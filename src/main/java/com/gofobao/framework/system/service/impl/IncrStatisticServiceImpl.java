@@ -3,6 +3,7 @@ package com.gofobao.framework.system.service.impl;
 import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.helper.ExceptionEmailHelper;
 import com.gofobao.framework.helper.NumberHelper;
+import com.gofobao.framework.member.repository.UsersRepository;
 import com.gofobao.framework.system.entity.IncrStatistic;
 import com.gofobao.framework.system.entity.Statistic;
 import com.gofobao.framework.system.repository.IncrStatisticRepository;
@@ -20,10 +21,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 
-import javax.persistence.EntityManager;
 import javax.persistence.LockModeType;
-import javax.persistence.Query;
-import java.math.BigDecimal;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -93,7 +91,7 @@ public class IncrStatisticServiceImpl implements IncrStatisticService {
     }
 
     @Autowired
-    private EntityManager entityManager;
+    private UsersRepository usersRepository;
 
     /**
      * 注册人数统计
@@ -101,12 +99,9 @@ public class IncrStatisticServiceImpl implements IncrStatisticService {
      * @return
      */
     @Override
-    public BigDecimal registerTotal() {
-        String sql = "SELECT SUM(i.register_count) FROM gfb_incr_statistic AS i";
-        Query query = entityManager.createNativeQuery(sql);
-        return (BigDecimal) query.getSingleResult();
+    public Long registerTotal() {
+        return  usersRepository.registerUserCount();
     }
-
     /**
      * 每日统计调度
      *

@@ -323,14 +323,16 @@ public class AssetBizImpl implements AssetBiz {
         voUserAssetInfoResp.setHidePayment(StringHelper.formatDouble(payment / 100D, true));
         voUserAssetInfoResp.setHideCollection(StringHelper.formatDouble(asset.getCollection() / 100D, true));
         voUserAssetInfoResp.setHideVirtualMoney(StringHelper.formatDouble(asset.getVirtualMoney() / 100D, true));
-        voUserAssetInfoResp.setHideNetWorthQuota(StringHelper.formatDouble(netWorthQuota / 100D, true));
+        voUserAssetInfoResp.setHideNetWorthQuota(StringHelper.formatDouble((netWorthQuota>0?netWorthQuota:0) / 100D, true));
         voUserAssetInfoResp.setUseMoney(useMoney);
         voUserAssetInfoResp.setNoUseMoney(asset.getNoUseMoney());
         voUserAssetInfoResp.setPayment(asset.getPayment());
         voUserAssetInfoResp.setCollection(asset.getCollection());
         voUserAssetInfoResp.setVirtualMoney(asset.getVirtualMoney());
-        voUserAssetInfoResp.setNetWorthQuota(netWorthQuota);
+        voUserAssetInfoResp.setNetWorthQuota(netWorthQuota>0?netWorthQuota:0 );
         voUserAssetInfoResp.setNetAsset(StringHelper.formatMon(netAsset / 100D));
+        voUserAssetInfoResp.setIncomeTotal(StringHelper.formatMon(userCache.getIncomeTotal()/100D));
+        voUserAssetInfoResp.setHideIncomeTotal(userCache.getIncomeTotal());
         return ResponseEntity.ok(voUserAssetInfoResp);
     }
 

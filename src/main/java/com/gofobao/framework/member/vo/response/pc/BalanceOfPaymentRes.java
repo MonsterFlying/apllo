@@ -11,15 +11,15 @@ import lombok.Data;
 public class BalanceOfPaymentRes extends VoBaseResp {
 
     @ApiModelProperty("待还")
-    private String waitPayment="0";
+    private String waitPayment="0.00";
 
     @ApiModelProperty("已还")
-    private String payment="0";
+    private String payment="0.00";
 
     @ApiModelProperty("待收")
-    private String waitCollection="0";
+    private String waitCollection="0.00";
 
     @ApiModelProperty("已收")
-    private String collection="0";
+    private String collection="0.00";
 
 }

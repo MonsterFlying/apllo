@@ -180,6 +180,7 @@ public class FinancePlanBizImpl implements FinancePlanBiz {
      */
     @Transactional(rollbackFor = Exception.class)
     public ResponseEntity<VoBaseResp> tenderFinancePlan(VoTenderFinancePlan voTenderFinancePlan) throws Exception {
+        voTenderFinancePlan.setMoney(voTenderFinancePlan.getMoney() * 100);
         String orderId = JixinHelper.getOrderId(JixinHelper.BALANCE_FREEZE_PREFIX);/* 购买理财计划解冻id */
         //前置判断计划可购金额是否充足
         long financePlanId = voTenderFinancePlan.getFinancePlanId();/* 理财计划id */
@@ -197,7 +198,7 @@ public class FinancePlanBizImpl implements FinancePlanBiz {
         Set<String> errorSet = errerMessage.elementSet();
         Iterator<String> iterator = errorSet.iterator();
         if (!flag) {
-            return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, iterator.next(), VoViewFinancePlanTender.class));
+            return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, iterator.next(), VoBaseResp.class/*VoViewFinancePlanTender.class)*/));
         }
         /* 购买理财计划有效金额 */
         long validateMoney = NumberHelper.toLong(iterator.next());
@@ -206,10 +207,16 @@ public class FinancePlanBizImpl implements FinancePlanBiz {
         errorSet = errerMessage.elementSet();
         iterator = errorSet.iterator();
         if (flag) {
-            ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, iterator.next(), VoViewFinancePlanTender.class));
+            ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, iterator.next(), VoBaseResp.class));
         }
         //生成理财计划购买记录
         FinancePlanBuyer financePlanBuyer = addFinancePlanBuyer(voTenderFinancePlan, userId, financePlan, validateMoney);
+        try {
+            //理财计划更新
+            updateFinancePlan(financePlan, voTenderFinancePlan);
+        } catch (Exception e) {
+            throw new Exception("系统异常,请稍后再试");
+        }
         //更新理财计划购买人的资金账户
         try {
             updateAssetByBuyFinancePlan(financePlan, buyUserAccount, validateMoney, financePlanBuyer, orderId);
@@ -227,10 +234,19 @@ public class FinancePlanBizImpl implements FinancePlanBiz {
                 throw new Exception("理财计划投标解冻资金失败：" + balanceUnfreezeResp.getRetMsg());
             }
         }
-        VoViewFinancePlanTender voViewFinancePlanTender = VoBaseResp.ok("购买成功!", VoViewFinancePlanTender.class);
-        voViewFinancePlanTender.setFinancePlanBuyer(financePlanBuyer);
-        return ResponseEntity.ok(voViewFinancePlanTender);
+        //   VoViewFinancePlanTender voViewFinancePlanTender = VoBaseResp.ok("购买成功!", VoViewFinancePlanTender.class);
+        //  voViewFinancePlanTender.setFinancePlanBuyer(financePlanBuyer);
+        return ResponseEntity.ok(VoBaseResp.ok("购买成功", VoBaseResp.class));
     }
+
+    private FinancePlan updateFinancePlan(FinancePlan financePlan, VoTenderFinancePlan voTenderFinancePlan) {
+        financePlan.setMoneyYes(financePlan.getMoneyYes() + voTenderFinancePlan.getMoney());
+        financePlan.setTotalSubPoint(financePlan.getTotalSubPoint() + 1);
+        financePlan.setUpdatedAt(new Date());
+        FinancePlan financePlan1 = financePlanService.save(financePlan);
+        return financePlan1;
+    }
+
 
     /**
      * 生成理财计划购买记录
@@ -254,6 +270,8 @@ public class FinancePlanBizImpl implements FinancePlanBiz {
         financePlanBuyer.setApr(financePlan.getBaseApr());
         financePlanBuyer.setStatus(1);
         financePlanBuyer.setSource(1);
+        financePlanBuyer.setPlanId(financePlan.getId());
+        financePlanBuyer.setUpdatedAt(new Date());
         financePlanBuyerService.save(financePlanBuyer);
         return financePlanBuyer;
     }
@@ -346,7 +364,10 @@ public class FinancePlanBizImpl implements FinancePlanBiz {
             errerMessage.add("当前用户属于锁定状态, 如有问题请联系客户!");
             return false;
         }
-
+        if (asset.getUseMoney().longValue() < voTenderFinancePlan.getMoney().longValue()) {
+            errerMessage.add("对不起余额不足!");
+            return false;
+        }
         // 判断最小投标金额
         long realTenderMoney = financePlan.getMoney() - financePlan.getMoneyYes();  // 剩余金额
         long minLimitTenderMoney = ObjectUtils.isEmpty(financePlan.getLowest()) ? 50 * 100 : financePlan.getLowest();  // 最小投标金额
@@ -499,7 +520,7 @@ public class FinancePlanBizImpl implements FinancePlanBiz {
 
         Specification<FinancePlan> specification = Specifications.<FinancePlan>and()
                 .notIn("status", statusArray.toArray())
-                .eq("type",0)
+                .eq("type", 0)
                 .build();
         List<FinancePlan> financePlans = financePlanService.findList(specification, new Sort(Sort.Direction.DESC, "id"));
 

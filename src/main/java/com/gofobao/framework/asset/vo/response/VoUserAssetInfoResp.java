@@ -8,18 +8,18 @@ import lombok.Data;
  * Created by Zeke on 2017/5/19.
  */
 @Data
-public class VoUserAssetInfoResp extends VoBaseResp{
+public class VoUserAssetInfoResp extends VoBaseResp {
     @ApiModelProperty("会员可用资金")
     private Long useMoney;
 
     @ApiModelProperty("会员可用资金展示")
-    private String hideUserMoney ;
+    private String hideUserMoney;
 
     @ApiModelProperty("会员冻结资金")
     private Long noUseMoney;
 
     @ApiModelProperty("会员冻结资金(展示)")
-    private String  hideNoUseMoney;
+    private String hideNoUseMoney;
 
     @ApiModelProperty("会员体验金")
     private Long virtualMoney;
@@ -47,5 +47,11 @@ public class VoUserAssetInfoResp extends VoBaseResp{
 
     @ApiModelProperty("净资产")
     private String netAsset;
+
+    @ApiModelProperty("累计收益")
+    private String incomeTotal;
+
+    @ApiModelProperty(value = "累计收益", hidden = true)
+    private Long hideIncomeTotal;
 
 }

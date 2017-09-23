@@ -30,7 +30,7 @@ public class OperateDataStatistics extends VoBaseResp {
     private Integer apr;
 
     @ApiModelProperty("注册人数")
-    private BigDecimal registerTotal;
+    private Long registerTotal;
 
     @ApiModelProperty("累计投资人数")
     private Long tenderNoOfPeople ;

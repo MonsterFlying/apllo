@@ -20,7 +20,7 @@ public class IndexStatistics {
     private Long dueTotal;
 
     @ApiModelProperty("注册人数")
-    private BigDecimal registerTotal;
+    private Long registerTotal;
 
     @ApiModelProperty("为用户赚取收益")
     private Long earnings;
