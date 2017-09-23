@@ -218,42 +218,6 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "当前客户本地金额大于存管金额,请联系客服吧", VoPreCashResp.class));
         }*/
 
-
-
-        int pageSize = 20, pageIndex = 1, realSize = 0;
-        String accountId = userThirdAccount.getAccountId();  // 存管账户ID
-
-        do {
-            AccountDetailsQueryRequest accountDetailsQueryRequest = new AccountDetailsQueryRequest();
-            accountDetailsQueryRequest.setPageSize(String.valueOf(pageSize));
-            accountDetailsQueryRequest.setPageNum(String.valueOf(pageIndex));
-            accountDetailsQueryRequest.setStartDate(jixinTxDateHelper.getTxDateStr());
-            accountDetailsQueryRequest.setEndDate(jixinTxDateHelper.getTxDateStr());
-            accountDetailsQueryRequest.setType("0");
-            accountDetailsQueryRequest.setAccountId(accountId);
-            AccountDetailsQueryResponse accountDetailsQueryResponse = jixinManager.send(JixinTxCodeEnum.ACCOUNT_DETAILS_QUERY,
-                    accountDetailsQueryRequest,
-                    AccountDetailsQueryResponse.class);
-
-            if ((ObjectUtils.isEmpty(accountDetailsQueryResponse)) || (!JixinResultContants.SUCCESS.equals(accountDetailsQueryResponse.getRetCode()))) {
-                String msg = ObjectUtils.isEmpty(accountDetailsQueryResponse) ? "当前网络出现异常, 请稍后尝试！" : accountDetailsQueryResponse.getRetMsg();
-                log.error(String.format("资金同步: %s", msg));
-                break;
-            }
-
-            String subPacks = accountDetailsQueryResponse.getSubPacks();
-            if (StringUtils.isEmpty(subPacks)) {
-                break;
-            }
-
-            Optional<List<AccountDetailsQueryItem>> optional = Optional.ofNullable(GSON.fromJson(accountDetailsQueryResponse.getSubPacks(), new TypeToken<List<AccountDetailsQueryItem>>() {
-            }.getType()));
-            List<AccountDetailsQueryItem> accountDetailsQueryItems = optional.orElse(Lists.newArrayList());
-            realSize = accountDetailsQueryItems.size();
-
-            pageIndex++;
-        } while (realSize == pageSize);
-
         Long realCashMoney = getRealCashMoney(userId);
         VoPreCashResp resp = VoBaseResp.ok("查询成功", VoPreCashResp.class);
         resp.setBankName(userThirdAccount.getBankName());

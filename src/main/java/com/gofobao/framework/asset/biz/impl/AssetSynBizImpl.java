@@ -177,11 +177,11 @@ public class AssetSynBizImpl implements AssetSynBiz {
                 while (iterator1.hasNext()) {
                     AccountDetailsQueryItem offRecharge = iterator1.next();
                     Double recordRecharge = new Double(MoneyHelper.multiply(offRecharge.getTxAmount(), "100", 0));
-                    long money = recordRecharge.longValue() ;
+                    long money = recordRecharge.longValue();
                     long localMoney = recharge.getMoney().longValue();
-                    log.info(String.format("待同步金额: %s , %s", localMoney, money) );
-                    if (localMoney ==  money) {
-                        log.info(String.format("已成功同步金额: %s , %s", localMoney, money) );
+                    log.info(String.format("待同步金额: %s , %s", localMoney, money));
+                    if (localMoney == money) {
+                        log.info(String.format("已成功同步金额: %s , %s", localMoney, money));
                         iterator.remove();
                         iterator1.remove();
                         break;
@@ -198,7 +198,7 @@ public class AssetSynBizImpl implements AssetSynBiz {
         for (AccountDetailsQueryItem accountDetailsQueryItem : accountDetailsQueryItemList) {
             seqNo = String.format("%s%s%s", accountDetailsQueryItem.getInpDate(), accountDetailsQueryItem.getInpTime(), accountDetailsQueryItem.getTraceNo());
             Double recordRecharge = new Double(MoneyHelper.multiply(accountDetailsQueryItem.getTxAmount(), "100", 0));
-            Long money = recordRecharge.longValue() ;
+            Long money = recordRecharge.longValue();
             RechargeDetailLog rechargeDetailLog = new RechargeDetailLog();
             log.info("进入同步环节");
             rechargeDetailLog.setUserId(userId);
@@ -304,7 +304,7 @@ public class AssetSynBizImpl implements AssetSynBiz {
         // 同步时间大于两天
         String transtype = "7820";
         List<AccountDetailsQueryItem> accountDetailsQueryItemList = new ArrayList<>();
-        if (DateHelper.diffInDays(DateHelper.beginOfDate(nowDate), DateHelper.beginOfDate(synDate), false) > 1) {  // 同步大于一天查询数据库
+        if (DateHelper.diffInDays(nowDate, DateHelper.beginOfDate(synDate), false) == 0) {  // 同步大于一天查询数据库
             log.info("进入数据库查询数据同步");
             Specification<Aleve> specification = Specifications
                     .<Aleve>and()
@@ -363,8 +363,8 @@ public class AssetSynBizImpl implements AssetSynBiz {
             log.info("当前线下用户资金流水为0");
             return true;
         }
-        Date startDate = DateHelper.endOfDate(DateHelper.subDays(synDate, 1)) ;
-        Date endDate = DateHelper.beginOfDate(DateHelper.addDays(synDate, 1)) ;
+        Date startDate = DateHelper.endOfDate(DateHelper.subDays(synDate, 1));
+        Date endDate = DateHelper.beginOfDate(DateHelper.addDays(synDate, 1));
         Specification<RechargeDetailLog> rechargeDetailLogSpecification = Specifications
                 .<RechargeDetailLog>and()
                 .between("createTime", new Range<>(startDate, endDate))
@@ -382,7 +382,7 @@ public class AssetSynBizImpl implements AssetSynBiz {
                 while (iterator1.hasNext()) {
                     AccountDetailsQueryItem offRecharge = iterator1.next();
                     Double recordRecharge = new Double(MoneyHelper.multiply(offRecharge.getTxAmount(), "100", 0));
-                    if (recharge.getMoney() ==  recordRecharge.longValue()) {
+                    if (recharge.getMoney() == recordRecharge.longValue()) {
                         log.info("匹配成功");
                         iterator.remove();
                         iterator1.remove();
@@ -402,7 +402,7 @@ public class AssetSynBizImpl implements AssetSynBiz {
         for (AccountDetailsQueryItem accountDetailsQueryItem : accountDetailsQueryItemList) {
             seqNo = String.format("%s%s%s", accountDetailsQueryItem.getInpDate(), accountDetailsQueryItem.getInpTime(), accountDetailsQueryItem.getTraceNo());
             Double recordRecharge = new Double(MoneyHelper.multiply(accountDetailsQueryItem.getTxAmount(), "100", 0));
-            Long money = recordRecharge.longValue() ;
+            Long money = recordRecharge.longValue();
             RechargeDetailLog rechargeDetailLog = new RechargeDetailLog();
             log.info(String.format("进入同步环节 %s", gson.toJson(accountDetailsQueryItem)));
             rechargeDetailLog.setUserId(userId);
@@ -439,6 +439,13 @@ public class AssetSynBizImpl implements AssetSynBiz {
             mqHelper.convertAndSend(mqConfig);
         }
         return true;
+    }
+
+    public static void main(String[] args) {
+        Date nowDate = new Date() ;
+        Date synDate = DateHelper.stringToDate("20170922", DateHelper.DATE_FORMAT_YMD_NUM) ;
+        int i = DateHelper.diffInDays(nowDate, DateHelper.beginOfDate(synDate), false);
+        System.err.println(i);
     }
 
     @Override
@@ -511,7 +518,7 @@ public class AssetSynBizImpl implements AssetSynBiz {
                 while (iterator1.hasNext()) {
                     AccountDetailsQueryItem offRecharge = iterator1.next();
                     Double recordRecharge = new Double(MoneyHelper.multiply(offRecharge.getTxAmount(), "100", 0));
-                    long money = recordRecharge.longValue() ;
+                    long money = recordRecharge.longValue();
                     if (recharge.getMoney() == money) {
                         log.info("线下充值回调匹配成功");
                         iterator.remove();
@@ -537,7 +544,7 @@ public class AssetSynBizImpl implements AssetSynBiz {
                 seqNo = orgSeqNo;
             }
             Double recordRecharge = new Double(MoneyHelper.multiply(accountDetailsQueryItem.getTxAmount(), "100", 0));
-            Long money = recordRecharge.longValue() ;
+            Long money = recordRecharge.longValue();
             RechargeDetailLog rechargeDetailLog = new RechargeDetailLog();
             log.info(String.format("进入线下充值回调同步环节 %s", gson.toJson(accountDetailsQueryItem)));
             rechargeDetailLog.setUserId(userId);

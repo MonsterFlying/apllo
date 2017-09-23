@@ -94,8 +94,13 @@ gofobao:
     AppKey: ce7616b0fc76f923a1b53b30
     MasterSecre : d4b742ae7cc3e4be1d6a95c3
 logging:
-  file: /var/log/apllo.log
-  pattern:
-    console: "%d %-5level %logger : %msg%n"
-  level:
-    root: INFO
+  config: classpath:logback-app.xml
+#logging:
+#  file: D:/apollo/apollo.log
+#  pattern:
+#    console: "%d %-5level %logger : %msg%n"
+#  level:
+#    root: INFO
+#    org.springframework.web: INFO
+#    org.hibernate: INFO
+
