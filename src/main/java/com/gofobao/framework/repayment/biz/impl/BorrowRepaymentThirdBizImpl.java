@@ -141,7 +141,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
      * @param voThirdBatchLendRepay
      * @return
      */
-    public ResponseEntity<VoBaseResp> thirdFinanceBatchLendRepay(VoThirdBatchLendRepay voThirdBatchLendRepay) throws Exception {
+    public ResponseEntity<VoBaseResp> thirdBatchFinanceLendRepay(VoThirdBatchLendRepay voThirdBatchLendRepay) throws Exception {
         Gson gson = new Gson();
         log.info(String.format("理财计划批次放款调用: %s", gson.toJson(voThirdBatchLendRepay)));
         Date nowDate = new Date();
@@ -303,7 +303,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
         BatchAssetChange batchAssetChange = new BatchAssetChange();
         batchAssetChange.setSourceId(borrowId);
         batchAssetChange.setState(0);
-        batchAssetChange.setType(BatchAssetChangeContants.BATCH_LEND_REPAY);
+        batchAssetChange.setType(BatchAssetChangeContants.BATCH_FINANCE_LEND_REPAY);
         batchAssetChange.setCreatedAt(new Date());
         batchAssetChange.setUpdatedAt(new Date());
         batchAssetChange.setBatchNo(batchNo);

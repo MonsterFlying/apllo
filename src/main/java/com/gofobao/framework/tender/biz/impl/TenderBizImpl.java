@@ -190,19 +190,32 @@ public class TenderBizImpl implements TenderBiz {
                 borrowService.save(borrow);
             }
 
-            /**
-             * @// TODO: 2017/9/22 理财计划复审不一样
-             */
-            //复审
-            MqConfig mqConfig = new MqConfig();
-            mqConfig.setQueue(MqQueueEnum.RABBITMQ_BORROW);
-            mqConfig.setTag(MqTagEnum.AGAIN_VERIFY);
-            mqConfig.setSendTime(DateHelper.addSeconds(nowDate, 1));
-            ImmutableMap<String, String> body = ImmutableMap
-                    .of(MqConfig.MSG_BORROW_ID, StringHelper.toString(borrow.getId()), MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
-            mqConfig.setMsg(body);
-            log.info(String.format("tenderBizImpl tender send mq %s", TenderBizImpl.GSON.toJson(body)));
-            mqHelper.convertAndSend(mqConfig);
+            //判断是否是理财计划借款
+            if (borrow.getIsFinance()) {
+                //复审
+                MqConfig mqConfig = new MqConfig();
+                mqConfig.setQueue(MqQueueEnum.RABBITMQ_BORROW);
+                mqConfig.setTag(MqTagEnum.AGAIN_VERIFY_FINANCE);
+                mqConfig.setSendTime(DateHelper.addSeconds(nowDate, 1));
+                ImmutableMap<String, String> body = ImmutableMap
+                        .of(MqConfig.MSG_BORROW_ID, StringHelper.toString(borrow.getId()), MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
+                mqConfig.setMsg(body);
+                log.info(String.format("tenderBizImpl tender send mq %s", GSON.toJson(body)));
+                mqHelper.convertAndSend(mqConfig);
+            } else {
+
+                //复审
+                MqConfig mqConfig = new MqConfig();
+                mqConfig.setQueue(MqQueueEnum.RABBITMQ_BORROW);
+                mqConfig.setTag(MqTagEnum.AGAIN_VERIFY);
+                mqConfig.setSendTime(DateHelper.addSeconds(nowDate, 1));
+                ImmutableMap<String, String> body = ImmutableMap
+                        .of(MqConfig.MSG_BORROW_ID, StringHelper.toString(borrow.getId()), MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
+                mqConfig.setMsg(body);
+                log.info(String.format("tenderBizImpl tender send mq %s", GSON.toJson(body)));
+                mqHelper.convertAndSend(mqConfig);
+
+            }
         }
 
         //如果当前用户是风车理财用户

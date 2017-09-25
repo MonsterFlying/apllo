@@ -1008,7 +1008,9 @@ public class RepaymentBizImpl implements RepaymentBiz {
         borrowCollectionList.stream().forEach(borrowCollection -> {
             Tender tender = tenderMap.get(borrowCollection.getTenderId());
             if (tender.getType().intValue() == 1) { //理财计划需要变更理财计划参数
-
+                /**
+                 * @// TODO: 2017/9/25 理财计划
+                 */
             }
         });
     }
