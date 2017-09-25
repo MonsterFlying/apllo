@@ -1,23 +1,15 @@
 package com.gofobao.framework.helper.project;
 
-import com.gofobao.framework.common.page.Page;
 import com.gofobao.framework.helper.MathHelper;
 import com.gofobao.framework.helper.RedisHelper;
-import com.gofobao.framework.tender.vo.VoSaveThirdTender;
-import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.util.CollectionUtils;
 
-import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 /**
  * Created by Max on 2017/3/27.

@@ -1,15 +1,9 @@
 package com.gofobao.framework.scheduler.biz.impl;
 
 import com.gofobao.framework.scheduler.biz.TaskSchedulerBiz;
-import com.gofobao.framework.scheduler.entity.TaskScheduler;
 import com.gofobao.framework.scheduler.service.TaskSchedulerService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Component;
-
-import java.util.List;
 
 /**
  * Created by Administrator on 2017/6/30 0030.

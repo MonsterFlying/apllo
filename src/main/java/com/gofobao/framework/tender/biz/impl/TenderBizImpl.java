@@ -7,7 +7,6 @@ import com.gofobao.framework.api.helper.JixinManager;
 import com.gofobao.framework.api.helper.JixinTxCodeEnum;
 import com.gofobao.framework.api.model.balance_query.BalanceQueryRequest;
 import com.gofobao.framework.api.model.balance_query.BalanceQueryResponse;
-import com.gofobao.framework.api.model.bid_auto_apply.BidAutoApplyRequest;
 import com.gofobao.framework.api.model.bid_cancel.BidCancelReq;
 import com.gofobao.framework.api.model.bid_cancel.BidCancelResp;
 import com.gofobao.framework.asset.entity.Asset;
@@ -17,7 +16,6 @@ import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.borrow.service.BorrowService;
 import com.gofobao.framework.borrow.vo.request.VoCancelBorrow;
 import com.gofobao.framework.borrow.vo.response.VoBorrowTenderUserRes;
-import com.gofobao.framework.collection.vo.response.web.Collection;
 import com.gofobao.framework.common.assets.AssetChange;
 import com.gofobao.framework.common.assets.AssetChangeProvider;
 import com.gofobao.framework.common.assets.AssetChangeTypeEnum;
@@ -29,7 +27,6 @@ import com.gofobao.framework.common.rabbitmq.MqTagEnum;
 import com.gofobao.framework.core.helper.PasswordHelper;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.helper.*;
-import com.gofobao.framework.helper.project.BorrowHelper;
 import com.gofobao.framework.helper.project.JixinTenderRecordHelper;
 import com.gofobao.framework.helper.project.SecurityHelper;
 import com.gofobao.framework.lend.entity.Lend;
@@ -65,7 +62,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 
 import java.util.*;
@@ -129,7 +125,7 @@ public class TenderBizImpl implements TenderBiz {
                     .body(VoBaseResp.error(VoBaseResp.ERROR_CREDIT, "请先签订自动投标协议！", VoBaseResp.class));
         }
 
-        Borrow borrow = borrowService.findByIdLock(voCreateTenderReq.getBorrowId());
+        Borrow borrow = borrowService.findByIdLock(voCreateTenderReq.getBorrowId());  //
         Preconditions.checkNotNull(borrow, "投标: 标的信息为空!");
         if (!ObjectUtils.isEmpty(borrow.getLendId()) && borrow.getLendId() > 0) {
             Lend lend = lendService.findByIdLock(borrow.getLendId());
@@ -194,6 +190,7 @@ public class TenderBizImpl implements TenderBiz {
             MqConfig mqConfig = new MqConfig();
             mqConfig.setQueue(MqQueueEnum.RABBITMQ_BORROW);
             mqConfig.setTag(MqTagEnum.AGAIN_VERIFY);
+            mqConfig.setSendTime(DateHelper.addSeconds(nowDate, 1));
             ImmutableMap<String, String> body = ImmutableMap
                     .of(MqConfig.MSG_BORROW_ID, StringHelper.toString(borrow.getId()), MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
             mqConfig.setMsg(body);
@@ -547,7 +544,7 @@ public class TenderBizImpl implements TenderBiz {
     @Transactional(rollbackFor = Exception.class)
     public ResponseEntity<VoBaseResp> tender(VoCreateTenderReq voCreateTenderReq) throws Exception {
         //投标撤回集合
-        String borrowId = String.valueOf(voCreateTenderReq.getBorrowId());
+        String borrowId = String.valueOf(voCreateTenderReq.getBorrowId()) ;
         try {
             ResponseEntity<VoBaseResp> voBaseRespResponseEntity = createTender(voCreateTenderReq);
             if (voBaseRespResponseEntity.getStatusCode().equals(HttpStatus.OK)) {

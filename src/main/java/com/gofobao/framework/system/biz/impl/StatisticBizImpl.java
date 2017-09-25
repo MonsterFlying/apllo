@@ -1,11 +1,11 @@
 package com.gofobao.framework.system.biz.impl;
 
-import com.github.wenhao.jpa.Specifications;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.helper.MathHelper;
 import com.gofobao.framework.helper.MultiCaculateHelper;
 import com.gofobao.framework.helper.RedisHelper;
+import com.gofobao.framework.member.repository.UserCacheRepository;
 import com.gofobao.framework.system.biz.StatisticBiz;
 import com.gofobao.framework.system.contants.DictAliasCodeContants;
 import com.gofobao.framework.system.entity.DictItem;
@@ -19,8 +19,7 @@ import com.gofobao.framework.system.vo.response.IndexStatistics;
 import com.gofobao.framework.system.vo.response.NewIndexStatisics;
 import com.gofobao.framework.system.vo.response.OperateDataStatistics;
 import com.gofobao.framework.system.vo.response.VoViewIndexStatisticsWarpRes;
-import com.gofobao.framework.tender.contants.TenderConstans;
-import com.gofobao.framework.tender.entity.Tender;
+import com.gofobao.framework.tender.repository.TenderRepository;
 import com.gofobao.framework.tender.service.TenderService;
 import com.google.common.base.Preconditions;
 import com.google.common.cache.CacheBuilder;
@@ -30,7 +29,6 @@ import com.google.gson.Gson;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -68,6 +66,12 @@ public class StatisticBizImpl implements StatisticBiz {
     @Autowired
     private IncrStatisticService incrStatisticService;
 
+    @Autowired
+    private UserCacheRepository userCacheRepository;
+
+    @Autowired
+    private TenderRepository tenderRepository;
+
     private static final Gson GSON = new Gson();
 
     static final Date startDate = DateHelper.stringToDate("2013-7-23 00:00:00", DateHelper.DATE_FORMAT_YMDHMS);
@@ -101,15 +105,14 @@ public class StatisticBizImpl implements StatisticBiz {
                     int days = DateHelper.diffInDays(currCalender.getTime(), currYearDate, false);
                     newIndexStatisics.setSafeOperation(String.format("%s年%s天", years, days));
                     //注册人数
-                    BigDecimal registerTotal = incrStatisticService.registerTotal();
-                    long register = registerTotal.longValue();
+                    Long registerTotal = incrStatisticService.registerTotal();
                     String titel = formatNumber(borrowTotal / 100);
                     if (titel.contains("亿")) {
                         titel = titel.substring(0, titel.indexOf("亿") + 1);
                     } else if (titel.contains("万")) {
                         titel = titel.substring(0, titel.indexOf("万") + 1);
                     }
-                    newIndexStatisics.setRegsiterCount(formatNumber(register) + "人");
+                    newIndexStatisics.setRegsiterCount(formatNumber(registerTotal) + "人");
                     newIndexStatisics.setTotalTransaction(String.format("%s元", titel)); // 交易总额
                     return newIndexStatisics;
                 }
@@ -129,10 +132,12 @@ public class StatisticBizImpl implements StatisticBiz {
                     indexStatistics.setTransactionsTotal(borrowTotal);
                     indexStatistics.setDueTotal(statistic.getWaitRepayTotal());
                     indexStatistics.setBorrowTotal(statistic.getBorrowItems());
-                    indexStatistics.setEarnings(statistic.getUserIncomeTotal());
+                    //为用户赚取收益
+                    Long userIncomeTotal=userCacheRepository.userIncomeTotal();
+                    indexStatistics.setEarnings(userIncomeTotal);
                     indexStatistics.setYesterdayDueTotal(0l);
                     // 注册人数
-                    BigDecimal registerTotal = incrStatisticService.registerTotal();
+                    Long registerTotal = incrStatisticService.registerTotal();
                     indexStatistics.setRegisterTotal(registerTotal);
                     // 起头金额 & 年华利率
                     DictItem dictItem = dictItemService.findTopByAliasCodeAndDel(DictAliasCodeContants.INDEX_CONFIG, 0);
@@ -221,6 +226,7 @@ public class StatisticBizImpl implements StatisticBiz {
     }
 
 
+
     LoadingCache<String, OperateDataStatistics> operateData = CacheBuilder
             .newBuilder()
             .expireAfterWrite(60, TimeUnit.MINUTES)
@@ -239,18 +245,15 @@ public class StatisticBizImpl implements StatisticBiz {
                     //注册人数
                     dataStatistics.setRegisterTotal(indexStatistics.getRegisterTotal());
                     //为用户赚取收益
-                    dataStatistics.setEarnings(indexStatistics.getEarnings());
+                    Long userIncomeTotal=userCacheRepository.userIncomeTotal();
+                    dataStatistics.setEarnings(userIncomeTotal);
                     //累计成交笔数
                     dataStatistics.setBorrowTotal(indexStatistics.getBorrowTotal());
                     //交易总额
                     dataStatistics.setTransactionsTotal(indexStatistics.getTransactionsTotal());
-
-                    Specification<Tender> specification = Specifications.<Tender>and()
-                            .eq("status", TenderConstans.SUCCESS)
-                            .build();
-                    Long count = tenderService.count(specification);
                     //累计投资人数
-                    dataStatistics.setTenderNoOfPeople(count);
+                    Long userCount=tenderRepository.tenderUserCount();
+                    dataStatistics.setTenderNoOfPeople(userCount);
 
                 /*    //已还本息
                     dataStatistics.setSettleCapitalTotal(indexStatistics.);*/

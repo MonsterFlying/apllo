@@ -48,6 +48,12 @@ public class CashController {
         return cashDetailLogBiz.adminWebCash(httpServletRequest, voAdminCashReq) ;
     }
 
+    /**
+     * 即信提现回调
+     * @param request
+     * @return
+     * @throws Exception
+     */
     @PostMapping("/pub/asset/cash/callback")
     public ResponseEntity<String> cashCallback(HttpServletRequest request) throws Exception{
         return cashDetailLogBiz.cashCallback(request) ;

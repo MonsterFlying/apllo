@@ -46,6 +46,8 @@ public class UserActiveListener {
                 result = userActiveProvider.recharge(msg) ;
             }else if(tag.equalsIgnoreCase(MqTagEnum.LOGIN.getValue())){ // 登录
                 result = userActiveProvider.userLogin(msg) ;
+            }else if(tag.equalsIgnoreCase(MqTagEnum.OP_JIXIN_QUERY.getValue())){ // 即信确认查询
+                result = userActiveProvider.jixinOpQuery(msg) ;
             }
 
             if(!result){

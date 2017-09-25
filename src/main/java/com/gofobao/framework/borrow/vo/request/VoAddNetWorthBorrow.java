@@ -84,6 +84,6 @@ public class VoAddNetWorthBorrow {
     }
 
     public void setMoney(double money) {
-        this.money = money * 100.0;
+        this.money =  MoneyHelper.multiply( money,  100.0, 0);
     }
 }
