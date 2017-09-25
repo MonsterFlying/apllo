@@ -187,6 +187,7 @@ public class BorrowCollectionServiceImpl implements BorrowCollectionService {
         Specification specification = Specifications.<BorrowCollection>and()
                 .eq("userId", listReq.getUserId())
                 .eq("status", BorrowCollectionContants.STATUS_NO)
+                .eq("transferFlag",0)
                 .between("collectionAt", new Range<>(beginAt, endAt))
                 .build();
         Page<BorrowCollection> collectionPage = borrowCollectionRepository.findAll(specification,

@@ -81,7 +81,7 @@ public class WebFriendsController {
     @GetMapping("invite/pc/v2/shareRegister")
     public ResponseEntity shareRegister(@RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
         try {
-            Map<String, Object> resultMaps = brokerBounsBiz.shareRegister(userId);
+            Map<String, Object> resultMaps = brokerBounsBiz.shareRegister(userId,"jinFu");
             return ResponseEntity.ok(resultMaps);
         } catch (Exception e) {
             return ResponseEntity.badRequest()

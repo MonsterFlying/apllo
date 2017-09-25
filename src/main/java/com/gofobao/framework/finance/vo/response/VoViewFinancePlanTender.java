@@ -11,3 +11,5 @@ import lombok.Data;
 public class VoViewFinancePlanTender extends VoBaseResp{
     private FinancePlanBuyer financePlanBuyer;
 }
+
+
