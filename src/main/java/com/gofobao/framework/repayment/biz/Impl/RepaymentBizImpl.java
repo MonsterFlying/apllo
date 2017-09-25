@@ -467,7 +467,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
                 penalty = borrowRepayment.getInterest() / days * 7;
             }
 
-            Date nowStartDate = DateHelper.beginOfDate(new Date());  // 现在的凌晨时间
+            Date nowStartDate = DateHelper.beginOfDate(DateHelper.addHours(new Date(), 3));  // 现在的凌晨时间
             double interestPercent;/* 利息百分比 */
             if (nowStartDate.getTime() <= startAt.getTime()) {
                 interestPercent = 0;
@@ -475,7 +475,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
                 interestPercent = MathHelper.min(DateHelper.diffInDays(nowStartDate, startAt, false) / DateHelper.diffInDays(endAt, startAt, false), 1);
             }
             /* 逾期天数 */
-            int lateDays = DateHelper.diffInDays(nowStartDate, endAt, false);
+            int lateDays = getLateDays(borrowRepayment);
             /* 逾期利息 */
             long lateInterest = calculateLateInterest(lateDays, borrowRepayment, borrow);
             //累加金额用于判断还款账余额是否充足
@@ -1008,7 +1008,9 @@ public class RepaymentBizImpl implements RepaymentBiz {
         borrowCollectionList.stream().forEach(borrowCollection -> {
             Tender tender = tenderMap.get(borrowCollection.getTenderId());
             if (tender.getType().intValue() == 1) { //理财计划需要变更理财计划参数
-
+                /**
+                 * @// TODO: 2017/9/25 理财计划
+                 */
             }
         });
     }
@@ -2078,8 +2080,8 @@ public class RepaymentBizImpl implements RepaymentBiz {
      * @param borrowRepayment
      * @return
      */
-    private int getLateDays(BorrowRepayment borrowRepayment) {
-        Date nowDateOfBegin = DateHelper.beginOfDate(new Date());
+    public int getLateDays(BorrowRepayment borrowRepayment) {
+        Date nowDateOfBegin = DateHelper.beginOfDate(DateHelper.addHours(new Date(), 3));
         Date repayDateOfBegin = DateHelper.beginOfDate(borrowRepayment.getRepayAt());
         int lateDays = DateHelper.diffInDays(nowDateOfBegin, repayDateOfBegin, false);
         lateDays = lateDays < 0 ? 0 : lateDays;

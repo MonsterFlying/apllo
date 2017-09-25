@@ -188,10 +188,10 @@ public class WindmillTenderBizImpl implements WindmillTenderBiz {
                     investRecords.setIs_auto_bid0(borrow.getMostAuto());
                     //还款方式
                     if (borrow.getRepayFashion() == BorrowContants.REPAY_FASHION_ONCE) {
-                        investRecords.setPayback_way(BorrowContants.REPAY_FASHION_ONCE_STR);
+                        investRecords.setPayback_way("到期一次性还本付息");
                     }
                     if (borrow.getRepayFashion() == BorrowContants.REPAY_FASHION_MONTH) {
-                        investRecords.setPayback_way(BorrowContants.REPAY_FASHION_MONTH_STR);
+                        investRecords.setPayback_way("等额本息");
                     }
                     if (borrow.getRepayFashion() == BorrowContants.REPAY_FASHION_INTEREST_THEN_PRINCIPAL) {
                         investRecords.setPayback_way(BorrowContants.REPAY_FASHION_INTEREST_THEN_PRINCIPAL_STR);

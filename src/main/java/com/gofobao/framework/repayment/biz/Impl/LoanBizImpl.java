@@ -272,13 +272,14 @@ public class LoanBizImpl implements LoanBiz {
                         log.error("调度还款失败原因", e);
                         log.error(String.format("调度还款失败： 打印应款期数信息:%s", new Gson().toJson(repayment)));
                         exceptionEmailHelper.sendErrorMessage("每天早上9点官标定时还款-失败","失败原因:"+e.getMessage()+", 还款期数信息: "+ new Gson().toJson(repayment));
+                        break;
                     }
                 }
             } else {
                 log.info("今日没有要还款的批次！");
             }
         } catch (Exception e) {
-          //  exceptionEmailHelper.sendException("每天早上9点官标定时还款-失败", e);
+            //  exceptionEmailHelper.sendException("每天早上9点官标定时还款-失败", e);
         }
     }
 }

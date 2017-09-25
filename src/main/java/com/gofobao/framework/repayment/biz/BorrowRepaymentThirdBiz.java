@@ -21,7 +21,7 @@ public interface BorrowRepaymentThirdBiz {
      * @param voThirdBatchLendRepay
      * @return
      */
-    ResponseEntity<VoBaseResp> thirdFinanceBatchLendRepay(VoThirdBatchLendRepay voThirdBatchLendRepay) throws Exception;
+    ResponseEntity<VoBaseResp> thirdBatchFinanceLendRepay(VoThirdBatchLendRepay voThirdBatchLendRepay) throws Exception;
 
 
     /**

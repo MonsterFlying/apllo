@@ -779,6 +779,5 @@ ALTER TABLE gfb_transfer ADD   `right_money` int(10) unsigned NOT NULL DEFAULT '
 ALTER TABLE gfb_finance_plan ADD   `left_money` int(10) unsigned NOT NULL DEFAULT '0' COMMENT '剩余未匹配金额';
 
 ALTER TABLE gfb_borrow_tender ADD   `finance_buy_id` int(11) DEFAULT NULL COMMENT '理财计划购买id';
-
-ALTER TABLE gfb_borrow_repayment ADD  `repay_trigger_at` datetime DEFAULT NULL COMMENT '还款触发时间';
 ALTER TABLE gfb_borrow ADD   `is_finance` tinyint(1) DEFAULT '0' COMMENT '是否是理财计划 0否 1是';
+ALTER TABLE gfb_borrow_repayment ADD  `repay_trigger_at` datetime DEFAULT NULL COMMENT '还款触发时间';

@@ -70,6 +70,36 @@ public class BorrowProvider {
             log.info(String.format("复审: 批量正常放款申请申请失败: %s", data));
             return false;
         }
+    }
 
+    /**
+     * 理财计划正常放款流程(禁止流转标调用此方法)
+     *
+     * @param msg
+     * @return
+     * @throws Exception
+     */
+    @Transactional(rollbackFor = Exception.class)
+    public boolean doAgainVerifyFinance(Map<String, String> msg) throws Exception {
+        Long borrowId = NumberHelper.toLong(StringHelper.toString(msg.get("borrowId")));
+        Borrow borrow = borrowService.findByIdLock(borrowId);
+        if (borrow.getStatus() != 1) {
+            log.error("复审：理财计划借款状态已发生改变！");
+            return false;
+        }
+
+        log.info(String.format("复审: 理财计划批量正常放款申请开始: %s", GSON.toJson(msg)));
+
+        //批次放款
+        VoThirdBatchLendRepay voThirdBatchLendRepay = new VoThirdBatchLendRepay();
+        voThirdBatchLendRepay.setBorrowId(borrowId);
+        ResponseEntity<VoBaseResp> resp = borrowRepaymentThirdBiz.thirdBatchFinanceLendRepay(voThirdBatchLendRepay);
+        if (resp.getBody().getState().getCode() == VoBaseResp.OK) {
+            log.info(String.format("复审: 理财计划批量正常放款申请申请成功: %s", GSON.toJson(msg)));
+            return true;
+        } else {
+            log.info(String.format("复审: 理财计划批量正常放款申请申请失败: %s", GSON.toJson(resp)));
+            return false;
+        }
     }
 }

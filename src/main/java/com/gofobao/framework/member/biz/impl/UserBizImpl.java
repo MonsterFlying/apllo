@@ -208,13 +208,24 @@ public class UserBizImpl implements UserBiz {
         // 插入数据
         Users users = new Users();
         users.setEmail(null);
-        users.setUsername(voRegisterReq.getUserName());
+        if(!voRegisterReq.getUserName().equals(voRegisterReq.getPhone())){
+            users.setUsername(voRegisterReq.getUserName());
+        }else {
+            users.setUsername(null);
+        }
         users.setPhone(voRegisterReq.getPhone());
         users.setCardId(null);
         users.setPassword(PasswordHelper.encodingPassword(voRegisterReq.getPassword())); // 设置密码
         users.setPayPassword("");
         users.setRealname("");
-        users.setType(voRegisterReq.getType());
+        //用户类型
+        if (parentId != 0) {
+            //当前用户类型根据邀请人的类型一致
+            Users parentUser = userService.findById(parentId);
+            users.setType(parentUser.getType());
+        } else {
+            users.setType(voRegisterReq.getType());
+        }
         users.setBranch(0);
         users.setSource(channel);
         users.setInviteCode(GenerateInviteCodeHelper.getRandomCode()); // 生成用户邀请码
@@ -746,12 +757,19 @@ public class UserBizImpl implements UserBiz {
                 .build();
         List<BorrowRepayment> borrowRepayments = borrowRepaymentService.findList(repaymentSpecification);
         if (CollectionUtils.isEmpty(borrowRepayments)) {
-            //已还
-            Long repayment = borrowRepayments.stream().filter(p -> p.getStatus() == RepaymentContants.STATUS_YES).mapToLong(p -> p.getRepayMoneyYes()).sum();
-            balanceOfPaymentRes.setPayment(StringHelper.formatMon(repayment / 100D));
             //应还
             Long waitRepayment = borrowRepayments.stream().mapToLong(p -> p.getRepayMoney()).sum();
-            balanceOfPaymentRes.setWaitPayment(StringHelper.formatMon(waitRepayment / 100D));
+            if (waitRepayment.intValue() >= 0) {
+                balanceOfPaymentRes.setWaitPayment(StringHelper.formatMon(waitRepayment / 100D));
+                //已还
+                Long repayment = borrowRepayments.stream()
+                        .filter(p -> p.getStatus() == RepaymentContants.STATUS_YES)
+                        .mapToLong(p -> p.getRepayMoneyYes())
+                        .sum();
+                if (repayment.intValue() >= 0) {
+                    balanceOfPaymentRes.setPayment(StringHelper.formatMon(repayment / 100D));
+                }
+            }
         }
 
         //已收 待收
@@ -761,12 +779,22 @@ public class UserBizImpl implements UserBiz {
                 .build();
         List<BorrowCollection> borrowCollections = borrowCollectionService.findList(collectionSpecification);
         if (!CollectionUtils.isEmpty(borrowCollections)) {
-            //已收
-            Long collection = borrowCollections.stream().filter(w -> w.getStatus() == BorrowCollectionContants.STATUS_YES).mapToLong(p -> p.getCollectionMoneyYes()).sum();
             //待收
-            Long waitCollection = borrowCollections.stream().mapToLong(p -> p.getCollectionMoney()).sum();
-            balanceOfPaymentRes.setCollection(StringHelper.formatMon(collection / 100D));
-            balanceOfPaymentRes.setWaitCollection(StringHelper.formatMon(waitCollection / 100D));
+            Long waitCollection = borrowCollections.stream()
+                    .mapToLong(p -> p.getCollectionMoney())
+                    .sum();
+
+            if (waitCollection.intValue() > 0) {
+                balanceOfPaymentRes.setWaitCollection(StringHelper.formatMon(waitCollection / 100D));
+                //已收
+                Long collection = borrowCollections.stream()
+                        .filter(w -> w.getStatus() == BorrowCollectionContants.STATUS_YES)
+                        .mapToLong(p -> p.getCollectionMoneyYes())
+                        .sum();
+                if (collection > 0) {
+                    balanceOfPaymentRes.setCollection(StringHelper.formatMon(collection / 100D));
+                }
+            }
         }
         return ResponseEntity.ok(balanceOfPaymentRes);
     }

@@ -231,18 +231,32 @@ public class BorrowBizImpl implements BorrowBiz {
                 borrow.setSuccessAt(new Date());
                 borrowService.save(borrow);
             }
-            MqConfig mqConfig = new MqConfig();
-            mqConfig.setTag(MqTagEnum.AGAIN_VERIFY);
-            mqConfig.setQueue(MqQueueEnum.RABBITMQ_BORROW);
-            ImmutableMap<String, String> body = ImmutableMap
-                    .of(MqConfig.MSG_BORROW_ID, StringHelper.toString(borrow.getId()),
-                            MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
-            mqConfig.setMsg(body);
-            log.info(String.format("BorrowBizImpl sendAgainVerify send mq %s", GSON.toJson(body)));
-            try {
+            //判断是否是理财计划借款
+            if (borrow.getIsFinance()) {
+                //复审
+                MqConfig mqConfig = new MqConfig();
+                mqConfig.setQueue(MqQueueEnum.RABBITMQ_BORROW);
+                mqConfig.setTag(MqTagEnum.AGAIN_VERIFY_FINANCE);
+                mqConfig.setSendTime(DateHelper.addSeconds(new Date(), 1));
+                ImmutableMap<String, String> body = ImmutableMap
+                        .of(MqConfig.MSG_BORROW_ID, StringHelper.toString(borrow.getId()), MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
+                mqConfig.setMsg(body);
+                log.info(String.format("BorrowBizImpl sendAgainVerify send mq %s", GSON.toJson(body)));
                 mqHelper.convertAndSend(mqConfig);
-            } catch (Exception e) {
-                log.error("发送复审异常:", e);
+            }else {
+                MqConfig mqConfig = new MqConfig();
+                mqConfig.setTag(MqTagEnum.AGAIN_VERIFY);
+                mqConfig.setQueue(MqQueueEnum.RABBITMQ_BORROW);
+                ImmutableMap<String, String> body = ImmutableMap
+                        .of(MqConfig.MSG_BORROW_ID, StringHelper.toString(borrow.getId()),
+                                MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
+                mqConfig.setMsg(body);
+                log.info(String.format("BorrowBizImpl sendAgainVerify send mq %s", GSON.toJson(body)));
+                try {
+                    mqHelper.convertAndSend(mqConfig);
+                } catch (Exception e) {
+                    log.error("发送复审异常:", e);
+                }
             }
             return ResponseEntity.ok(VoBaseResp.ok("发送成功!"));
         }
@@ -893,6 +907,58 @@ public class BorrowBizImpl implements BorrowBiz {
     }
 
     /**
+     * 理财计划非转让标复审
+     *
+     * @param borrow
+     * @return
+     * @throws Exception
+     */
+    @Transactional(rollbackFor = Throwable.class)
+    public boolean financeBorrowAgainVerify(Borrow borrow, String batchNo, Statistic statistic) throws Exception {
+        if ((ObjectUtils.isEmpty(borrow)) || (borrow.getStatus() != 1)
+                || (!StringHelper.toString(borrow.getMoney()).equals(StringHelper.toString(borrow.getMoneyYes())))) {
+            return false;
+        }
+        Date nowDate = new Date();
+        // 生成还款记录
+        List<BorrowRepayment> borrowRepaymentList = disposeBorrowRepay(borrow, nowDate);
+
+        //查询当前借款的所有 状态为1的 tender记录
+        Specification<Tender> ts = Specifications.<Tender>and()
+                .eq("borrowId", borrow.getId())
+                .eq("status", 1)
+                .build();
+        List<Tender> tenderList = tenderService.findList(ts);
+        Preconditions.checkNotNull(tenderList, "理财计划生成还款记录: 投标记录为空");
+        String groupSeqNo = assetChangeProvider.getGroupSeqNo();
+        // 这里涉及用户投标回款计划生成和平台资金的变动
+        generateBorrowCollectionAndAssetChange(borrow, borrowRepaymentList, tenderList, nowDate, groupSeqNo);
+
+        // 借款人资金变动
+        Specification<BatchAssetChange> bacs = Specifications
+                .<BatchAssetChange>and()
+                .eq("sourceId", borrow.getId())
+                .eq("type", BatchAssetChangeContants.BATCH_FINANCE_LEND_REPAY)
+                .eq("batchNo", batchNo)
+                .in("state", 0, 1)
+                .build();
+        long count = batchAssetChangeService.count(bacs);
+        if (count > 0) {
+            //1.处理借款人资产变动
+            batchAssetChangeHelper.batchAssetChangeAndCollection(borrow.getId(), batchNo, BatchAssetChangeContants.BATCH_LEND_REPAY);
+            //2.新增待还记录
+            addLendRepayPayment(borrow, borrowRepaymentList, groupSeqNo);
+        } else {
+            processBorrowAssetChange(borrow, borrowRepaymentList, groupSeqNo);
+        }
+        // 满标操作
+        finishBorrow(borrow);
+        //更新总统计
+        fillStatisticByBorrowReview(borrow, borrowRepaymentList, statistic);
+        return true;
+    }
+
+    /**
      * 非转让标复审
      *
      * @param borrow
@@ -900,7 +966,7 @@ public class BorrowBizImpl implements BorrowBiz {
      * @throws Exception
      */
     @Transactional(rollbackFor = Throwable.class)
-    public boolean borrowAgainVerify(Borrow borrow, String batchNo,Statistic statistic) throws Exception {
+    public boolean borrowAgainVerify(Borrow borrow, String batchNo, Statistic statistic) throws Exception {
         if ((ObjectUtils.isEmpty(borrow)) || (borrow.getStatus() != 1)
                 || (!StringHelper.toString(borrow.getMoney()).equals(StringHelper.toString(borrow.getMoneyYes())))) {
             return false;
@@ -958,7 +1024,7 @@ public class BorrowBizImpl implements BorrowBiz {
         //发送借款协议
         sendBorrowProtocol(borrow);
         //更新总统计
-        fillStatisticByBorrowReview(borrow, borrowRepaymentList,statistic);
+        fillStatisticByBorrowReview(borrow, borrowRepaymentList, statistic);
         return true;
     }
 
@@ -1054,13 +1120,22 @@ public class BorrowBizImpl implements BorrowBiz {
         for (int i = 0; i < repayDetailList.size(); i++) {
             borrowRepayment = new BorrowRepayment();
             Map<String, Object> repayDetailMap = repayDetailList.get(i);
+            long principal = NumberHelper.toLong(repayDetailMap.get("principal"));//应回本金
+            long interest = NumberHelper.toLong(repayDetailMap.get("interest"));//应回利息
+            //判断是否是理财计划
+            if (borrow.getIsFinance()) {
+                interest = 0;
+            }
+            long repayMoney = principal + interest;//应回本息
+
+
             borrowRepayment.setBorrowId(borrow.getId());
             borrowRepayment.setStatus(0);
             borrowRepayment.setOrder(i);
             borrowRepayment.setRepayAt(DateHelper.stringToDate(StringHelper.toString(repayDetailMap.get("repayAt"))));
-            borrowRepayment.setRepayMoney(NumberHelper.toLong(repayDetailMap.get("repayMoney")));
-            borrowRepayment.setPrincipal(NumberHelper.toLong(repayDetailMap.get("principal")));
-            borrowRepayment.setInterest(NumberHelper.toLong(repayDetailMap.get("interest")));
+            borrowRepayment.setRepayMoney(repayMoney);
+            borrowRepayment.setPrincipal(principal);
+            borrowRepayment.setInterest(interest);
             borrowRepayment.setRepayMoneyYes(0l);
             borrowRepayment.setCreatedAt(nowDate);
             borrowRepayment.setUpdatedAt(nowDate);
@@ -1336,12 +1411,18 @@ public class BorrowBizImpl implements BorrowBiz {
                     sumInterests.set(j, sumInterests.get(j) + interest);
                 }
 
-                if (i == (tenderList.size() - 1)) { //通过回款金额计算还款金额
+                //通过回款金额计算还款金额
+                if (i == (tenderList.size() - 1)) {
                     BorrowRepayment borrowRepayment = borrowRepaymentMaps.get(j);
                     borrowRepayment.setPrincipal(sumPrincipals.get(j));
                     borrowRepayment.setInterest(sumInterests.get(j));
                     borrowRepayment.setRepayMoney(sumPrincipals.get(j) + sumInterests.get(j));
                 }
+                //判断是否是理财计划
+                if (borrow.getIsFinance()) {
+                    interest = 0; //利息置为0
+                }
+
                 long repayMoney = principal + interest;
 
                 borrowCollection = new BorrowCollection();
