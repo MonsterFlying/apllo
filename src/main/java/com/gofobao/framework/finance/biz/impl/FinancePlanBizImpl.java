@@ -40,6 +40,7 @@ import com.gofobao.framework.finance.vo.response.VoViewFinancePlanTender;
 import com.gofobao.framework.helper.*;
 import com.gofobao.framework.helper.project.BorrowCalculatorHelper;
 import com.gofobao.framework.helper.project.SecurityHelper;
+import com.gofobao.framework.listener.providers.TransferProvider;
 import com.gofobao.framework.member.entity.UserThirdAccount;
 import com.gofobao.framework.member.entity.Users;
 import com.gofobao.framework.member.service.UserService;
@@ -98,6 +99,8 @@ public class FinancePlanBizImpl implements FinancePlanBiz {
     private AssetChangeProvider assetChangeProvider;
     @Autowired
     private MqHelper mqHelper;
+    @Autowired
+    private TransferProvider transferProvider;
 
 
     //过滤掉 状态; 1:发标待审 ；2：初审不通过；4：复审不通过；5：已取消
@@ -426,6 +429,8 @@ public class FinancePlanBizImpl implements FinancePlanBiz {
         return true;
     }
 
+
+
     /**
      * 理财计划匹配债权转让
      *
@@ -435,6 +440,8 @@ public class FinancePlanBizImpl implements FinancePlanBiz {
     @Transactional(rollbackFor = Exception.class)
     public ResponseEntity<VoViewFinancePlanTender> financePlanTender(VoFinancePlanTender voFinancePlanTender) {
       try {
+
+
           Date nowDate = new Date();
           //获取paramStr参数、校验参数有效性
           String paramStr = voFinancePlanTender.getParamStr();/* 理财计划投标 */
@@ -480,16 +487,19 @@ public class FinancePlanBizImpl implements FinancePlanBiz {
 
           //理财计划购买债权转让
           financePlanBuyTransfer(nowDate, money, transferId, userId, financePlanBuyer, financePlan, transfer, validMoney);
-
+          VoViewFinancePlanTender planTender=VoBaseResp.ok("匹配成功",VoViewFinancePlanTender.class);
           if (transfer.getTransferMoneyYes() >= transfer.getTransferMoney()) {
-              MqConfig mqConfig = new MqConfig();
-              mqConfig.setQueue(MqQueueEnum.RABBITMQ_TRANSFER);
-              mqConfig.setTag(MqTagEnum.AGAIN_VERIFY_FINANCE_TRANSFER);
+
               ImmutableMap<String, String> body = ImmutableMap
                       .of(MqConfig.MSG_TRANSFER_ID, StringHelper.toString(transferId), MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
-              mqConfig.setMsg(body);
-              log.info(String.format("FinancePlanBizImpl financePlanTender send mq %s", GSON.toJson(body)));
-              mqHelper.convertAndSend(mqConfig);
+             // mqConfig.setMsg(body);
+              Boolean result=transferProvider.againVerifyFinanceTransfer(body);
+              if(result){
+                  planTender.setFinancePlanBuyer(financePlanBuyer);
+
+              }else{
+
+              }
           }
 
           // /更改购买计划状态、资金信息
