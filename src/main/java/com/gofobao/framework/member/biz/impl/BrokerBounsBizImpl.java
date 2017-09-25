@@ -137,17 +137,27 @@ public class BrokerBounsBizImpl implements BrokerBounsBiz {
      * @return
      */
     @Override
-    public Map<String, Object> shareRegister(Long userId) {
+    public Map<String, Object> shareRegister(Long userId,String type) {
         Map<String, Object> paramMaps = new HashMap<>();
         Users user = usersRepository.findOne(userId);
         String inviteCode = user.getInviteCode();
         paramMaps.put("inviteUrl", h5Domain + "/#/auth/register?inviteCode=" + inviteCode);
         paramMaps.put("inviteCode", inviteCode);
         paramMaps.put("invitePhone", user.getPhone());
-        paramMaps.put("QRCodeURL", javaDomain + "/pub/invite/qrcode/getInviteFriendQRCode?inviteCode=" + inviteCode);
+        String qRCodeURL="";
+        //理财邀请
+        if(type.equals("finance")){
+            qRCodeURL= javaDomain + "/pub/invite/finance/qrcode/getInviteFriendQRCode?inviteCode=";
+        }else{//金服邀请
+            qRCodeURL= javaDomain + "/pub/invite/qrcode/getInviteFriendQRCode?inviteCode=";
+        }
+        paramMaps.put("QRCodeURL", qRCodeURL + inviteCode);
         paramMaps.put("requestSource", 3);
         return paramMaps;
     }
+
+
+
 
     /**
      * PC

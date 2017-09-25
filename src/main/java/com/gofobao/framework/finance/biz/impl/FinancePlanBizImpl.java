@@ -18,6 +18,10 @@ import com.gofobao.framework.common.assets.AssetChangeProvider;
 import com.gofobao.framework.common.assets.AssetChangeTypeEnum;
 import com.gofobao.framework.common.constans.TypeTokenContants;
 import com.gofobao.framework.common.page.Page;
+import com.gofobao.framework.common.rabbitmq.MqConfig;
+import com.gofobao.framework.common.rabbitmq.MqHelper;
+import com.gofobao.framework.common.rabbitmq.MqQueueEnum;
+import com.gofobao.framework.common.rabbitmq.MqTagEnum;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.finance.biz.FinancePlanBiz;
 import com.gofobao.framework.finance.constants.FinannceContants;
@@ -44,9 +48,7 @@ import com.gofobao.framework.tender.entity.TransferBuyLog;
 import com.gofobao.framework.tender.service.TransferBuyLogService;
 import com.gofobao.framework.tender.service.TransferService;
 import com.google.common.base.Preconditions;
-import com.google.common.collect.HashMultiset;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Multiset;
+import com.google.common.collect.*;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import lombok.extern.slf4j.Slf4j;
@@ -89,6 +91,9 @@ public class FinancePlanBizImpl implements FinancePlanBiz {
     private UserService userService;
     @Autowired
     private AssetChangeProvider assetChangeProvider;
+    @Autowired
+    private MqHelper mqHelper;
+
 
     //过滤掉 状态; 1:发标待审 ；2：初审不通过；4：复审不通过；5：已取消
     private static List<Integer> statusArray = Lists.newArrayList(FinannceContants.CANCEL,
@@ -234,8 +239,16 @@ public class FinancePlanBizImpl implements FinancePlanBiz {
                 throw new Exception("理财计划投标解冻资金失败：" + balanceUnfreezeResp.getRetMsg());
             }
         }
-        //   VoViewFinancePlanTender voViewFinancePlanTender = VoBaseResp.ok("购买成功!", VoViewFinancePlanTender.class);
-        //  voViewFinancePlanTender.setFinancePlanBuyer(financePlanBuyer);
+        //是否满额 满额通知后台
+        if (financePlan.getMoney().intValue() == financePlan.getMoneyYes().intValue()) {
+            Map<String, String> bodyMap = ImmutableMap.of("plan", financePlan.getId().toString());
+            MqConfig mqConfig = new MqConfig();
+            mqConfig.setSendTime(new Date());
+            mqConfig.setQueue(MqQueueEnum.RABBITMQ_FINANCE_PLAN);
+            mqConfig.setTag(MqTagEnum.FINANCE_PLAN_FULL_NOTIFY);
+            mqConfig.setMsg(bodyMap);
+            mqHelper.convertAndSend(mqConfig);
+        }
         return ResponseEntity.ok(VoBaseResp.ok("购买成功", VoBaseResp.class));
     }
 
@@ -261,7 +274,8 @@ public class FinancePlanBizImpl implements FinancePlanBiz {
         FinancePlanBuyer financePlanBuyer = new FinancePlanBuyer();
         financePlanBuyer.setUserId(userId);
         financePlanBuyer.setLeftMoney(validateMoney);
-        financePlanBuyer.setMoney(validateMoney);
+        financePlanBuyer.setMoney(voTenderFinancePlan.getMoney());
+        financePlanBuyer.setValidMoney(validateMoney);
         financePlanBuyer.setUpdatedAt(new Date());
         financePlanBuyer.setApr(financePlan.getBaseApr());
         financePlanBuyer.setRemark(voTenderFinancePlan.getRemark());
@@ -534,7 +548,7 @@ public class FinancePlanBizImpl implements FinancePlanBiz {
             plan.setApr(StringHelper.formatMon(p.getBaseApr() / 100D));
             plan.setId(p.getId());
             plan.setMoney(StringHelper.formatMon(p.getMoney() / 100D));
-            plan.setSpend(p.getMoneyYes() / p.getMoney().doubleValue());
+            plan.setSpend(MoneyHelper.round((p.getMoneyYes() / p.getMoney().doubleValue()) * 100, 2));
             plan.setTimeLimit(p.getTimeLimit());
             plan.setStatus(handleStatus(p));
             plan.setPlanName(p.getName());
@@ -581,7 +595,7 @@ public class FinancePlanBizImpl implements FinancePlanBiz {
         Long moneyYes = financePlan.getMoneyYes();
         //剩余金额
         planDetail.setSurplusMoney(StringHelper.formatMon((money - moneyYes) / 100D));
-        planDetail.setSpend(moneyYes / money.doubleValue());
+        planDetail.setSpend(MoneyHelper.round((moneyYes / money.doubleValue()) * 100, 1));
         Integer timeLimit = financePlan.getTimeLimit();
         //预期收益
         BorrowCalculatorHelper borrowCalculatorHelper = new BorrowCalculatorHelper(new Double(money), new Double(apr), timeLimit, financePlan.getCreatedAt());
@@ -600,6 +614,9 @@ public class FinancePlanBizImpl implements FinancePlanBiz {
         planDetail.setTimeLimit(financePlan.getTimeLimit());
         //截至日期
         planDetail.setEndAt(DateHelper.dateToString(endDate));
+        planDetail.setEndLockAt(!StringUtils.isEmpty(financePlan.getEndLockAt())
+                ? DateHelper.dateToString(financePlan.getEndLockAt(), DateHelper.DATE_FORMAT_YMD)
+                : "");
         //起始日期
         planDetail.setStartAt(DateHelper.dateToString(financePlan.getCreatedAt()));
         planDetail.setStatus(status);

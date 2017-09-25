@@ -3,6 +3,7 @@ package com.gofobao.framework.finance.vo.response;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
+import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * Created by admin on 2017/8/14.
@@ -54,4 +55,6 @@ public class PlanDetail extends VoBaseResp {
     @ApiModelProperty("购买起始日期")
     private String startAt;
 
+    @ApiModelProperty("到期日期")
+    private String endLockAt;
 }

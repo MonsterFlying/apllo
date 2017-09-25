@@ -93,9 +93,15 @@ public class WindmillBorrowBizImpl implements WindmillBorrowBiz {
                         invest.setInvest_title(p.getName());
                         invest.setInvest_url(h5Address + "/#/borrow/" + p.getId());
                         invest.setTime_limit(p.getRepayFashion() == 1 ? p.getTimeLimit() : (p.getTimeLimit() * 30));
-                        invest.setTime_limit_desc(p.getRepayFashion() == 1 ? p.getTimeLimit() + BorrowContants.DAY : p.getTimeLimit() + BorrowContants.MONTH);
-                        invest.setBuy_limit(p.getMost() == 0 ? "" : StringHelper.formatDouble(p.getMost() / 100D, false));
-                        invest.setBuy_unit(p.getLowest() == 0 ? "" : StringHelper.formatDouble(p.getLowest() / 100D, false));
+                        invest.setTime_limit_desc(p.getRepayFashion() == 1
+                                ? p.getTimeLimit() + BorrowContants.DAY
+                                : p.getTimeLimit() + BorrowContants.MONTH);
+                        invest.setBuy_limit(p.getMost() == 0
+                                ? ""
+                                : StringHelper.formatDouble(p.getMost() / 100D, false));
+                        invest.setBuy_unit(p.getLowest() == 0
+                                ? ""
+                                : StringHelper.formatDouble(p.getLowest() / 100D, false));
                         invest.setInvested_amount(StringHelper.formatMon(p.getMoneyYes() / 100D));
                         invest.setTotal_amount(StringHelper.formatMon(p.getMoney() / 100D));
                         invest.setRate(StringHelper.formatDouble(p.getApr() / 100D, false));

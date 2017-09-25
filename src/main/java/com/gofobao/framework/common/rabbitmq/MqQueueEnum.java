@@ -15,7 +15,9 @@ public enum MqQueueEnum {
     RABBITMQ_CREDIT(MqQueueEnumContants.RABBITMQ_CREDIT),
     RABBITMQ_THIRD_BATCH(MqQueueEnumContants.RABBITMQ_THIRD_BATCH),
     RABBITMQ_REPAYMENT(MqQueueEnumContants.RABBITMQ_REPAYMENT),
-    RABBITMQ_TRANSFER(MqQueueEnumContants.RABBITMQ_TRANSFER);
+    RABBITMQ_TRANSFER(MqQueueEnumContants.RABBITMQ_TRANSFER),
+    RABBITMQ_FINANCE_PLAN(MqQueueEnumContants.RABBITMQ_FINANCE_PLAN);
+
     private String value ;
 
     MqQueueEnum(String value) {

@@ -65,6 +65,7 @@ import com.gofobao.framework.repayment.biz.LoanBiz;
 import com.gofobao.framework.repayment.biz.RepaymentBiz;
 import com.gofobao.framework.repayment.entity.BorrowRepayment;
 import com.gofobao.framework.repayment.service.BorrowRepaymentService;
+import com.gofobao.framework.scheduler.BorrowRepayScanduler;
 import com.gofobao.framework.scheduler.DealThirdBatchScheduler;
 import com.gofobao.framework.scheduler.biz.FundStatisticsBiz;
 import com.gofobao.framework.system.biz.ThirdBatchDealBiz;
@@ -911,19 +912,21 @@ public class AplloApplicationTests {
     @Autowired
     private BrokerBounsBiz brokerBounsBiz;
 
-    @Test
-    public void monthPushMoney() {
+    @Autowired
+    private BorrowRepayScanduler borrowRepayScanduler;
 
-        aaaaa();
+    @Test
+    public void todayRepayment() {
+        borrowRepayScanduler.todayRepayment();
     }
 
-    @Transactional(rollbackFor = Exception.class)
+/*    @Transactional(rollbackFor = Exception.class)
     public void aaaaa() {
         Borrow borrow1 = borrowService.findByIdLock(179937l);
         borrow1.setMoneyYes(10l);
         borrowService.save(borrow1);
         System.out.println(GSON.toJson(borrow1));
-    }
+    }*/
 
 
 }

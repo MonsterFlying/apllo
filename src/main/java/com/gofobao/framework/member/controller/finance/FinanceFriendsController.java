@@ -1,4 +1,4 @@
-package com.gofobao.framework.member.controller;
+package com.gofobao.framework.member.controller.finance;
 
 import com.gofobao.framework.award.vo.response.VoViewShareRegiestRes;
 import com.gofobao.framework.core.vo.VoBaseResp;
@@ -31,7 +31,9 @@ import java.util.Map;
 @RequestMapping("")
 @Api(description = "我的邀请")
 @RestController
-public class FriendsController {
+@SuppressWarnings("all")
+public class FinanceFriendsController {
+
     @Autowired
     private BrokerBounsBiz brokerBounsBiz;
 
@@ -44,11 +46,8 @@ public class FriendsController {
     @Value("${gofobao.javaDomain}")
     private String javaDomain;
 
-
-
-
     @ApiOperation("邀请好友列表")
-    @GetMapping("/invite/v2/list/{pageIndex}/{pageSize}")
+    @GetMapping("/invite/finance/v2/list/{pageIndex}/{pageSize}")
     public ResponseEntity<VoViewInviteFriendersWarpRes> list(@RequestAttribute(SecurityContants.USERID_KEY) Long userId,
                                                              @PathVariable Integer pageIndex,
                                                              @PathVariable Integer pageSize) {
@@ -60,13 +59,13 @@ public class FriendsController {
     }
 
     @ApiOperation("邀请统计")
-    @GetMapping("/invite/v2/statistic")
+    @GetMapping("/invite/finance/v2/statistic")
     public ResponseEntity<VoViewInviteAwardStatisticsWarpRes> statistic(@RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
         return brokerBounsBiz.statistic(userId);
     }
 
     @ApiOperation("邀请好友投标列表")
-    @GetMapping("/invite/v2/first/tender/list/{pageIndex}/{pageSize}")
+    @GetMapping("/invite/finance/v2/first/tender/list/{pageIndex}/{pageSize}")
     public ResponseEntity<VoViewFriendsTenderInfoWarpRes> firstTenderList(@RequestAttribute(SecurityContants.USERID_KEY) Long userId,
                                                                           @PathVariable Integer pageIndex,
                                                                           @PathVariable Integer pageSize) {
@@ -77,16 +76,16 @@ public class FriendsController {
         return brokerBounsBiz.firstTender(voFriendsReq);
     }
 
-    @ApiOperation("邀请好友首页页面")
-    @GetMapping("invite/v2/shareRegister")
+    @ApiOperation("理财app-邀请好友首页页面")
+    @GetMapping("invite/finance/v2/shareRegister")
     public ResponseEntity<VoViewShareRegiestRes> shareRegister(@RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
         String content;
         VoViewShareRegiestRes res = VoBaseResp.ok("查询成功", VoViewShareRegiestRes.class);
         try {
-            Map<String, Object> resultMaps = brokerBounsBiz.shareRegister(userId,"jinFu");
+            Map<String, Object> resultMaps = brokerBounsBiz.shareRegister(userId,"finance");
             res.setCodeUrl(resultMaps.get("QRCodeURL").toString());
             res.setTitle("江西银行存管,您值得信赖");
-            res.setDesc("新手福利,投资即可发放红包+加息0.5%-3%");
+         //   res.setDesc("新手福利,投资即可发放红包+加息0.5%-3%");
             res.setRequestHtmlUrl(resultMaps.get("inviteUrl").toString());
             res.setIcon(javaDomain + "/images/bankLogo/logo.png");
             content = thymeleafHelper.build("user/friends", resultMaps);
@@ -106,7 +105,7 @@ public class FriendsController {
      *
      * @param response
      */
-    @RequestMapping(value = "/pub/invite/qrcode/getInviteFriendQRCode", method = RequestMethod.GET)
+    @RequestMapping(value = "/pub/invite/finance/qrcode/getInviteFriendQRCode", method = RequestMethod.GET)
     @ApiOperation(value = "获取二维码接口", notes = "获取二维码接口")
     public void getInviteFriendQRCode(@RequestParam("inviteCode") String inviteCode, HttpServletResponse response) {
 
@@ -123,14 +122,13 @@ public class FriendsController {
         response.setContentType("image/jpeg"); // return a jpeg
 
         try {
-            InputStream in = FriendsController.class.getResourceAsStream("/static/images/shareLogo/logo.png");
+            InputStream in = FinanceFriendsController.class.getResourceAsStream("/static/images/shareLogo/finance_logo.png");
 
             QRCodeHelper.createQRCodeTStream(h5Domain + "/#/auth/register?shareRegisterCode=" + inviteCode, in, 100, 100, out);
             out.flush();
         } catch (Throwable e) {
             log.error(String.format("获取二维码接口：%s", e.getMessage()));
         }
-
 
     }
 
