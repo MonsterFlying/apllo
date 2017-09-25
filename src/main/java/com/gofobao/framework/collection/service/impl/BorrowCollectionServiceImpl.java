@@ -258,7 +258,7 @@ public class BorrowCollectionServiceImpl implements BorrowCollectionService {
         if (borrowCollection.getStatus() == BorrowCollectionContants.STATUS_YES || nowDate.getTime() < collectionAt.getTime()) {
             lateDays = borrowCollection.getLateDays();
         } else if (nowDate.getTime() > collectionAt.getTime() && borrowCollection.getStatus() == BorrowCollectionContants.STATUS_NO) {
-            lateDays = DateHelper.diffInDays(nowDate, collectionAt, false);
+            lateDays = DateHelper.diffInDays(DateHelper.beginOfDate(DateHelper.addHours(nowDate, 3)), DateHelper.beginOfDate(collectionAt), false);
         }
         detailRes.setLateDays(lateDays);
         detailRes.setBorrowName(borrow.getName());

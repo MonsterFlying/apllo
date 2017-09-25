@@ -121,7 +121,6 @@ public class TestController {
             e.printStackTrace();
         }
         UserThirdAccount redpackAccount = userThirdAccountService.findByUserId(redpackAccountId);
-        UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(22002l);
 
         String collectionIds = "418565,418713,418716,419532,419541,420643,420848,420854,420966,420975,421002,421011,421020,421118,421125,422198,423838";
         String[] idArr = collectionIds.split(",");
@@ -138,6 +137,7 @@ public class TestController {
         List<Borrow> borrowList = borrowService.findList(bs);
         Map<Long, Borrow> borrowMap = borrowList.stream().collect(Collectors.toMap(Borrow::getId, Function.identity()));
         for (BorrowCollection borrowCollection : borrowCollectionList) {
+            UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(borrowCollection.getUserId());
             Specification<NewAssetLog> nals = Specifications
                     .<NewAssetLog>and()
                     .eq("userId", borrowCollection.getUserId())
@@ -220,7 +220,8 @@ public class TestController {
             } catch (Exception e) {
                 log.error("补发失败:", e);
             }
-            int lateDays = DateHelper.diffInDays(DateHelper.beginOfDate(new Date()), DateHelper.beginOfDate(borrowCollection.getCollectionAt()), false);
+            int lateDays = DateHelper.diffInDays(DateHelper.beginOfDate(DateHelper.addHours(new Date(), 3)),
+                    DateHelper.beginOfDate(borrowCollection.getCollectionAt()), false);
             long overPricipal = new Double(MoneyHelper.round(MoneyHelper.multiply(MoneyHelper.multiply(borrowCollection.getPrincipal(), 0.001), lateDays), 0)).longValue();  // 每天逾期费
 
             assetChange = new AssetChange();
