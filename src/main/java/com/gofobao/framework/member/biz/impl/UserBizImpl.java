@@ -151,6 +151,15 @@ public class UserBizImpl implements UserBiz {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public ResponseEntity<VoBaseResp> register(HttpServletRequest request, VoRegisterReq voRegisterReq) throws Exception {
+        // 判断当前用户名为手机类型就返回错误
+        if(!ObjectUtils.isEmpty(voRegisterReq.getUserName())){
+            if( RegexHelper.matches(RegexHelper.REGEX_MOBILE_EXACT, voRegisterReq.getUserName()) ){
+                return ResponseEntity
+                        .badRequest()
+                        .body(VoBaseResp.error(VoBaseResp.ERROR, "用户名不能为手机号码"));
+            }
+        }
+
         // 0.短信验证码
         boolean match = macthHelper.match(MqTagEnum.SMS_REGISTER.getValue(), voRegisterReq.getPhone(), voRegisterReq.getSmsCode());
         if (!match) {
@@ -208,9 +217,9 @@ public class UserBizImpl implements UserBiz {
         // 插入数据
         Users users = new Users();
         users.setEmail(null);
-        if(!voRegisterReq.getUserName().equals(voRegisterReq.getPhone())){
+        if (!StringUtils.isEmpty(voRegisterReq.getUserName())) {
             users.setUsername(voRegisterReq.getUserName());
-        }else {
+        } else {
             users.setUsername(null);
         }
         users.setPhone(voRegisterReq.getPhone());
