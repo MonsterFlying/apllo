@@ -64,10 +64,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.math.BigDecimal;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -110,6 +107,7 @@ public class TestController {
     @Autowired
     private BorrowService borrowService;
 
+
     @ApiOperation("获取自动投标列表")
     @RequestMapping("/pub/borrow/collection/send")
     @Transactional(rollbackFor = Exception.class)
@@ -121,9 +119,16 @@ public class TestController {
             e.printStackTrace();
         }
         UserThirdAccount redpackAccount = userThirdAccountService.findByUserId(redpackAccountId);
-        UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(22002l);
 
         String collectionIds = "418565,418713,418716,419532,419541,420643,420848,420854,420966,420975,421002,421011,421020,421118,421125,422198,423838";
+
+        String sentedCollectionIds = "418565,418713,418716,419532,420643,420848,420966,420975,421020,421118,421125,422198,423838";
+        String[] sendArr = sentedCollectionIds.split(",");
+        Set<Long> scis = new HashSet<Long>();
+        for (String idstr : sendArr) {
+            scis.add(NumberHelper.toLong(idstr));
+        }
+
         String[] idArr = collectionIds.split(",");
         Specification<BorrowCollection> bcs = Specifications
                 .<BorrowCollection>and()
@@ -137,16 +142,17 @@ public class TestController {
                 .build();
         List<Borrow> borrowList = borrowService.findList(bs);
         Map<Long, Borrow> borrowMap = borrowList.stream().collect(Collectors.toMap(Borrow::getId, Function.identity()));
+
+        Set<Long> userIds = new HashSet<>();
         for (BorrowCollection borrowCollection : borrowCollectionList) {
-            Specification<NewAssetLog> nals = Specifications
+            UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(borrowCollection.getUserId());
+            /*Specification<NewAssetLog> nals = Specifications
                     .<NewAssetLog>and()
                     .eq("userId", borrowCollection.getUserId())
                     .eq("localType", AssetChangeTypeEnum.makeUpReceivedPayments.getLocalType())
                     .build();
             long count = newAssetLogService.count(nals);
-            if (count > 0) {
-                continue;
-            }
+            */
 
             Borrow borrow = borrowMap.get(borrowCollection.getBorrowId());
             long principal = borrowCollection.getPrincipal();
@@ -181,10 +187,13 @@ public class TestController {
                 assetChange.setRemark(String.format("扣除借款标的[%s]利息管理费%s元(补收)", borrow.getName(), StringHelper.formatDouble(interestFee / 100D, false)));
                 assetChange.setSeqNo(assetChangeProvider.getSeqNo());
                 assetChange.setGroupSeqNo(assetChangeProvider.getGroupSeqNo());
-                try {
-                    assetChangeProvider.commonAssetChange(assetChange);
-                } catch (Exception e) {
-                    log.error("补发失败:", e);
+
+                if (!scis.contains(borrowCollection.getId())) {
+                    try {
+                        assetChangeProvider.commonAssetChange(assetChange);
+                    } catch (Exception e) {
+                        log.error("补发失败:", e);
+                    }
                 }
             }
 
@@ -198,10 +207,12 @@ public class TestController {
             assetChange.setSourceId(borrowCollection.getId());
             assetChange.setSeqNo(assetChangeProvider.getSeqNo());
             assetChange.setGroupSeqNo(assetChangeProvider.getGroupSeqNo());
-            try {
-                assetChangeProvider.commonAssetChange(assetChange);
-            } catch (Exception e) {
-                log.error("补发失败:", e);
+            if (!scis.contains(borrowCollection.getId())) {
+                try {
+                    assetChangeProvider.commonAssetChange(assetChange);
+                } catch (Exception e) {
+                    log.error("补发失败:", e);
+                }
             }
 
 
@@ -215,10 +226,12 @@ public class TestController {
             assetChange.setSourceId(borrowCollection.getId());
             assetChange.setSeqNo(assetChangeProvider.getSeqNo());
             assetChange.setGroupSeqNo(assetChangeProvider.getGroupSeqNo());
-            try {
-                assetChangeProvider.commonAssetChange(assetChange);
-            } catch (Exception e) {
-                log.error("补发失败:", e);
+            if (!scis.contains(borrowCollection.getId())) {
+                try {
+                    assetChangeProvider.commonAssetChange(assetChange);
+                } catch (Exception e) {
+                    log.error("补发失败:", e);
+                }
             }
             int lateDays = DateHelper.diffInDays(DateHelper.beginOfDate(DateHelper.addHours(new Date(), 3)),
                     DateHelper.beginOfDate(borrowCollection.getCollectionAt()), false);
@@ -232,10 +245,12 @@ public class TestController {
             assetChange.setRemark(String.format("收取借款标的[%s]逾期管理费%s元(补发)", borrow.getName(), StringHelper.formatDouble(overPricipal / 100D, false)));
             assetChange.setSeqNo(assetChangeProvider.getSeqNo());
             assetChange.setGroupSeqNo(assetChangeProvider.getGroupSeqNo());
-            try {
-                assetChangeProvider.commonAssetChange(assetChange);
-            } catch (Exception e) {
-                log.error("补发失败:", e);
+            if (!scis.contains(borrowCollection.getId())) {
+                try {
+                    assetChangeProvider.commonAssetChange(assetChange);
+                } catch (Exception e) {
+                    log.error("补发失败:", e);
+                }
             }
 
             //3.发送红包
@@ -252,6 +267,13 @@ public class TestController {
                 log.error("redPacket" + msg);
             }
         }
+    }
+
+    public static void main(String[] args) {
+        Set<Long> ids = new HashSet<>();
+        ids.add(1l);
+        System.out.println(ids.contains(1l));
+
     }
 
     @ApiOperation("获取自动投标列表")
