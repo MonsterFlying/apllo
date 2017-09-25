@@ -23,8 +23,8 @@ import com.gofobao.framework.api.model.batch_details_query.BatchDetailsQueryReq;
 import com.gofobao.framework.api.model.batch_details_query.BatchDetailsQueryResp;
 import com.gofobao.framework.api.model.batch_query.BatchQueryReq;
 import com.gofobao.framework.api.model.batch_query.BatchQueryResp;
-import com.gofobao.framework.api.model.bid_apply_query.BidApplyQueryReq;
-import com.gofobao.framework.api.model.bid_apply_query.BidApplyQueryResp;
+import com.gofobao.framework.api.model.bid_apply_query.BidApplyQueryRequest;
+import com.gofobao.framework.api.model.bid_apply_query.BidApplyQueryResponse;
 import com.gofobao.framework.api.model.credit_auth_query.CreditAuthQueryRequest;
 import com.gofobao.framework.api.model.credit_auth_query.CreditAuthQueryResponse;
 import com.gofobao.framework.api.model.credit_invest_query.CreditInvestQueryReq;
@@ -410,11 +410,11 @@ public class AplloApplicationTests {
     }
 
     private void bidApplyQuery() {
-        BidApplyQueryReq request = new BidApplyQueryReq();
+        BidApplyQueryRequest request = new BidApplyQueryRequest();
         request.setAccountId("6212462190000058565");
         request.setChannel(ChannelContant.HTML);
         request.setOrgOrderId("GFBT_1504058244169462574939");
-        BidApplyQueryResp response = jixinManager.send(JixinTxCodeEnum.BID_APPLY_QUERY, request, BidApplyQueryResp.class);
+        BidApplyQueryResponse response = jixinManager.send(JixinTxCodeEnum.BID_APPLY_QUERY, request, BidApplyQueryResponse.class);
         System.out.println(response);
     }
 

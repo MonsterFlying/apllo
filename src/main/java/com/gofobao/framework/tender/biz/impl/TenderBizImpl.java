@@ -113,28 +113,33 @@ public class TenderBizImpl implements TenderBiz {
      * @throws Exception
      */
     public ResponseEntity<VoBaseResp> createTender(VoCreateTenderReq voCreateTenderReq) throws Exception {
-        log.info(String.format("马上投资: 起步: %s", new Gson().toJson(voCreateTenderReq)));
-        Users user = userService.findByIdLock(voCreateTenderReq.getUserId());
-        Preconditions.checkNotNull(user, "投标: 用户信息为空!");
-
-        UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(voCreateTenderReq.getUserId());
-        Preconditions.checkNotNull(userThirdAccount, "投标: 当前用户未开户!");
-        if (userThirdAccount.getAutoTenderState() != 1) {
-            return ResponseEntity
-                    .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR_CREDIT, "请先签订自动投标协议！", VoBaseResp.class));
-        }
-
-        Borrow borrow = borrowService.findByIdLock(voCreateTenderReq.getBorrowId());  //
+        Gson gson = new Gson();
+        log.info(String.format("马上投资: 起步: %s", gson.toJson(voCreateTenderReq)));
+        Borrow borrow = borrowService.findByIdLock(voCreateTenderReq.getBorrowId());
         Preconditions.checkNotNull(borrow, "投标: 标的信息为空!");
         if (!ObjectUtils.isEmpty(borrow.getLendId()) && borrow.getLendId() > 0) {
             Lend lend = lendService.findByIdLock(borrow.getLendId());
-            // 对待有草出借,只能是出草人投
-            if (voCreateTenderReq.getUserId().intValue() != lend.getUserId().intValue()) {
+            if (voCreateTenderReq.getUserId().intValue() != lend.getUserId().intValue()) { // 对待有草出借,只能是出草人投
                 return ResponseEntity
                         .badRequest()
                         .body(VoBaseResp.error(VoBaseResp.ERROR, "非常抱歉, 当前标的为有草出借标的, 只有出草人才能投!"));
             }
+        }
+
+        Users user = userService.findByIdLock(voCreateTenderReq.getUserId());
+        Preconditions.checkNotNull(user, "投标: 用户信息为空!");
+
+        UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(voCreateTenderReq.getUserId());
+       if(ObjectUtils.isEmpty(userThirdAccount)){
+           return ResponseEntity
+                   .badRequest()
+                   .body(VoBaseResp.error(VoBaseResp.ERROR_CREDIT, "当前用户未开户！", VoBaseResp.class));
+       }
+
+        if (userThirdAccount.getAutoTenderState() != 1) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR_CREDIT, "请先签订自动投标协议！", VoBaseResp.class));
         }
 
         Asset asset = assetService.findByUserIdLock(voCreateTenderReq.getUserId());
@@ -163,11 +168,13 @@ public class TenderBizImpl implements TenderBiz {
         Date nowDate = new Date();
         long validateMoney = Long.parseLong(iterator.next());
         Tender borrowTender = createBorrowTenderRecord(voCreateTenderReq, user, nowDate, validateMoney);    // 生成投标记录
+        borrowTender = registerJixinTenderRecord(borrow, borrowTender);  // 投标的存管报备
+        if(ObjectUtils.isEmpty(borrowTender)){
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "非常抱歉, 自动投标存管申报失败"));
+        }
 
-        //=========================
-        // 投标的存管报备
-        //=========================
-        borrowTender = registerJixinTenderRecord(borrow, borrowTender);
         // 扣除用户投标金额
         updateAssetByTender(borrow, borrowTender);
         borrow.setMoneyYes(borrow.getMoneyYes() + validateMoney);
@@ -229,7 +236,6 @@ public class TenderBizImpl implements TenderBiz {
                 marketingData.setSourceId(borrowTender.getId().toString());
                 marketingData.setMarketingType(MarketingTypeContants.TENDER);
                 try {
-                    Gson gson = new Gson();
                     String json = gson.toJson(marketingData);
                     Map<String, String> data = gson.fromJson(json, TypeTokenContants.MAP_ALL_STRING_TOKEN);
                     MqConfig mqConfig = new MqConfig();
@@ -293,11 +299,10 @@ public class TenderBizImpl implements TenderBiz {
             voCreateThirdTenderReq.setFrzFlag(FrzFlagContant.FREEZE);
             ResponseEntity<VoBaseResp> resp = tenderThirdBiz.createThirdTender(voCreateThirdTenderReq);
             if (resp.getBody().getState().getCode() == VoBaseResp.ERROR) {
-                log.info(String.format("马上投资: 投资报备失败: %s", new Gson().toJson(resp)));
-                String msg = "tenderBizImpl createTender: tenderId->" + borrowTender.getId() + "msg->" + resp.getBody().getState().getMsg();
-                throw new Exception(msg);
-            } else {
-                //保存即信投标申请到redis
+                log.info("马上投资: 投资报备失败");
+                return null;
+            } else { // 保存即信投标申请到redis
+                log.info("马上投资: 投资报备成功");
                 UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(borrowTender.getUserId());
                 VoSaveThirdTender voSaveThirdTender = new VoSaveThirdTender();
                 voSaveThirdTender.setAccountId(userThirdAccount.getAccountId());
@@ -308,7 +313,10 @@ public class TenderBizImpl implements TenderBiz {
                 jixinTenderRecordHelper.saveJixinTenderInRedis(voSaveThirdTender);
             }
         }
+
+        borrowTender = tenderService.findById(borrowTender.getId());
         borrowTender.setIsThirdRegister(true);
+        borrowTender.setUpdatedAt(new Date());
         return tenderService.save(borrowTender);
     }
 

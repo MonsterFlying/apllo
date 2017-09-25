@@ -304,7 +304,7 @@ public class AssetSynBizImpl implements AssetSynBiz {
         // 同步时间大于两天
         String transtype = "7820";
         List<AccountDetailsQueryItem> accountDetailsQueryItemList = new ArrayList<>();
-        if (DateHelper.diffInDays(nowDate, DateHelper.beginOfDate(synDate), false) == 0) {  // 同步大于一天查询数据库
+        if (DateHelper.diffInDays(nowDate, DateHelper.beginOfDate(synDate), false) != 0) {  // 同步大于一天查询数据库
             log.info("进入数据库查询数据同步");
             Specification<Aleve> specification = Specifications
                     .<Aleve>and()

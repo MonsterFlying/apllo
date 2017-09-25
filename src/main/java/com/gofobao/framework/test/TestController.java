@@ -16,8 +16,8 @@ import com.gofobao.framework.api.model.batch_details_query.BatchDetailsQueryReq;
 import com.gofobao.framework.api.model.batch_details_query.BatchDetailsQueryResp;
 import com.gofobao.framework.api.model.batch_query.BatchQueryReq;
 import com.gofobao.framework.api.model.batch_query.BatchQueryResp;
-import com.gofobao.framework.api.model.bid_apply_query.BidApplyQueryReq;
-import com.gofobao.framework.api.model.bid_apply_query.BidApplyQueryResp;
+import com.gofobao.framework.api.model.bid_apply_query.BidApplyQueryRequest;
+import com.gofobao.framework.api.model.bid_apply_query.BidApplyQueryResponse;
 import com.gofobao.framework.api.model.credit_details_query.CreditDetailsQueryRequest;
 import com.gofobao.framework.api.model.credit_details_query.CreditDetailsQueryResponse;
 import com.gofobao.framework.api.model.freeze_details_query.FreezeDetailsQueryRequest;
@@ -517,11 +517,11 @@ public class TestController {
     @RequestMapping("/pub/bid/find")
     @Transactional
     public void bidApplyQuery(@RequestParam("orderId") Object orderId, @RequestParam("accountId") Object accountId) {
-        BidApplyQueryReq request = new BidApplyQueryReq();
+        BidApplyQueryRequest request = new BidApplyQueryRequest();
         request.setAccountId(String.valueOf(accountId));
         request.setChannel(ChannelContant.HTML);
         request.setOrgOrderId(String.valueOf(orderId));
-        BidApplyQueryResp response = jixinManager.send(JixinTxCodeEnum.BID_APPLY_QUERY, request, BidApplyQueryResp.class);
+        BidApplyQueryResponse response = jixinManager.send(JixinTxCodeEnum.BID_APPLY_QUERY, request, BidApplyQueryResponse.class);
         log.info("=========================================================================================");
         log.info("即信批次状态详情查询:");
         log.info("=========================================================================================");

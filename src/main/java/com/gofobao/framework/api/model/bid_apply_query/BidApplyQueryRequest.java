@@ -7,7 +7,7 @@ import lombok.Data;
  * Created by Zeke on 2017/6/14.
  */
 @Data
-public class BidApplyQueryReq extends JixinBaseRequest {
+public class BidApplyQueryRequest extends JixinBaseRequest {
     /**
      * 投资人电子账号
      */

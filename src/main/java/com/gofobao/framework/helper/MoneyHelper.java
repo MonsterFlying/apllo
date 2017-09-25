@@ -18,6 +18,17 @@ public class MoneyHelper {
 
 
     /**
+     * 元转分(string)
+     * @param stringDouble
+     * @return
+     */
+    public static long yuanToFen(String stringDouble){
+        String multiply = multiply(stringDouble, "100", 0);
+        return new BigDecimal(multiply).longValue() ;
+    }
+
+
+    /**
      * double 转long (直接截断小数点后面的数字, 不会四舍五入)
      * @param v1
      * @return
@@ -668,5 +679,8 @@ public class MoneyHelper {
 
         //使用了BigDecimal类进行计算后，可以做到精确计算
         //System.out.println(BigDecimalMoney.add(0.0000000000005, 0.00000001));
+        String yuan = "9996999.99" ;
+        long fen = yuanToFen(yuan);
+        System.err.println(fen);
     }
 }
