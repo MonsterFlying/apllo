@@ -34,6 +34,7 @@ public class VoRegisterReq  extends VoBaseReq {
     private String password ;
 
     @ApiModelProperty(value = "用户名")
+
     private String userName ;
 
     @ApiModelProperty(value = "推荐码")
