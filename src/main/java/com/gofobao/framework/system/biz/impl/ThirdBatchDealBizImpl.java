@@ -211,6 +211,12 @@ public class ThirdBatchDealBizImpl implements ThirdBatchDealBiz {
                     //即信批次放款结果处理总统计
                     statisticBiz.caculate(statistic);
                     break;
+                case ThirdBatchLogContants.BATCH_FINANCE_LEND_REPAY:
+                    // 即信批次放款结果处理
+                    statistic = lendRepayDeal(batchNo, sourceId, failureOrderIds, successOrderIds);
+                    //即信批次放款结果处理总统计
+                    statisticBiz.caculate(statistic);
+                    break;
                 case ThirdBatchLogContants.BATCH_REPAY: //即信批次还款
                     // 即信批次还款结果处理
                     statistic = repayDeal(batchNo, sourceId, failureOrderIds, successOrderIds);

@@ -133,6 +133,11 @@ public enum AssetChangeTypeEnum {
     /**
      * 借款人借款入账
      */
+    financeBorrow("理财计划借款入账", "financeBorrow", "7780", "add@useMoney", "", "D"),
+
+    /**
+     * 借款人借款入账
+     */
     borrow("借款入账", "borrow", "7780", "add@useMoney", "", "D"),
 
     /**

@@ -31,7 +31,6 @@ import com.gofobao.framework.common.assets.AssetChange;
 import com.gofobao.framework.common.assets.AssetChangeProvider;
 import com.gofobao.framework.common.assets.AssetChangeTypeEnum;
 import com.gofobao.framework.common.constans.TypeTokenContants;
-import com.gofobao.framework.common.rabbitmq.MqHelper;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.helper.*;
 import com.gofobao.framework.member.entity.UserCache;
@@ -109,8 +108,6 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
     @Autowired
     private ThirdBatchLogService thirdBatchLogService;
     @Autowired
-    private MqHelper mqHelper;
-    @Autowired
     private ThirdBatchLogBiz thirdBatchLogBiz;
     @Autowired
     private AssetChangeProvider assetChangeProvider;
@@ -136,6 +133,273 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
 
     public static void main(String[] args) {
 
+    }
+
+    /**
+     * 非流转标的 理财计划即信批次放款 （满标后调用）
+     *
+     * @param voThirdBatchLendRepay
+     * @return
+     */
+    public ResponseEntity<VoBaseResp> thirdFinanceBatchLendRepay(VoThirdBatchLendRepay voThirdBatchLendRepay) throws Exception {
+        Gson gson = new Gson();
+        log.info(String.format("理财计划批次放款调用: %s", gson.toJson(voThirdBatchLendRepay)));
+        Date nowDate = new Date();
+        Long borrowId = voThirdBatchLendRepay.getBorrowId();
+        //查询当前借款的所有 状态为1的 tender记录
+        Specification<Tender> ts = Specifications.<Tender>and()
+                .eq("borrowId", borrowId)
+                .eq("status", 1)
+                .build();
+
+        List<Tender> tenderList = tenderService.findList(ts);
+        Preconditions.checkNotNull(tenderList, "理财计划批次放款调用: 投标记录为空");
+        Borrow borrow = borrowService.findById(borrowId);
+        Preconditions.checkNotNull(borrow, "理财计划批次放款调用: 标的信息为空 ");
+        UserThirdAccount takeUserThirdAccount = userThirdAccountService.findByUserId(borrow.getUserId());// 收款人存管账户记录
+        Preconditions.checkNotNull(takeUserThirdAccount, "理财计划借款人未开户!");
+
+            /*查询受托支付是否成功*/
+        TrusteePayQueryReq request = new TrusteePayQueryReq();
+        request.setAccountId(takeUserThirdAccount.getAccountId());
+        request.setProductId(borrow.getProductId());
+        request.setChannel(ChannelContant.HTML);
+        TrusteePayQueryResp trusteePayQueryResp = jixinManager.send(JixinTxCodeEnum.TRUSTEE_PAY_QUERY, request, TrusteePayQueryResp.class);
+        if (ObjectUtils.isEmpty(trusteePayQueryResp)) {
+            throw new Exception("理财计划批次放款调用：受托支付查询失败,msg->" + trusteePayQueryResp.getRetMsg());
+        }
+        if ("1".equals(trusteePayQueryResp.getState())) {
+            /*收款人id*/
+            Long takeUserId = borrow.getTakeUserId();
+            if (!ObjectUtils.isEmpty(takeUserId)) {
+                takeUserThirdAccount = userThirdAccountService.findByUserId(takeUserId);
+            }
+        }
+
+
+        List<LendPay> lendPayList = new ArrayList<>();
+        LendPay lendPay;
+        UserThirdAccount tenderUserThirdAccount;
+        double sumTxAmount = 0, validMoney, debtFee;
+        for (Tender tender : tenderList) {
+            debtFee = 0;
+            //投标有效金额
+            validMoney = tender.getValidMoney();
+            //已经处理过的批次不放即信处理
+            if (BooleanHelper.isTrue(tender.getThirdTenderFlag())) {
+                continue;
+            }
+            tenderUserThirdAccount = userThirdAccountService.findByUserId(tender.getUserId());
+            Preconditions.checkNotNull(tenderUserThirdAccount, "理财计划投资人未开户!");
+
+            sumTxAmount += validMoney; //放款总金额
+
+            String lendPayOrderId = JixinHelper.getOrderId(JixinHelper.LEND_REPAY_PREFIX);
+            lendPay = new LendPay();
+            lendPay.setAccountId(tenderUserThirdAccount.getAccountId());
+            lendPay.setAuthCode(tender.getAuthCode());
+            lendPay.setBidFee("0");
+            lendPay.setDebtFee(StringHelper.formatDouble(debtFee, 100, false));
+            lendPay.setOrderId(lendPayOrderId);
+            lendPay.setForAccountId(takeUserThirdAccount.getAccountId());
+            lendPay.setTxAmount(StringHelper.formatDouble(validMoney, 100, false));
+            lendPay.setProductId(borrow.getProductId());
+            lendPayList.add(lendPay);
+            tender.setThirdLendPayOrderId(lendPayOrderId);
+            tender.setUpdatedAt(nowDate);
+        }
+        tenderService.save(tenderList);
+
+        //批次号
+        String batchNo = jixinHelper.getBatchNo();
+        //请求保留参数
+        Map<String, Object> acqResMap = new HashMap<>();
+        acqResMap.put("borrowId", borrowId);
+
+        try {
+            BatchLendPayReq batchLendPayReq = new BatchLendPayReq();
+            batchLendPayReq.setBatchNo(batchNo);
+            batchLendPayReq.setAcqRes(GSON.toJson(acqResMap));
+            batchLendPayReq.setNotifyURL(javaDomain + "/pub/repayment/v2/third/batch/finance/lendrepay/check");
+            batchLendPayReq.setRetNotifyURL(javaDomain + "/pub/repayment/v2/third/batch/finance/lendrepay/run");
+            batchLendPayReq.setTxAmount(StringHelper.formatDouble(sumTxAmount, 100, false));
+            batchLendPayReq.setTxCounts(StringHelper.toString(lendPayList.size()));
+            batchLendPayReq.setChannel(ChannelContant.HTML);
+            batchLendPayReq.setSubPacks(GSON.toJson(lendPayList));
+            BatchLendPayResp response = jixinManager.send(JixinTxCodeEnum.BATCH_LEND_REPAY, batchLendPayReq, BatchLendPayResp.class);
+            String retCode = response.getRetCode();
+            if ((ObjectUtils.isEmpty(response)) || (!ObjectUtils.isEmpty(retCode) && !JixinResultContants.SUCCESS.equals(retCode))) {
+                BatchCancelReq batchCancelReq = new BatchCancelReq();
+                batchCancelReq.setBatchNo(batchNo);
+                batchCancelReq.setTxAmount(StringHelper.formatDouble(sumTxAmount, 100, false));
+                batchCancelReq.setChannel(ChannelContant.HTML);
+                batchCancelReq.setTxCounts(StringHelper.toString(lendPayList.size()));
+                BatchCancelResp batchCancelResp = jixinManager.send(JixinTxCodeEnum.BATCH_CANCEL, batchCancelReq, BatchCancelResp.class);
+                if ((ObjectUtils.isEmpty(batchCancelResp)) || (!ObjectUtils.isEmpty(batchCancelResp.getRetCode()))) {
+                    throw new Exception("理财计划即信批次撤销失败!");
+                }
+            }
+            if ((ObjectUtils.isEmpty(response)) || (!ObjectUtils.isEmpty(retCode) && !JixinResultContants.BATCH_SUCCESS.equalsIgnoreCase(response.getReceived()))) {
+                BatchCancelReq batchCancelReq = new BatchCancelReq();
+                batchCancelReq.setBatchNo(batchNo);
+                batchCancelReq.setChannel(ChannelContant.HTML);
+                batchCancelReq.setTxAmount(StringHelper.formatDouble(sumTxAmount, 100, false));
+                batchCancelReq.setTxCounts(StringHelper.toString(lendPayList.size()));
+                BatchCancelResp batchCancelResp = jixinManager.send(JixinTxCodeEnum.BATCH_CANCEL, batchCancelReq, BatchCancelResp.class);
+                if ((ObjectUtils.isEmpty(batchCancelResp)) || (!ObjectUtils.isEmpty(batchCancelResp.getRetCode()))) {
+                    throw new Exception("理财计划即信批次撤销失败!");
+                }
+                throw new Exception("理财计划即信批次放款失败!");
+            }
+
+            //新增放款资产变动记录
+            addBorrowFinanceLendRepayAssetChange(nowDate, borrowId, borrow, batchNo);
+
+            //记录日志
+            ThirdBatchLog thirdBatchLog = new ThirdBatchLog();
+            thirdBatchLog.setBatchNo(batchNo);
+            thirdBatchLog.setCreateAt(nowDate);
+            thirdBatchLog.setUpdateAt(nowDate);
+            thirdBatchLog.setSourceId(borrowId);
+            thirdBatchLog.setType(ThirdBatchLogContants.BATCH_FINANCE_LEND_REPAY);
+            thirdBatchLog.setAcqRes(GSON.toJson(acqResMap));
+            thirdBatchLog.setRemark("理财计划即信批次放款");
+            thirdBatchLog = thirdBatchLogService.save(thirdBatchLog);
+            //记录批次处理日志
+            thirdBatchDealLogBiz.recordThirdBatchDealLog(thirdBatchLog.getBatchNo(), thirdBatchLog.getSourceId(),
+                    ThirdBatchDealLogContants.SEND_REQUEST, true, ThirdBatchLogContants.BATCH_LEND_REPAY, "");
+
+            //改变批次放款状态 处理中
+            borrow.setLendRepayStatus(ThirdDealStatusContrants.DISPOSING);
+            borrowService.save(borrow);
+            return ResponseEntity.ok(VoBaseResp.ok("理财计划放款申请成功!"));
+        } catch (Exception e) {
+            BatchCancelReq batchCancelReq = new BatchCancelReq();
+            batchCancelReq.setBatchNo(batchNo);
+            batchCancelReq.setTxAmount(StringHelper.formatDouble(0, 100, false));
+            batchCancelReq.setChannel(ChannelContant.HTML);
+            batchCancelReq.setTxCounts(StringHelper.toString(lendPayList.size()));
+            BatchCancelResp batchCancelResp = jixinManager.send(JixinTxCodeEnum.BATCH_CANCEL, batchCancelReq, BatchCancelResp.class);
+            if ((ObjectUtils.isEmpty(batchCancelResp)) || (!ObjectUtils.isEmpty(batchCancelResp.getRetCode()))) {
+                throw new Exception("理财计划即信批次撤销失败!");
+            }
+            throw new Exception(e);
+        }
+    }
+
+    /**
+     * 理财计划新增借款放款资产变动
+     *
+     * @param nowDate
+     * @param borrowId
+     * @param borrow
+     * @param batchNo
+     * @throws ExecutionException
+     */
+    private void addBorrowFinanceLendRepayAssetChange(Date nowDate, Long borrowId, Borrow borrow, String batchNo) throws ExecutionException {
+        String groupSeqNo = assetChangeProvider.getGroupSeqNo();
+        long takeUserId = ObjectUtils.isEmpty(borrow.getTakeUserId()) ? borrow.getUserId() : borrow.getTakeUserId();
+        //生成借款人资产变动记录
+        BatchAssetChange batchAssetChange = new BatchAssetChange();
+        batchAssetChange.setSourceId(borrowId);
+        batchAssetChange.setState(0);
+        batchAssetChange.setType(BatchAssetChangeContants.BATCH_LEND_REPAY);
+        batchAssetChange.setCreatedAt(new Date());
+        batchAssetChange.setUpdatedAt(new Date());
+        batchAssetChange.setBatchNo(batchNo);
+        batchAssetChangeService.save(batchAssetChange);
+        long batchAssetChangeId = batchAssetChange.getId();
+        // 借款人还款
+        // 放款
+        BatchAssetChangeItem batchAssetChangeItem = new BatchAssetChangeItem();
+        batchAssetChangeItem.setBatchAssetChangeId(batchAssetChangeId);
+        batchAssetChangeItem.setState(0);
+        batchAssetChangeItem.setSourceId(borrow.getId());
+        batchAssetChangeItem.setGroupSeqNo(groupSeqNo);
+        batchAssetChangeItem.setMoney(borrow.getMoney());
+        batchAssetChangeItem.setSeqNo(assetChangeProvider.getSeqNo());
+        batchAssetChangeItem.setRemark(String.format("理财计划标的[%s]融资成功. 放款%s元", borrow.getName(), StringHelper.formatDouble(borrow.getMoney() / 100D, true)));
+        batchAssetChangeItem.setType(AssetChangeTypeEnum.financeBorrow.getLocalType());
+        batchAssetChangeItem.setUserId(takeUserId);
+        batchAssetChangeItem.setCreatedAt(nowDate);
+        batchAssetChangeItem.setUpdatedAt(nowDate);
+        batchAssetChangeItemService.save(batchAssetChangeItem);
+    }
+
+    /**
+     * 即信批次放款  （满标后调用）
+     *
+     * @return
+     */
+    public ResponseEntity<String> thirdBatchFinanceLendRepayCheckCall(HttpServletRequest request, HttpServletResponse response) {
+        BatchLendPayCheckResp lendRepayCheckResp = jixinManager.callback(request, new TypeToken<BatchLendPayCheckResp>() {
+        });
+
+        if (ObjectUtils.isEmpty(lendRepayCheckResp)) {
+            log.error("=============================理财计划即信批次放款检验参数回调===========================");
+            log.error("请求体为空!");
+        }
+
+        Map<String, Object> acqResMap = GSON.fromJson(lendRepayCheckResp.getAcqRes(), TypeTokenContants.MAP_TOKEN);
+        Long borrowId = NumberHelper.toLong(acqResMap.get("borrowId"));
+        if (!JixinResultContants.SUCCESS.equals(lendRepayCheckResp.getRetCode())) {
+            log.error("=============================理财计划即信批次放款检验参数回调===========================");
+            log.error("回调失败! msg:" + lendRepayCheckResp.getRetMsg());
+            thirdBatchLogBiz.updateBatchLogState(lendRepayCheckResp.getBatchNo(), borrowId, 2, ThirdBatchLogContants.BATCH_LEND_REPAY);
+            //改变批次放款状态 处理失败
+            Borrow borrow = borrowService.findById(borrowId);
+            borrow.setLendRepayStatus(ThirdDealStatusContrants.INDISPOSE);
+            borrowService.save(borrow);
+            //记录批次处理日志
+            thirdBatchDealLogBiz.recordThirdBatchDealLog(lendRepayCheckResp.getBatchNo(), borrowId, ThirdBatchDealLogContants.PARAM_CHECK, false,
+                    ThirdBatchLogContants.BATCH_LEND_REPAY, lendRepayCheckResp.getRetMsg());
+        } else {
+            log.info("=============================理财计划即信批次放款检验参数回调===========================");
+            log.info("回调成功!");
+            //更新批次状态
+            thirdBatchLogBiz.updateBatchLogState(lendRepayCheckResp.getBatchNo(), borrowId, 1, ThirdBatchLogContants.BATCH_LEND_REPAY);
+            //记录批次处理日志
+            thirdBatchDealLogBiz.recordThirdBatchDealLog(lendRepayCheckResp.getBatchNo(), borrowId, ThirdBatchDealLogContants.PARAM_CHECK, true,
+                    ThirdBatchLogContants.BATCH_LEND_REPAY, lendRepayCheckResp.getRetMsg());
+        }
+
+        return ResponseEntity.ok("success");
+    }
+
+    /**
+     * 即信批次放款  （满标后调用）
+     *
+     * @return
+     */
+    public ResponseEntity<String> thirdBatchFinanceLendRepayRunCall(HttpServletRequest request, HttpServletResponse response) throws Exception {
+        BatchLendPayRunResp lendRepayRunResp = jixinManager.callback(request, new TypeToken<BatchLendPayRunResp>() {
+        });
+        return dealBatchFinanceLendRepay(lendRepayRunResp);
+    }
+
+    /**
+     * 处理理财计划即信批次放款
+     *
+     * @param lendRepayRunResp
+     * @return
+     */
+    public ResponseEntity<String> dealBatchFinanceLendRepay(BatchLendPayRunResp lendRepayRunResp) {
+        log.info("进入理财计划批次放款处理流程!");
+        Preconditions.checkNotNull(lendRepayRunResp, "即信请求体为空！");
+        log.info("即信请求体:", GSON.toJson(lendRepayRunResp));
+        Preconditions.checkState(JixinResultContants.SUCCESS.equals(lendRepayRunResp.getRetCode()), "即信回调反馈：处理失败! msg:" + lendRepayRunResp.getRetMsg());
+        Map<String, Object> acqResMap = GSON.fromJson(lendRepayRunResp.getAcqRes(), TypeTokenContants.MAP_TOKEN);
+
+
+        //触发处理理财计划批次放款处理结果队列
+        try {
+            //批次执行问题
+            thirdBatchDealBiz.batchDeal(NumberHelper.toLong(acqResMap.get("borrowId")), lendRepayRunResp.getBatchNo(), lendRepayRunResp.getAcqRes(), GSON.toJson(lendRepayRunResp));
+        } catch (Exception e) {
+            log.error("批次执行异常:", e);
+        }
+
+        return ResponseEntity.ok("success");
     }
 
     /**
@@ -246,9 +510,9 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
             batchLendPayReq.setNotifyURL(javaDomain + "/pub/repayment/v2/third/batch/lendrepay/check");
             batchLendPayReq.setRetNotifyURL(javaDomain + "/pub/repayment/v2/third/batch/lendrepay/run");
             batchLendPayReq.setTxAmount(StringHelper.formatDouble(sumTxAmount, 100, false));
+            batchLendPayReq.setChannel(ChannelContant.HTML);
             batchLendPayReq.setTxCounts(StringHelper.toString(lendPayList.size()));
             batchLendPayReq.setSubPacks(GSON.toJson(lendPayList));
-            batchLendPayReq.setChannel(ChannelContant.HTML);
             BatchLendPayResp response = jixinManager.send(JixinTxCodeEnum.BATCH_LEND_REPAY, batchLendPayReq, BatchLendPayResp.class);
             String retCode = response.getRetCode();
             if ((ObjectUtils.isEmpty(response)) || (!ObjectUtils.isEmpty(retCode) && !JixinResultContants.SUCCESS.equals(retCode))) {

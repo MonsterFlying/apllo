@@ -181,7 +181,6 @@ public class TestController {
                 log.error("补发失败:", e);
             }
 
-
             //3.发送红包
             VoucherPayRequest voucherPayRequest = new VoucherPayRequest();
             voucherPayRequest.setAccountId(redpackAccount.getAccountId());
