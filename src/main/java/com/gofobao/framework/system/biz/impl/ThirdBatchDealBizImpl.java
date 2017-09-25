@@ -30,12 +30,15 @@ import com.gofobao.framework.repayment.biz.RepaymentBiz;
 import com.gofobao.framework.repayment.contants.ThirdDealStatusContrants;
 import com.gofobao.framework.repayment.entity.BorrowRepayment;
 import com.gofobao.framework.repayment.service.BorrowRepaymentService;
+import com.gofobao.framework.repayment.vo.request.VoRepayReq;
+import com.gofobao.framework.system.biz.StatisticBiz;
 import com.gofobao.framework.system.biz.ThirdBatchDealBiz;
 import com.gofobao.framework.system.biz.ThirdBatchDealLogBiz;
 import com.gofobao.framework.system.biz.ThirdBatchLogBiz;
 import com.gofobao.framework.system.contants.ThirdBatchDealLogContants;
 import com.gofobao.framework.system.contants.ThirdBatchLogContants;
 import com.gofobao.framework.system.entity.Notices;
+import com.gofobao.framework.system.entity.Statistic;
 import com.gofobao.framework.system.entity.ThirdBatchLog;
 import com.gofobao.framework.system.entity.ThirdErrorRemark;
 import com.gofobao.framework.system.service.ThirdBatchLogService;
@@ -115,6 +118,8 @@ public class ThirdBatchDealBizImpl implements ThirdBatchDealBiz {
     AssetChangeProvider assetChangeProvider;
     @Autowired
     private UserCacheService userCacheService;
+    @Autowired
+    private StatisticBiz statisticBiz;
 
     /**
      * 批次处理
@@ -126,7 +131,6 @@ public class ThirdBatchDealBizImpl implements ThirdBatchDealBiz {
      * @return
      * @throws Exception
      */
-    @Transactional(rollbackFor = Exception.class)
     public boolean batchDeal(long sourceId, String batchNo, String acqRes, String batchResp) throws Exception {
         Specification<ThirdBatchLog> tbls = Specifications
                 .<ThirdBatchLog>and()
@@ -191,22 +195,39 @@ public class ThirdBatchDealBizImpl implements ThirdBatchDealBiz {
 
         //不存在失败批次进行后续操作
         try {
+            Statistic statistic = null;
             switch (thirdBatchLog.getType()) {
                 case ThirdBatchLogContants.BATCH_CREDIT_INVEST: // 投资人批次购买债权
                     // 批次债权转让结果处理
                     newCreditInvestDeal(batchNo, sourceId, failureOrderIds, successOrderIds);
                     break;
+                case ThirdBatchLogContants.BATCH_FINANCE_CREDIT_INVEST:
+                    //理财计划批次债权转让结果处理
+                    financeCreditInvestDeal(batchNo, sourceId, failureOrderIds, successOrderIds);
+                    break;
                 case ThirdBatchLogContants.BATCH_LEND_REPAY: // 即信批次放款
                     // 即信批次放款结果处理
-                    lendRepayDeal(batchNo, sourceId, failureOrderIds, successOrderIds);
+                    statistic = lendRepayDeal(batchNo, sourceId, failureOrderIds, successOrderIds);
+                    //即信批次放款结果处理总统计
+                    statisticBiz.caculate(statistic);
+                    break;
+                case ThirdBatchLogContants.BATCH_FINANCE_LEND_REPAY:
+                    // 即信批次放款结果处理
+                    statistic = lendRepayDeal(batchNo, sourceId, failureOrderIds, successOrderIds);
+                    //即信批次放款结果处理总统计
+                    statisticBiz.caculate(statistic);
                     break;
                 case ThirdBatchLogContants.BATCH_REPAY: //即信批次还款
                     // 即信批次还款结果处理
-                    repayDeal(batchNo, sourceId, failureOrderIds, successOrderIds);
+                    statistic = repayDeal(batchNo, sourceId, failureOrderIds, successOrderIds);
+                    //提前结清批次还款总统计
+                    statisticBiz.caculate(statistic);
                     break;
                 case ThirdBatchLogContants.BATCH_BAIL_REPAY: //名义借款人垫付
                     // 即信批次名义借款人垫付处理
-                    bailRepayDeal(batchNo, sourceId, failureOrderIds, successOrderIds);
+                    statistic = bailRepayDeal(batchNo, sourceId, failureOrderIds, successOrderIds);
+                    //即信批次名义借款人垫付处理总统计
+                    statisticBiz.caculate(statistic);
                     break;
                 case ThirdBatchLogContants.BATCH_CREDIT_END: //批次结束债权
                     // 批次结束债权
@@ -214,7 +235,9 @@ public class ThirdBatchDealBizImpl implements ThirdBatchDealBiz {
                     break;
                 case ThirdBatchLogContants.BATCH_REPAY_ALL: //提前结清批次还款
                     // 提前结清批次还款
-                    repayAllDeal(batchNo, sourceId, failureOrderIds, successOrderIds);
+                    statistic = repayAllDeal(batchNo, sourceId, failureOrderIds, successOrderIds);
+                    //提前结清批次还款总统计
+                    statisticBiz.caculate(statistic);
                     break;
                 default:
             }
@@ -246,6 +269,7 @@ public class ThirdBatchDealBizImpl implements ThirdBatchDealBiz {
      * @param failureThirdCreditEndOrderIds
      * @param successThirdCreditEndOrderIds
      */
+    @Transactional(rollbackFor = Exception.class)
     private void creditEndDeal(String batchNo, long borrowId, String acqRes, List<String> failureThirdCreditEndOrderIds, List<String> successThirdCreditEndOrderIds) {
         if (CollectionUtils.isEmpty(failureThirdCreditEndOrderIds)) {
             log.info("================================================================================");
@@ -281,7 +305,9 @@ public class ThirdBatchDealBizImpl implements ThirdBatchDealBiz {
      * @param failureTRepayAllOrderIds
      * @param successTRepayAllOrderIds
      */
-    private void repayAllDeal(String batchNo, long borrowId, List<String> failureTRepayAllOrderIds, List<String> successTRepayAllOrderIds) {
+    @Transactional(rollbackFor = Exception.class)
+    private Statistic repayAllDeal(String batchNo, long borrowId, List<String> failureTRepayAllOrderIds, List<String> successTRepayAllOrderIds) {
+        Statistic statistic = new Statistic();
         if (CollectionUtils.isEmpty(failureTRepayAllOrderIds)) {
             log.info("================================================================================");
             log.info("即信批次还款查询：未发现失败批次！");
@@ -304,12 +330,11 @@ public class ThirdBatchDealBizImpl implements ThirdBatchDealBiz {
 
 
         // 批次还款处理(提前结清)
-
         if (CollectionUtils.isEmpty(failureTRepayAllOrderIds)) {
             //提前结清操作
             ResponseEntity<VoBaseResp> resp = null;
             try {
-                resp = repaymentBiz.repayAllDeal(borrowId, batchNo);
+                resp = repaymentBiz.repayAllDeal(borrowId, batchNo, statistic);
             } catch (Exception e) {
                 log.error("批次还款处理(提前结清)异常:", e);
             }
@@ -319,8 +344,12 @@ public class ThirdBatchDealBizImpl implements ThirdBatchDealBiz {
                 //更新批次状态
                 log.error("批次还款处理正常:" + resp.getBody().getState().getMsg());
                 thirdBatchLogBiz.updateBatchLogState(String.valueOf(batchNo), borrowId, 3, ThirdBatchLogContants.BATCH_REPAY_ALL);
+                //记录批次处理日志
+                thirdBatchDealLogBiz.recordThirdBatchDealLog(batchNo, borrowId,
+                        ThirdBatchDealLogContants.PROCESSED, true, ThirdBatchLogContants.BATCH_REPAY_ALL, "");
             }
         }
+        return statistic;
     }
 
     /**
@@ -330,7 +359,9 @@ public class ThirdBatchDealBizImpl implements ThirdBatchDealBiz {
      * @param failureTransferOrderIds
      * @param successTransferOrderIds
      */
-    private void bailRepayDeal(String batchNo, long repaymentId, List<String> failureTransferOrderIds, List<String> successTransferOrderIds) throws Exception {
+    @Transactional(rollbackFor = Exception.class)
+    private Statistic bailRepayDeal(String batchNo, long repaymentId, List<String> failureTransferOrderIds, List<String> successTransferOrderIds) throws Exception {
+        Statistic statistic = new Statistic();
         if (CollectionUtils.isEmpty(failureTransferOrderIds)) {
             log.info("================================================================================");
             log.info("即信批次还款查询：未发现失败批次！");
@@ -394,10 +425,6 @@ public class ThirdBatchDealBizImpl implements ThirdBatchDealBiz {
             });
             tenderService.save(tenderList);
 
-
-            //更新批次日志状态
-            updateThirdBatchLogState(batchNo, repaymentId, ThirdBatchLogContants.BATCH_BAIL_REPAY, 4);
-
             MqConfig mqConfig = new MqConfig();
             mqConfig.setQueue(MqQueueEnum.RABBITMQ_REPAYMENT);
             mqConfig.setTag(MqTagEnum.ADVANCE);
@@ -411,21 +438,31 @@ public class ThirdBatchDealBizImpl implements ThirdBatchDealBiz {
             } catch (Throwable e) {
                 log.error("thirdBatchProvider bailRepayDeal send mq exception", e);
             }
+
+            //更新批次日志状态
+            updateThirdBatchLogState(batchNo, repaymentId, ThirdBatchLogContants.BATCH_BAIL_REPAY, 4);
+            //记录批次处理日志
+            thirdBatchDealLogBiz.recordThirdBatchDealLog(batchNo, repaymentId,
+                    ThirdBatchDealLogContants.PROCESSED, false, ThirdBatchLogContants.BATCH_BAIL_REPAY, "");
         }
 
 
         // 批次名义借款人垫付操作
 
         if (CollectionUtils.isEmpty(failureTransferOrderIds)) {
-            ResponseEntity<VoBaseResp> resp = repaymentBiz.newAdvanceDeal(repaymentId, batchNo);
+            ResponseEntity<VoBaseResp> resp = repaymentBiz.newAdvanceDeal(repaymentId, batchNo, statistic);
             if (resp.getBody().getState().getCode() != VoBaseResp.OK) {
                 log.error("批次名义借款人垫付操作：" + resp.getBody().getState().getMsg());
             } else {
+                log.info("批次名义借款人垫付操作：" + resp.getBody().getState().getMsg());
                 //更新批次状态
                 thirdBatchLogBiz.updateBatchLogState(String.valueOf(batchNo), repaymentId, 3, ThirdBatchLogContants.BATCH_BAIL_REPAY);
-                log.info("批次名义借款人垫付操作：" + resp.getBody().getState().getMsg());
+                //记录批次处理日志
+                thirdBatchDealLogBiz.recordThirdBatchDealLog(batchNo, repaymentId,
+                        ThirdBatchDealLogContants.PROCESSED, true, ThirdBatchLogContants.BATCH_BAIL_REPAY, "");
             }
         }
+        return statistic;
     }
 
     /**
@@ -434,7 +471,9 @@ public class ThirdBatchDealBizImpl implements ThirdBatchDealBiz {
      * @param failureTRepayOrderIds
      * @param successTRepayOrderIds
      */
-    private void repayDeal(String batchNo, long repaymentId, List<String> failureTRepayOrderIds, List<String> successTRepayOrderIds) throws Exception {
+    @Transactional(rollbackFor = Exception.class)
+    private Statistic repayDeal(String batchNo, long repaymentId, List<String> failureTRepayOrderIds, List<String> successTRepayOrderIds) throws Exception {
+        Statistic statistic = new Statistic();
         if (CollectionUtils.isEmpty(failureTRepayOrderIds)) {
             log.info("================================================================================");
             log.info("即信批次还款查询：未发现失败批次！");
@@ -471,15 +510,19 @@ public class ThirdBatchDealBizImpl implements ThirdBatchDealBiz {
             borrowRepayment.setUpdatedAt(new Date());
             borrowRepaymentService.save(borrowRepayment);
 
-            ResponseEntity<VoBaseResp> resp = repaymentBiz.newRepayDeal(repaymentId, batchNo);
+            ResponseEntity<VoBaseResp> resp = repaymentBiz.newRepayDeal(repaymentId, batchNo, statistic);
             if (resp.getBody().getState().getCode() != VoBaseResp.OK) {
                 log.error("批次还款处理:" + resp.getBody().getState().getMsg());
             } else {
                 log.info("批次还款处理:" + resp.getBody().getState().getMsg());
                 //更新批次状态
                 thirdBatchLogBiz.updateBatchLogState(String.valueOf(batchNo), repaymentId, 3, ThirdBatchLogContants.BATCH_REPAY);
+                //记录批次处理日志
+                thirdBatchDealLogBiz.recordThirdBatchDealLog(batchNo, repaymentId,
+                        ThirdBatchDealLogContants.PROCESSED, true, ThirdBatchLogContants.BATCH_REPAY, "");
             }
         }
+        return statistic;
     }
 
     /**
@@ -488,8 +531,10 @@ public class ThirdBatchDealBizImpl implements ThirdBatchDealBiz {
      * @param failureThirdLendPayOrderIds
      * @param successThirdLendPayOrderIds
      */
-    private void lendRepayDeal(String batchNo, long borrowId, List<String> failureThirdLendPayOrderIds, List<String> successThirdLendPayOrderIds) throws Exception {
+    @Transactional(rollbackFor = Exception.class)
+    private Statistic lendRepayDeal(String batchNo, long borrowId, List<String> failureThirdLendPayOrderIds, List<String> successThirdLendPayOrderIds) throws Exception {
         Date nowDate = new Date();
+        Statistic statistic = new Statistic();
         if (CollectionUtils.isEmpty(failureThirdLendPayOrderIds)) {
             log.info("================================================================================");
             log.info("即信批次放款查询：未发现失败批次！");
@@ -592,18 +637,17 @@ public class ThirdBatchDealBizImpl implements ThirdBatchDealBiz {
 
             Borrow borrow = borrowService.findById(borrowId);
             log.info(String.format("正常标的放款回调: %s", gson.toJson(borrow)));
-            boolean flag = borrowBiz.borrowAgainVerify(borrow, batchNo);
+            boolean flag = borrowBiz.borrowAgainVerify(borrow, batchNo, statistic);
             if (!flag) {
                 log.error("标的放款失败！标的id：" + borrowId);
             } else {
+                log.error("标的放款成功！标的id：" + borrowId);
                 //更新批次状态
                 thirdBatchLogBiz.updateBatchLogState(batchNo, borrowId, 3, ThirdBatchLogContants.BATCH_LEND_REPAY);
                 //记录批次处理日志
                 thirdBatchDealLogBiz.recordThirdBatchDealLog(batchNo, borrowId, ThirdBatchDealLogContants.PROCESSED, true,
                         ThirdBatchLogContants.BATCH_LEND_REPAY, "");
-
             }
-
             //改变批次放款状态 处理成功
             borrow.setLendRepayStatus(ThirdDealStatusContrants.DISPOSED);
             borrow.setRecheckAt(new Date());
@@ -611,6 +655,7 @@ public class ThirdBatchDealBizImpl implements ThirdBatchDealBiz {
         } else {
             log.info("非流转标复审失败!");
         }
+        return statistic;
     }
 
     /**
@@ -705,6 +750,126 @@ public class ThirdBatchDealBizImpl implements ThirdBatchDealBiz {
                 log.error("ThirdBatchProvider creditInvestDeal send mq exception", e);
             }
         });
+    }
+
+    /**
+     * 理财计划债权转让处理
+     *
+     * @param batchNo
+     * @param transferId
+     * @param failureThirdTransferOrderIds
+     * @param successThirdTransferOrderIds
+     * @throws Exception
+     */
+    @Transactional(rollbackFor = Exception.class)
+    private void financeCreditInvestDeal(String batchNo, long transferId, List<String> failureThirdTransferOrderIds,
+                                         List<String> successThirdTransferOrderIds) throws Exception {
+        Date nowDate = new Date();
+        if (CollectionUtils.isEmpty(failureThirdTransferOrderIds)) {
+            log.info("================================================================================");
+            log.info("理财计划债权转让批次查询：未发现失败批次！transferId:" + transferId);
+            log.info("================================================================================");
+        }
+
+        if (!CollectionUtils.isEmpty(successThirdTransferOrderIds)) {
+            //成功批次对应债权
+            Specification<TransferBuyLog> transferBuyLogSpecification = Specifications
+                    .<TransferBuyLog>and()
+                    .in("thirdTransferOrderId", successThirdTransferOrderIds.toArray())
+                    .build();
+
+            List<TransferBuyLog> successTransferList = transferBuyLogService.findList(transferBuyLogSpecification);
+            successTransferList.stream().forEach(buyLogConsumer -> {
+                //设置转让状态为true
+                buyLogConsumer.setThirdTransferFlag(true);
+
+            });
+
+            transferBuyLogService.save(successTransferList);
+        }
+
+        //查询失败日志
+        if (!CollectionUtils.isEmpty(failureThirdTransferOrderIds)) {
+            log.info(String.format("理财计划批量债权回调: 取消失败债权购买: %s", gson.toJson(failureThirdTransferOrderIds)));
+            //失败批次对应债权
+            Specification<TransferBuyLog> tbls = Specifications
+                    .<TransferBuyLog>and()
+                    .in("thirdTransferOrderId", failureThirdTransferOrderIds.toArray())
+                    .build();
+
+            List<TransferBuyLog> failureTransferBuyLogList = transferBuyLogService.findList(tbls);
+            Preconditions.checkNotNull(failureTransferBuyLogList, "摘取批次处理: 查询失败的投标记录不存在!");
+            Set<Long> transferIdSet = failureTransferBuyLogList.stream().map(transferBuyLog -> transferBuyLog.getTransferId()).collect(Collectors.toSet());
+            //3.挑选出失败有失败批次的债权转让
+            Specification<Transfer> ts = Specifications
+                    .<Transfer>and()
+                    .in("id", transferIdSet.toArray())
+                    .build();
+            List<Transfer> transferList = transferService.findList(ts);
+            Preconditions.checkNotNull(transferList, "理财计划债权批次回调处理: 查询债权转让记录不存在!");
+            Map<Long, List<TransferBuyLog>> transferByLogMap = failureTransferBuyLogList.stream().collect(Collectors.groupingBy(TransferBuyLog::getTransferId));
+            for (Transfer transfer : transferList) {
+                List<TransferBuyLog> transferBuyLogList = transferByLogMap.get(transfer.getId());
+                for (TransferBuyLog transferBuyLog : transferBuyLogList) {
+                    transferBuyLog.setState(2);
+                    transferBuyLog.setUpdatedAt(nowDate);
+
+                    // 解除理财计划冻结资金
+                    AssetChange assetChange = new AssetChange();
+                    assetChange.setSourceId(transferBuyLog.getId());
+                    assetChange.setGroupSeqNo(assetChangeProvider.getGroupSeqNo());
+                    assetChange.setMoney(transferBuyLog.getValidMoney());
+                    assetChange.setSeqNo(assetChangeProvider.getSeqNo());
+                    assetChange.setRemark(String.format("存管系统审核债权转让[%s]不通过, 成功解冻资金%s元", transfer.getTitle(), StringHelper.formatDouble(transferBuyLog.getValidMoney() / 100D, true)));
+                    assetChange.setType(AssetChangeTypeEnum.financePlanUnFreeze);
+                    assetChange.setUserId(transferBuyLog.getUserId());
+                    assetChangeProvider.commonAssetChange(assetChange);
+                }
+
+                transfer.setTenderCount(transfer.getTenderCount() - transferBuyLogList.size());
+                long sum = transferBuyLogList.stream().mapToLong(transferBuyLog -> transferBuyLog.getValidMoney()).sum();  // 取消的总总债权
+                transfer.setTransferMoneyYes(transfer.getTransferMoneyYes() - sum);
+                transfer.setUpdatedAt(nowDate);
+                transfer.setSuccessAt(null);
+                transferService.save(transfer);
+            }
+            //更新批次日志状态
+            updateThirdBatchLogState(batchNo, transferId, ThirdBatchLogContants.BATCH_CREDIT_INVEST, 4);
+            transferService.save(transferList);
+            transferBuyLogService.save(failureTransferBuyLogList);
+        }
+
+        //1.判断失败orderId集合为空
+        //2.判断borrowId不为空
+        if (CollectionUtils.isEmpty(failureThirdTransferOrderIds)) {
+            log.info(String.format("理财计划批量债权转让复审transfer: %s", transferId));
+            /*债权转让记录*/
+            Transfer transfer = transferService.findById(transferId);
+            ResponseEntity<VoBaseResp> resp = transferBiz.againFinanceVerifyTransfer(transferId, batchNo);
+            if ((resp.getBody().getState().getCode() == VoBaseResp.OK)
+                    && (transfer.getTransferMoneyYes().longValue() >= transfer.getTransferMoney().longValue())) { //只有全部转让才会触发结束债权
+                //更新批次状态
+                thirdBatchLogBiz.updateBatchLogState(String.valueOf(batchNo), transferId, 3, ThirdBatchLogContants.BATCH_CREDIT_INVEST);
+                //推送队列结束债权
+                MqConfig mqConfig = new MqConfig();
+                mqConfig.setQueue(MqQueueEnum.RABBITMQ_CREDIT);
+                mqConfig.setTag(MqTagEnum.END_CREDIT_BY_TRANSFER);
+                mqConfig.setSendTime(DateHelper.addMinutes(new Date(), 1));
+                ImmutableMap<String, String> body = ImmutableMap
+                        .of(MqConfig.MSG_BORROW_ID, StringHelper.toString(transfer.getBorrowId()), MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
+                mqConfig.setMsg(body);
+                try {
+                    log.info(String.format("thirdBatchProvider financeCreditInvestDeal send mq %s", GSON.toJson(body)));
+                    mqHelper.convertAndSend(mqConfig);
+                } catch (Throwable e) {
+                    log.error("thirdBatchProvider financeCreditInvestDeal send mq exception", e);
+                }
+
+                log.info("理财计划批量债权转让复审: 成功");
+            } else {
+                log.error("理财计划批量债权转让复审: 失败");
+            }
+        }
     }
 
     /**

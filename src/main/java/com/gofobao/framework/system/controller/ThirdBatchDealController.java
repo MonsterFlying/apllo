@@ -2,7 +2,9 @@ package com.gofobao.framework.system.controller;
 
 import com.gofobao.framework.system.biz.ThirdBatchDealLogBiz;
 import com.gofobao.framework.system.vo.request.VoFindLendRepayStatusListReq;
+import com.gofobao.framework.system.vo.request.VoFindRepayStatusListReq;
 import com.gofobao.framework.system.vo.response.VoViewFindLendRepayStatusListRes;
+import com.gofobao.framework.system.vo.response.VoViewFindRepayStatusListRes;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -35,4 +37,15 @@ public class ThirdBatchDealController {
         return thirdBatchDealLogBiz.findLendRepayStatusList(voFindLendRepayStatusListReq);
     }
 
+    /**
+     * 查询还款状态集合
+     *
+     * @param voFindRepayStatusListReq
+     * @return
+     */
+    @ApiOperation("查询还款状态集合")
+    @PostMapping("/thirdbatchdeal/pub/repay/find/list")
+    public ResponseEntity<VoViewFindRepayStatusListRes> findRepayStatusList(VoFindRepayStatusListReq voFindRepayStatusListReq){
+        return thirdBatchDealLogBiz.findRepayStatusList(voFindRepayStatusListReq);
+    }
 }

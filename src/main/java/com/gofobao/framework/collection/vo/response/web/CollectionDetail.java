@@ -1,7 +1,11 @@
 package com.gofobao.framework.collection.vo.response.web;
 
+import com.gofobao.framework.system.vo.response.VoFindRepayStatus;
 import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
+
+import java.util.List;
 
 /**
  * Created by Zeke on 2017/7/11.
@@ -16,4 +20,6 @@ public class CollectionDetail {
     private String interest;
     private String earnings;
     private String collectionAt;
+    @ApiModelProperty("还款状态")
+    private List<VoFindRepayStatus> voFindRepayStatusList;
 }

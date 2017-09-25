@@ -161,11 +161,13 @@ public class TenderProvider {
                 }
             } while (autoTenderList.size() >= maxSize && !isFull);
 
+
             if (autoTenderCount >= 1) {
                 autoTenderService.updateAutoTenderOrder();
                 log.info("===========================AutoTenderListener===========================");
                 log.info("自动投标成功! borrowId：" + borrowId);
                 log.info("========================================================================");
+
             } else {
                 log.info("===========================AutoTenderListener===========================");
                 log.info("自动投标无匹配规则! borrowId：" + borrowId);
@@ -181,6 +183,7 @@ public class TenderProvider {
                 borrowService.updateById(updateBorrow);
             }
         } catch (Exception e) {
+            log.error("自动投标异常 borrowId：" + borrowId, e);
             //取消债权
             jixinTenderRecordHelper.cancelJixinTenderByRedisRecord(borrow.getProductId(), true);
             throw new Exception(e);

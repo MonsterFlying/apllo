@@ -4,6 +4,7 @@ import com.gofobao.framework.common.page.Page;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.finance.biz.FinancePlanBiz;
 import com.gofobao.framework.finance.biz.FinancePlanBuyerBiz;
+import com.gofobao.framework.finance.vo.request.VoFinanceAgainVerifyTransfer;
 import com.gofobao.framework.finance.vo.request.VoTenderFinancePlan;
 import com.gofobao.framework.finance.vo.response.PlanBuyUserListWarpRes;
 import com.gofobao.framework.finance.vo.response.PlanDetail;
@@ -16,6 +17,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import springfox.documentation.annotations.ApiIgnore;
+
+import javax.validation.Valid;
 
 /**
  * Created by Zeke on 2017/8/10.
@@ -30,6 +33,17 @@ public class FinanceController {
 
     @Autowired
     private FinancePlanBuyerBiz financePlanBuyerBiz;
+
+    /**
+     * 理财计划复审
+     *
+     * @param voFinanceAgainVerifyTransfer
+     */
+    @ApiOperation("理财计划复审")
+    @GetMapping("/pub/finance/pub/again/verify")
+    public ResponseEntity<VoBaseResp> financeAgainVerifyTransfer(@Valid @ModelAttribute VoFinanceAgainVerifyTransfer voFinanceAgainVerifyTransfer) {
+        return financePlanBiz.financeAgainVerifyTransfer(voFinanceAgainVerifyTransfer);
+    }
 
     @ApiOperation("理财列表")
     @GetMapping("/pub/finance/plan/list/{pageIndex}/{pageSize}")
@@ -61,17 +75,13 @@ public class FinanceController {
      * @return
      */
     @ApiOperation("购买理财计划")
-    @PostMapping("finance/v2/tender/plan")
-    public ResponseEntity<VoBaseResp> tenderFinancePlan(@ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId,
-                                                        VoTenderFinancePlan voTenderFinancePlan) {
+    @PostMapping("/finance/v2/tender/finance/plan")
+    public ResponseEntity<VoBaseResp> tenderFinancePlan(@Valid @ModelAttribute VoTenderFinancePlan voTenderFinancePlan,@ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
         try {
             voTenderFinancePlan.setUserId(userId);
             return financePlanBiz.tenderFinancePlan(voTenderFinancePlan);
         } catch (Exception e) {
-            return ResponseEntity.badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR,
-                            "系统开小差了，请稍后再试!",
-                            VoViewFinancePlanTender.class));
+            return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "系统开小差了，请稍后再试!", VoViewFinancePlanTender.class));
         }
     }
 }

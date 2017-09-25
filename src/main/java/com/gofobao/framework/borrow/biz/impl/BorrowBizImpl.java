@@ -223,26 +223,14 @@ public class BorrowBizImpl implements BorrowBiz {
             } catch (Exception e) {
                 log.error("批次执行异常:", e);
             }
-            /*//触发处理批次放款处理结果队列
-            MqConfig mqConfig = new MqConfig();
-            mqConfig.setTag(MqTagEnum.BATCH_DEAL);
-            mqConfig.setQueue(MqQueueEnum.RABBITMQ_THIRD_BATCH);
-            ImmutableMap<String, String> body = ImmutableMap
-                    .of(MqConfig.SOURCE_ID, StringHelper.toString(thirdBatchLog.getSourceId()),
-                            MqConfig.BATCH_NO, StringHelper.toString(thirdBatchLog.getBatchNo()),
-                            MqConfig.ACQ_RES, thirdBatchLog.getAcqRes(),
-                            MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
-            mqConfig.setMsg(body);
-            try {
-                log.info(String.format("borrowBizImpl sendAgainVerify send mq %s", GSON.toJson(body)));
-                mqHelper.convertAndSend(mqConfig);
-            } catch (Throwable e) {
-                log.error("borrowBizImpl sendAgainVerify send mq exception", e);
-            }
-            log.info("即信批次回调处理结束");*/
         }
 
         if (borrow.getStatus() == 1 && borrow.getMoneyYes() >= borrow.getMoney()) {
+            //更新满标时间
+            if (ObjectUtils.isEmpty(borrow.getSuccessAt())) {
+                borrow.setSuccessAt(new Date());
+                borrowService.save(borrow);
+            }
             MqConfig mqConfig = new MqConfig();
             mqConfig.setTag(MqTagEnum.AGAIN_VERIFY);
             mqConfig.setQueue(MqQueueEnum.RABBITMQ_BORROW);
@@ -912,7 +900,7 @@ public class BorrowBizImpl implements BorrowBiz {
      * @throws Exception
      */
     @Transactional(rollbackFor = Throwable.class)
-    public boolean borrowAgainVerify(Borrow borrow, String batchNo) throws Exception {
+    public boolean borrowAgainVerify(Borrow borrow, String batchNo,Statistic statistic) throws Exception {
         if ((ObjectUtils.isEmpty(borrow)) || (borrow.getStatus() != 1)
                 || (!StringHelper.toString(borrow.getMoney()).equals(StringHelper.toString(borrow.getMoneyYes())))) {
             return false;
@@ -970,7 +958,7 @@ public class BorrowBizImpl implements BorrowBiz {
         //发送借款协议
         sendBorrowProtocol(borrow);
         //更新总统计
-        updateStatisticByBorrowReview(borrow, borrowRepaymentList);
+        fillStatisticByBorrowReview(borrow, borrowRepaymentList,statistic);
         return true;
     }
 
@@ -1712,7 +1700,7 @@ public class BorrowBizImpl implements BorrowBiz {
      *
      * @param borrow
      */
-    private void updateStatisticByBorrowReview(Borrow borrow, List<BorrowRepayment> borrowRepaymentList) {
+    private void fillStatisticByBorrowReview(Borrow borrow, List<BorrowRepayment> borrowRepaymentList, Statistic statistic) {
         if (CollectionUtils.isEmpty(borrowRepaymentList)) {//查询当前借款 还款记录
             return;
         }
@@ -1725,7 +1713,6 @@ public class BorrowBizImpl implements BorrowBiz {
         }
 
         //全站统计
-        Statistic statistic = new Statistic();
         long borrowMoney = borrow.getMoney();
 
         statistic.setBorrowItems(1L);
@@ -1748,13 +1735,6 @@ public class BorrowBizImpl implements BorrowBiz {
             statistic.setQdBorrowTotal(borrowMoney);
             statistic.setQdWaitRepayPrincipalTotal(principal);
             statistic.setQdWaitRepayTotal(repayMoney);
-        }
-        if (!ObjectUtils.isEmpty(statistic)) {
-            try {
-                statisticBiz.caculate(statistic);
-            } catch (Throwable e) {
-                log.error("borrowProvider updateStatisticByBorrowReview 全站统计异常:", e);
-            }
         }
     }
 

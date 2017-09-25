@@ -26,6 +26,8 @@ public class FinancePlan {
     private String name;
     private Long money;
     private Long moneyYes;
+    private Long rightMoney;
+    private Long leftMoney;
     private Integer baseApr;
     private Integer timeLimit;
     private Integer lockPeriod;

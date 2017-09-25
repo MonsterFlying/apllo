@@ -2,6 +2,7 @@ package com.gofobao.framework;
 
 import com.github.wenhao.jpa.Specifications;
 import com.gofobao.framework.api.contants.ChannelContant;
+import com.gofobao.framework.api.contants.DesLineFlagContant;
 import com.gofobao.framework.api.contants.JixinResultContants;
 import com.gofobao.framework.api.helper.CertHelper;
 import com.gofobao.framework.api.helper.JixinManager;
@@ -33,7 +34,11 @@ import com.gofobao.framework.api.model.freeze_details_query.FreezeDetailsQueryRe
 import com.gofobao.framework.api.model.freeze_details_query.FreezeDetailsQueryResponse;
 import com.gofobao.framework.api.model.trustee_pay_query.TrusteePayQueryReq;
 import com.gofobao.framework.api.model.trustee_pay_query.TrusteePayQueryResp;
+import com.gofobao.framework.api.model.voucher_pay.VoucherPayRequest;
+import com.gofobao.framework.api.model.voucher_pay.VoucherPayResponse;
+import com.gofobao.framework.asset.entity.NewAssetLog;
 import com.gofobao.framework.asset.service.AssetService;
+import com.gofobao.framework.asset.service.NewAssetLogService;
 import com.gofobao.framework.borrow.biz.BorrowBiz;
 import com.gofobao.framework.borrow.biz.BorrowThirdBiz;
 import com.gofobao.framework.borrow.entity.Borrow;
@@ -41,7 +46,9 @@ import com.gofobao.framework.borrow.service.BorrowService;
 import com.gofobao.framework.borrow.vo.request.VoQueryThirdBorrowList;
 import com.gofobao.framework.collection.entity.BorrowCollection;
 import com.gofobao.framework.collection.service.BorrowCollectionService;
+import com.gofobao.framework.common.assets.AssetChange;
 import com.gofobao.framework.common.assets.AssetChangeProvider;
+import com.gofobao.framework.common.assets.AssetChangeTypeEnum;
 import com.gofobao.framework.common.rabbitmq.MqConfig;
 import com.gofobao.framework.common.rabbitmq.MqHelper;
 import com.gofobao.framework.common.rabbitmq.MqQueueEnum;
@@ -65,7 +72,7 @@ import com.gofobao.framework.repayment.biz.LoanBiz;
 import com.gofobao.framework.repayment.biz.RepaymentBiz;
 import com.gofobao.framework.repayment.entity.BorrowRepayment;
 import com.gofobao.framework.repayment.service.BorrowRepaymentService;
-import com.gofobao.framework.scheduler.BorrowRepayScanduler;
+import com.gofobao.framework.scheduler.DailyAssetBackupScheduler;
 import com.gofobao.framework.scheduler.DealThirdBatchScheduler;
 import com.gofobao.framework.scheduler.biz.FundStatisticsBiz;
 import com.gofobao.framework.system.biz.ThirdBatchDealBiz;
@@ -98,6 +105,7 @@ import org.springframework.util.StringUtils;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import java.util.*;
+import java.util.concurrent.ExecutionException;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -106,7 +114,6 @@ import static java.util.stream.Collectors.groupingBy;
 @RunWith(SpringRunner.class)
 @SpringBootTest
 @Slf4j
-
 public class AplloApplicationTests {
     final Gson GSON = new GsonBuilder().create();
 
@@ -640,53 +647,29 @@ public class AplloApplicationTests {
 
     }
 
+    @Autowired
+    private DailyAssetBackupScheduler dailyAssetBackupScheduler;
+    @Autowired
+    private NewAssetLogService newAssetLogService;
+
+    @Transactional
+    private void ddddd(){
+        Borrow borrow = borrowService.findById(179937l);
+        System.out.println(GSON.toJson(borrow));
+        Borrow borrow1 = borrowService.findByIdLock(179937l);
+        System.out.println(GSON.toJson(borrow1));
+    }
+
     @Test
     public void test() {
+        /*Borrow borrow = borrowService.findById(179937l);
+        System.out.println(GSON.toJson(borrow));
+        Borrow borrow1 = borrowService.findByIdLock(179937l);
+        System.out.println(GSON.toJson(borrow1));*/
 
-        MqConfig mqConfig = new MqConfig();
-        mqConfig.setQueue(MqQueueEnum.RABBITMQ_TENDER);
-        mqConfig.setTag(MqTagEnum.AUTO_TENDER);
-        ImmutableMap<String, String> body = ImmutableMap
-                .of(MqConfig.MSG_BORROW_ID, StringHelper.toString("179939"), MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
-        mqConfig.setMsg(body);
-        try {
-            mqHelper.convertAndSend(mqConfig);
-        } catch (Throwable e) {
-            log.error("borrowProvider autoTender send mq exception", e);
-        }
 
-        //1.查询并判断还款记录是否存在!
-       /* BorrowRepayment borrowRepayment = borrowRepaymentService.findById(297l);*//* 当期还款记录 *//*
-        Preconditions.checkNotNull(borrowRepayment, "还款记录不存在!");
-        Borrow parentBorrow = borrowService.findById(borrowRepayment.getBorrowId());*//* 还款记录对应的借款记录 *//*
-        Preconditions.checkNotNull(parentBorrow, "借款记录不存在!");
-        *//* 还款对应的投标记录  包括债权转让在里面 *//*
-        Specification<Tender> ts = Specifications
-                .<Tender>and()
-                .eq("status", 1)
-                .eq("borrowId", parentBorrow.getId())
-                .build();
-        List<Tender> tenderList = tenderService.findList(ts);*//* 还款对应的投标记录  包括债权转让在里面 *//*
-        Preconditions.checkNotNull(tenderList, "立即还款: 投标记录为空!");
-        *//* 投标记录id *//*
-        Set<Long> tenderIds = tenderList.stream().map(tender -> tender.getId()).collect(Collectors.toSet());
-        *//* 查询未转让的投标记录回款记录 *//*
-        Specification<BorrowCollection> bcs = Specifications
-                .<BorrowCollection>and()
-                .in("tenderId", tenderIds.toArray())
-                .eq("status", 0)
-                .eq("order", borrowRepayment.getOrder())
-                .eq("transferFlag", 0)
-                .build();
-        List<BorrowCollection> borrowCollectionList = borrowCollectionService.findList(bcs);
-        Preconditions.checkNotNull(borrowCollectionList, "立即还款: 回款记录为空!");
-        *//* 是否垫付 *//*
-        boolean advance = !ObjectUtils.isEmpty(borrowRepayment.getAdvanceAtYes());
-        if (!advance) { //非转让标需要统计与发放短信
-            //10.项目回款短信通知
-            smsNoticeByReceivedRepay(borrowCollectionList, parentBorrow, borrowRepayment);
-        }*/
-
+        /*dailyAssetBackupScheduler.process();
+*/
      /*   //记录批次处理日志
         thirdBatchDealLogBiz.recordThirdBatchDealLog(String.valueOf(113841),169974, ThirdBatchDealLogContants.PROCESSED,true,
                 ThirdBatchLogContants.BATCH_LEND_REPAY, "");
@@ -912,21 +895,19 @@ public class AplloApplicationTests {
     @Autowired
     private BrokerBounsBiz brokerBounsBiz;
 
-    @Autowired
-    private BorrowRepayScanduler borrowRepayScanduler;
-
     @Test
-    public void todayRepayment() {
-        borrowRepayScanduler.todayRepayment();
+    public void monthPushMoney() {
+
+        aaaaa();
     }
 
-/*    @Transactional(rollbackFor = Exception.class)
+    @Transactional(rollbackFor = Exception.class)
     public void aaaaa() {
         Borrow borrow1 = borrowService.findByIdLock(179937l);
         borrow1.setMoneyYes(10l);
         borrowService.save(borrow1);
         System.out.println(GSON.toJson(borrow1));
-    }*/
+    }
 
 
 }

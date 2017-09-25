@@ -19,19 +19,19 @@ public class VoCreateLend {
 
     @ApiModelProperty(name = "money", value = "借款金额 min:1000|max:20000000", required = true)
     @NotNull(message = "借款金额不能为空!")
-    @Min(value = LendContants.MIN_MONEY, message = "借款金额不能低于" + LendContants.MIN_MONEY / 100 + "元!")
-    @Max(value = LendContants.MAX_MONEY, message = "借款金额不能高于" + LendContants.MAX_MONEY / 100 + "元!")
+    @Min(value = LendContants.MIN_MONEY / 100, message = "借款金额不能低于" + LendContants.MIN_MONEY / 100 + "元!")
+    @Max(value = LendContants.MAX_MONEY / 100, message = "借款金额不能高于" + LendContants.MAX_MONEY / 100 + "元!")
     private Double money; //借款金额
 
     @ApiModelProperty(name = "apr", value = "年利率 between:100,2400", dataType = "int", required = true)
     @NotNull(message = "年利率不能为空!")
-    @Min(value = LendContants.MIN_APR, message = "年利率不能低于" + LendContants.MIN_APR / 100 + "%!")
-    @Max(value = LendContants.MAX_APR, message = "年利率不能高于" + LendContants.MAX_APR / 100 + "%!")
+    @Min(value = LendContants.MIN_APR , message = "年利率不能低于" + LendContants.MIN_APR / 100 + "%!")
+    @Max(value = LendContants.MAX_APR , message = "年利率不能高于" + LendContants.MAX_APR / 100 + "%!")
     private Integer apr; //年利率
 
     @ApiModelProperty(name = "lowest", value = "最低金额(分) min:1000|max:借款金额", required = true)
     @NotNull(message = "最低金额不能为空!")
-    @Min(value = LendContants.MIN_LOWEST, message = "最低金额不能低于" + LendContants.MIN_LOWEST / 100 + "元!")
+    @Min(value = LendContants.MIN_LOWEST / 100, message = "最低金额不能低于" + LendContants.MIN_LOWEST / 100 + "元!")
     private Double lowest; //最低金额
 
     @ApiModelProperty(name = "timeLimit", value = "期限 between:1,92", dataType = "1-92天", required = true)
