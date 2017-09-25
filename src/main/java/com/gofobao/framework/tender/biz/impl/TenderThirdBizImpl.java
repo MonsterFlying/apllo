@@ -8,8 +8,8 @@ import com.gofobao.framework.api.helper.JixinTxCodeEnum;
 import com.gofobao.framework.api.model.batch_credit_invest.BatchCreditInvestCheckCall;
 import com.gofobao.framework.api.model.batch_credit_invest.BatchCreditInvestRunCall;
 import com.gofobao.framework.api.model.batch_credit_invest.CreditInvestRun;
-import com.gofobao.framework.api.model.bid_apply_query.BidApplyQueryRequest;
-import com.gofobao.framework.api.model.bid_apply_query.BidApplyQueryResponse;
+import com.gofobao.framework.api.model.bid_apply_query.BidApplyQueryReq;
+import com.gofobao.framework.api.model.bid_apply_query.BidApplyQueryResp;
 import com.gofobao.framework.api.model.bid_auto_apply.BidAutoApplyRequest;
 import com.gofobao.framework.api.model.bid_auto_apply.BidAutoApplyResponse;
 import com.gofobao.framework.api.model.bid_cancel.BidCancelReq;
@@ -18,7 +18,9 @@ import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.borrow.service.BorrowService;
 import com.gofobao.framework.common.constans.TypeTokenContants;
 import com.gofobao.framework.core.vo.VoBaseResp;
-import com.gofobao.framework.helper.*;
+import com.gofobao.framework.helper.JixinHelper;
+import com.gofobao.framework.helper.NumberHelper;
+import com.gofobao.framework.helper.StringHelper;
 import com.gofobao.framework.member.entity.UserThirdAccount;
 import com.gofobao.framework.member.service.UserThirdAccountService;
 import com.gofobao.framework.system.biz.ThirdBatchDealBiz;
@@ -49,7 +51,6 @@ import org.springframework.util.ObjectUtils;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.PrintWriter;
-import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
@@ -293,6 +294,86 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
 
 
     /**
+     * 理财计划批次购买债权参数验证回调
+     *
+     * @return
+     */
+    public ResponseEntity<String> thirdBatchCreditInvestFinanceCheckCall(HttpServletRequest request, HttpServletResponse response) {
+        BatchCreditInvestCheckCall batchCreditInvestCheckCall = jixinManager.callback(request, new TypeToken<BatchCreditInvestCheckCall>() {
+        });
+
+        if (ObjectUtils.isEmpty(batchCreditInvestCheckCall)) {
+            log.error("=============================理财计划批次购买债权参数验证回调===========================");
+            log.error("请求体为空!");
+            ResponseEntity.ok("error");
+        }
+
+        Map<String, Object> acqResMap = GSON.fromJson(batchCreditInvestCheckCall.getAcqRes(), TypeTokenContants.MAP_TOKEN);
+        Long transferId = NumberHelper.toLong(acqResMap.get("transferId"));
+        if (!JixinResultContants.SUCCESS.equals(batchCreditInvestCheckCall.getRetCode())) {
+            log.error("=============================理财计划批次购买债权参数验证回调===========================");
+            log.error("回调失败! msg:" + batchCreditInvestCheckCall.getRetMsg());
+            thirdBatchLogBiz.updateBatchLogState(batchCreditInvestCheckCall.getBatchNo(), transferId, 2, ThirdBatchLogContants.BATCH_FINANCE_CREDIT_INVEST);
+            ResponseEntity.ok("error");
+        } else {
+            log.error("=============================理财计划批次购买债权参数验证回调===========================");
+            log.error("回调成功!");
+            //更新批次状态
+            thirdBatchLogBiz.updateBatchLogState(batchCreditInvestCheckCall.getBatchNo(), transferId, 1, ThirdBatchLogContants.BATCH_FINANCE_CREDIT_INVEST);
+        }
+
+        return ResponseEntity.ok("success");
+    }
+
+    /**
+     * 理财计划批次购买债权参数运行回调
+     *
+     * @return
+     */
+    public ResponseEntity<String> thirdBatchCreditInvestFinanceRunCall(HttpServletRequest request, HttpServletResponse response) throws Exception {
+        BatchCreditInvestRunCall batchCreditInvestRunCall = jixinManager.callback(request, new TypeToken<BatchCreditInvestRunCall>() {
+        });
+        return dealFinanceBatchCreditInvest(batchCreditInvestRunCall);
+    }
+
+    /**
+     * 处理理财计划批次购买债权转让
+     *
+     * @param batchCreditInvestRunCall
+     * @return
+     */
+    public ResponseEntity<String> dealFinanceBatchCreditInvest(BatchCreditInvestRunCall batchCreditInvestRunCall) {
+        Gson gson = new Gson();
+        log.info(String.format("理财计划批量债权购买回调信息打印: %s", gson.toJson(batchCreditInvestRunCall)));
+        Preconditions.checkNotNull(batchCreditInvestRunCall, "理财计划批量债权转让回调: 回调信息为空!");
+        Preconditions.checkArgument(JixinResultContants.SUCCESS.equals(batchCreditInvestRunCall.getRetCode()),
+                "理财计划批量债权转让回调: 请求失败!");
+        Map<String, Object> acqResMap = GSON.fromJson(batchCreditInvestRunCall.getAcqRes(), TypeTokenContants.MAP_TOKEN);
+
+        //=============================================
+        // 保存第三方债权转让授权码
+        //=============================================
+        try {
+            List<CreditInvestRun> creditInvestRunList = GSON.fromJson(batchCreditInvestRunCall.getSubPacks(), new TypeToken<List<CreditInvestRun>>() {
+            }.getType());
+            Preconditions.checkNotNull(creditInvestRunList, "理财计划批量债权转让回调: 查询批次详情为空");
+            saveThirdTransferAuthCode(creditInvestRunList);
+        } catch (JsonSyntaxException e) {
+            log.error("理财计划批量债权转让保存第三方债权转让授权码!", e);
+        }
+
+        // 触发处理批次购买债权处理队列
+        try {
+            //批次执行问题
+            thirdBatchDealBiz.batchDeal(NumberHelper.toLong(acqResMap.get("transferId")), batchCreditInvestRunCall.getBatchNo(),
+                    batchCreditInvestRunCall.getAcqRes(), GSON.toJson(batchCreditInvestRunCall));
+        } catch (Exception e) {
+            log.error("批次执行异常:", e);
+        }
+        return ResponseEntity.ok("success");
+    }
+
+    /**
      * 查询即信投标记录
      *
      * @param accountId  电子账号
@@ -318,35 +399,14 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
         log.info(String.format("查询即信投标记录: %s", data));
         log.info("======================================");
 
-        // 是否存在超时, 超时再次查询 || 或者查询为空
-        if ((ObjectUtils.isEmpty(bidApplyQueryResponse))  // 查询对象为空
-                || (JixinResultContants.ERROR_502.equalsIgnoreCase(bidApplyQueryResponse.getRetCode()))  // 502
-                || (JixinResultContants.ERROR_504.equalsIgnoreCase(bidApplyQueryResponse.getRetCode()))  // 504
-                || (JixinResultContants.ERROR_WAIT_CT9903.equalsIgnoreCase(bidApplyQueryResponse.getRetCode())) // 交易超时
-                || (JixinResultContants.ERROR_JX900032.equalsIgnoreCase(bidApplyQueryResponse.getRetCode()))) { //访问频率超限
-            try {
-                Thread.sleep(3 * 1000);
-            } catch (Exception e) {
-            }
 
-            log.error(String.format("查询即信投标记录失败[%s], 原因可能是超时系统拒绝访问", data));
-            return queryJixinTenderRecord(accountId, orgOrderId, retryNum - 1);
-        }
-
-        if (JixinResultContants.SUCCESS.equalsIgnoreCase(bidApplyQueryResponse.getRetCode())) {
-            return bidApplyQueryResponse;
-        } else {
-            return bidApplyQueryResponse;
-        }
-    }
 
     /**
      * 投资人批次购买债权参数验证回调
      *
      * @return
      */
-    public ResponseEntity<String> thirdBatchCreditInvestCheckCall(HttpServletRequest request, HttpServletResponse
-            response) {
+    public ResponseEntity<String> thirdBatchCreditInvestCheckCall(HttpServletRequest request, HttpServletResponse response) {
         BatchCreditInvestCheckCall batchCreditInvestCheckCall = jixinManager.callback(request, new TypeToken<BatchCreditInvestCheckCall>() {
         });
 
@@ -378,8 +438,7 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
      *
      * @return
      */
-    public ResponseEntity<String> thirdBatchCreditInvestRunCall(HttpServletRequest request, HttpServletResponse
-            response) throws Exception {
+    public ResponseEntity<String> thirdBatchCreditInvestRunCall(HttpServletRequest request, HttpServletResponse response) throws Exception {
         BatchCreditInvestRunCall batchCreditInvestRunCall = jixinManager.callback(request, new TypeToken<BatchCreditInvestRunCall>() {
         });
         return dealBatchCreditInvest(batchCreditInvestRunCall);
@@ -463,19 +522,19 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
         Preconditions.checkNotNull(borrow, "tenderThirdBizImpl cancelThirdTender: tender为空!");
 
         /* 添加取消投标前置查询 */
-        BidApplyQueryRequest bidApplyQueryRequest = new BidApplyQueryRequest();
-        bidApplyQueryRequest.setAccountId(tenderUserThirdAccount.getAccountId());
-        bidApplyQueryRequest.setChannel(ChannelContant.HTML);
-        bidApplyQueryRequest.setOrgOrderId(tender.getThirdTenderOrderId());
-        BidApplyQueryResponse bidApplyQueryResponse = jixinManager.send(JixinTxCodeEnum.BID_APPLY_QUERY, bidApplyQueryRequest, BidApplyQueryResponse.class);
+        BidApplyQueryReq bidApplyQueryReq = new BidApplyQueryReq();
+        bidApplyQueryReq.setAccountId(tenderUserThirdAccount.getAccountId());
+        bidApplyQueryReq.setChannel(ChannelContant.HTML);
+        bidApplyQueryReq.setOrgOrderId(tender.getThirdTenderOrderId());
+        BidApplyQueryResp bidApplyQueryResp = jixinManager.send(JixinTxCodeEnum.BID_APPLY_QUERY, bidApplyQueryReq, BidApplyQueryResp.class);
         /* 取消投标orderId */
         String orderId = JixinHelper.getOrderId(JixinHelper.TENDER_CANCEL_PREFIX);
-        if (!JixinResultContants.SUCCESS.equals(bidApplyQueryResponse.getRetCode())) {
-            String msg = ObjectUtils.isEmpty(bidApplyQueryResponse) ? "当前网络不稳定，请稍候重试" : bidApplyQueryResponse.getRetMsg();
+        if (!JixinResultContants.SUCCESS.equals(bidApplyQueryResp.getRetCode())) {
+            String msg = ObjectUtils.isEmpty(bidApplyQueryResp) ? "当前网络不稳定，请稍候重试" : bidApplyQueryResp.getRetMsg();
             return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, msg));
-        } else if ("2".equals(bidApplyQueryResponse.getState()) || "4".equals(bidApplyQueryResponse.getState())) {
+        } else if ("2".equals(bidApplyQueryResp.getState()) || "4".equals(bidApplyQueryResp.getState())) {
             return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, String.format("投标还款中不能取消借款 tenderId:%s", tenderId)));
-        } else if (!"9".equals(bidApplyQueryResponse.getState())) {
+        } else if (!"9".equals(bidApplyQueryResp.getState())) {
 
             BidCancelReq request = new BidCancelReq();
             request.setAccountId(tenderUserThirdAccount.getAccountId());
@@ -538,8 +597,7 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
      *
      * @return
      */
-    public ResponseEntity<String> thirdBatchCreditEndRunCall(HttpServletRequest request, HttpServletResponse
-            response) throws Exception {
+    public ResponseEntity<String> thirdBatchCreditEndRunCall(HttpServletRequest request, HttpServletResponse response) throws Exception {
         BatchCreditInvestRunCall batchCreditInvestRunCall = jixinManager.callback(request, new TypeToken<BatchCreditInvestRunCall>() {
         });
         Map<String, Object> acqResMap = GSON.fromJson(batchCreditInvestRunCall.getAcqRes(), TypeTokenContants.MAP_TOKEN);

@@ -1,7 +1,10 @@
 package com.gofobao.framework.repayment.vo.response.pc;
 
+import com.gofobao.framework.system.vo.response.VoFindRepayStatus;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
+
+import java.util.List;
 
 /**
  * Created by admin on 2017/7/6.
@@ -35,4 +38,6 @@ public class VoCollection {
     @ApiModelProperty("状态 0:未还款;1 以还 ；2：待复审")
     private Integer status;
 
+    @ApiModelProperty("还款状态")
+    private List<VoFindRepayStatus> voFindRepayStatusList;
 }

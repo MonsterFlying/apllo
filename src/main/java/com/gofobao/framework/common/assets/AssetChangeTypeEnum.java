@@ -3,6 +3,12 @@ package com.gofobao.framework.common.assets;
 
 public enum AssetChangeTypeEnum {
 
+
+    /**
+     * 投资人到期收回本息
+     */
+    makeUpReceivedPayments("正常回款", "makeUpReceivedPayments", "7781", "add@useMoney", "add@incomeInterest#interest", "D"),
+
     /**
      * 净值标借款入账
      */
@@ -43,10 +49,21 @@ public enum AssetChangeTypeEnum {
      */
     freeze("资金冻结", "freeze", "0", "sub@useMoney,add@noUseMoney", "", "B"),
 
+
     /**
      * 理财计划冻结
      */
     financePlanFreeze("理财计划资金冻结", "finance_plan_freeze", "", "sub@useMoney,add@financePlanMoney", "", "B"),
+
+    /**
+     * 用户购买理财计划债权
+     */
+    financeBatchBuyClaims("购买理财计划债权", "finance_batch_buy_claims", "2789", "sub@financePlanMoney", "", "C"),
+
+    /**
+     * 出售理财计划债权
+     */
+    financeBatchSellBonds("出售理财计划债权", "finance_batch_sell_bonds", "7785", "add@financePlanMoney", "", "D"),
 
     /**
      * 理财计划接触冻结
@@ -112,6 +129,11 @@ public enum AssetChangeTypeEnum {
      * 出借人投标
      */
     tender("投标", "tender", "2780", "sub@noUseMoney", "", "C"),
+
+    /**
+     * 借款人借款入账
+     */
+    financeBorrow("理财计划借款入账", "financeBorrow", "7780", "add@useMoney", "", "D"),
 
     /**
      * 借款人借款入账

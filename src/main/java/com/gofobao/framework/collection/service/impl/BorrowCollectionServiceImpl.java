@@ -98,6 +98,10 @@ public class BorrowCollectionServiceImpl implements BorrowCollectionService {
         return Optional.ofNullable(borrowCollections).orElse(Collections.EMPTY_LIST);
     }
 
+    public BorrowCollection findById(long id) {
+        return borrowCollectionRepository.findOne(id);
+    }
+
     /**
      * PC:回款列表
      *
@@ -165,7 +169,7 @@ public class BorrowCollectionServiceImpl implements BorrowCollectionService {
             item.setCreateTime((String) objects[0]);
             item.setCollectionMoney(StringHelper.toString((Long) objects[1] / 100D));
             item.setPrincipal(StringHelper.toString((Long) objects[2] / 100D));
-            item.setInterest(StringHelper.toString((Long) objects[3]/100D));
+            item.setInterest(StringHelper.toString((Long) objects[3] / 100D));
             item.setOrderCount((Long) objects[4]);
             collectionLists.add(item);
         });
@@ -212,7 +216,7 @@ public class BorrowCollectionServiceImpl implements BorrowCollectionService {
             collection.setPrincipal(StringHelper.formatMon(p.getPrincipal() / 100D));
             collection.setCollectionAt(DateHelper.dateToString(p.getCollectionAt()));
             collection.setOrder(p.getOrder() + 1);
-            collection.setTimeLimit(BorrowContants.REPAY_FASHION_ONCE==borrow.getRepayFashion()?BorrowContants.REPAY_FASHION_ONCE:borrow.getTimeLimit());
+            collection.setTimeLimit(BorrowContants.REPAY_FASHION_ONCE == borrow.getRepayFashion() ? BorrowContants.REPAY_FASHION_ONCE : borrow.getTimeLimit());
             if (borrow.getType().intValue() == 0 || borrow.getType().intValue() == 4) { //官标
                 collection.setEarnings(StringHelper.formatMon((p.getInterest() * 0.9) / 100D));
             } else {

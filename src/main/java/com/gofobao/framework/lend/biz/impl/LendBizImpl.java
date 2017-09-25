@@ -174,7 +174,7 @@ public class LendBizImpl implements LendBiz {
      */
     @Transactional(rollbackFor = Exception.class)
     public ResponseEntity<VoBaseResp> create(VoCreateLend voCreateLend) {
-        Double money = voCreateLend.getMoney();//借款金额（分）
+        Double money = voCreateLend.getMoney();//借款金额（元）
         Double lowest = voCreateLend.getLowest();
         Integer timeLimit = voCreateLend.getTimeLimit();
         Date repayAt = DateHelper.stringToDate(voCreateLend.getRepayAt());

@@ -25,6 +25,15 @@ import java.util.Map;
 public interface TransferBiz {
 
     /**
+     * 理财计划债权转让复审
+     *
+     * @param transferId
+     * @return
+     */
+    ResponseEntity<VoBaseResp> againFinanceVerifyTransfer(long transferId, String batchNo) throws Exception;
+
+
+    /**
      * 查询债权转让购买记录
      *
      * @return

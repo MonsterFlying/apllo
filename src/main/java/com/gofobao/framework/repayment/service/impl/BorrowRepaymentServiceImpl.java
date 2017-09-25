@@ -18,6 +18,7 @@ import com.gofobao.framework.repayment.vo.response.RepayCollectionLog;
 import com.gofobao.framework.repayment.vo.response.RepaymentOrderDetail;
 import com.gofobao.framework.repayment.vo.response.pc.VoCollection;
 import com.gofobao.framework.repayment.vo.response.pc.VoOrdersList;
+import com.gofobao.framework.system.biz.ThirdBatchDealLogBiz;
 import com.gofobao.framework.system.contants.ThirdBatchLogContants;
 import com.gofobao.framework.system.entity.ThirdBatchLog;
 import com.gofobao.framework.system.service.ThirdBatchLogService;
@@ -61,6 +62,9 @@ public class BorrowRepaymentServiceImpl implements BorrowRepaymentService {
 
     @Autowired
     private ThirdBatchLogService thirdBatchLogService;
+
+    @Autowired
+    private ThirdBatchDealLogBiz thirdBatchDealLogBiz;
 
 
     /**
@@ -194,21 +198,22 @@ public class BorrowRepaymentServiceImpl implements BorrowRepaymentService {
             Specification<ThirdBatchLog> thirdBatchLogSpecification = Specifications.<ThirdBatchLog>and()
                     .eq("type", ThirdBatchLogContants.BATCH_REPAY)
                     .eq("sourceId", p.getId())
-                    .in("state",Lists.newArrayList(0,1).toArray())
+                    .in("state", Lists.newArrayList(0, 1).toArray())
                     .build();
             List<ThirdBatchLog> thirdBatchLogs = thirdBatchLogService.findList(thirdBatchLogSpecification);
 
             VoCollection collection = new VoCollection();
             collection.setOrder(p.getOrder() + 1);
             Borrow borrow = borrowMap.get(p.getBorrowId());
-            collection.setTimeLimit(borrow.getRepayFashion()== BorrowContants.REPAY_FASHION_ONCE?BorrowContants.REPAY_FASHION_ONCE:borrow.getTimeLimit());
+            collection.setTimeLimit(borrow.getRepayFashion() == BorrowContants.REPAY_FASHION_ONCE ? BorrowContants.REPAY_FASHION_ONCE : borrow.getTimeLimit());
             collection.setLend(!StringUtils.isEmpty(borrow.getLendId()) ? true : false);
             collection.setRepayAt(!StringUtils.isEmpty(borrow.getLendId()) ? DateHelper.dateToString(p.getRepayAt(), DateHelper.DATE_FORMAT_YMD) : DateHelper.dateToString(p.getRepayAt()));
             collection.setRepaymentId(p.getId());
-            collection.setStatus(p.getStatus()==0?!CollectionUtils.isEmpty(thirdBatchLogs)?2:p.getStatus():p.getStatus());
+            collection.setStatus(p.getStatus() == 0 ? !CollectionUtils.isEmpty(thirdBatchLogs) ? 2 : p.getStatus() : p.getStatus());
             collection.setBorrowName(borrow.getName());
             collection.setPrincipal(StringHelper.formatMon(p.getPrincipal() / 100D));
             collection.setInterest(StringHelper.formatMon(p.getInterest() / 100D));
+            collection.setVoFindRepayStatusList(thirdBatchDealLogBiz.getVoFindRepayStatusList(null, p.getId()));
             collections.add(collection);
         });
         resultMaps.put("repaymentList", collections);
@@ -250,7 +255,7 @@ public class BorrowRepaymentServiceImpl implements BorrowRepaymentService {
         Specification<ThirdBatchLog> thirdBatchLogSpecification = Specifications.<ThirdBatchLog>and()
                 .eq("type", ThirdBatchLogContants.BATCH_REPAY)
                 .eq("sourceId", borrowRepayment.getId())
-                .in("state",Lists.newArrayList(0,1).toArray())
+                .in("state", Lists.newArrayList(0, 1).toArray())
                 .build();
         Date nowDate = new Date();   //当前时间
         Date tempRepayAt = DateHelper.nextDate(borrowRepayment.getRepayAt());  //还款日（第二天0点之前都算 还款日）
@@ -262,7 +267,7 @@ public class BorrowRepaymentServiceImpl implements BorrowRepaymentService {
         } else if (!StringUtils.isEmpty(borrowRepayment.getAdvanceAtYes())) {
             lateDays = DateHelper.diffInDays(DateHelper.nextDate(borrowRepayment.getAdvanceAtYes()), tempRepayAt, false);
             //当前时间大于还款日（逾期)&&未还款
-        } else if(nowDate.getTime()>tempRepayAt.getTime()&&borrowRepayment.getStatus()==RepaymentContants.STATUS_NO){
+        } else if (nowDate.getTime() > tempRepayAt.getTime() && borrowRepayment.getStatus() == RepaymentContants.STATUS_NO) {
             lateDays = DateHelper.diffInDays(nowDate, tempRepayAt, false);
         }
         detailRes.setLateDays(lateDays);

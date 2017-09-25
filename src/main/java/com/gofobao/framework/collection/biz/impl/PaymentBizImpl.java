@@ -25,6 +25,7 @@ import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.helper.StringHelper;
 import com.gofobao.framework.repayment.entity.BorrowRepayment;
 import com.gofobao.framework.repayment.service.BorrowRepaymentService;
+import com.gofobao.framework.system.biz.ThirdBatchDealLogBiz;
 import com.gofobao.framework.tender.contants.BorrowContants;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
@@ -61,6 +62,9 @@ public class PaymentBizImpl implements PaymentBiz {
     @Autowired
     private BorrowRepaymentService borrowRepaymentService;
 
+    @Autowired
+    private ThirdBatchDealLogBiz thirdBatchDealLogBiz;
+
     /**
      * 回款列表
      *
@@ -89,7 +93,7 @@ public class PaymentBizImpl implements PaymentBiz {
 
             List<VoViewCollectionOrderRes> orderResList = new ArrayList<>();
             long sumCollectionMoneyYes = 0;
-            for (BorrowCollection borrowCollection : borrowCollections){
+            for (BorrowCollection borrowCollection : borrowCollections) {
                 VoViewCollectionOrderRes item = new VoViewCollectionOrderRes();
                 Borrow borrow = borrowMap.get(borrowCollection.getBorrowId());
                 /*回款对应期数还款记录*/
@@ -104,13 +108,13 @@ public class PaymentBizImpl implements PaymentBiz {
                 item.setStatus(borrowCollection.getStatus());
                 item.setCollectionId(borrowCollection.getId());
                 item.setOrder(borrowCollection.getOrder() + 1);
-                item.setTimeLime(borrow.getRepayFashion()== BorrowContants.REPAY_FASHION_YCBX_NUM?1:borrow.getTimeLimit());
+                item.setTimeLime(borrow.getRepayFashion() == BorrowContants.REPAY_FASHION_YCBX_NUM ? 1 : borrow.getTimeLimit());
                 item.setCollectionMoney(StringHelper.formatMon(borrowCollection.getCollectionMoney() / 100d));
-                if(borrowCollection.getStatus().intValue() == BorrowCollectionContants.STATUS_YES.intValue() ) {  // 已还款
+                if (borrowCollection.getStatus().intValue() == BorrowCollectionContants.STATUS_YES.intValue()) {  // 已还款
                     item.setCollectionMoneyYes(StringHelper.formatMon(borrowCollection.getCollectionMoneyYes() / 100d));
                     sumCollectionMoneyYes += borrowCollection.getCollectionMoney();
-                }else{
-                    item.setCollectionMoneyYes(StringHelper.formatMon( 0 ));
+                } else {
+                    item.setCollectionMoneyYes(StringHelper.formatMon(0));
                 }
 
                 orderResList.add(item);
@@ -163,15 +167,15 @@ public class PaymentBizImpl implements PaymentBiz {
 
         List<CollectionList> collectionLists = borrowCollectionService.toExecl(listReq);
 
-        if(!CollectionUtils.isEmpty(collectionLists)){
-            LinkedHashMap<String,String >paramMaps=Maps.newLinkedHashMap();
-            paramMaps.put("createTime","时间");
-            paramMaps.put("collectionMoney","待收本息");
-            paramMaps.put("principal","待收本金");
-            paramMaps.put("interest","待收利息");
-            paramMaps.put("orderCount","笔数");
+        if (!CollectionUtils.isEmpty(collectionLists)) {
+            LinkedHashMap<String, String> paramMaps = Maps.newLinkedHashMap();
+            paramMaps.put("createTime", "时间");
+            paramMaps.put("collectionMoney", "待收本息");
+            paramMaps.put("principal", "待收本金");
+            paramMaps.put("interest", "待收利息");
+            paramMaps.put("orderCount", "笔数");
             try {
-                ExcelUtil.listToExcel(collectionLists,paramMaps,"回款明细",response);
+                ExcelUtil.listToExcel(collectionLists, paramMaps, "回款明细", response);
             } catch (ExcelException e) {
                 e.printStackTrace();
             }
@@ -281,13 +285,14 @@ public class PaymentBizImpl implements PaymentBiz {
                     collectionDetail.setCollectionAt(DateHelper.dateToString(borrowCollection.getCollectionAt(), DateHelper.DATE_FORMAT_YMD));
                     collectionDetail.setPrincipal(StringHelper.formatDouble(borrowCollection.getPrincipal(), 100, false));
                     if (borrow.getType().intValue() == 0 || borrow.getType().intValue() == 4) {
-                        collectionDetail.setEarnings(StringHelper.formatMon((borrowCollection.getInterest()*0.9)/100D));
-                    }else{
-                        collectionDetail.setEarnings(StringHelper.formatMon(borrowCollection.getInterest()/100D));
+                        collectionDetail.setEarnings(StringHelper.formatMon((borrowCollection.getInterest() * 0.9) / 100D));
+                    } else {
+                        collectionDetail.setEarnings(StringHelper.formatMon(borrowCollection.getInterest() / 100D));
                     }
                     collectionDetail.setInterest(StringHelper.formatDouble(borrowCollection.getInterest(), 100D, false));
                     collectionDetail.setOrderStr(borrowCollection.getOrder() + 1 + "/" + borrow.getTotalOrder());
                     collectionDetail.setBorrowId(borrow.getId());
+                    collectionDetail.setVoFindRepayStatusList(thirdBatchDealLogBiz.getVoFindRepayStatusList(borrowCollection.getId(), null));
                     collectionDetailList.add(collectionDetail);
                 }
             }

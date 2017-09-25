@@ -71,6 +71,8 @@ public interface BorrowCollectionService {
 
     List<BorrowCollection> findList(Specification<BorrowCollection> specification);
 
+    BorrowCollection findById(long id);
+
     long count(Specification<BorrowCollection> specification);
 
     boolean updateBySpecification(BorrowCollection borrowCollection, Specification<BorrowCollection> specification);

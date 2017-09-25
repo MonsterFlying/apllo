@@ -9,6 +9,7 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -34,7 +35,7 @@ public class WebFinanceController {
      */
     @ApiOperation("理财计划匹配债权转让")
     @PostMapping("/v2/pub/finance/plan/tender")
-    public ResponseEntity<VoViewFinancePlanTender> financePlanTender(@Valid VoFinancePlanTender voFinancePlanTender) {
+    public ResponseEntity<VoViewFinancePlanTender> financePlanTender(@Valid @ModelAttribute VoFinancePlanTender voFinancePlanTender) {
         try {
             return financePlanBiz.financePlanTender(voFinancePlanTender);
         } catch (Exception e) {
@@ -50,7 +51,7 @@ public class WebFinanceController {
      */
     @ApiOperation("理财计划资金变动")
     @PostMapping("/v2/pub/finance/plan/asset/change")
-    public ResponseEntity<VoBaseResp> financePlanAssetChange(VoFinancePlanAssetChange voFinancePlanAssetChange) {
+    public ResponseEntity<VoBaseResp> financePlanAssetChange(@Valid @ModelAttribute VoFinancePlanAssetChange voFinancePlanAssetChange) {
         try {
             return financePlanBiz.financePlanAssetChange(voFinancePlanAssetChange);
         } catch (Exception e) {

@@ -12,6 +12,8 @@ public class ThirdBatchLogContants {
     /*public static final int BATCH_REPAY_BAIL = 5;批次融资人还担保账户垫款*/
     public static final int BATCH_CREDIT_END = 6;/*批次结束投资人债权*/
     public static final int BATCH_REPAY_ALL = 7;/*提前结清批次还款*/
+    public static final int BATCH_FINANCE_CREDIT_INVEST = 8; /*理财计划批次购买债权 */
+    public static final int BATCH_FINANCE_LEND_REPAY = 9; /*理财计划批次即信批次放款 */
 
     //存管批次状态
     public static final String AWAIT_DISPOSE = "A";/* 等待处理 */
@@ -31,4 +33,10 @@ public class ThirdBatchLogContants {
     public static final String BORROW_THIRD_STEP = "存管系统接受平台放款请求";
     public static final String BORROW_FOUR_STEP = "存管确定平台放款请求";
     public static final String BORROW_FIVE_STEP = "存管放款";
+
+    //存管报备状态
+    public static final String REPAYMENT_FIRST_STEP = "借款本地还款";
+    public static final String REPAYMENT_SECOND_STEP = "存管系统接受平台还款请求";
+    public static final String REPAYMENT_THIRD_STEP = "存管确定平台还款请求";
+    public static final String REPAYMENT_FOUR_STEP = "存管还款";
 }

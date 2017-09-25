@@ -51,15 +51,12 @@ public class BorrowProvider {
         }
 
         log.info(String.format("复审: 批量正常放款申请开始: %s", GSON.toJson(msg)));
-        //更新满标时间
-        borrow.setSuccessAt(new Date());
-        borrowService.save(borrow);
 
         //批次放款
         VoThirdBatchLendRepay voThirdBatchLendRepay = new VoThirdBatchLendRepay();
         voThirdBatchLendRepay.setBorrowId(borrowId);
         ResponseEntity<VoBaseResp> resp = borrowRepaymentThirdBiz.thirdBatchLendRepay(voThirdBatchLendRepay);
-        if (ObjectUtils.isEmpty(resp)) {
+        if (resp.getBody().getState().getCode() == VoBaseResp.OK) {
             log.info(String.format("复审: 批量正常放款申请申请成功: %s", GSON.toJson(msg)));
             return true;
         } else {

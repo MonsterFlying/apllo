@@ -11,6 +11,7 @@ import com.gofobao.framework.repayment.vo.response.VoViewRepayCollectionLogWarpR
 import com.gofobao.framework.repayment.vo.response.VoViewRepaymentOrderDetailWarpRes;
 import com.gofobao.framework.repayment.vo.response.pc.VoViewCollectionWarpRes;
 import com.gofobao.framework.repayment.vo.response.pc.VoViewOrderListWarpRes;
+import com.gofobao.framework.system.entity.Statistic;
 import org.springframework.http.ResponseEntity;
 
 import javax.servlet.http.HttpServletResponse;
@@ -33,7 +34,7 @@ public interface RepaymentBiz {
      *
      * @param borrowId
      */
-    ResponseEntity<VoBaseResp> repayAllDeal(long borrowId,String batchNo) throws Exception;
+    ResponseEntity<VoBaseResp> repayAllDeal(long borrowId, String batchNo, Statistic statistic) throws Exception;
 
     /**
      * pc提前结清
@@ -119,7 +120,7 @@ public interface RepaymentBiz {
      * @return
      * @throws Exception
      */
-    ResponseEntity<VoBaseResp> newRepayDeal(long repaymentId, String batchNo) throws Exception;
+    ResponseEntity<VoBaseResp> newRepayDeal(long repaymentId, String batchNo, Statistic statistic) throws Exception;
 
     /**
      * 当前应还款日期
@@ -146,7 +147,7 @@ public interface RepaymentBiz {
      * @return
      * @throws Exception
      */
-    ResponseEntity<VoBaseResp> newAdvanceDeal(long repaymentId, String batchNo) throws Exception;
+    ResponseEntity<VoBaseResp> newAdvanceDeal(long repaymentId, String batchNo, Statistic statistic) throws Exception;
 
     /**
      * 新版垫付
