@@ -421,20 +421,23 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
 
         List<Tender> tenderList = tenderService.findList(ts);
         Preconditions.checkNotNull(tenderList, "批次放款调用: 投标记录为空");
+
         Borrow borrow = borrowService.findById(borrowId);
         Preconditions.checkNotNull(borrow, "批次放款调用: 标的信息为空 ");
+
         UserThirdAccount takeUserThirdAccount = userThirdAccountService.findByUserId(borrow.getUserId());// 收款人存管账户记录
         Preconditions.checkNotNull(takeUserThirdAccount, "借款人未开户!");
 
-            /*查询受托支付是否成功*/
-        TrusteePayQueryReq request = new TrusteePayQueryReq();
-        request.setAccountId(takeUserThirdAccount.getAccountId());
-        request.setProductId(borrow.getProductId());
-        request.setChannel(ChannelContant.HTML);
-        TrusteePayQueryResp trusteePayQueryResp = jixinManager.send(JixinTxCodeEnum.TRUSTEE_PAY_QUERY, request, TrusteePayQueryResp.class);
+        /*查询受托支付是否成功*/
+        TrusteePayQueryReq trusteePayQueryReq = new TrusteePayQueryReq();
+        trusteePayQueryReq.setAccountId(takeUserThirdAccount.getAccountId());
+        trusteePayQueryReq.setProductId(borrow.getProductId());
+        trusteePayQueryReq.setChannel(ChannelContant.HTML);
+        TrusteePayQueryResp trusteePayQueryResp = jixinManager.send(JixinTxCodeEnum.TRUSTEE_PAY_QUERY, trusteePayQueryReq, TrusteePayQueryResp.class);
         if (ObjectUtils.isEmpty(trusteePayQueryResp)) {
             throw new Exception("批次放款调用：受托支付查询失败,msg->" + trusteePayQueryResp.getRetMsg());
         }
+
         if ("1".equals(trusteePayQueryResp.getState())) {
                      /*收款人id*/
             Long takeUserId = borrow.getTakeUserId();
