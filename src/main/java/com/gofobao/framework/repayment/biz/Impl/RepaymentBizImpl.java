@@ -2081,7 +2081,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
      * @return
      */
     private int getLateDays(BorrowRepayment borrowRepayment) {
-        Date nowDateOfBegin = DateHelper.beginOfDate(new Date());
+        Date nowDateOfBegin = DateHelper.beginOfDate(DateHelper.addHours(new Date(), 3));
         Date repayDateOfBegin = DateHelper.beginOfDate(borrowRepayment.getRepayAt());
         int lateDays = DateHelper.diffInDays(nowDateOfBegin, repayDateOfBegin, false);
         lateDays = lateDays < 0 ? 0 : lateDays;
