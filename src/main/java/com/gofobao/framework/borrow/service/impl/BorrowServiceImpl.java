@@ -24,6 +24,7 @@ import com.gofobao.framework.tender.service.TransferService;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
@@ -94,16 +95,20 @@ public class BorrowServiceImpl implements BorrowService {
             new Integer(BorrowContants.PENDING));
 
 
+
     LoadingCache<String, Borrow> newBorrow = CacheBuilder
             .newBuilder()
             .expireAfterWrite(60, TimeUnit.MINUTES)
             .maximumSize(1024)
             .build(new CacheLoader<String, Borrow>() {
+                ImmutableList states = ImmutableList.of(1, 3) ;
                 @Override
                 public Borrow load(String type) throws Exception {
                     Specification<Borrow> specification = Specifications
                             .<Borrow>and()
-                            .eq("isNovice", true).build();
+                            .eq("isNovice", true)
+                            .in("status", states.toArray())
+                            .build();
                     Page<Borrow> page = borrowRepository.findAll(specification,
                             new PageRequest(0, 1, new Sort(new Sort.Order(Sort.Direction.DESC, "id"))));
                     List<Borrow> content = page.getContent();
