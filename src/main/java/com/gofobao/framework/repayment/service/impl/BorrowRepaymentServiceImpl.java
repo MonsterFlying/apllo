@@ -8,6 +8,7 @@ import com.gofobao.framework.collection.vo.request.VoCollectionListReq;
 import com.gofobao.framework.collection.vo.request.VoCollectionOrderReq;
 import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.helper.StringHelper;
+import com.gofobao.framework.repayment.biz.RepaymentBiz;
 import com.gofobao.framework.repayment.contants.RepaymentContants;
 import com.gofobao.framework.repayment.entity.BorrowRepayment;
 import com.gofobao.framework.repayment.repository.BorrowRepaymentRepository;
@@ -66,6 +67,8 @@ public class BorrowRepaymentServiceImpl implements BorrowRepaymentService {
     @Autowired
     private ThirdBatchDealLogBiz thirdBatchDealLogBiz;
 
+    @Autowired
+    private RepaymentBiz repaymentBiz;
 
     /**
      * 还款计划列表
@@ -264,11 +267,8 @@ public class BorrowRepaymentServiceImpl implements BorrowRepaymentService {
         if (borrowRepayment.getStatus() == RepaymentContants.STATUS_YES || tempRepayAt.getTime() > nowDate.getTime()) {
             lateDays = borrowRepayment.getLateDays();
             //当前是否是垫付
-        } else if (!StringUtils.isEmpty(borrowRepayment.getAdvanceAtYes())) {
-            lateDays = DateHelper.diffInDays(DateHelper.nextDate(borrowRepayment.getAdvanceAtYes()), tempRepayAt, false);
-            //当前时间大于还款日（逾期)&&未还款
         } else if (nowDate.getTime() > tempRepayAt.getTime() && borrowRepayment.getStatus() == RepaymentContants.STATUS_NO) {
-            lateDays = DateHelper.diffInDays(nowDate, tempRepayAt, false);
+            lateDays = repaymentBiz.getLateDays(borrowRepayment);
         }
         detailRes.setLateDays(lateDays);
         List<ThirdBatchLog> thirdBatchLogs = thirdBatchLogService.findList(thirdBatchLogSpecification);

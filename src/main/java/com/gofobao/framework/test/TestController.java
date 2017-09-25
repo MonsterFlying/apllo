@@ -220,7 +220,8 @@ public class TestController {
             } catch (Exception e) {
                 log.error("补发失败:", e);
             }
-            int lateDays = DateHelper.diffInDays(DateHelper.beginOfDate(new Date()), DateHelper.beginOfDate(borrowCollection.getCollectionAt()), false);
+            int lateDays = DateHelper.diffInDays(DateHelper.beginOfDate(DateHelper.addHours(new Date(), 3)),
+                    DateHelper.beginOfDate(borrowCollection.getCollectionAt()), false);
             long overPricipal = new Double(MoneyHelper.round(MoneyHelper.multiply(MoneyHelper.multiply(borrowCollection.getPrincipal(), 0.001), lateDays), 0)).longValue();  // 每天逾期费
 
             assetChange = new AssetChange();

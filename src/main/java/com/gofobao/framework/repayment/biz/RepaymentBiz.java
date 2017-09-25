@@ -6,6 +6,7 @@ import com.gofobao.framework.collection.vo.request.VoCollectionOrderReq;
 import com.gofobao.framework.collection.vo.response.VoViewCollectionDaysWarpRes;
 import com.gofobao.framework.collection.vo.response.VoViewCollectionOrderListWarpResp;
 import com.gofobao.framework.core.vo.VoBaseResp;
+import com.gofobao.framework.repayment.entity.BorrowRepayment;
 import com.gofobao.framework.repayment.vo.request.*;
 import com.gofobao.framework.repayment.vo.response.VoViewRepayCollectionLogWarpRes;
 import com.gofobao.framework.repayment.vo.response.VoViewRepaymentOrderDetailWarpRes;
@@ -121,6 +122,14 @@ public interface RepaymentBiz {
      * @throws Exception
      */
     ResponseEntity<VoBaseResp> newRepayDeal(long repaymentId, String batchNo, Statistic statistic) throws Exception;
+
+    /**
+     * 获取逾期天数
+     *
+     * @param borrowRepayment
+     * @return
+     */
+    int getLateDays(BorrowRepayment borrowRepayment);
 
     /**
      * 当前应还款日期
