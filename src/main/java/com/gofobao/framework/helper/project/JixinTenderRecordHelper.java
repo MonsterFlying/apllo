@@ -105,7 +105,7 @@ public class JixinTenderRecordHelper {
                 bidCancelReq.setTxAmount(item.getTxAmount()); // 投标金额
 
                 BidCancelResp bidCancelResp = jixinManager.send(JixinTxCodeEnum.BID_CANCEL, bidCancelReq, BidCancelResp.class);
-                if (ObjectUtils.isEmpty(bidCancelResp) || JixinResultContants.SUCCESS.equals(bidCancelResp.getRetCode())) {
+                if (ObjectUtils.isEmpty(bidCancelResp) || !JixinResultContants.SUCCESS.equals(bidCancelResp.getRetCode())) {
                     String data = gson.toJson(bidCancelReq);
                     exceptionEmailHelper.sendErrorMessage("即信自动投标取消失败", data);
                     continue;

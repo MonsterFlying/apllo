@@ -29,9 +29,6 @@
             <onMismatch>DENY</onMismatch>
         </filter>
     </appender> <!-- 日志记录器，日期滚动记录 -->
-    <logger name="org.springframework" level="WARN" additivity="true">
-        <appender-ref ref="STDOUT"/>
-    </logger>
     <root level="INFO"> <!-- 为了不让控制台显示那么多 无用的 debug 代码所以 注释掉 <appender-ref ref="STDOUT" /> -->
         <appender-ref ref="STDOUT"/>
         <appender-ref ref="FILE_LOG"/>

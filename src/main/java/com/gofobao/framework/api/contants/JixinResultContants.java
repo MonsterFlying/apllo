@@ -1659,6 +1659,19 @@ public class JixinResultContants {
      */
     public static final String ERROR_504 = "ERROR_504";
 
+    /**
+     * 访问频率超限
+     */
+    public static final String ERROR_JX900032 = "JX900032";
+    /**
+     * 交易未开通
+     */
+    public static final String ERROR_JX900663 = "JX900663";
+
+
+
+
+
 
     public static final String[] TO_BE_CONFIRM_ARRS;
 

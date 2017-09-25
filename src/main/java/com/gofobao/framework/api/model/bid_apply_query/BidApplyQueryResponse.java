@@ -7,7 +7,7 @@ import lombok.Data;
  * Created by Zeke on 2017/6/14.
  */
 @Data
-public class BidApplyQueryResp extends JixinBaseResponse {
+public class BidApplyQueryResponse extends JixinBaseResponse {
     /**
      * 买入方账号
      */

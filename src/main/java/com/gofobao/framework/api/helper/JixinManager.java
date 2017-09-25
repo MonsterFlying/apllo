@@ -61,10 +61,6 @@ public class JixinManager {
     @Value("${jixin.bankCode}")
     String bankCode;
 
-    @Autowired
-    JixinTxLogBizImpl jixinTxLogBiz;
-
-
     /**
      * 获取url
      *
@@ -162,7 +158,6 @@ public class JixinManager {
         String unSign = StringHelper.mergeMap(params);
         String sign = certHelper.doSign(unSign);
         params.put("sign", sign);
-        jixinTxLogBiz.saveRequest(txCodeEnum, params);
         log.info("=============================================");
         log.info(String.format("[%s] 报文流水：%s%s%s", txCodeEnum.getName(), req.getTxDate(), req.getTxTime(), req.getSeqNo()));
         log.info("=============================================");
@@ -229,7 +224,6 @@ public class JixinManager {
         // 验证参数
         Map<String, String> param = gson.fromJson(bgData, new TypeToken<Map<String, String>>() {
         }.getType());
-        jixinTxLogBiz.saveResponse(param);
         String unsige = StringHelper.mergeMap(param);
         boolean result = certHelper.verify(unsige, param.get("sign"));
         if (!result) {
@@ -237,6 +231,10 @@ public class JixinManager {
             return null;
         }
 
+        // 未开通交易接口发送邮件通知
+        if (JixinResultContants.ERROR_JX900663.equalsIgnoreCase(t.getRetCode())) {
+            exceptionEmailHelper.sendErrorMessage("访问权限受限, 需要联系即信", t.getTxCode());
+        }
         t.setRetMsg(JixinResultContants.getMessage(t.getRetCode()));
         return t;
     }
@@ -259,7 +257,6 @@ public class JixinManager {
         // 验证参数
         Map<String, String> param = gson.fromJson(bgData, new TypeToken<Map<String, String>>() {
         }.getType());
-        jixinTxLogBiz.saveResponse(param);
         String unsige = StringHelper.mergeMap(param);
         boolean result = certHelper.verify(unsige, param.get("sign"));
         if (!result) {
@@ -305,7 +302,6 @@ public class JixinManager {
         log.info(String.format("[%s]报文流水：%s%s%s", txCodeEnum.getName(), req.getTxDate(), req.getTxTime(), req.getSeqNo()));
         log.info("=============================================");
         log.info(String.format("即信请求报文: url=%s body=%s", url, gson.toJson(params)));
-        jixinTxLogBiz.saveRequest(txCodeEnum, params);
         initHttps();
         HttpEntity entity = getHttpEntity(params);
         RestTemplate restTemplate = new RestTemplate();
@@ -335,15 +331,15 @@ public class JixinManager {
                     return null;
                 }
             }
-        }
 
+            return null;
+        }
 
         checkNotNull(response);
         S body = response.getBody();
         // 验证参数
         String bodyJson = gson.toJson(body);
         Map<String, String> unverifyParams = gson.fromJson(bodyJson, TypeTokenContants.MAP_ALL_STRING_TOKEN);
-        jixinTxLogBiz.saveResponse(unverifyParams);
         String unsige = StringHelper.mergeMap(unverifyParams);
         boolean result = certHelper.verify(unsige, unverifyParams.get("sign"));
         if (!result) {
@@ -353,7 +349,12 @@ public class JixinManager {
 
         log.info(String.format("即信响应报文:url=%s body=%s", url, gson.toJson(body)));
         body.setRetMsg(JixinResultContants.getMessage(body.getRetCode()));
-        // 请求插入数据
+
+        // 未开通交易接口发送邮件通知
+        if (JixinResultContants.ERROR_JX900663.equalsIgnoreCase(body.getRetCode())) {
+            exceptionEmailHelper.sendErrorMessage("访问权限受限, 需要联系即信", body.getTxCode());
+        }
+
         return body;
     }
 

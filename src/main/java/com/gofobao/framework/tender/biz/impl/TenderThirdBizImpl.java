@@ -8,8 +8,8 @@ import com.gofobao.framework.api.helper.JixinTxCodeEnum;
 import com.gofobao.framework.api.model.batch_credit_invest.BatchCreditInvestCheckCall;
 import com.gofobao.framework.api.model.batch_credit_invest.BatchCreditInvestRunCall;
 import com.gofobao.framework.api.model.batch_credit_invest.CreditInvestRun;
-import com.gofobao.framework.api.model.bid_apply_query.BidApplyQueryReq;
-import com.gofobao.framework.api.model.bid_apply_query.BidApplyQueryResp;
+import com.gofobao.framework.api.model.bid_apply_query.BidApplyQueryRequest;
+import com.gofobao.framework.api.model.bid_apply_query.BidApplyQueryResponse;
 import com.gofobao.framework.api.model.bid_auto_apply.BidAutoApplyRequest;
 import com.gofobao.framework.api.model.bid_auto_apply.BidAutoApplyResponse;
 import com.gofobao.framework.api.model.bid_cancel.BidCancelReq;
@@ -18,9 +18,7 @@ import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.borrow.service.BorrowService;
 import com.gofobao.framework.common.constans.TypeTokenContants;
 import com.gofobao.framework.core.vo.VoBaseResp;
-import com.gofobao.framework.helper.JixinHelper;
-import com.gofobao.framework.helper.NumberHelper;
-import com.gofobao.framework.helper.StringHelper;
+import com.gofobao.framework.helper.*;
 import com.gofobao.framework.member.entity.UserThirdAccount;
 import com.gofobao.framework.member.service.UserThirdAccountService;
 import com.gofobao.framework.system.biz.ThirdBatchDealBiz;
@@ -51,6 +49,7 @@ import org.springframework.util.ObjectUtils;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.PrintWriter;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
@@ -64,23 +63,36 @@ import java.util.stream.Collectors;
 public class TenderThirdBizImpl implements TenderThirdBiz {
 
     final Gson GSON = new GsonBuilder().create();
+
     @Autowired
     private UserThirdAccountService userThirdAccountService;
+
     @Autowired
     private JixinManager jixinManager;
+
     @Autowired
     private TenderService tenderService;
+
     @Autowired
     private BorrowService borrowService;
+
     @Autowired
     private ThirdBatchLogBiz thirdBatchLogBiz;
+
     @Autowired
     private TransferBuyLogService transferBuyLogService;
+
     @Autowired
     private ThirdBatchDealBiz thirdBatchDealBiz;
+
     @Value("${gofobao.javaDomain}")
     private String javaDomain;
 
+    @Autowired
+    ExceptionEmailHelper exceptionEmailHelper;
+
+    @Autowired
+    JixinHelper jixinHelper;
 
     public ResponseEntity<VoBaseResp> createThirdTender(VoCreateThirdTenderReq voCreateThirdTenderReq) {
         Long userId = voCreateThirdTenderReq.getUserId();
@@ -97,52 +109,244 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "投标人未进行投标签约!"));
         }
         Long autoTenderTxAmount = userThirdAccount.getAutoTenderTxAmount();
-        if (autoTenderTxAmount < (NumberHelper.toDouble(txAmount) * 100)) {
+        if (autoTenderTxAmount < MoneyHelper.yuanToFen(txAmount)) {
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "投标金额超出签约单笔最大投标额!"));
         }
         Long autoTenderTotAmount = userThirdAccount.getAutoTenderTotAmount();
-        if (autoTenderTotAmount < (NumberHelper.toDouble(txAmount) * 100)) {
+        if (autoTenderTotAmount < MoneyHelper.yuanToFen(txAmount)) {
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "投标金额超出签约总投标额!"));
         }
 
-        BidAutoApplyRequest request = new BidAutoApplyRequest();
-        request.setAccountId(userThirdAccount.getAccountId());
-        request.setOrderId(orderId);
-        request.setTxAmount(voCreateThirdTenderReq.getTxAmount());
-        request.setProductId(voCreateThirdTenderReq.getProductId());
-        request.setFrzFlag(voCreateThirdTenderReq.getFrzFlag());
-        request.setContOrderId(autoTenderOrderId);
-        request.setAcqRes(voCreateThirdTenderReq.getAcqRes());
-        request.setChannel(ChannelContant.HTML);
-
-        BidAutoApplyResponse response = jixinManager.send(JixinTxCodeEnum.BID_AUTO_APPLY, request, BidAutoApplyResponse.class);
-        if ((ObjectUtils.isEmpty(response)) || (!JixinResultContants.SUCCESS.equals(response.getRetCode()))) {
-            String msg = ObjectUtils.isEmpty(response) ? "当前网络不稳定，请稍候重试" : response.getRetMsg();
-            log.error(String.format("进入投标撤回程序: %s", msg));
+        BidAutoApplyRequest bidAutoApplyRequest = new BidAutoApplyRequest();
+        bidAutoApplyRequest.setAccountId(userThirdAccount.getAccountId());
+        bidAutoApplyRequest.setOrderId(orderId);
+        bidAutoApplyRequest.setTxAmount(voCreateThirdTenderReq.getTxAmount());
+        bidAutoApplyRequest.setProductId(voCreateThirdTenderReq.getProductId());
+        bidAutoApplyRequest.setFrzFlag(voCreateThirdTenderReq.getFrzFlag());
+        bidAutoApplyRequest.setContOrderId(autoTenderOrderId);
+        bidAutoApplyRequest.setAcqRes(voCreateThirdTenderReq.getAcqRes());
+        bidAutoApplyRequest.setChannel(ChannelContant.HTML);
+        BidAutoApplyResponse bidAutoApplyResponse = doSafetyRegisterJixinTender(bidAutoApplyRequest, 3);  // 安全自动投标申报, 会有重试机制
+        if ((ObjectUtils.isEmpty(bidAutoApplyResponse))
+                || (!JixinResultContants.SUCCESS.equals(bidAutoApplyResponse.getRetCode()))) {
+            // 此处为了安全起见, 对于即信投标失败, 主动进行撤回, 并且把投标记录设置为投标失败
+            Tender updTender = tenderService.findById(NumberHelper.toLong(bidAutoApplyRequest.getAcqRes()));
+            updTender.setTUserId(userThirdAccount.getId());
+            updTender.setThirdTenderOrderId(orderId);
+            updTender.setStatus(0);  // 投标失败
+            updTender.setUpdatedAt(new Date()); // 更新投标时间
+            tenderService.updateById(updTender);
+            cancelJixinTenderRecord(bidAutoApplyRequest, 4); // 取消即信投标
+            String msg = ObjectUtils.isEmpty(bidAutoApplyResponse) ? "当前网络不稳定，请稍候重试" : bidAutoApplyResponse.getRetMsg();
             return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, msg));
+        } else {  // 更新投标记录
+            Tender updTender = tenderService.findById(NumberHelper.toLong(bidAutoApplyRequest.getAcqRes()));
+            updTender.setAuthCode(bidAutoApplyResponse.getAuthCode());
+            updTender.setTUserId(userThirdAccount.getId());
+            updTender.setThirdTenderOrderId(orderId);
+            tenderService.updateById(updTender);
+            return ResponseEntity.ok(VoBaseResp.ok("创建投标成功!"));
+        }
+    }
+
+    /**
+     * 取消即信自动投标申请
+     *
+     * @param bidAutoApplyRequest
+     * @param retryNum            重试次数
+     * @return
+     */
+    public boolean cancelJixinTenderRecord(BidAutoApplyRequest bidAutoApplyRequest, int retryNum) {
+        String data = GSON.toJson(bidAutoApplyRequest);
+        if (retryNum <= 0) {
+            return false;
+        }
+        BidCancelReq bidCancelReq = new BidCancelReq();
+        String orderId = JixinHelper.getOrderId(JixinHelper.CANCEL_TENDER_PREFIX);
+        bidCancelReq.setAccountId(bidAutoApplyRequest.getAccountId()); // 电子账户ID
+        bidCancelReq.setOrderId(orderId);  // 取消投标申请
+        bidCancelReq.setOrgOrderId(bidAutoApplyRequest.getOrderId()); // 原始投标Id
+        bidCancelReq.setProductId(bidAutoApplyRequest.getProductId()); // 投标ID
+        bidCancelReq.setTxAmount(bidAutoApplyRequest.getTxAmount()); // 投标金额
+        BidCancelResp bidCancelResp = jixinManager.send(JixinTxCodeEnum.BID_CANCEL, bidCancelReq, BidCancelResp.class);
+        if (ObjectUtils.isEmpty(bidCancelResp)) {
+            log.error(String.format("取消即信自动投标申请失败, 原因即信响应体为空. 数据[%s]", data));
+            return cancelJixinTenderRecord(bidAutoApplyRequest, retryNum - 1);
         }
 
-        //更新tender记录
-        Tender updTender = tenderService.findById(NumberHelper.toLong(request.getAcqRes()));
-        updTender.setAuthCode(response.getAuthCode());
-        updTender.setTUserId(userThirdAccount.getId());
-        updTender.setThirdTenderOrderId(orderId);
-        tenderService.updateById(updTender);
-        return ResponseEntity.ok(VoBaseResp.ok("创建投标成功!"));
+
+        if (JixinResultContants.SUCCESS.equals(bidCancelResp.getRetCode())) {
+            log.info("取消即信自动投标申请成功");
+            exceptionEmailHelper.sendErrorMessage("自动投标申请取消成功", data);
+            return true;
+        } else {
+            if ((JixinResultContants.ERROR_502.equalsIgnoreCase(bidCancelResp.getRetCode()))  // 502
+                    || (JixinResultContants.ERROR_504.equalsIgnoreCase(bidCancelResp.getRetCode())) // 504
+                    || (JixinResultContants.ERROR_JX900032.equalsIgnoreCase(bidCancelResp.getRetCode()))) {  // 出现超时
+                try {
+                    Thread.sleep(3 * 1000);
+                } catch (Exception e) {
+                }
+                return cancelJixinTenderRecord(bidAutoApplyRequest, retryNum - 1);
+            } else {
+                String msg = String.format("取消即信自动投标申请失败, 原因: %s, 数据: %s", bidCancelResp.getRetMsg(), data);
+                log.error(msg);
+                exceptionEmailHelper.sendErrorMessage("自动投标申请取消失败", msg);
+                return false;
+            }
+        }
+    }
+
+    /**
+     * 安全申报投标
+     *
+     * @param bidAutoApplyRequest
+     * @param retryNum
+     * @return
+     */
+    private BidAutoApplyResponse doSafetyRegisterJixinTender(BidAutoApplyRequest bidAutoApplyRequest, int retryNum) {
+        String data = "";
+        if (retryNum <= 0) {
+            exceptionEmailHelper.sendErrorMessage("安全申报自动投标严重BUG", String.format("数据[%s]", data));
+            return null;
+        }
+
+        try {
+            BidAutoApplyResponse bidAutoApplyResponse = jixinManager.send(JixinTxCodeEnum.BID_AUTO_APPLY,
+                    bidAutoApplyRequest,
+                    BidAutoApplyResponse.class);
+            data = GSON.toJson(bidAutoApplyRequest);
+            log.info("======================================");
+            log.info(String.format("即信自动投标申请: %s", data));
+            log.info("======================================");
+            if ((ObjectUtils.isEmpty(bidAutoApplyResponse))) {
+                log.error(String.format("安全申报自动投标失败[%s], 响应体为NULL", data));
+                exceptionEmailHelper.sendErrorMessage("安全申报自动投标严重BUG", String.format("安全申报自动投标失败[%s], 响应体为NULL", data));
+                return doSafetyRegisterJixinTender(bidAutoApplyRequest, retryNum - 1);
+            }
+
+            if (!JixinResultContants.SUCCESS.equalsIgnoreCase(bidAutoApplyResponse.getRetCode())) {
+                log.error(String.format("安全申报自动投标失败[%s], 原因:%s", data, bidAutoApplyResponse.getRetMsg()));
+                // 创建投标超时类型处理
+                if ((JixinResultContants.ERROR_502.equalsIgnoreCase(bidAutoApplyResponse.getRetCode()))  // 502
+                        || (JixinResultContants.ERROR_504.equalsIgnoreCase(bidAutoApplyResponse.getRetCode())) // 504
+                        || (JixinResultContants.ERROR_WAIT_CT9903.equalsIgnoreCase(bidAutoApplyResponse.getRetCode()))  // 出现超时
+                        || ("JX900044".equalsIgnoreCase(bidAutoApplyResponse.getRetCode()))) {  // 订单号已存在
+
+                    try {
+                        Thread.sleep(2 * 1000);
+                    } catch (Exception e) {
+                    }
+
+                    BidApplyQueryResponse bidApplyQueryResponse = queryJixinTenderRecord(bidAutoApplyRequest.getAccountId(),
+                            bidAutoApplyRequest.getOrderId(),
+                            4);  // 即信交易查询
+
+                    if ((!ObjectUtils.isEmpty(bidApplyQueryResponse))
+                            && (bidApplyQueryResponse.getRetCode().equalsIgnoreCase(JixinResultContants.SUCCESS))) {  // 查询成功
+                        bidAutoApplyResponse = new BidAutoApplyResponse();
+                        bidAutoApplyResponse.setAccountId(bidAutoApplyRequest.getAccountId());
+                        bidAutoApplyResponse.setAuthCode(bidApplyQueryResponse.getAuthCode());
+                        bidAutoApplyResponse.setOrderId(bidAutoApplyRequest.getOrderId());
+                        bidAutoApplyResponse.setName(bidApplyQueryResponse.getName());
+                        bidAutoApplyResponse.setProductId(bidApplyQueryResponse.getProductId());
+                        bidAutoApplyResponse.setTxAmount(bidApplyQueryResponse.getTxAmount());
+                        bidAutoApplyResponse.setRetCode(JixinResultContants.SUCCESS);
+                        return bidAutoApplyResponse;
+                    } else { // 查询失败, 重新创建投标
+                        log.error("安全申报自动投标失败: 查询记录失败, 系统进行尝试");
+                        if (!ObjectUtils.isEmpty(bidAutoApplyResponse)) {
+                            // 对于JX900044(orderId重复现象). 如果查询账户确实没有该投标记录, 说明order生成存在重复现象. 直接返回null, 不必继续重试
+                            if ("JX900044".equalsIgnoreCase(bidAutoApplyResponse.getRetCode())) {
+                                log.error(String.format("安全申报自动投标失败[%s], orderId 不唯一", data));
+                                return null;
+                            }
+                        }
+                        return doSafetyRegisterJixinTender(bidAutoApplyRequest, retryNum - 1);
+                    }
+                }
+
+                // 访问频率超限
+                if (JixinResultContants.ERROR_JX900032.equalsIgnoreCase(bidAutoApplyResponse.getRetCode())) {
+                    log.error("安全申报自动投标失败: 频率受限, 系统进行尝试");
+                    try {
+                        Thread.sleep(1 * 1000);
+                    } catch (Exception e) {
+                    }
+                    return doSafetyRegisterJixinTender(bidAutoApplyRequest, retryNum - 1);
+                }
+
+                return null;
+            } else { // 查询成功
+                return bidAutoApplyResponse;
+            }
+
+        } catch (Exception e) {
+            log.error(String.format("安全申报自动投标失败[%s]", data), e);
+            return null;
+        }
     }
 
 
+    /**
+     * 查询即信投标记录
+     *
+     * @param accountId  电子账号
+     * @param orgOrderId 原始投标OrderId
+     * @param retryNum   尝试次数
+     * @return
+     */
+    private BidApplyQueryResponse queryJixinTenderRecord(String accountId, String orgOrderId, long retryNum) {
+        if (retryNum <= 0) {
+            exceptionEmailHelper.sendErrorMessage("查询即信投标记录严重BUG", String.format("数据[ 账号:  %s, OrderId: %s]", accountId, orgOrderId));
+            return null;
+        }
+
+        String data = "";
+        BidApplyQueryRequest bidApplyQueryRequest = new BidApplyQueryRequest();
+        bidApplyQueryRequest.setAccountId(accountId);
+        bidApplyQueryRequest.setOrgOrderId(orgOrderId);
+        BidApplyQueryResponse bidApplyQueryResponse = jixinManager.send(JixinTxCodeEnum.BID_APPLY_QUERY,
+                bidApplyQueryRequest,
+                BidApplyQueryResponse.class);
+        data = GSON.toJson(bidApplyQueryRequest);  // 查询即信投标记录
+        log.info("======================================");
+        log.info(String.format("查询即信投标记录: %s", data));
+        log.info("======================================");
+
+        // 是否存在超时, 超时再次查询 || 或者查询为空
+        if ((ObjectUtils.isEmpty(bidApplyQueryResponse))  // 查询对象为空
+                || (JixinResultContants.ERROR_502.equalsIgnoreCase(bidApplyQueryResponse.getRetCode()))  // 502
+                || (JixinResultContants.ERROR_504.equalsIgnoreCase(bidApplyQueryResponse.getRetCode()))  // 504
+                || (JixinResultContants.ERROR_WAIT_CT9903.equalsIgnoreCase(bidApplyQueryResponse.getRetCode())) // 交易超时
+                || (JixinResultContants.ERROR_JX900032.equalsIgnoreCase(bidApplyQueryResponse.getRetCode()))) { //访问频率超限
+            try {
+                Thread.sleep(3 * 1000);
+            } catch (Exception e) {
+            }
+
+            log.error(String.format("查询即信投标记录失败[%s], 原因可能是超时系统拒绝访问", data));
+            return queryJixinTenderRecord(accountId, orgOrderId, retryNum - 1);
+        }
+
+        if (JixinResultContants.SUCCESS.equalsIgnoreCase(bidApplyQueryResponse.getRetCode())) {
+            return bidApplyQueryResponse;
+        } else {
+            return bidApplyQueryResponse;
+        }
+    }
 
     /**
      * 投资人批次购买债权参数验证回调
      *
      * @return
      */
-    public ResponseEntity<String> thirdBatchCreditInvestCheckCall(HttpServletRequest request, HttpServletResponse response) {
+    public ResponseEntity<String> thirdBatchCreditInvestCheckCall(HttpServletRequest request, HttpServletResponse
+            response) {
         BatchCreditInvestCheckCall batchCreditInvestCheckCall = jixinManager.callback(request, new TypeToken<BatchCreditInvestCheckCall>() {
         });
 
@@ -174,7 +378,8 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
      *
      * @return
      */
-    public ResponseEntity<String> thirdBatchCreditInvestRunCall(HttpServletRequest request, HttpServletResponse response) throws Exception {
+    public ResponseEntity<String> thirdBatchCreditInvestRunCall(HttpServletRequest request, HttpServletResponse
+            response) throws Exception {
         BatchCreditInvestRunCall batchCreditInvestRunCall = jixinManager.callback(request, new TypeToken<BatchCreditInvestRunCall>() {
         });
         return dealBatchCreditInvest(batchCreditInvestRunCall);
@@ -258,19 +463,19 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
         Preconditions.checkNotNull(borrow, "tenderThirdBizImpl cancelThirdTender: tender为空!");
 
         /* 添加取消投标前置查询 */
-        BidApplyQueryReq bidApplyQueryReq = new BidApplyQueryReq();
-        bidApplyQueryReq.setAccountId(tenderUserThirdAccount.getAccountId());
-        bidApplyQueryReq.setChannel(ChannelContant.HTML);
-        bidApplyQueryReq.setOrgOrderId(tender.getThirdTenderOrderId());
-        BidApplyQueryResp bidApplyQueryResp = jixinManager.send(JixinTxCodeEnum.BID_APPLY_QUERY, bidApplyQueryReq, BidApplyQueryResp.class);
+        BidApplyQueryRequest bidApplyQueryRequest = new BidApplyQueryRequest();
+        bidApplyQueryRequest.setAccountId(tenderUserThirdAccount.getAccountId());
+        bidApplyQueryRequest.setChannel(ChannelContant.HTML);
+        bidApplyQueryRequest.setOrgOrderId(tender.getThirdTenderOrderId());
+        BidApplyQueryResponse bidApplyQueryResponse = jixinManager.send(JixinTxCodeEnum.BID_APPLY_QUERY, bidApplyQueryRequest, BidApplyQueryResponse.class);
         /* 取消投标orderId */
         String orderId = JixinHelper.getOrderId(JixinHelper.TENDER_CANCEL_PREFIX);
-        if (!JixinResultContants.SUCCESS.equals(bidApplyQueryResp.getRetCode())) {
-            String msg = ObjectUtils.isEmpty(bidApplyQueryResp) ? "当前网络不稳定，请稍候重试" : bidApplyQueryResp.getRetMsg();
+        if (!JixinResultContants.SUCCESS.equals(bidApplyQueryResponse.getRetCode())) {
+            String msg = ObjectUtils.isEmpty(bidApplyQueryResponse) ? "当前网络不稳定，请稍候重试" : bidApplyQueryResponse.getRetMsg();
             return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, msg));
-        } else if ("2".equals(bidApplyQueryResp.getState()) || "4".equals(bidApplyQueryResp.getState())) {
+        } else if ("2".equals(bidApplyQueryResponse.getState()) || "4".equals(bidApplyQueryResponse.getState())) {
             return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, String.format("投标还款中不能取消借款 tenderId:%s", tenderId)));
-        } else if (!"9".equals(bidApplyQueryResp.getState())) {
+        } else if (!"9".equals(bidApplyQueryResponse.getState())) {
 
             BidCancelReq request = new BidCancelReq();
             request.setAccountId(tenderUserThirdAccount.getAccountId());
@@ -333,7 +538,8 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
      *
      * @return
      */
-    public ResponseEntity<String> thirdBatchCreditEndRunCall(HttpServletRequest request, HttpServletResponse response) throws Exception {
+    public ResponseEntity<String> thirdBatchCreditEndRunCall(HttpServletRequest request, HttpServletResponse
+            response) throws Exception {
         BatchCreditInvestRunCall batchCreditInvestRunCall = jixinManager.callback(request, new TypeToken<BatchCreditInvestRunCall>() {
         });
         Map<String, Object> acqResMap = GSON.fromJson(batchCreditInvestRunCall.getAcqRes(), TypeTokenContants.MAP_TOKEN);
