@@ -232,6 +232,11 @@ public class BorrowBizImpl implements BorrowBiz {
         }
 
         if (borrow.getStatus() == 1 && borrow.getMoneyYes() >= borrow.getMoney()) {
+            //更新满标时间
+            if (ObjectUtils.isEmpty(borrow.getSuccessAt())) {
+                borrow.setSuccessAt(new Date());
+                borrowService.save(borrow);
+            }
             MqConfig mqConfig = new MqConfig();
             mqConfig.setTag(MqTagEnum.AGAIN_VERIFY);
             mqConfig.setQueue(MqQueueEnum.RABBITMQ_BORROW);
@@ -901,7 +906,7 @@ public class BorrowBizImpl implements BorrowBiz {
      * @throws Exception
      */
     @Transactional(rollbackFor = Throwable.class)
-    public boolean borrowAgainVerify(Borrow borrow, String batchNo) throws Exception {
+    public boolean borrowAgainVerify(Borrow borrow, String batchNo,Statistic statistic) throws Exception {
         if ((ObjectUtils.isEmpty(borrow)) || (borrow.getStatus() != 1)
                 || (!StringHelper.toString(borrow.getMoney()).equals(StringHelper.toString(borrow.getMoneyYes())))) {
             return false;
@@ -959,7 +964,7 @@ public class BorrowBizImpl implements BorrowBiz {
         //发送借款协议
         sendBorrowProtocol(borrow);
         //更新总统计
-        updateStatisticByBorrowReview(borrow, borrowRepaymentList);
+        fillStatisticByBorrowReview(borrow, borrowRepaymentList,statistic);
         return true;
     }
 
@@ -1701,7 +1706,7 @@ public class BorrowBizImpl implements BorrowBiz {
      *
      * @param borrow
      */
-    private void updateStatisticByBorrowReview(Borrow borrow, List<BorrowRepayment> borrowRepaymentList) {
+    private void fillStatisticByBorrowReview(Borrow borrow, List<BorrowRepayment> borrowRepaymentList, Statistic statistic) {
         if (CollectionUtils.isEmpty(borrowRepaymentList)) {//查询当前借款 还款记录
             return;
         }
@@ -1714,7 +1719,6 @@ public class BorrowBizImpl implements BorrowBiz {
         }
 
         //全站统计
-        Statistic statistic = new Statistic();
         long borrowMoney = borrow.getMoney();
 
         statistic.setBorrowItems(1L);
@@ -1737,13 +1741,6 @@ public class BorrowBizImpl implements BorrowBiz {
             statistic.setQdBorrowTotal(borrowMoney);
             statistic.setQdWaitRepayPrincipalTotal(principal);
             statistic.setQdWaitRepayTotal(repayMoney);
-        }
-        if (!ObjectUtils.isEmpty(statistic)) {
-            try {
-                statisticBiz.caculate(statistic);
-            } catch (Throwable e) {
-                log.error("borrowProvider updateStatisticByBorrowReview 全站统计异常:", e);
-            }
         }
     }
 

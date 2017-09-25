@@ -32,4 +32,10 @@ public class ThirdBatchLogContants {
     public static final String BORROW_THIRD_STEP = "存管系统接受平台放款请求";
     public static final String BORROW_FOUR_STEP = "存管确定平台放款请求";
     public static final String BORROW_FIVE_STEP = "存管放款";
+
+    //存管报备状态
+    public static final String REPAYMENT_FIRST_STEP = "借款本地还款";
+    public static final String REPAYMENT_SECOND_STEP = "存管系统接受平台还款请求";
+    public static final String REPAYMENT_THIRD_STEP = "存管确定平台还款请求";
+    public static final String REPAYMENT_FOUR_STEP = "存管还款";
 }

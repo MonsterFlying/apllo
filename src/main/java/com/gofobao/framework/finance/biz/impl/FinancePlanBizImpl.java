@@ -444,7 +444,7 @@ public class FinancePlanBizImpl implements FinancePlanBiz {
         long validMoney = (long) MathHelper.min(transfer.getTransferMoney() - transfer.getTransferMoneyYes(), money);
 
         //理财计划购买债权转让
-        financePlanBuyTransfer(nowDate, money, transferId, userId, financePlanBuyer, transfer, validMoney);
+        financePlanBuyTransfer(nowDate, money, transferId, userId, financePlanBuyer, financePlan, transfer, validMoney);
 
         if (transfer.getTransferMoneyYes() >= transfer.getTransferMoney()) {
             MqConfig mqConfig = new MqConfig();
@@ -502,7 +502,7 @@ public class FinancePlanBizImpl implements FinancePlanBiz {
      * @param transfer
      * @param validMoney
      */
-    private void financePlanBuyTransfer(Date nowDate, long money, long transferId, long userId, FinancePlanBuyer financePlanBuyer, Transfer transfer, long validMoney) {
+    private void financePlanBuyTransfer(Date nowDate, long money, long transferId, long userId, FinancePlanBuyer financePlanBuyer, FinancePlan financePlan, Transfer transfer, long validMoney) {
         long alreadyInterest = validMoney / transfer.getTransferMoney() * transfer.getAlreadyInterest();/* 当期应计利息 */
         long principal = validMoney - alreadyInterest;/* 债权份额 */
         /* 债权购买记录 */
@@ -526,11 +526,14 @@ public class FinancePlanBizImpl implements FinancePlanBiz {
         transfer.setUpdatedAt(nowDate);
         transfer.setTransferMoneyYes(transfer.getTransferMoney() + validMoney);
         transferService.save(transfer);
-        /* 更新债权转让购买记录 */
+        /* 更新理财计划购买记录 */
         financePlanBuyer.setLeftMoney(financePlanBuyer.getLeftMoney() - validMoney);
         financePlanBuyer.setRightMoney(financePlanBuyer.getRightMoney() + validMoney);
         financePlanBuyer.setUpdatedAt(nowDate);
         financePlanBuyerService.save(financePlanBuyer);
+        /* 更新理财计划记录 */
+        financePlan.setLeftMoney(financePlan.getLeftMoney() - validMoney);
+        financePlan.setRightMoney(financePlan.getRightMoney() + validMoney);
     }
 
 
@@ -547,7 +550,7 @@ public class FinancePlanBizImpl implements FinancePlanBiz {
 
         Specification<FinancePlan> specification = Specifications.<FinancePlan>and()
                 .notIn("status", statusArray.toArray())
-                .eq("type",0)
+                .eq("type", 0)
                 .build();
         List<FinancePlan> financePlans = financePlanService.findList(specification, new Sort(Sort.Direction.DESC, "id"));
 

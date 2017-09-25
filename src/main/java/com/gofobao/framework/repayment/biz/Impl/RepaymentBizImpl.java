@@ -54,6 +54,9 @@ import com.gofobao.framework.common.rabbitmq.MqHelper;
 import com.gofobao.framework.common.rabbitmq.MqQueueEnum;
 import com.gofobao.framework.common.rabbitmq.MqTagEnum;
 import com.gofobao.framework.core.vo.VoBaseResp;
+import com.gofobao.framework.finance.entity.FinancePlan;
+import com.gofobao.framework.finance.entity.FinancePlanBuyer;
+import com.gofobao.framework.finance.service.FinancePlanBuyerService;
 import com.gofobao.framework.helper.*;
 import com.gofobao.framework.helper.project.BatchAssetChangeHelper;
 import com.gofobao.framework.helper.project.IntegralChangeHelper;
@@ -81,7 +84,9 @@ import com.gofobao.framework.repayment.vo.response.pc.VoViewCollectionWarpRes;
 import com.gofobao.framework.repayment.vo.response.pc.VoViewOrderListWarpRes;
 import com.gofobao.framework.system.biz.StatisticBiz;
 import com.gofobao.framework.system.biz.ThirdBatchDealBiz;
+import com.gofobao.framework.system.biz.ThirdBatchDealLogBiz;
 import com.gofobao.framework.system.biz.ThirdBatchLogBiz;
+import com.gofobao.framework.system.contants.ThirdBatchDealLogContants;
 import com.gofobao.framework.system.contants.ThirdBatchLogContants;
 import com.gofobao.framework.system.entity.Notices;
 import com.gofobao.framework.system.entity.Statistic;
@@ -191,6 +196,10 @@ public class RepaymentBizImpl implements RepaymentBiz {
     private UserThirdAccountService userThirdAccountService;
     @Autowired
     private JixinManager jixinManager;
+    @Autowired
+    private FinancePlanBuyerService financePlanBuyerService;
+    @Autowired
+    private ThirdBatchDealLogBiz thirdBatchDealLogBiz;
 
     /**
      * pc还款
@@ -258,7 +267,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
      *
      * @param borrowId
      */
-    public ResponseEntity<VoBaseResp> repayAllDeal(long borrowId, String batchNo) throws Exception {
+    public ResponseEntity<VoBaseResp> repayAllDeal(long borrowId, String batchNo, Statistic statistic) throws Exception {
         //1.判断借款状态，
         Borrow borrow = borrowService.findByIdLock(borrowId);/* 提前结清操作的借款记录 */
         Preconditions.checkNotNull(borrow, "借款记录不存在!");
@@ -304,7 +313,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
             //7.发放积分
             giveInterest(borrowCollectionList, borrow);
             //8.还款最后新增统计
-            updateRepaymentStatistics(borrow, borrowRepayment);
+            fillRepaymentStatistics(borrow, borrowRepayment, statistic);
             //9.更新投资人缓存
             updateUserCacheByReceivedRepay(borrowCollectionList, borrow);
             //10.项目回款短信通知
@@ -563,6 +572,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
                     advance, repayMoney);
             //更新还款记录
             borrowRepayment.setUpdatedAt(nowDate);
+            borrowRepayment.setRepayTriggerAt(nowDate);
             borrowRepayment.setRepayMoneyYes(repayMoney);
             borrowRepayment.setLateInterest(realLateInterest);
         }
@@ -638,6 +648,9 @@ public class RepaymentBizImpl implements RepaymentBiz {
             thirdBatchLog.setAcqRes(GSON.toJson(acqResMap));
             thirdBatchLog.setRemark("(提前结清)即信批次还款");
             thirdBatchLogService.save(thirdBatchLog);
+            //记录批次处理日志
+            thirdBatchDealLogBiz.recordThirdBatchDealLog(batchNo, borrowId,
+                    ThirdBatchDealLogContants.SEND_REQUEST, true, ThirdBatchLogContants.BATCH_REPAY_ALL, "");
         } catch (Exception e) {
             // 申请即信还款解冻
             String unfreezeOrderId = JixinHelper.getOrderId(JixinHelper.BALANCE_UNFREEZE_PREFIX);
@@ -925,7 +938,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
      * @throws Exception
      */
     @Transactional(rollbackFor = Exception.class)
-    public ResponseEntity<VoBaseResp> newRepayDeal(long repaymentId, String batchNo) throws Exception {
+    public ResponseEntity<VoBaseResp> newRepayDeal(long repaymentId, String batchNo, Statistic statistic) throws Exception {
         //1.查询并判断还款记录是否存在!
         BorrowRepayment borrowRepayment = borrowRepaymentService.findByIdLock(repaymentId);/* 当期还款记录 */
         Preconditions.checkNotNull(borrowRepayment, "还款记录不存在!");
@@ -938,6 +951,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
                 .eq("borrowId", parentBorrow.getId())
                 .build();
         List<Tender> tenderList = tenderService.findList(ts);/* 还款对应的投标记录  包括债权转让在里面 */
+        Map<Long/* tenderId */, Tender> tenderMap = tenderList.stream().collect(Collectors.toMap(Tender::getId, Function.identity()));
         Preconditions.checkNotNull(tenderList, "立即还款: 投标记录为空!");
         /* 投标记录id */
         Set<Long> tenderIds = tenderList.stream().map(tender -> tender.getId()).collect(Collectors.toSet());
@@ -965,16 +979,41 @@ public class RepaymentBizImpl implements RepaymentBiz {
             //7.发放积分
             giveInterest(borrowCollectionList, parentBorrow);
             //8.还款最后新增统计
-            updateRepaymentStatistics(parentBorrow, borrowRepayment);
+            fillRepaymentStatistics(parentBorrow, borrowRepayment, statistic);
             //9.更新投资人缓存
             updateUserCacheByReceivedRepay(borrowCollectionList, parentBorrow);
             //10.项目回款短信通知
             smsNoticeByReceivedRepay(borrowCollectionList, parentBorrow, borrowRepayment);
+            //11.变更理财计划参数
+            updateFinanceByReceivedRepay(tenderList, tenderMap, borrowCollectionList);
         }
         //通知风车理财用户 回款成功
         windmillTenderBiz.backMoneyNotify(borrowCollectionList);
 
         return ResponseEntity.ok(VoBaseResp.ok("还款处理成功!"));
+    }
+
+    /**
+     * 变更理财计划参数
+     *
+     * @param tenderList
+     * @param tenderMap
+     * @param borrowCollectionList
+     */
+    public void updateFinanceByReceivedRepay(List<Tender> tenderList, Map<Long, Tender> tenderMap, List<BorrowCollection> borrowCollectionList) {
+        //理财计划购买ids
+        Set<Long> financeBuyIds = tenderList.stream().map(Tender::getFinanceBuyId).collect(Collectors.toSet());
+        Specification<FinancePlanBuyer> fps = Specifications
+                .<FinancePlanBuyer>and()
+                .in("id", financeBuyIds.toArray())
+                .build();
+        List<FinancePlanBuyer> financePlanBuyerList = financePlanBuyerService.findList(fps);
+        borrowCollectionList.stream().forEach(borrowCollection -> {
+            Tender tender = tenderMap.get(borrowCollection.getTenderId());
+            if (tender.getType().intValue() == 1) { //理财计划需要变更理财计划参数
+
+            }
+        });
     }
 
     /**
@@ -1286,30 +1325,21 @@ public class RepaymentBizImpl implements RepaymentBiz {
      *
      * @param borrowRepayment
      */
-    private void updateRepaymentStatistics(Borrow parentBorrow, BorrowRepayment borrowRepayment) {
-        //更新统计数据
-        try {
-            long repayMoney = borrowRepayment.getRepayMoney();/* 还款金额 */
-            long principal = borrowRepayment.getPrincipal();/* 还款本金 */
-            Statistic statistic = new Statistic();
-            statistic.setWaitRepayTotal(-repayMoney);
-            if (!parentBorrow.isTransfer()) {//判断非转让标
-                if (parentBorrow.getType() == 0) { //车贷标
-                    statistic.setTjWaitRepayPrincipalTotal(-principal);
-                    statistic.setTjWaitRepayTotal(-repayMoney);
-                } else if (parentBorrow.getType() == 1) { //净值标
-                    statistic.setJzWaitRepayPrincipalTotal(-principal);
-                    statistic.setJzWaitRepayTotal(-repayMoney);
-                } else if (parentBorrow.getType() == 4) { //渠道标
-                    statistic.setQdWaitRepayPrincipalTotal(-principal);
-                    statistic.setQdWaitRepayTotal(-repayMoney);
-                }
+    private void fillRepaymentStatistics(Borrow parentBorrow, BorrowRepayment borrowRepayment, Statistic statistic) {
+        long repayMoney = borrowRepayment.getRepayMoney();/* 还款金额 */
+        long principal = borrowRepayment.getPrincipal();/* 还款本金 */
+        statistic.setWaitRepayTotal(-repayMoney);
+        if (!parentBorrow.isTransfer()) {//判断非转让标
+            if (parentBorrow.getType() == 0) { //车贷标
+                statistic.setTjWaitRepayPrincipalTotal(-principal);
+                statistic.setTjWaitRepayTotal(-repayMoney);
+            } else if (parentBorrow.getType() == 1) { //净值标
+                statistic.setJzWaitRepayPrincipalTotal(-principal);
+                statistic.setJzWaitRepayTotal(-repayMoney);
+            } else if (parentBorrow.getType() == 4) { //渠道标
+                statistic.setQdWaitRepayPrincipalTotal(-principal);
+                statistic.setQdWaitRepayTotal(-repayMoney);
             }
-            if (!ObjectUtils.isEmpty(statistic)) {
-                statisticBiz.caculate(statistic);
-            }
-        } catch (Throwable e) {
-            log.error(String.format("repaymentBizImpl updateRepaymentStatistics 立即还款统计错误：", e));
         }
     }
 
@@ -1442,6 +1472,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
         borrowRepayment.setRepayMoneyYes(repayMoney);
         borrowRepayment.setRepayMoney(repayMoney);
         borrowRepayment.setUpdatedAt(nowDate);
+        borrowRepayment.setRepayTriggerAt(nowDate);
         borrowRepaymentService.save(borrowRepayment);
         if (advance) {
             AdvanceLog advanceLog = advanceLogService.findByRepaymentId(borrowRepayment.getId());/* 担保人还款记录 */
@@ -1708,6 +1739,10 @@ public class RepaymentBizImpl implements RepaymentBiz {
             thirdBatchLog.setRemark("即信批次还款.");
             thirdBatchLog.setAcqRes(GSON.toJson(acqResMap));
             thirdBatchLogService.save(thirdBatchLog);
+
+            //记录批次处理日志
+            thirdBatchDealLogBiz.recordThirdBatchDealLog(thirdBatchLog.getBatchNo(), thirdBatchLog.getSourceId(),
+                    ThirdBatchDealLogContants.SEND_REQUEST, true, ThirdBatchLogContants.BATCH_REPAY, "");
         } catch (Exception e) {
 
             // 申请即信还款解冻
@@ -2642,6 +2677,9 @@ public class RepaymentBizImpl implements RepaymentBiz {
         }
         // 生成名义借款人垫付批次资产变更记录
         addBatchAssetChangeItemByAdvance(batchAssetChange.getId(), titularBorrowAccount.getUserId(), borrowRepayment, borrow, lateInterest, groupSeqNo);
+        //更新还款状态
+        borrowRepayment.setRepayTriggerAt(nowDate);
+        borrowRepaymentService.save(borrowRepayment);
         try {
             // 垫付还款冻结
             long frozenMoney = new Double(MoneyHelper.round(MoneyHelper.multiply(txAmount, 100), 0)).longValue();
@@ -2680,6 +2718,9 @@ public class RepaymentBizImpl implements RepaymentBiz {
             thirdBatchLog.setRemark("批次名义借款人垫付");
             thirdBatchLog.setAcqRes(GSON.toJson(acqResMap));
             thirdBatchLogService.save(thirdBatchLog);
+            //记录批次处理日志
+            thirdBatchDealLogBiz.recordThirdBatchDealLog(batchNo, borrowRepayment.getId(),
+                    ThirdBatchDealLogContants.SEND_REQUEST, true, ThirdBatchLogContants.BATCH_BAIL_REPAY, "");
         } catch (Exception e) {
             // 申请即信还款解冻
             String unfreezeOrderId = JixinHelper.getOrderId(JixinHelper.BALANCE_UNFREEZE_PREFIX);
@@ -2946,7 +2987,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
      * @throws Exception
      */
     @Transactional(rollbackFor = Exception.class)
-    public ResponseEntity<VoBaseResp> newAdvanceDeal(long repaymentId, String batchNo) throws Exception {
+    public ResponseEntity<VoBaseResp> newAdvanceDeal(long repaymentId, String batchNo, Statistic statistic) throws Exception {
         //1.查询判断还款记录是否存在
         BorrowRepayment borrowRepayment = borrowRepaymentService.findByIdLock(repaymentId);/* 当期还款记录 */
         Preconditions.checkNotNull(borrowRepayment, "还款记录不存在!");
@@ -2990,7 +3031,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
         //6.发放积分
         giveInterest(borrowCollectionList, parentBorrow);
         //7.还款最后新增统计
-        updateRepaymentStatistics(parentBorrow, borrowRepayment);
+        fillRepaymentStatistics(parentBorrow, borrowRepayment, statistic);
         //8.更新投资人缓存
         updateUserCacheByReceivedRepay(borrowCollectionList, parentBorrow);
         //9.项目回款短信通知

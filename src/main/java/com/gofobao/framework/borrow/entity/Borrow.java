@@ -77,6 +77,8 @@ public class Borrow implements Serializable {
 
     private Boolean isNovice;
 
+    private Boolean isFinance;
+
     private Long moneyYes;
 
     private Date verifyAt;

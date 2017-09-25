@@ -27,6 +27,7 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.gson.Gson;
+import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.jpa.domain.Specification;
@@ -48,6 +49,7 @@ import java.util.stream.Collectors;
  */
 @Component
 @Slf4j
+@Data
 public class StatisticBizImpl implements StatisticBiz {
     @Autowired
     StatisticService statisticService;
@@ -151,7 +153,7 @@ public class StatisticBizImpl implements StatisticBiz {
     @Override
     @Transactional
     public boolean caculate(Statistic changeEntity) throws Exception {
-        try{
+        try {
             Preconditions.checkNotNull(changeEntity, "StatisticBizImpl.caculate: changeEntity is empty");
             log.info(String.format("全站统计增加: %s", GSON.toJson(changeEntity)));
             Statistic statistic = statisticService.findLast();
@@ -160,7 +162,7 @@ public class StatisticBizImpl implements StatisticBiz {
             statistic.setUpdatedAt(new Date());
             statisticService.save(statistic);
             return true;
-        }catch (Exception e){
+        } catch (Exception e) {
             log.error("全站统计添加: ", e);
             return false;
         }
@@ -198,7 +200,7 @@ public class StatisticBizImpl implements StatisticBiz {
     public ResponseEntity<VoViewIndexStatisticsWarpRes> query() {
         IndexStatistics indexStatistics = new IndexStatistics();
         try {
-            indexStatistics  = webArtclesCache.get("web");
+            indexStatistics = webArtclesCache.get("web");
         } catch (ExecutionException e) {
             log.error("获取缓存失败");
             indexStatistics = new IndexStatistics();

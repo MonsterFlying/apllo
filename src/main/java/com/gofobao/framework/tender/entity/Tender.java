@@ -59,6 +59,7 @@ public class Tender {
      * 购买债权记录id
      */
     private Long transferBuyId;
+    private Long financeBuyId;
     /**
      * 父级投标id（默认为0，最顶级记录）
      */

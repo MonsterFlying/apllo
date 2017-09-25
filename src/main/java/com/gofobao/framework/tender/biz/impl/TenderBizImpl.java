@@ -178,9 +178,19 @@ public class TenderBizImpl implements TenderBiz {
         borrow.setTenderCount((borrow.getTenderCount() + 1));
         borrow.setId(borrow.getId());
         borrow.setUpdatedAt(nowDate);
-        borrowService.updateById(borrow);  // 更改标的信息
+        borrowService.save(borrow);  // 更改标的信息
 
         if (borrow.getMoneyYes() >= borrow.getMoney()) {   // 对于投标金额等于招标金额触发复审
+            //更新满标时间
+            if (ObjectUtils.isEmpty(borrow.getSuccessAt())) {
+                borrow.setSuccessAt(nowDate);
+                borrowService.save(borrow);
+            }
+
+            /**
+             * @// TODO: 2017/9/22 理财计划复审不一样
+             */
+            //复审
             MqConfig mqConfig = new MqConfig();
             mqConfig.setQueue(MqQueueEnum.RABBITMQ_BORROW);
             mqConfig.setTag(MqTagEnum.AGAIN_VERIFY);
@@ -200,10 +210,9 @@ public class TenderBizImpl implements TenderBiz {
             }
         }
 
-
         try {
             // 触发新手标活动派发
-            if (borrow.getIsNovice() && userCache.isNovice()) {
+            if (borrow.getIsNovice() && userCache.isNovice() && (!borrow.getIsFinance())) {
                 MarketingData marketingData = new MarketingData();
                 marketingData.setTransTime(DateHelper.dateToString(new Date()));
                 marketingData.setUserId(borrowTender.getUserId().toString());
@@ -538,8 +547,7 @@ public class TenderBizImpl implements TenderBiz {
     @Transactional(rollbackFor = Exception.class)
     public ResponseEntity<VoBaseResp> tender(VoCreateTenderReq voCreateTenderReq) throws Exception {
         //投标撤回集合
-        List<VoSaveThirdTender> voSaveThirdTenderList = null;
-        Borrow borrow = borrowService.findById(voCreateTenderReq.getBorrowId());
+        String borrowId = String.valueOf(voCreateTenderReq.getBorrowId());
         try {
             ResponseEntity<VoBaseResp> voBaseRespResponseEntity = createTender(voCreateTenderReq);
             if (voBaseRespResponseEntity.getStatusCode().equals(HttpStatus.OK)) {
@@ -549,11 +557,11 @@ public class TenderBizImpl implements TenderBiz {
             }
         } catch (Exception e) {
             //投标撤回
-            jixinTenderRecordHelper.cancelJixinTenderByRedisRecord(borrow.getProductId(), false);
+            jixinTenderRecordHelper.cancelJixinTenderByRedisRecord(borrowId, false);
             throw new Exception(e);
         } finally {
             //从redis删除投标申请记录
-            jixinTenderRecordHelper.removeJixinTenderRecordInRedis(borrow.getProductId(), false);
+            jixinTenderRecordHelper.removeJixinTenderRecordInRedis(borrowId, false);
         }
     }
 

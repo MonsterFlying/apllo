@@ -3,7 +3,11 @@ package com.gofobao.framework.system.biz.impl;
 import com.github.wenhao.jpa.Specifications;
 import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.borrow.service.BorrowService;
+import com.gofobao.framework.collection.entity.BorrowCollection;
+import com.gofobao.framework.collection.service.BorrowCollectionService;
 import com.gofobao.framework.helper.DateHelper;
+import com.gofobao.framework.repayment.entity.BorrowRepayment;
+import com.gofobao.framework.repayment.service.BorrowRepaymentService;
 import com.gofobao.framework.system.biz.ThirdBatchDealLogBiz;
 import com.gofobao.framework.system.contants.ThirdBatchDealLogContants;
 import com.gofobao.framework.system.contants.ThirdBatchLogContants;
@@ -12,8 +16,14 @@ import com.gofobao.framework.system.entity.ThirdBatchLog;
 import com.gofobao.framework.system.service.ThirdBatchDealLogService;
 import com.gofobao.framework.system.service.ThirdBatchLogService;
 import com.gofobao.framework.system.vo.request.VoFindLendRepayStatusListReq;
+import com.gofobao.framework.system.vo.request.VoFindRepayStatusListReq;
 import com.gofobao.framework.system.vo.response.VoFindLendRepayStatus;
+import com.gofobao.framework.system.vo.response.VoFindRepayStatus;
 import com.gofobao.framework.system.vo.response.VoViewFindLendRepayStatusListRes;
+import com.gofobao.framework.system.vo.response.VoViewFindRepayStatusListRes;
+import com.gofobao.framework.tender.entity.Tender;
+import com.gofobao.framework.tender.service.TenderService;
+import com.google.common.base.Preconditions;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
@@ -38,52 +48,220 @@ public class ThirdBatchDealLogBizImpl implements ThirdBatchDealLogBiz {
     private ThirdBatchLogService thirdBatchLogService;
     @Autowired
     private ThirdBatchDealLogService thirdBatchDealLogService;
-
+    @Autowired
+    private BorrowCollectionService borrowCollectionService;
+    @Autowired
+    private TenderService tenderService;
+    @Autowired
+    private BorrowRepaymentService borrowRepaymentService;
 
     /**
-     * 记录批次执行记录
+     * 查询还款状态集合
      *
-     * @param state
-     * @param type
+     * @param voFindRepayStatusListReq
      * @return
      */
-    public ThirdBatchDealLog recordThirdBatchDealLog(String batchNo, long sourceId, int state, boolean status, int type, String errorMsg) {
-        ThirdBatchLog thirdBatchLog = thirdBatchLogService.findByBatchNoAndSourceIdAndType(batchNo, sourceId, type);
-        if (ObjectUtils.isEmpty(thirdBatchLog)) {
-            return null;
+    public ResponseEntity<VoViewFindRepayStatusListRes> findRepayStatusList(VoFindRepayStatusListReq voFindRepayStatusListReq) {
+        VoViewFindRepayStatusListRes repayStatusListRes = VoViewFindRepayStatusListRes.ok("查询成功!", VoViewFindRepayStatusListRes.class);
+        /* 回款id */
+        long collectionId = voFindRepayStatusListReq.getCollectionId();
+        /* 回款记录 */
+        BorrowCollection borrowCollection = borrowCollectionService.findById(collectionId);
+        Preconditions.checkNotNull(borrowCollection, "借款记录查询不存在!");
+        /* 投标记录 */
+        Tender tender = tenderService.findById(borrowCollection.getTenderId());
+        Preconditions.checkNotNull(tender, "投标记录查询不存在!");
+        /* 借款记录 */
+        Borrow borrow = borrowService.findById(tender.getBorrowId());
+        Preconditions.checkNotNull(tender, "借款记录查询不存在!");
+        /* 查询当期还款记录 */
+        Specification<BorrowRepayment> brs = Specifications
+                .<BorrowRepayment>and()
+                .eq("borrowId", borrow.getId())
+                .eq("order", borrowCollection.getOrder())
+                .build();
+        List<BorrowRepayment> borrowRepaymentList = borrowRepaymentService.findList(brs);
+        Preconditions.checkState(!CollectionUtils.isEmpty(borrowRepaymentList), "还款记录不存在！");
+        BorrowRepayment borrowRepayment = borrowRepaymentList.get(0);
+        //查询相关垫付、还款、提前结清
+        Specification<ThirdBatchLog> tbls = Specifications
+                .<ThirdBatchLog>and()
+                .eq("sourceId", borrowRepayment.getId())
+                .eq("type", ThirdBatchLogContants.BATCH_REPAY)
+                .in("state", 0, 1, 3)
+                .build();
+        List<ThirdBatchLog> thirdBatchLogList = thirdBatchLogService.findList(tbls, new Sort(Sort.Direction.DESC, "createAt"));
+        if (ObjectUtils.isEmpty(thirdBatchLogList)) {//存在处理中还款操作
+            tbls = Specifications
+                    .<ThirdBatchLog>and()
+                    .eq("sourceId", borrowRepayment.getId())
+                    .eq("type", ThirdBatchLogContants.BATCH_BAIL_REPAY)
+                    .in("state", 0, 1, 3)
+                    .build();
+            thirdBatchLogList = thirdBatchLogService.findList(tbls, new Sort(Sort.Direction.DESC, "createAt"));
+            if (ObjectUtils.isEmpty(thirdBatchLogList)) {//存在处理中垫付操作
+                tbls = Specifications
+                        .<ThirdBatchLog>and()
+                        .eq("sourceId", borrow.getId())
+                        .eq("type", ThirdBatchLogContants.BATCH_REPAY_ALL)
+                        .in("state", 0, 1, 3)
+                        .build();
+                thirdBatchLogList = thirdBatchLogService.findList(tbls, new Sort(Sort.Direction.DESC, "createAt"));
+            }
         }
-        Date nowDate = new Date();
-
-        /*前面一个*/
-        int priorState = state - 1;
-        if (priorState >= 0) {
+        /* 批次处理日志集合 */
+        /* 批次处理记录 */
+        ThirdBatchLog thirdBatchLog = null;
+        Map<Integer/* state */, ThirdBatchDealLog> thirdBatchDealLogMap = new HashMap<>();
+        if (!CollectionUtils.isEmpty(thirdBatchLogList)) {
+            //已完成批次
+            List<ThirdBatchLog> successThirdBatchLogList = thirdBatchLogList.stream().filter(t -> t.getState().intValue() == 3).collect(Collectors.toList());
+            if (!CollectionUtils.isEmpty(successThirdBatchLogList)) {
+                thirdBatchLog = successThirdBatchLogList.get(1);
+            } else {
+                thirdBatchLog = thirdBatchLogList.get(0);
+            }
+            /*批次处理节点记录*/
             Specification<ThirdBatchDealLog> tbdls = Specifications
                     .<ThirdBatchDealLog>and()
                     .eq("batchId", thirdBatchLog.getId())
-                    .eq("state", priorState)
                     .build();
-            long count = thirdBatchDealLogService.count(tbdls);
-            if (count < 1) {//前一个节点不存在记录
-                ThirdBatchDealLog thirdBatchDealLog = new ThirdBatchDealLog();
-                thirdBatchDealLog.setBatchId(thirdBatchLog.getId());
-                thirdBatchDealLog.setState(priorState);
-                thirdBatchDealLog.setStatus(true);
-                thirdBatchDealLog.setType(type);
-                thirdBatchDealLog.setCreatedAt(DateHelper.subMinutes(nowDate, 1));
-                thirdBatchDealLog.setUpdatedAt(DateHelper.subMinutes(nowDate, 1));
-                thirdBatchDealLogService.save(thirdBatchDealLog);
-            }
+            List<ThirdBatchDealLog> thirdBatchDealLogList = thirdBatchDealLogService.findList(tbdls, new Sort(Sort.Direction.DESC, "batchId", "state", "createdAt"));
+            thirdBatchDealLogList.stream().forEach(thirdBatchDealLog -> {
+                thirdBatchDealLogMap.put(thirdBatchDealLog.getState(), thirdBatchDealLog);
+            });
         }
 
-        ThirdBatchDealLog thirdBatchDealLog = new ThirdBatchDealLog();
-        thirdBatchDealLog.setBatchId(thirdBatchLog.getId());
-        thirdBatchDealLog.setState(state);
-        thirdBatchDealLog.setStatus(status);
-        thirdBatchDealLog.setType(type);
-        thirdBatchDealLog.setErrorMsg(errorMsg);
-        thirdBatchDealLog.setCreatedAt(nowDate);
-        thirdBatchDealLog.setUpdatedAt(nowDate);
-        return thirdBatchDealLogService.save(thirdBatchDealLog);
+
+        //不存在已完成批次，继续获取批次处理记录 0待处理 1.未通过 2.已通过
+        List<VoFindRepayStatus> voFindRepayStatusList = new ArrayList<>();
+        //填充放款状态数据
+        fillFindRepayStatusData(borrowRepayment, thirdBatchLog, voFindRepayStatusList, thirdBatchDealLogMap);
+
+        //修改参数
+        repayStatusListRes.setVoFindRepayStatusList(voFindRepayStatusList);
+
+        return ResponseEntity.ok(repayStatusListRes);
+    }
+
+    /**
+     * 填充放款状态数据
+     *
+     * @param borrowRepayment
+     * @param thirdBatchLog
+     * @param voFindRepayStatusList
+     */
+    public void fillFindRepayStatusData(BorrowRepayment borrowRepayment, ThirdBatchLog thirdBatchLog, List<VoFindRepayStatus> voFindRepayStatusList, Map<Integer/* state */, ThirdBatchDealLog> thirdBatchDealLogMap) {
+        boolean flag = false;
+        //第一步
+        VoFindRepayStatus voFindRepayStatus = new VoFindRepayStatus();
+        voFindRepayStatus.setName(ThirdBatchLogContants.REPAYMENT_FIRST_STEP);
+        if (ObjectUtils.isEmpty(borrowRepayment.getRepayTriggerAt())) { // 0待处理
+            voFindRepayStatus.setDateStr("- -");
+            voFindRepayStatus.setState(0);
+        } else if (!ObjectUtils.isEmpty(borrowRepayment.getRepayTriggerAt())) { // 2.已通过
+            flag = true;
+            voFindRepayStatus.setState(2);
+            voFindRepayStatus.setDateStr(DateHelper.dateToString(borrowRepayment.getRepayTriggerAt()));
+        } else { //1.未通过
+            voFindRepayStatus.setDateStr(DateHelper.dateToString(borrowRepayment.getRepayTriggerAt()));
+            voFindRepayStatus.setState(1);
+        }
+        voFindRepayStatusList.add(voFindRepayStatus);
+        //第二步
+        /* 批次处理节点记录 */
+        ThirdBatchDealLog thirdBatchDealLog = thirdBatchDealLogMap.get(ThirdBatchDealLogContants.SEND_REQUEST);
+        voFindRepayStatus = new VoFindRepayStatus();
+        voFindRepayStatus.setName(ThirdBatchLogContants.REPAYMENT_SECOND_STEP);
+        if (!flag) { // 0待处理
+            voFindRepayStatus.setDateStr("- -");
+            voFindRepayStatus.setState(0);
+            flag = false;
+        } else if ((!ObjectUtils.isEmpty(thirdBatchLog) && (thirdBatchLog.getState() == 5 || thirdBatchLog.getState() == 2 || thirdBatchLog.getState() == 4)) ||
+                (!ObjectUtils.isEmpty(thirdBatchDealLog) && !thirdBatchDealLog.getStatus())) { //1.未通过
+            Date date = ObjectUtils.isEmpty(borrowRepayment.getRepayTriggerAt()) ? (borrowRepayment.getUpdatedAt()) : borrowRepayment.getRepayTriggerAt();
+            if (!ObjectUtils.isEmpty(thirdBatchDealLog)) {
+                date = thirdBatchDealLog.getCreatedAt();
+            } else if (!ObjectUtils.isEmpty(thirdBatchLog)) {
+                date = DateHelper.subMinutes(thirdBatchLog.getCreateAt(), 3);
+            }
+
+            voFindRepayStatus.setDateStr(DateHelper.dateToString(date));
+            voFindRepayStatus.setState(1);
+            flag = false;
+        } else { // 2.已通过
+            flag = true;
+            Date date = ObjectUtils.isEmpty(borrowRepayment.getRepayTriggerAt()) ? (borrowRepayment.getUpdatedAt()) : borrowRepayment.getRepayTriggerAt();
+            if (!ObjectUtils.isEmpty(thirdBatchDealLog)) {
+                date = thirdBatchDealLog.getCreatedAt();
+            } else if (!ObjectUtils.isEmpty(thirdBatchLog)) {
+                date = DateHelper.subMinutes(thirdBatchLog.getCreateAt(), 3);
+            }
+            voFindRepayStatus.setDateStr(DateHelper.dateToString(date));
+            voFindRepayStatus.setState(2);
+        }
+        voFindRepayStatusList.add(voFindRepayStatus);
+        //第三步
+        /* 批次处理节点记录 */
+        thirdBatchDealLog = thirdBatchDealLogMap.get(ThirdBatchDealLogContants.PARAM_CHECK);
+        voFindRepayStatus = new VoFindRepayStatus();
+        voFindRepayStatus.setName(ThirdBatchLogContants.REPAYMENT_THIRD_STEP);
+        if (!flag || (!ObjectUtils.isEmpty(thirdBatchLog) && thirdBatchLog.getState() != 3 && thirdBatchLog.getState() != 5)) { // 0待处理
+            voFindRepayStatus.setDateStr("- -");
+            voFindRepayStatus.setState(0);
+            flag = false;
+        } else if ((!ObjectUtils.isEmpty(thirdBatchLog) && (thirdBatchLog.getState() == 5 || thirdBatchLog.getState() == 2 || thirdBatchLog.getState() == 4))
+                || (!ObjectUtils.isEmpty(thirdBatchDealLog) && !thirdBatchDealLog.getStatus())) { //1.未通过
+            Date date = ObjectUtils.isEmpty(borrowRepayment.getRepayTriggerAt()) ? (borrowRepayment.getUpdatedAt()) : borrowRepayment.getRepayTriggerAt();
+            if (!ObjectUtils.isEmpty(thirdBatchDealLog)) {
+                date = thirdBatchDealLog.getCreatedAt();
+            } else if (!ObjectUtils.isEmpty(thirdBatchLog)) {
+                date = DateHelper.subMinutes(thirdBatchLog.getCreateAt(), 2);
+            }
+            voFindRepayStatus.setDateStr(DateHelper.dateToString(date));
+            voFindRepayStatus.setState(1);
+            flag = false;
+        } else { // 2.已通过
+            flag = true;
+            Date date = ObjectUtils.isEmpty(borrowRepayment.getRepayTriggerAt()) ? (borrowRepayment.getUpdatedAt()) : borrowRepayment.getRepayTriggerAt();
+            if (!ObjectUtils.isEmpty(thirdBatchDealLog)) {
+                date = thirdBatchDealLog.getCreatedAt();
+            } else if (!ObjectUtils.isEmpty(thirdBatchLog)) {
+                date = DateHelper.subMinutes(thirdBatchLog.getCreateAt(), 2);
+            }
+            voFindRepayStatus.setDateStr(DateHelper.dateToString(date));
+            voFindRepayStatus.setState(2);
+        }
+        voFindRepayStatusList.add(voFindRepayStatus);
+        //第四步
+        /* 批次处理节点记录 */
+        thirdBatchDealLog = thirdBatchDealLogMap.get(ThirdBatchDealLogContants.PROCESSED);
+        voFindRepayStatus = new VoFindRepayStatus();
+        voFindRepayStatus.setName(ThirdBatchLogContants.REPAYMENT_FOUR_STEP);
+        if (!flag || (!ObjectUtils.isEmpty(thirdBatchLog) && thirdBatchLog.getState() != 3 && thirdBatchLog.getState() != 5)) { // 0待处理
+            voFindRepayStatus.setDateStr("- -");
+            voFindRepayStatus.setState(0);
+        } else if ((!ObjectUtils.isEmpty(thirdBatchLog) && (thirdBatchLog.getState() == 5 || thirdBatchLog.getState() == 2 || thirdBatchLog.getState() == 4))
+                || (!ObjectUtils.isEmpty(thirdBatchDealLog) && !thirdBatchDealLog.getStatus())) { //1.未通过
+            Date date = ObjectUtils.isEmpty(borrowRepayment.getRepayTriggerAt()) ? (borrowRepayment.getUpdatedAt()) : borrowRepayment.getRepayTriggerAt();
+            if (!ObjectUtils.isEmpty(thirdBatchDealLog)) {
+                date = thirdBatchDealLog.getCreatedAt();
+            } else if (!ObjectUtils.isEmpty(thirdBatchLog)) {
+                date = DateHelper.subMinutes(thirdBatchLog.getCreateAt(), 1);
+            }
+            voFindRepayStatus.setDateStr(DateHelper.dateToString(date));
+            voFindRepayStatus.setState(1);
+        } else { // 2.已通过
+            Date date = ObjectUtils.isEmpty(borrowRepayment.getRepayTriggerAt()) ? (borrowRepayment.getUpdatedAt()) : borrowRepayment.getRepayTriggerAt();
+            if (!ObjectUtils.isEmpty(thirdBatchDealLog)) {
+                date = thirdBatchDealLog.getCreatedAt();
+            } else if (!ObjectUtils.isEmpty(thirdBatchLog)) {
+                date = DateHelper.subMinutes(thirdBatchLog.getCreateAt(), 1);
+            }
+            voFindRepayStatus.setDateStr(DateHelper.dateToString(date));
+            voFindRepayStatus.setState(2);
+        }
+        voFindRepayStatusList.add(voFindRepayStatus);
     }
 
     /**
@@ -107,11 +285,11 @@ public class ThirdBatchDealLogBizImpl implements ThirdBatchDealLogBiz {
         List<ThirdBatchLog> thirdBatchLogList = thirdBatchLogService.findList(tbls, new Sort(Sort.Direction.DESC, "createAt"));
         /* 批次处理记录 */
         ThirdBatchLog thirdBatchLog = null;
-        List<ThirdBatchDealLog> thirdBatchDealLogList = null;
+        /* 批次处理日志集合 */
         Map<Integer/* state */, ThirdBatchDealLog> thirdBatchDealLogMap = new HashMap<>();
         if (!CollectionUtils.isEmpty(thirdBatchLogList)) {
             //已完成批次
-            List<ThirdBatchLog> successThirdBatchLogList = thirdBatchLogList.stream().filter(t -> t.getType().intValue() == 3).collect(Collectors.toList());
+            List<ThirdBatchLog> successThirdBatchLogList = thirdBatchLogList.stream().filter(t -> t.getState().intValue() == 3).collect(Collectors.toList());
             if (!CollectionUtils.isEmpty(successThirdBatchLogList)) {
                 thirdBatchLog = successThirdBatchLogList.get(1);
             } else {
@@ -122,7 +300,7 @@ public class ThirdBatchDealLogBizImpl implements ThirdBatchDealLogBiz {
                     .<ThirdBatchDealLog>and()
                     .eq("batchId", thirdBatchLog.getId())
                     .build();
-            thirdBatchDealLogList = thirdBatchDealLogService.findList(tbdls, new Sort(Sort.Direction.DESC, "batchId", "state", "createdAt"));
+            List<ThirdBatchDealLog> thirdBatchDealLogList = thirdBatchDealLogService.findList(tbdls, new Sort(Sort.Direction.DESC, "batchId", "state", "createdAt"));
             thirdBatchDealLogList.stream().forEach(thirdBatchDealLog -> {
                 thirdBatchDealLogMap.put(thirdBatchDealLog.getState(), thirdBatchDealLog);
             });
@@ -279,6 +457,53 @@ public class ThirdBatchDealLogBizImpl implements ThirdBatchDealLogBiz {
             voFindLendRepayStatus.setState(2);
         }
         voFindLendRepayStatusList.add(voFindLendRepayStatus);
+    }
+
+
+    /**
+     * 记录批次执行记录
+     *
+     * @param state
+     * @param type
+     * @return
+     */
+    public ThirdBatchDealLog recordThirdBatchDealLog(String batchNo, long sourceId, int state, boolean status, int type, String errorMsg) {
+        ThirdBatchLog thirdBatchLog = thirdBatchLogService.findByBatchNoAndSourceIdAndType(batchNo, sourceId, type);
+        if (ObjectUtils.isEmpty(thirdBatchLog)) {
+            return null;
+        }
+        Date nowDate = new Date();
+
+        /*前面一个*/
+        int priorState = state - 1;
+        if (priorState >= 0) {
+            Specification<ThirdBatchDealLog> tbdls = Specifications
+                    .<ThirdBatchDealLog>and()
+                    .eq("batchId", thirdBatchLog.getId())
+                    .eq("state", priorState)
+                    .build();
+            long count = thirdBatchDealLogService.count(tbdls);
+            if (count < 1) {//前一个节点不存在记录
+                ThirdBatchDealLog thirdBatchDealLog = new ThirdBatchDealLog();
+                thirdBatchDealLog.setBatchId(thirdBatchLog.getId());
+                thirdBatchDealLog.setState(priorState);
+                thirdBatchDealLog.setStatus(true);
+                thirdBatchDealLog.setType(type);
+                thirdBatchDealLog.setCreatedAt(DateHelper.subMinutes(nowDate, 1));
+                thirdBatchDealLog.setUpdatedAt(DateHelper.subMinutes(nowDate, 1));
+                thirdBatchDealLogService.save(thirdBatchDealLog);
+            }
+        }
+
+        ThirdBatchDealLog thirdBatchDealLog = new ThirdBatchDealLog();
+        thirdBatchDealLog.setBatchId(thirdBatchLog.getId());
+        thirdBatchDealLog.setState(state);
+        thirdBatchDealLog.setStatus(status);
+        thirdBatchDealLog.setType(type);
+        thirdBatchDealLog.setErrorMsg(errorMsg);
+        thirdBatchDealLog.setCreatedAt(nowDate);
+        thirdBatchDealLog.setUpdatedAt(nowDate);
+        return thirdBatchDealLogService.save(thirdBatchDealLog);
     }
 }
 

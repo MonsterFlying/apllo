@@ -91,4 +91,5 @@ public class BorrowRepayment {
     private Long tUserId;
     //放款即信通信状态 0.未处理 1.处理中 2.处理失败 3.处理成功
     private Integer repayStatus;
+    private Date repayTriggerAt;
 }

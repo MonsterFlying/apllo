@@ -100,6 +100,7 @@ import org.springframework.util.StringUtils;
 
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
+import javax.transaction.Transactional;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -646,11 +647,27 @@ public class AplloApplicationTests {
     @Autowired
     private DailyAssetBackupScheduler dailyAssetBackupScheduler;
 
+
+    @Transactional
+    private void ddddd(){
+        Borrow borrow = borrowService.findById(179937l);
+        System.out.println(GSON.toJson(borrow));
+        Borrow borrow1 = borrowService.findByIdLock(179937l);
+        System.out.println(GSON.toJson(borrow1));
+    }
+
     @Test
+
     public void test() {
+ddddd();
+        /*Borrow borrow = borrowService.findById(179937l);
+        System.out.println(GSON.toJson(borrow));
+        Borrow borrow1 = borrowService.findByIdLock(179937l);
+        System.out.println(GSON.toJson(borrow1));*/
 
-        dailyAssetBackupScheduler.process();
 
+        /*dailyAssetBackupScheduler.process();
+*/
      /*   //记录批次处理日志
         thirdBatchDealLogBiz.recordThirdBatchDealLog(String.valueOf(113841),169974, ThirdBatchDealLogContants.PROCESSED,true,
                 ThirdBatchLogContants.BATCH_LEND_REPAY, "");
@@ -861,14 +878,15 @@ public class AplloApplicationTests {
     private LoanBiz loanBiz;
 
     @Test
-    public void timingRepayment(){
+    public void timingRepayment() {
         loanBiz.timingRepayment(new Date());
     }
+
     @Autowired
     private IncrStatisticService incrStatisticService;
 
     @Test
-    public void incrstatistic(){
+    public void incrstatistic() {
         incrStatisticService.dayStatistic(new Date());
     }
 

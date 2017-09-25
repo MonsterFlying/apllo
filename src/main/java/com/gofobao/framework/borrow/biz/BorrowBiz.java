@@ -5,6 +5,7 @@ import com.gofobao.framework.borrow.vo.request.*;
 import com.gofobao.framework.borrow.vo.response.*;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.member.vo.response.VoHtmlResp;
+import com.gofobao.framework.system.entity.Statistic;
 import com.gofobao.framework.tender.entity.Tender;
 import org.springframework.http.ResponseEntity;
 
@@ -18,6 +19,7 @@ public interface BorrowBiz {
 
     /**
      * 发送复审
+     *
      * @return
      */
     ResponseEntity<VoBaseResp> sendAgainVerify(VoSendAgainVerify voSendAgainVerify);
@@ -69,10 +71,11 @@ public interface BorrowBiz {
 
 
     /**
-     *首页标
+     * 首页标
+     *
      * @return
      */
-    ResponseEntity<VoPcBorrowList>pcIndexBorrowList();
+    ResponseEntity<VoPcBorrowList> pcIndexBorrowList();
 
     /**
      * 非转让标复审
@@ -81,7 +84,7 @@ public interface BorrowBiz {
      * @return
      * @throws Exception
      */
-    boolean borrowAgainVerify(Borrow borrow,String batchNo) throws Exception;
+    boolean borrowAgainVerify(Borrow borrow, String batchNo, Statistic statistic) throws Exception;
 
     /**
      * 标信息
