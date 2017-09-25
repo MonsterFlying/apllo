@@ -208,7 +208,11 @@ public class UserBizImpl implements UserBiz {
         // 插入数据
         Users users = new Users();
         users.setEmail(null);
-        users.setUsername(voRegisterReq.getUserName());
+        if(!voRegisterReq.getUserName().equals(voRegisterReq.getPhone())){
+            users.setUsername(voRegisterReq.getUserName());
+        }else {
+            users.setUsername(null);
+        }
         users.setPhone(voRegisterReq.getPhone());
         users.setCardId(null);
         users.setPassword(PasswordHelper.encodingPassword(voRegisterReq.getPassword())); // 设置密码

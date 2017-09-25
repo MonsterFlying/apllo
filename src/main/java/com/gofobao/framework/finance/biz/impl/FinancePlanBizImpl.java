@@ -287,6 +287,7 @@ public class FinancePlanBizImpl implements FinancePlanBiz {
         financePlanBuyer.setCreatedAt(new Date());
         financePlanBuyer.setRightMoney(0L);
         financePlanBuyer.setApr(financePlan.getBaseApr());
+        financePlanBuyer.setEndLockAt(financePlan.getEndLockAt());
         financePlanBuyer.setStatus(1);
         financePlanBuyer.setSource(1);
         financePlanBuyer.setPlanId(financePlan.getId());
@@ -431,65 +432,74 @@ public class FinancePlanBizImpl implements FinancePlanBiz {
      * @param voFinancePlanTender
      * @return
      */
+    @Transactional(rollbackFor = Exception.class)
     public ResponseEntity<VoViewFinancePlanTender> financePlanTender(VoFinancePlanTender voFinancePlanTender) {
-        Date nowDate = new Date();
-        //获取paramStr参数、校验参数有效性
-        String paramStr = voFinancePlanTender.getParamStr();/* 理财计划投标 */
-        if (!SecurityHelper.checkSign(voFinancePlanTender.getSign(), paramStr)) {
-            return ResponseEntity
-                    .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, "理财计划投标 签名验证不通过!", VoViewFinancePlanTender.class));
+      try {
+          Date nowDate = new Date();
+          //获取paramStr参数、校验参数有效性
+          String paramStr = voFinancePlanTender.getParamStr();/* 理财计划投标 */
+          if (!SecurityHelper.checkSign(voFinancePlanTender.getSign(), paramStr)) {
+              return ResponseEntity
+                      .badRequest()
+                      .body(VoBaseResp.error(VoBaseResp.ERROR, "理财计划投标 签名验证不通过!", VoViewFinancePlanTender.class));
 
-        }
-        Map<String, String> paramMap = GSON.fromJson(paramStr, TypeTokenContants.MAP_ALL_STRING_TOKEN);
+          }
+          Map<String, String> paramMap = GSON.fromJson(paramStr, TypeTokenContants.MAP_ALL_STRING_TOKEN);
         /* 购买债权转让金额 分 */
-        long money = (long) NumberHelper.toDouble(paramMap.get("money")) * 100;
+          long money = (long) NumberHelper.toDouble(paramMap.get("money")) * 100;
         /* 债权转让id */
-        long transferId = NumberHelper.toLong(paramMap.get("transferId"));
+          long transferId = NumberHelper.toLong(paramMap.get("transferId"));
         /* 购买理财计划id */
-        long buyerId = NumberHelper.toLong(paramMap.get("buyerId"));
+          long buyerId = NumberHelper.toLong(paramMap.get("buyerId"));
         /* 理财计划id */
-        long planId = NumberHelper.toLong(paramMap.get("planId"));
+          long planId = NumberHelper.toLong(paramMap.get("planId"));
         /* 购买计划人id */
-        long userId = NumberHelper.toLong(paramMap.get("userId"));
+          long userId = NumberHelper.toLong(paramMap.get("userId"));
         /* 理财计划购买记录 */
-        FinancePlanBuyer financePlanBuyer = financePlanBuyerService.findByIdLock(buyerId);
-        Preconditions.checkNotNull(financePlanBuyer, "理财计划购买记录不存在!");
+          FinancePlanBuyer financePlanBuyer = financePlanBuyerService.findByIdLock(buyerId);
+          Preconditions.checkNotNull(financePlanBuyer, "理财计划购买记录不存在!");
         /* 理财计划记录 */
-        FinancePlan financePlan = financePlanService.findById(planId);
-        Preconditions.checkNotNull(financePlan, "理财计划记录不存在!");
+          FinancePlan financePlan = financePlanService.findById(planId);
+          Preconditions.checkNotNull(financePlan, "理财计划记录不存在!");
         /* 债权转让记录*/
-        Transfer transfer = transferService.findById(transferId);
-        Preconditions.checkNotNull(transfer, "债权转让记录不存在!");
+          Transfer transfer = transferService.findById(transferId);
+          Preconditions.checkNotNull(transfer, "债权转让记录不存在!");
         /* 理财计划购买人存管账户 */
-        UserThirdAccount buyUserAccount = userThirdAccountService.findByUserId(userId);
-        ThirdAccountHelper.allConditionCheck(buyUserAccount);
-        //判断是否是购买人操作
-        if (financePlanBuyer.getUserId() != userId) {
-            return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "操作人非理财计划购买人!", VoViewFinancePlanTender.class));
-        }
-        //进行购买债权操作（部分债权转让），并推送到存管系统
-        if (transfer.getTransferMoney() == transfer.getTransferMoneyYes()) {
-            return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "债权转让已全部转出!", VoViewFinancePlanTender.class));
-        }
+          UserThirdAccount buyUserAccount = userThirdAccountService.findByUserId(userId);
+          ThirdAccountHelper.allConditionCheck(buyUserAccount);
+          //判断是否是购买人操作
+          if (financePlanBuyer.getUserId() != userId) {
+              return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "操作人非理财计划购买人!", VoViewFinancePlanTender.class));
+          }
+          //进行购买债权操作（部分债权转让），并推送到存管系统
+          if (transfer.getTransferMoney() == transfer.getTransferMoneyYes()) {
+              return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "债权转让已全部转出!", VoViewFinancePlanTender.class));
+          }
         /*购买债权有效金额*/
-        long validMoney = (long) MathHelper.min(transfer.getTransferMoney() - transfer.getTransferMoneyYes(), money);
+          long validMoney = (long) MathHelper.min(transfer.getTransferMoney() - transfer.getTransferMoneyYes(), money);
 
-        //理财计划购买债权转让
-        financePlanBuyTransfer(nowDate, money, transferId, userId, financePlanBuyer, financePlan, transfer, validMoney);
+          //理财计划购买债权转让
+          financePlanBuyTransfer(nowDate, money, transferId, userId, financePlanBuyer, financePlan, transfer, validMoney);
 
-        if (transfer.getTransferMoneyYes() >= transfer.getTransferMoney()) {
-            MqConfig mqConfig = new MqConfig();
-            mqConfig.setQueue(MqQueueEnum.RABBITMQ_TRANSFER);
-            mqConfig.setTag(MqTagEnum.AGAIN_VERIFY_FINANCE_TRANSFER);
-            ImmutableMap<String, String> body = ImmutableMap
-                    .of(MqConfig.MSG_TRANSFER_ID, StringHelper.toString(transferId), MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
-            mqConfig.setMsg(body);
-            log.info(String.format("FinancePlanBizImpl financePlanTender send mq %s", GSON.toJson(body)));
-            mqHelper.convertAndSend(mqConfig);
-        }
-        // /更改购买计划状态、资金信息
-        return ResponseEntity.ok(VoBaseResp.ok("理财计划投标成功!", VoViewFinancePlanTender.class));
+          if (transfer.getTransferMoneyYes() >= transfer.getTransferMoney()) {
+              MqConfig mqConfig = new MqConfig();
+              mqConfig.setQueue(MqQueueEnum.RABBITMQ_TRANSFER);
+              mqConfig.setTag(MqTagEnum.AGAIN_VERIFY_FINANCE_TRANSFER);
+              ImmutableMap<String, String> body = ImmutableMap
+                      .of(MqConfig.MSG_TRANSFER_ID, StringHelper.toString(transferId), MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
+              mqConfig.setMsg(body);
+              log.info(String.format("FinancePlanBizImpl financePlanTender send mq %s", GSON.toJson(body)));
+              mqHelper.convertAndSend(mqConfig);
+          }
+
+          // /更改购买计划状态、资金信息
+          return ResponseEntity.ok(VoBaseResp.ok("理财计划投标成功!", VoViewFinancePlanTender.class));
+      }catch (Exception e){
+          e.printStackTrace();
+          return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR,
+                  "匹配失败",
+                  VoViewFinancePlanTender.class));
+      }
     }
 
     /**
