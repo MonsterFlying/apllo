@@ -24,6 +24,7 @@ import com.gofobao.framework.api.model.freeze_details_query.FreezeDetailsQueryRe
 import com.gofobao.framework.api.model.freeze_details_query.FreezeDetailsQueryResponse;
 import com.gofobao.framework.api.model.voucher_pay.VoucherPayRequest;
 import com.gofobao.framework.api.model.voucher_pay.VoucherPayResponse;
+import com.gofobao.framework.asset.entity.BatchAssetChangeItem;
 import com.gofobao.framework.asset.entity.NewAssetLog;
 import com.gofobao.framework.asset.service.NewAssetLogService;
 import com.gofobao.framework.borrow.biz.BorrowBiz;
@@ -35,10 +36,7 @@ import com.gofobao.framework.common.assets.AssetChange;
 import com.gofobao.framework.common.assets.AssetChangeProvider;
 import com.gofobao.framework.common.assets.AssetChangeTypeEnum;
 import com.gofobao.framework.common.rabbitmq.MqHelper;
-import com.gofobao.framework.helper.DateHelper;
-import com.gofobao.framework.helper.JixinHelper;
-import com.gofobao.framework.helper.NumberHelper;
-import com.gofobao.framework.helper.StringHelper;
+import com.gofobao.framework.helper.*;
 import com.gofobao.framework.member.entity.UserThirdAccount;
 import com.gofobao.framework.member.service.UserThirdAccountService;
 import com.gofobao.framework.system.biz.ThirdBatchDealBiz;
@@ -47,6 +45,7 @@ import com.gofobao.framework.system.service.ThirdBatchLogService;
 import com.gofobao.framework.tender.biz.AutoTenderBiz;
 import com.gofobao.framework.tender.entity.Tender;
 import com.gofobao.framework.tender.service.TenderService;
+import com.google.common.collect.ImmutableSet;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import io.swagger.annotations.Api;
@@ -72,6 +71,8 @@ import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+
+import static com.gofobao.framework.helper.DateHelper.isBetween;
 
 /**
  * Created by Zeke on 2017/6/21.
@@ -111,7 +112,7 @@ public class TestController {
 
     @ApiOperation("获取自动投标列表")
     @RequestMapping("/pub/borrow/collection/send")
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public void sendBorrowCollection() {
         long redpackAccountId = 0;
         try {
@@ -148,13 +149,51 @@ public class TestController {
             }
 
             Borrow borrow = borrowMap.get(borrowCollection.getBorrowId());
+            long principal = borrowCollection.getPrincipal();
+            long interest = borrowCollection.getInterest();
+            long interestFee = 0;
+
+            ImmutableSet<Long> stockholder = ImmutableSet.of(2480L, 1753L, 1699L,
+                    3966L, 1413L, 1857L,
+                    183L, 2327L, 2432L,
+                    2470L, 2552L, 2739L,
+                    3939L, 893L, 608L,
+                    1216L);
+            boolean between = isBetween(new Date(), DateHelper.stringToDate("2015-12-25 00:00:00"),
+                    DateHelper.stringToDate("2017-12-31 23:59:59"));
+
+            if ((stockholder.contains(borrowCollection.getUserId())) && (between)) {
+            } else {
+                Long feeAccountId = null;  // 平台收费账户ID
+                try {
+                    feeAccountId = assetChangeProvider.getFeeAccountId();
+                } catch (ExecutionException e) {
+                    e.printStackTrace();
+                }
+                interestFee = MoneyHelper.doubleToint(MoneyHelper.multiply(interest, 0.1D, 0));  // 利息问题
+
+                AssetChange assetChange = new AssetChange();   // 还款本金和利息
+                assetChange = new AssetChange();
+                assetChange.setType(AssetChangeTypeEnum.interestManagementFee);  // 扣除投资人利息管理费
+                assetChange.setUserId(borrowCollection.getUserId());
+                assetChange.setForUserId(feeAccountId);
+                assetChange.setMoney(interestFee);
+                assetChange.setRemark(String.format("扣除借款标的[%s]利息管理费%s元(补收)", borrow.getName(), StringHelper.formatDouble(interestFee / 100D, false)));
+                assetChange.setSeqNo(assetChangeProvider.getSeqNo());
+                assetChange.setGroupSeqNo(assetChangeProvider.getGroupSeqNo());
+                try {
+                    assetChangeProvider.commonAssetChange(assetChange);
+                } catch (Exception e) {
+                    log.error("补发失败:", e);
+                }
+            }
 
             AssetChange assetChange = new AssetChange();   // 还款本金和利息
             assetChange.setType(AssetChangeTypeEnum.makeUpReceivedPayments);  // 投资人收到还款
             assetChange.setUserId(borrowCollection.getUserId());
             assetChange.setForUserId(0l);
-            assetChange.setMoney(borrowCollection.getPrincipal() + borrowCollection.getInterest());   // 本金加利息
-            assetChange.setInterest(borrowCollection.getInterest());  // 利息
+            assetChange.setMoney(principal + interest);   // 本金加利息
+            assetChange.setInterest(interest);  // 利息
             assetChange.setRemark(String.format("收到客户对借款[%s]第%s期的还款(补发)", borrow.getName(), (borrowCollection.getOrder() + 1)));
             assetChange.setSourceId(borrowCollection.getId());
             assetChange.setSeqNo(assetChangeProvider.getSeqNo());
@@ -164,6 +203,7 @@ public class TestController {
             } catch (Exception e) {
                 log.error("补发失败:", e);
             }
+
 
             //扣除投资人待收
             assetChange = new AssetChange();
@@ -180,14 +220,30 @@ public class TestController {
             } catch (Exception e) {
                 log.error("补发失败:", e);
             }
+            int lateDays = DateHelper.diffInDays(DateHelper.beginOfDate(new Date()), DateHelper.beginOfDate(borrowCollection.getCollectionAt()), false);
+            long overPricipal = new Double(MoneyHelper.round(MoneyHelper.multiply(MoneyHelper.multiply(borrowCollection.getPrincipal(), 0.001), lateDays), 0)).longValue();  // 每天逾期费
+
+            assetChange = new AssetChange();
+            assetChange.setType(AssetChangeTypeEnum.receivedPaymentsPenalty);  // 收取逾期管理费
+            assetChange.setUserId(borrowCollection.getUserId());
+            assetChange.setForUserId(0l);
+            assetChange.setMoney(overPricipal);
+            assetChange.setRemark(String.format("收取借款标的[%s]逾期管理费%s元(补发)", borrow.getName(), StringHelper.formatDouble(overPricipal / 100D, false)));
+            assetChange.setSeqNo(assetChangeProvider.getSeqNo());
+            assetChange.setGroupSeqNo(assetChangeProvider.getGroupSeqNo());
+            try {
+                assetChangeProvider.commonAssetChange(assetChange);
+            } catch (Exception e) {
+                log.error("补发失败:", e);
+            }
 
             //3.发送红包
             VoucherPayRequest voucherPayRequest = new VoucherPayRequest();
             voucherPayRequest.setAccountId(redpackAccount.getAccountId());
-            voucherPayRequest.setTxAmount(StringHelper.formatDouble(borrowCollection.getCollectionMoney(), 100, false));
+            voucherPayRequest.setTxAmount(StringHelper.formatDouble(borrowCollection.getCollectionMoney() + overPricipal - interestFee, 100, false));
             voucherPayRequest.setForAccountId(userThirdAccount.getAccountId());
             voucherPayRequest.setDesLineFlag(DesLineFlagContant.TURE);
-            voucherPayRequest.setDesLine("红包发送!");
+            voucherPayRequest.setDesLine("债权转让回款补发!");
             voucherPayRequest.setChannel(ChannelContant.HTML);
             VoucherPayResponse response = jixinManager.send(JixinTxCodeEnum.SEND_RED_PACKET, voucherPayRequest, VoucherPayResponse.class);
             if ((ObjectUtils.isEmpty(response)) || (!JixinResultContants.SUCCESS.equals(response.getRetCode()))) {

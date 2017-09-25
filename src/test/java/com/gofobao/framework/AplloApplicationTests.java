@@ -36,6 +36,7 @@ import com.gofobao.framework.api.model.trustee_pay_query.TrusteePayQueryReq;
 import com.gofobao.framework.api.model.trustee_pay_query.TrusteePayQueryResp;
 import com.gofobao.framework.api.model.voucher_pay.VoucherPayRequest;
 import com.gofobao.framework.api.model.voucher_pay.VoucherPayResponse;
+import com.gofobao.framework.asset.entity.BatchAssetChangeItem;
 import com.gofobao.framework.asset.entity.NewAssetLog;
 import com.gofobao.framework.asset.service.AssetService;
 import com.gofobao.framework.asset.service.NewAssetLogService;
@@ -55,6 +56,7 @@ import com.gofobao.framework.common.rabbitmq.MqQueueEnum;
 import com.gofobao.framework.common.rabbitmq.MqTagEnum;
 import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.helper.JixinHelper;
+import com.gofobao.framework.helper.MoneyHelper;
 import com.gofobao.framework.helper.StringHelper;
 import com.gofobao.framework.listener.providers.BorrowProvider;
 import com.gofobao.framework.listener.providers.CreditProvider;
@@ -85,6 +87,7 @@ import com.gofobao.framework.tender.service.TenderService;
 import com.gofobao.framework.tender.service.TransferBuyLogService;
 import com.gofobao.framework.tender.service.TransferService;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -109,6 +112,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import static com.gofobao.framework.helper.DateHelper.isBetween;
 import static java.util.stream.Collectors.groupingBy;
 
 @RunWith(SpringRunner.class)
@@ -653,15 +657,19 @@ public class AplloApplicationTests {
     private NewAssetLogService newAssetLogService;
 
     @Transactional
-    private void ddddd(){
+    private void ddddd() {
         Borrow borrow = borrowService.findById(179937l);
         System.out.println(GSON.toJson(borrow));
         Borrow borrow1 = borrowService.findByIdLock(179937l);
         System.out.println(GSON.toJson(borrow1));
     }
 
+
+
     @Test
     public void test() {
+
+
         /*Borrow borrow = borrowService.findById(179937l);
         System.out.println(GSON.toJson(borrow));
         Borrow borrow1 = borrowService.findByIdLock(179937l);

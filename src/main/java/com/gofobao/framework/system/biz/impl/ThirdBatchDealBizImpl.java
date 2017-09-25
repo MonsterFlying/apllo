@@ -213,7 +213,7 @@ public class ThirdBatchDealBizImpl implements ThirdBatchDealBiz {
                     break;
                 case ThirdBatchLogContants.BATCH_FINANCE_LEND_REPAY:
                     // 即信批次放款结果处理
-                    statistic = lendRepayDeal(batchNo, sourceId, failureOrderIds, successOrderIds);
+                    statistic = financeLendRepayDeal(batchNo, sourceId, failureOrderIds, successOrderIds);
                     //即信批次放款结果处理总统计
                     statisticBiz.caculate(statistic);
                     break;
@@ -521,6 +521,135 @@ public class ThirdBatchDealBizImpl implements ThirdBatchDealBiz {
                 thirdBatchDealLogBiz.recordThirdBatchDealLog(batchNo, repaymentId,
                         ThirdBatchDealLogContants.PROCESSED, true, ThirdBatchLogContants.BATCH_REPAY, "");
             }
+        }
+        return statistic;
+    }
+
+    /**
+     * 理财计划批次放款处理
+     *
+     * @param failureThirdLendPayOrderIds
+     * @param successThirdLendPayOrderIds
+     */
+    @Transactional(rollbackFor = Exception.class)
+    private Statistic financeLendRepayDeal(String batchNo, long borrowId, List<String> failureThirdLendPayOrderIds, List<String> successThirdLendPayOrderIds) throws Exception {
+        Date nowDate = new Date();
+        Statistic statistic = new Statistic();
+        if (CollectionUtils.isEmpty(failureThirdLendPayOrderIds)) {
+            log.info("================================================================================");
+            log.info("理财计划即信批次放款查询：未发现失败批次！");
+            log.info("================================================================================");
+        }
+
+        Gson gson = new Gson();
+        // 当明细中存在批量放款成功是
+        // 直接更改记录为存款放款成功
+        if (!CollectionUtils.isEmpty(successThirdLendPayOrderIds)) {
+            log.info(String.format("理财计划批次放款: 正确放款批次处理开始 %s", gson.toJson(successThirdLendPayOrderIds)));
+            Specification<Tender> ts = Specifications
+                    .<Tender>and()
+                    .in("thirdLendPayOrderId", successThirdLendPayOrderIds.toArray())
+                    .build();
+            List<Tender> successTenderList = tenderService.findList(ts);
+            successTenderList.stream().forEach(tender -> {
+                tender.setThirdTenderFlag(true);
+            });
+            tenderService.save(successTenderList);
+            log.info(String.format("理财计划批次放款: 正确放款批次处理结束 %s", gson.toJson(successThirdLendPayOrderIds)));
+        }
+
+
+        // 对于失败的债权, 先查询失败的标的ID
+        if (!CollectionUtils.isEmpty(failureThirdLendPayOrderIds)) {
+            log.info(String.format("理财计划批次放款: 错误放款批次处理开始 %s", gson.toJson(successThirdLendPayOrderIds)));
+            Specification<Tender> ts = Specifications
+                    .<Tender>and()
+                    .in("thirdLendPayOrderId", failureThirdLendPayOrderIds.toArray())
+                    .build();
+            List<Tender> failureTenderList = tenderService.findList(ts);
+            Preconditions.checkNotNull(failureTenderList, "理财计划正常批次放款回调: 查询失败投标记录为空");
+            Map<Long/** borrowId */, List<Tender> /** borrowId 对应的投标记录*/> borrowIdAndTenderMap = failureTenderList
+                    .stream()
+                    .collect(Collectors.groupingBy(Tender::getBorrowId));
+
+            Set<Long> borrowIdSet = failureTenderList.stream().map(Tender::getBorrowId).collect(Collectors.toSet());
+            Specification<Borrow> bs = Specifications
+                    .<Borrow>and()
+                    .in("id", borrowIdSet.toArray())
+                    .build();
+            List<Borrow> failureBorrowList = borrowService.findList(bs);
+            for (Borrow borrow : failureBorrowList) {
+                List<Tender> tenders = borrowIdAndTenderMap.get(borrow.getId());
+                Long failureAmount = tenders.stream().mapToLong(t -> t.getValidMoney()).sum();  // 投标失败金额
+                Long failureNum = new Long(tenders.size());  // 投标失败笔数
+                for (Tender tender : tenders) {
+                    VoCancelThirdTenderReq voCancelThirdTenderReq = new VoCancelThirdTenderReq();
+                    voCancelThirdTenderReq.setTenderId(tender.getId());
+                    ResponseEntity<VoBaseResp> resp = tenderThirdBiz.cancelThirdTender(voCancelThirdTenderReq);
+                    if (resp.getBody().getState().getCode() == VoBaseResp.ERROR) {
+                        log.error(String.format("理财计划批量放款回调: 取消投标申请失败 %s msg:%s", gson.toJson(voCancelThirdTenderReq)
+                                , resp.getBody().getState().getMsg()));
+                    }
+
+                    tender.setId(tender.getId());
+                    tender.setStatus(2); // 取消状态
+                    tender.setUpdatedAt(nowDate);
+
+                    // 取消冻结
+                    AssetChange assetChange = new AssetChange();
+                    assetChange.setSourceId(tender.getId());
+                    assetChange.setGroupSeqNo(assetChangeProvider.getGroupSeqNo());
+                    assetChange.setMoney(tender.getValidMoney());
+                    assetChange.setSeqNo(assetChangeProvider.getSeqNo());
+                    assetChange.setRemark(String.format("存管系统审核投资标的[%s]资格失败, 解除资金冻结%s元", borrow.getName(), StringHelper.formatDouble(tender.getValidMoney() / 100D, true)));
+                    assetChange.setType(AssetChangeTypeEnum.unfreeze);
+                    assetChange.setUserId(tender.getUserId());
+                    assetChange.setForUserId(tender.getUserId());
+                    assetChangeProvider.commonAssetChange(assetChange);
+                }
+                tenderService.save(tenders);
+
+                //更新借款数据
+                borrow.setTenderCount(borrow.getTenderCount() - failureNum.intValue());
+                borrow.setMoneyYes(borrow.getMoneyYes() - failureAmount.intValue());
+                borrow.setSuccessAt(null);
+                borrow.setUpdatedAt(nowDate);
+
+            }
+            //更新批次日志状态
+            updateThirdBatchLogState(batchNo, borrowId, ThirdBatchLogContants.BATCH_LEND_REPAY, 4);
+            borrowService.save(failureBorrowList);
+            //记录批次处理日志
+            thirdBatchDealLogBiz.recordThirdBatchDealLog(batchNo, borrowId, ThirdBatchDealLogContants.PROCESSED, false,
+                    ThirdBatchLogContants.BATCH_LEND_REPAY, String.format("失败lendPayOrderId:%s", GSON.toJson(failureThirdLendPayOrderIds)));
+
+            //改变批次放款状态 处理失败
+            Borrow borrow = borrowService.findById(borrowId);
+            borrow.setLendRepayStatus(ThirdDealStatusContrants.UNDISPOSED);
+            borrowService.save(borrow);
+        }
+
+        if (CollectionUtils.isEmpty(failureThirdLendPayOrderIds)) {
+
+            Borrow borrow = borrowService.findById(borrowId);
+            log.info(String.format("理财计划正常标的放款回调: %s", gson.toJson(borrow)));
+            boolean flag = borrowBiz.financeBorrowAgainVerify(borrow, batchNo, statistic);
+            if (!flag) {
+                log.error("理财计划标的放款失败！标的id：" + borrowId);
+            } else {
+                log.error("理财计划标的放款成功！标的id：" + borrowId);
+                //更新批次状态
+                thirdBatchLogBiz.updateBatchLogState(batchNo, borrowId, 3, ThirdBatchLogContants.BATCH_LEND_REPAY);
+                //记录批次处理日志
+                thirdBatchDealLogBiz.recordThirdBatchDealLog(batchNo, borrowId, ThirdBatchDealLogContants.PROCESSED, true,
+                        ThirdBatchLogContants.BATCH_LEND_REPAY, "");
+            }
+            //改变批次放款状态 处理成功
+            borrow.setLendRepayStatus(ThirdDealStatusContrants.DISPOSED);
+            borrow.setRecheckAt(new Date());
+            borrowService.save(borrow);
+        } else {
+            log.info("理财计划非流转标复审失败!");
         }
         return statistic;
     }
