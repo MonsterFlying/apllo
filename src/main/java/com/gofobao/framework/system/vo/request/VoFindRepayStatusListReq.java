@@ -14,6 +14,7 @@ import javax.validation.constraints.NotNull;
 @Data
 public class VoFindRepayStatusListReq extends Page {
     @ApiModelProperty("回款id")
-    @NotNull(message = "回款id不能为空!")
     private Long collectionId;
+    @ApiModelProperty("回款id")
+    private Long repaymentId;
 }

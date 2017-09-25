@@ -3,14 +3,19 @@ package com.gofobao.framework.system.biz;
 import com.gofobao.framework.system.entity.ThirdBatchDealLog;
 import com.gofobao.framework.system.vo.request.VoFindLendRepayStatusListReq;
 import com.gofobao.framework.system.vo.request.VoFindRepayStatusListReq;
+import com.gofobao.framework.system.vo.response.VoFindRepayStatus;
 import com.gofobao.framework.system.vo.response.VoViewFindLendRepayStatusListRes;
 import com.gofobao.framework.system.vo.response.VoViewFindRepayStatusListRes;
 import org.springframework.http.ResponseEntity;
+
+import java.util.List;
 
 /**
  * Created by Zeke on 2017/9/12.
  */
 public interface ThirdBatchDealLogBiz {
+
+    List<VoFindRepayStatus> getVoFindRepayStatusList(Long collectionId, Long repaymentId);
 
     /**
      * 查询放款状态集合

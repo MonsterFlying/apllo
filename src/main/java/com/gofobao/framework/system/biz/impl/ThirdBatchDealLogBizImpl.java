@@ -62,26 +62,55 @@ public class ThirdBatchDealLogBizImpl implements ThirdBatchDealLogBiz {
      */
     public ResponseEntity<VoViewFindRepayStatusListRes> findRepayStatusList(VoFindRepayStatusListReq voFindRepayStatusListReq) {
         VoViewFindRepayStatusListRes repayStatusListRes = VoViewFindRepayStatusListRes.ok("查询成功!", VoViewFindRepayStatusListRes.class);
+
         /* 回款id */
-        long collectionId = voFindRepayStatusListReq.getCollectionId();
-        /* 回款记录 */
-        BorrowCollection borrowCollection = borrowCollectionService.findById(collectionId);
-        Preconditions.checkNotNull(borrowCollection, "借款记录查询不存在!");
-        /* 投标记录 */
-        Tender tender = tenderService.findById(borrowCollection.getTenderId());
-        Preconditions.checkNotNull(tender, "投标记录查询不存在!");
-        /* 借款记录 */
-        Borrow borrow = borrowService.findById(tender.getBorrowId());
-        Preconditions.checkNotNull(tender, "借款记录查询不存在!");
-        /* 查询当期还款记录 */
-        Specification<BorrowRepayment> brs = Specifications
-                .<BorrowRepayment>and()
-                .eq("borrowId", borrow.getId())
-                .eq("order", borrowCollection.getOrder())
-                .build();
-        List<BorrowRepayment> borrowRepaymentList = borrowRepaymentService.findList(brs);
-        Preconditions.checkState(!CollectionUtils.isEmpty(borrowRepaymentList), "还款记录不存在！");
-        BorrowRepayment borrowRepayment = borrowRepaymentList.get(0);
+        Long collectionId = voFindRepayStatusListReq.getCollectionId();
+
+        /* 还款id */
+        Long repaymentId = voFindRepayStatusListReq.getCollectionId();
+
+        List<VoFindRepayStatus> voFindRepayStatusList = getVoFindRepayStatusList(collectionId, repaymentId);
+
+        //修改参数
+        repayStatusListRes.setVoFindRepayStatusList(voFindRepayStatusList);
+
+        return ResponseEntity.ok(repayStatusListRes);
+    }
+
+    /**
+     * @param collectionId
+     * @return
+     */
+    public List<VoFindRepayStatus> getVoFindRepayStatusList(Long collectionId, Long repaymentId) {
+        Preconditions.checkNotNull(ObjectUtils.isEmpty(collectionId) && ObjectUtils.isEmpty(repaymentId), "borrowCollection与repaymentId必须传其中一个!");
+        BorrowRepayment borrowRepayment = null;
+        Borrow borrow = null;
+        if (!ObjectUtils.isEmpty(collectionId)) {
+            /* 回款记录 */
+            BorrowCollection borrowCollection = borrowCollectionService.findById(collectionId);
+            Preconditions.checkNotNull(borrowCollection, "借款记录查询不存在!");
+           /* 投标记录 */
+            Tender tender = tenderService.findById(borrowCollection.getTenderId());
+            Preconditions.checkNotNull(tender, "投标记录查询不存在!");
+            /* 借款记录 */
+            borrow = borrowService.findById(tender.getBorrowId());
+            Preconditions.checkNotNull(tender, "借款记录查询不存在!");
+            /* 查询当期还款记录 */
+            Specification<BorrowRepayment> brs = Specifications
+                    .<BorrowRepayment>and()
+                    .eq("borrowId", borrow.getId())
+                    .eq("order", borrowCollection.getOrder())
+                    .build();
+            List<BorrowRepayment> borrowRepaymentList = borrowRepaymentService.findList(brs);
+            Preconditions.checkState(!CollectionUtils.isEmpty(borrowRepaymentList), "还款记录不存在！");
+            borrowRepayment = borrowRepaymentList.get(0);
+        }
+
+        if (!ObjectUtils.isEmpty(repaymentId)) {
+            borrowRepayment = borrowRepaymentService.findById(repaymentId);
+            borrow = borrowService.findById(borrowRepayment.getBorrowId());
+        }
+
         //查询相关垫付、还款、提前结清
         Specification<ThirdBatchLog> tbls = Specifications
                 .<ThirdBatchLog>and()
@@ -136,11 +165,7 @@ public class ThirdBatchDealLogBizImpl implements ThirdBatchDealLogBiz {
         List<VoFindRepayStatus> voFindRepayStatusList = new ArrayList<>();
         //填充放款状态数据
         fillFindRepayStatusData(borrowRepayment, thirdBatchLog, voFindRepayStatusList, thirdBatchDealLogMap);
-
-        //修改参数
-        repayStatusListRes.setVoFindRepayStatusList(voFindRepayStatusList);
-
-        return ResponseEntity.ok(repayStatusListRes);
+        return voFindRepayStatusList;
     }
 
     /**

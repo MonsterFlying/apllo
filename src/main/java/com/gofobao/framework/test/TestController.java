@@ -2,6 +2,7 @@ package com.gofobao.framework.test;
 
 import com.github.wenhao.jpa.Specifications;
 import com.gofobao.framework.api.contants.ChannelContant;
+import com.gofobao.framework.api.contants.DesLineFlagContant;
 import com.gofobao.framework.api.contants.JixinResultContants;
 import com.gofobao.framework.api.helper.JixinManager;
 import com.gofobao.framework.api.helper.JixinTxCodeEnum;
@@ -21,8 +22,15 @@ import com.gofobao.framework.api.model.credit_details_query.CreditDetailsQueryRe
 import com.gofobao.framework.api.model.credit_details_query.CreditDetailsQueryResponse;
 import com.gofobao.framework.api.model.freeze_details_query.FreezeDetailsQueryRequest;
 import com.gofobao.framework.api.model.freeze_details_query.FreezeDetailsQueryResponse;
+import com.gofobao.framework.api.model.voucher_pay.VoucherPayRequest;
+import com.gofobao.framework.api.model.voucher_pay.VoucherPayResponse;
+import com.gofobao.framework.asset.entity.NewAssetLog;
 import com.gofobao.framework.asset.service.NewAssetLogService;
 import com.gofobao.framework.borrow.biz.BorrowBiz;
+import com.gofobao.framework.borrow.entity.Borrow;
+import com.gofobao.framework.borrow.service.BorrowService;
+import com.gofobao.framework.collection.entity.BorrowCollection;
+import com.gofobao.framework.collection.service.BorrowCollectionService;
 import com.gofobao.framework.common.assets.AssetChange;
 import com.gofobao.framework.common.assets.AssetChangeProvider;
 import com.gofobao.framework.common.assets.AssetChangeTypeEnum;
@@ -31,6 +39,7 @@ import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.helper.JixinHelper;
 import com.gofobao.framework.helper.NumberHelper;
 import com.gofobao.framework.helper.StringHelper;
+import com.gofobao.framework.member.entity.UserThirdAccount;
 import com.gofobao.framework.member.service.UserThirdAccountService;
 import com.gofobao.framework.system.biz.ThirdBatchDealBiz;
 import com.gofobao.framework.system.entity.ThirdBatchLog;
@@ -58,6 +67,11 @@ import org.springframework.web.bind.annotation.RestController;
 import java.math.BigDecimal;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ExecutionException;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * Created by Zeke on 2017/6/21.
@@ -90,7 +104,99 @@ public class TestController {
     final Gson GSON = new GsonBuilder().create();
     @Autowired
     private ThirdBatchDealBiz thirdBatchDealBiz;
+    @Autowired
+    private BorrowCollectionService borrowCollectionService;
+    @Autowired
+    private BorrowService borrowService;
 
+    @ApiOperation("获取自动投标列表")
+    @RequestMapping("/pub/borrow/collection/send")
+    @Transactional
+    public void sendBorrowCollection() {
+        long redpackAccountId = 0;
+        try {
+            redpackAccountId = assetChangeProvider.getRedpackAccountId();
+        } catch (ExecutionException e) {
+            e.printStackTrace();
+        }
+        UserThirdAccount redpackAccount = userThirdAccountService.findByUserId(redpackAccountId);
+        UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(22002l);
+
+        String collectionIds = "418565,418713,418716,419532,419541,420643,420848,420854,420966,420975,421002,421011,421020,421118,421125,422198,423838";
+        String[] idArr = collectionIds.split(",");
+        Specification<BorrowCollection> bcs = Specifications
+                .<BorrowCollection>and()
+                .in("id", idArr)
+                .build();
+        List<BorrowCollection> borrowCollectionList = borrowCollectionService.findList(bcs);
+        Set<Long> borrowIds = borrowCollectionList.stream().map(BorrowCollection::getBorrowId).collect(Collectors.toSet());
+        Specification<Borrow> bs = Specifications
+                .<Borrow>and()
+                .in("id", borrowIds.toArray())
+                .build();
+        List<Borrow> borrowList = borrowService.findList(bs);
+        Map<Long, Borrow> borrowMap = borrowList.stream().collect(Collectors.toMap(Borrow::getId, Function.identity()));
+        for (BorrowCollection borrowCollection : borrowCollectionList) {
+            Specification<NewAssetLog> nals = Specifications
+                    .<NewAssetLog>and()
+                    .eq("userId", borrowCollection.getUserId())
+                    .eq("localType", AssetChangeTypeEnum.makeUpReceivedPayments.getLocalType())
+                    .build();
+            long count = newAssetLogService.count(nals);
+            if (count > 0) {
+                continue;
+            }
+
+            Borrow borrow = borrowMap.get(borrowCollection.getBorrowId());
+
+            AssetChange assetChange = new AssetChange();   // 还款本金和利息
+            assetChange.setType(AssetChangeTypeEnum.makeUpReceivedPayments);  // 投资人收到还款
+            assetChange.setUserId(borrowCollection.getUserId());
+            assetChange.setForUserId(0l);
+            assetChange.setMoney(borrowCollection.getPrincipal() + borrowCollection.getInterest());   // 本金加利息
+            assetChange.setInterest(borrowCollection.getInterest());  // 利息
+            assetChange.setRemark(String.format("收到客户对借款[%s]第%s期的还款(补发)", borrow.getName(), (borrowCollection.getOrder() + 1)));
+            assetChange.setSourceId(borrowCollection.getId());
+            assetChange.setSeqNo(assetChangeProvider.getSeqNo());
+            assetChange.setGroupSeqNo(assetChangeProvider.getGroupSeqNo());
+            try {
+                assetChangeProvider.commonAssetChange(assetChange);
+            } catch (Exception e) {
+                log.error("补发失败:", e);
+            }
+
+            //扣除投资人待收
+            assetChange = new AssetChange();
+            assetChange.setType(AssetChangeTypeEnum.collectionSub);  //  扣除投资人待收
+            assetChange.setUserId(borrowCollection.getUserId());
+            assetChange.setMoney(borrowCollection.getInterest() + borrowCollection.getPrincipal());
+            assetChange.setInterest(borrowCollection.getInterest());
+            assetChange.setRemark(String.format("收到客户对[%s]借款的还款,扣除待收(补发)", borrow.getName()));
+            assetChange.setSourceId(borrowCollection.getId());
+            assetChange.setSeqNo(assetChangeProvider.getSeqNo());
+            assetChange.setGroupSeqNo(assetChangeProvider.getGroupSeqNo());
+            try {
+                assetChangeProvider.commonAssetChange(assetChange);
+            } catch (Exception e) {
+                log.error("补发失败:", e);
+            }
+
+
+            //3.发送红包
+            VoucherPayRequest voucherPayRequest = new VoucherPayRequest();
+            voucherPayRequest.setAccountId(redpackAccount.getAccountId());
+            voucherPayRequest.setTxAmount(StringHelper.formatDouble(borrowCollection.getCollectionMoney(), 100, false));
+            voucherPayRequest.setForAccountId(userThirdAccount.getAccountId());
+            voucherPayRequest.setDesLineFlag(DesLineFlagContant.TURE);
+            voucherPayRequest.setDesLine("红包发送!");
+            voucherPayRequest.setChannel(ChannelContant.HTML);
+            VoucherPayResponse response = jixinManager.send(JixinTxCodeEnum.SEND_RED_PACKET, voucherPayRequest, VoucherPayResponse.class);
+            if ((ObjectUtils.isEmpty(response)) || (!JixinResultContants.SUCCESS.equals(response.getRetCode()))) {
+                String msg = ObjectUtils.isEmpty(response) ? "当前网络不稳定，请稍候重试" : response.getRetMsg();
+                log.error("redPacket" + msg);
+            }
+        }
+    }
 
     @ApiOperation("获取自动投标列表")
     @RequestMapping("/pub/batch/deal")
@@ -110,7 +216,6 @@ public class TestController {
         }
 
        /* try {
->>>>>>> 5a5fbea0e39187552bfa814b103148e218aba1b4
             //批次执行问题
             thirdBatchDealBiz.batchDeal(NumberHelper.toLong(sourceId), StringHelper.toString(batchNo),
                     thirdBatchLogList.get(0).getAcqRes(), "");

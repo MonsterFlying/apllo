@@ -210,7 +210,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
         if (!SecurityHelper.checkSign(voPcRepay.getSign(), paramStr)) {
             return ResponseEntity
                     .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, "pc取消借款 签名验证不通过!"));
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "pc还款 签名验证不通过!"));
         }
         Map<String, String> paramMap = GSON.fromJson(paramStr, TypeTokenContants.MAP_ALL_STRING_TOKEN);
         /* 借款id */
@@ -2069,6 +2069,10 @@ public class RepaymentBizImpl implements RepaymentBiz {
         double allDayOverPricipal = MoneyHelper.multiply(oneDayOverPricipal, lateDays);  // 总共逾期费
         // return new Double(MoneyHelper.round(overPrincipal * 0.004 * lateDays, 2)).intValue();
         return MoneyHelper.doubleToLong(MoneyHelper.round(allDayOverPricipal, 0));  //不会四舍五入
+    }
+
+    public static void main(String[] args) {
+
     }
 
     /**
