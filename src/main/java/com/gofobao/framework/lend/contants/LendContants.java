@@ -20,7 +20,7 @@ public class LendContants {
     public static final int MIN_APR = 5 * 100;
     public static final int MAX_APR = 24 * 100;
     public static final int MIN_LOWEST = 1000 * 100;
-    public static final int MIN_TIME_LIMIT = 1;
+    public static final int MIN_TIME_LIMIT = 7;
     public static final int MAX_TIME_LIMIT = 92;
 
 }
