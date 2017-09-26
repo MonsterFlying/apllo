@@ -9,8 +9,7 @@ import lombok.Data;
 @Data
 public class BatchLendPayReq extends JixinBaseRequest {
     /**
-     * 当日相同的批次号交易后台在一个批量中处理
-     批次号当日必须唯一 6位
+     * 当日相同的批次号交易后台在一个批量中处理, 批次号当日必须唯一 6位
      */
     private String batchNo;
     /**

@@ -9,7 +9,7 @@ import com.gofobao.framework.core.helper.RandomHelper;
 import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.helper.ExceptionEmailHelper;
 import com.gofobao.framework.helper.StringHelper;
-import com.gofobao.framework.system.biz.impl.JixinTxLogBizImpl;
+import com.google.common.base.Preconditions;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import lombok.Data;
@@ -20,7 +20,6 @@ import org.springframework.http.*;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
-import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.RestTemplate;
 
@@ -222,8 +221,7 @@ public class JixinManager {
         checkNotNull(bgData, "返回值内容为空");
         T t = gson.fromJson(bgData, typeToken.getType());
         // 验证参数
-        Map<String, String> param = gson.fromJson(bgData, new TypeToken<Map<String, String>>() {
-        }.getType());
+        Map<String, String> param = gson.fromJson(bgData, TypeTokenContants.MAP_ALL_STRING_TOKEN);
         String unsige = StringHelper.mergeMap(param);
         boolean result = certHelper.verify(unsige, param.get("sign"));
         if (!result) {
@@ -255,14 +253,13 @@ public class JixinManager {
         checkNotNull(bgData, "返回值内容为空");
         T t = gson.fromJson(bgData, typeToken.getType());
         // 验证参数
-        Map<String, String> param = gson.fromJson(bgData, new TypeToken<Map<String, String>>() {
-        }.getType());
+        Map<String, String> param = gson.fromJson(bgData, TypeTokenContants.MAP_ALL_STRING_TOKEN);
         String unsige = StringHelper.mergeMap(param);
-        /*boolean result = certHelper.verify(unsige, param.get("sign"));
+        boolean result = certHelper.verify(unsige, param.get("sign"));
         if (!result) {
             log.error("验签失败", bgData);
             return null;
-        }*/
+        }
         return t;
     }
 
@@ -293,11 +290,16 @@ public class JixinManager {
         req.setTxCode(txCodeEnum.getValue());
         String url = prefixUrl + txCodeEnum.getUrl();
         String json = gson.toJson(req);
-        Map<String, String> params = gson.fromJson(json, new TypeToken<Map<String, String>>() {
-        }.getType());
+
+        //===============================
+        // 加签
+        //===============================
+        Map<String, String> params = gson.fromJson(json, TypeTokenContants.MAP_ALL_STRING_TOKEN);
         String unSign = StringHelper.mergeMap(params);
         String sign = certHelper.doSign(unSign);
         params.put("sign", sign);
+
+
         log.info("=============================================");
         log.info(String.format("[%s]报文流水：%s%s%s", txCodeEnum.getName(), req.getTxDate(), req.getTxTime(), req.getSeqNo()));
         log.info("=============================================");
@@ -310,41 +312,57 @@ public class JixinManager {
             response = restTemplate.exchange(url, HttpMethod.POST, entity, clazz);
         } catch (Throwable e) {
             log.error("请求即信服务器异常", e);
-            // 触发邮件发送
             exceptionEmailHelper.sendErrorMessage(String.format("请求即信异常: %s  %s", req.getTxCode(), e.getMessage()), gson.toJson(req));
-            if (e instanceof HttpClientErrorException) {
-                return null;
-            } else if (e instanceof HttpServerErrorException) {
-                try {
-                    S s = clazz.newInstance();
-                    if (e.getMessage().contains("502")) {
-                        s.setRetCode(JixinResultContants.ERROR_502);
-                        s.setRetMsg("请求即信502");
-                    } else if (e.getMessage().contains("504")) {
-                        s.setRetCode(JixinResultContants.ERROR_502);
-                        s.setRetMsg("请求即信504");
-                    } else {
-                        return null;
-                    }
-                    return s;
-                } catch (Exception e1) {
-                    return null;
-                }
+            S s = null;
+            try {
+                s = clazz.newInstance();
+            } catch (Exception ex) {
+                log.error("实例化错误响应类失败", ex);
             }
 
-            return null;
+            Preconditions.checkNotNull(s, "实例化错误响应失败");
+            s.setRetCode(JixinResultContants.ERROR_COMMON_CONNECT);
+            s.setRetMsg(String.format("请求网络异常: %s", e.getMessage()));
+
+            if (e instanceof HttpServerErrorException) { // 针对 500以上代码特殊处理
+                if (e.getMessage().contains("502")) {
+                    s.setRetCode(JixinResultContants.ERROR_502);
+                    s.setRetMsg("请求即信502");
+                } else if (e.getMessage().contains("504")) {
+                    s.setRetCode(JixinResultContants.ERROR_502);
+                    s.setRetMsg("请求即信504");
+                }
+                return s;
+            }
+
+            return s;
         }
 
-        checkNotNull(response);
+        checkNotNull(response, "即信响应类为空");
         S body = response.getBody();
-        // 验证参数
+
+        //==========================================
+        // 参数验证
+        //==========================================
         String bodyJson = gson.toJson(body);
         Map<String, String> unverifyParams = gson.fromJson(bodyJson, TypeTokenContants.MAP_ALL_STRING_TOKEN);
         String unsige = StringHelper.mergeMap(unverifyParams);
         boolean result = certHelper.verify(unsige, unverifyParams.get("sign"));
         if (!result) {
-            log.error("即信请求返回值验证不通过");
-            return null;
+            log.error("======================================");
+            log.error(String.format("即信响应,签名验证失败, 数据[%s]", bodyJson));
+            log.error("======================================");
+            S s = null;
+            try {
+                s = clazz.newInstance();
+            } catch (Exception ex) {
+                log.error("实例化错误响应类失败", ex);
+            }
+
+            Preconditions.checkNotNull(s, "实例化错误响应失败");
+            s.setRetCode(JixinResultContants.ERROR_SIGN);
+            s.setRetMsg("非法访问, 验签失败");
+            return s;
         }
 
         log.info(String.format("即信响应报文:url=%s body=%s", url, gson.toJson(body)));
@@ -353,6 +371,10 @@ public class JixinManager {
         // 未开通交易接口发送邮件通知
         if (JixinResultContants.ERROR_JX900663.equalsIgnoreCase(body.getRetCode())) {
             exceptionEmailHelper.sendErrorMessage("访问权限受限, 需要联系即信", body.getTxCode());
+        }
+
+        if (JixinResultContants.ERROR_JX999999.equalsIgnoreCase(body.getRetCode())) {
+            exceptionEmailHelper.sendErrorMessage("FES系统异常", body.getTxCode());
         }
 
         return body;
