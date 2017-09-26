@@ -664,6 +664,19 @@ public class AplloApplicationTests {
         System.out.println(GSON.toJson(borrow1));
     }
 
+@Test
+    public void mqTest(){
+        Map<String, String> bodyMap = ImmutableMap.of("planId", "4");
+        MqConfig mqConfig = new MqConfig();
+        mqConfig.setSendTime(new Date());
+        mqConfig.setQueue(MqQueueEnum.RABBITMQ_FINANCE_PLAN);
+        mqConfig.setTag(MqTagEnum.FINANCE_PLAN_FULL_NOTIFY);
+        mqConfig.setMsg(bodyMap);
+        mqHelper.convertAndSend(mqConfig);
+
+
+    }
+
 
 
     @Test

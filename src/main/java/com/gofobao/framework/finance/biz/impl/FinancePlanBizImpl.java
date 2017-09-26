@@ -60,6 +60,7 @@ import com.google.gson.GsonBuilder;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.BooleanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.ResponseEntity;
@@ -101,6 +102,8 @@ public class FinancePlanBizImpl implements FinancePlanBiz {
     private MqHelper mqHelper;
     @Autowired
     private TransferProvider transferProvider;
+    @Value("${gofobao.adminDomain}")
+    private String adminDomain;
 
 
     //过滤掉 状态; 1:发标待审 ；2：初审不通过；4：复审不通过；5：已取消
@@ -249,20 +252,22 @@ public class FinancePlanBizImpl implements FinancePlanBiz {
         }
         //是否满额 满额通知后台
         if (financePlan.getMoney().intValue() == financePlan.getMoneyYes().intValue()) {
-            Map<String, String> bodyMap = ImmutableMap.of("plan", financePlan.getId().toString());
-            MqConfig mqConfig = new MqConfig();
-            mqConfig.setSendTime(new Date());
-            mqConfig.setQueue(MqQueueEnum.RABBITMQ_FINANCE_PLAN);
-            mqConfig.setTag(MqTagEnum.FINANCE_PLAN_FULL_NOTIFY);
-            mqConfig.setMsg(bodyMap);
-            mqHelper.convertAndSend(mqConfig);
+            log.info("当前理财已满标,通知后台");
+            Map<String, String> bodyMap = ImmutableMap.of("planId", financePlan.getId().toString());
+            try {
+                Map<String, String> requestMaps = ImmutableMap.of("paramStr", GSON.toJson(bodyMap), "sign", SecurityHelper.getSign(GSON.toJson(bodyMap)));
+                String resultStr = OKHttpHelper.postForm(adminDomain + "/api/open/finance-plan/review", requestMaps, null);
+                System.out.print("返回响应:" + resultStr);
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
         }
         return ResponseEntity.ok(VoBaseResp.ok("购买成功", VoBaseResp.class));
     }
 
     private FinancePlan updateFinancePlan(FinancePlan financePlan, long validMoney) {
         financePlan.setMoneyYes(financePlan.getMoneyYes() + validMoney);
-        financePlan.setLeftMoney(+validMoney);
+        financePlan.setLeftMoney(financePlan.getLeftMoney() + validMoney);
         financePlan.setRightMoney(0L);
         financePlan.setTotalSubPoint(financePlan.getTotalSubPoint() + 1);
         financePlan.setUpdatedAt(new Date());
@@ -310,7 +315,7 @@ public class FinancePlanBizImpl implements FinancePlanBiz {
      */
     private void updateAssetByBuyFinancePlan(FinancePlan financePlan, UserThirdAccount buyUserAccount, long validateMoney, FinancePlanBuyer financePlanBuyer, String orderId) throws Exception {
         //冻结资金，将购买资金划到计划冻结 不要冻结
-/*        AssetChange assetChange = new AssetChange();
+        AssetChange assetChange = new AssetChange();
         assetChange.setForUserId(financePlanBuyer.getUserId());
         assetChange.setUserId(financePlanBuyer.getUserId());
         assetChange.setType(AssetChangeTypeEnum.financePlanFreeze);
@@ -319,9 +324,9 @@ public class FinancePlanBizImpl implements FinancePlanBiz {
         assetChange.setMoney(validateMoney);
         assetChange.setGroupSeqNo(assetChangeProvider.getGroupSeqNo());
         assetChange.setSourceId(financePlanBuyer.getId());
-        assetChangeProvider.commonAssetChange(assetChange);*/
+        assetChangeProvider.commonAssetChange(assetChange);
         //冻结购买债权转让人资金账户
-        BalanceFreezeReq balanceFreezeReq = new BalanceFreezeReq();
+     /*   BalanceFreezeReq balanceFreezeReq = new BalanceFreezeReq();
         balanceFreezeReq.setAccountId(buyUserAccount.getAccountId());
         balanceFreezeReq.setTxAmount(StringHelper.formatDouble(validateMoney, 100, false));
         balanceFreezeReq.setOrderId(orderId);
@@ -329,7 +334,7 @@ public class FinancePlanBizImpl implements FinancePlanBiz {
         BalanceFreezeResp balanceFreezeResp = jixinManager.send(JixinTxCodeEnum.BALANCE_FREEZE, balanceFreezeReq, BalanceFreezeResp.class);
         if ((ObjectUtils.isEmpty(balanceFreezeReq)) || (!JixinResultContants.SUCCESS.equalsIgnoreCase(balanceFreezeResp.getRetCode()))) {
             throw new Exception("即信批次还款冻结资金失败：" + balanceFreezeResp.getRetMsg());
-        }
+        }*/
         //保存存管冻结orderId
 /*        financePlanBuyer.setFreezeOrderId(orderId);*/
         financePlanBuyerService.save(financePlanBuyer);
