@@ -25,8 +25,8 @@
         </encoder> <!-- 此日志文件只记录error级别的 -->
         <filter class="ch.qos.logback.classic.filter.LevelFilter">
             <level>INFO</level>
-            <onMatch>ACCEPT</onMatch>
-            <onMismatch>DENY</onMismatch>
+           <!-- <onMatch>ACCEPT</onMatch>
+            <onMismatch>DENY</onMismatch>-->
         </filter>
     </appender> <!-- 日志记录器，日期滚动记录 -->
     <root level="INFO"> <!-- 为了不让控制台显示那么多 无用的 debug 代码所以 注释掉 <appender-ref ref="STDOUT" /> -->

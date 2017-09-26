@@ -34,7 +34,7 @@ public class VoCreateLend {
     @Min(value = LendContants.MIN_LOWEST / 100, message = "最低金额不能低于" + LendContants.MIN_LOWEST / 100 + "元!")
     private Double lowest; //最低金额
 
-    @ApiModelProperty(name = "timeLimit", value = "期限 between:1,92", dataType = "1-92天", required = true)
+    @ApiModelProperty(name = "timeLimit", value = "期限 between:7,92", dataType = "7-92天", required = true)
     @NotNull(message = "期限不能为空!")
     @Min(value = LendContants.MIN_TIME_LIMIT, message = "期限不能低于" + LendContants.MIN_TIME_LIMIT + "天!")
     @Max(value = LendContants.MAX_TIME_LIMIT, message = "期限不能高于" + LendContants.MAX_TIME_LIMIT + "天!")

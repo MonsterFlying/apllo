@@ -145,7 +145,7 @@ public class ThirdBatchDealLogBizImpl implements ThirdBatchDealLogBiz {
             //已完成批次
             List<ThirdBatchLog> successThirdBatchLogList = thirdBatchLogList.stream().filter(t -> t.getState().intValue() == 3).collect(Collectors.toList());
             if (!CollectionUtils.isEmpty(successThirdBatchLogList)) {
-                thirdBatchLog = successThirdBatchLogList.get(1);
+                thirdBatchLog = successThirdBatchLogList.get(0);
             } else {
                 thirdBatchLog = thirdBatchLogList.get(0);
             }
@@ -315,7 +315,7 @@ public class ThirdBatchDealLogBizImpl implements ThirdBatchDealLogBiz {
             //已完成批次
             List<ThirdBatchLog> successThirdBatchLogList = thirdBatchLogList.stream().filter(t -> t.getState().intValue() == 3).collect(Collectors.toList());
             if (!CollectionUtils.isEmpty(successThirdBatchLogList)) {
-                thirdBatchLog = successThirdBatchLogList.get(1);
+                thirdBatchLog = successThirdBatchLogList.get(0);
             } else {
                 thirdBatchLog = thirdBatchLogList.get(0);
             }

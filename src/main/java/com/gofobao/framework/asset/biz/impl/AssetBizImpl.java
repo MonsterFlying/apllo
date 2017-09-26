@@ -101,7 +101,10 @@ import java.util.concurrent.TimeUnit;
 public class AssetBizImpl implements AssetBiz {
 
     @Autowired
-    RechargeAndCashAndRedpackQueryHelper rechargeAndCashAndRedpackQueryHelper ;
+    ExceptionEmailHelper exceptionEmailHelper;
+
+    @Autowired
+    RechargeAndCashAndRedpackQueryHelper rechargeAndCashAndRedpackQueryHelper;
 
     @Autowired
     JixinTxDateHelper jixinTxDateHelper;
@@ -323,15 +326,15 @@ public class AssetBizImpl implements AssetBiz {
         voUserAssetInfoResp.setHidePayment(StringHelper.formatDouble(payment / 100D, true));
         voUserAssetInfoResp.setHideCollection(StringHelper.formatDouble(asset.getCollection() / 100D, true));
         voUserAssetInfoResp.setHideVirtualMoney(StringHelper.formatDouble(asset.getVirtualMoney() / 100D, true));
-        voUserAssetInfoResp.setHideNetWorthQuota(StringHelper.formatDouble((netWorthQuota>0?netWorthQuota:0) / 100D, true));
+        voUserAssetInfoResp.setHideNetWorthQuota(StringHelper.formatDouble((netWorthQuota > 0 ? netWorthQuota : 0) / 100D, true));
         voUserAssetInfoResp.setUseMoney(useMoney);
         voUserAssetInfoResp.setNoUseMoney(asset.getNoUseMoney());
         voUserAssetInfoResp.setPayment(asset.getPayment());
         voUserAssetInfoResp.setCollection(asset.getCollection());
         voUserAssetInfoResp.setVirtualMoney(asset.getVirtualMoney());
-        voUserAssetInfoResp.setNetWorthQuota(netWorthQuota>0?netWorthQuota:0 );
+        voUserAssetInfoResp.setNetWorthQuota(netWorthQuota > 0 ? netWorthQuota : 0);
         voUserAssetInfoResp.setNetAsset(StringHelper.formatMon(netAsset / 100D));
-        voUserAssetInfoResp.setIncomeTotal(StringHelper.formatMon(userCache.getIncomeTotal()/100D));
+        voUserAssetInfoResp.setIncomeTotal(StringHelper.formatMon(userCache.getIncomeTotal() / 100D));
         voUserAssetInfoResp.setHideIncomeTotal(userCache.getIncomeTotal());
         return ResponseEntity.ok(voUserAssetInfoResp);
     }
@@ -497,7 +500,7 @@ public class AssetBizImpl implements AssetBiz {
         int state;
         String msg = "";
         Date now = new Date();
-        boolean toBeConform = false ;  // 是否待查询
+        boolean toBeConform = false;  // 是否待查询
         if (directRechargeOnlineResponse.getRetCode().equals(JixinResultContants.SUCCESS)) {  // 充值成功
             log.info(String.format("充值成功: %s", gson.toJson(directRechargeOnlineResponse)));
             state = 1;
@@ -515,8 +518,8 @@ public class AssetBizImpl implements AssetBiz {
         } else if (JixinResultContants.toBeConfirm(directRechargeOnlineResponse)) { // 需要确认
             log.info(String.format("充值待确认: %s", gson.toJson(directRechargeOnlineResponse)));
             state = 2; // 充值失败
-            msg = "非常抱歉, 当前充值状态不明确, 系统需要在10分钟后确认是否充值成功!" ;
-            toBeConform = true ;
+            msg = "非常抱歉, 当前充值状态不明确, 系统需要在10分钟后确认是否充值成功!";
+            toBeConform = true;
         } else {
             log.error(String.format("请求即信联机充值异常: %s", gson.toJson(directRechargeOnlineResponse)));
             state = 2;
@@ -543,7 +546,7 @@ public class AssetBizImpl implements AssetBiz {
         RechargeDetailLog saveRechargeDetailLog = rechargeDetailLogService.save(rechargeDetailLog);
 
         // 触发发送短信
-        if(toBeConform){
+        if (toBeConform) {
             rechargeAndCashAndRedpackQueryHelper.save(RechargeAndCashAndRedpackQueryHelper.QueryType.QUERY_RECHARGE, users.getId(), saveRechargeDetailLog.getId(), false);
         }
 
@@ -1527,7 +1530,6 @@ public class AssetBizImpl implements AssetBiz {
     @Override
     @Transactional(rollbackFor = ExcelException.class)
     public ResponseEntity<String> offlineRechargeCallback(HttpServletRequest request, HttpServletResponse response) throws Exception {
-
         Map<String, String[]> parameterMap = request.getParameterMap();
         Iterator<String> iterator = parameterMap.keySet().iterator();
         while (iterator.hasNext()) {
@@ -1539,7 +1541,7 @@ public class AssetBizImpl implements AssetBiz {
             }
         }
 
-        log.info("线下充值回调");
+        log.info("即信线下充值回调");
         Gson gson = new Gson();
         OfflineRechargeCallbackResponse offlineRechargeCallbackResponse = jixinManager.specialCallback(request, new TypeToken<OfflineRechargeCallbackResponse>() {
         });
@@ -1562,15 +1564,13 @@ public class AssetBizImpl implements AssetBiz {
         offlineRechargeCallRequest.setPayAccountId(offlineRechargeCallbackResponse.getPayAccountId());
         offlineRechargeCallRequest.setTxAmount(offlineRechargeCallbackResponse.getTxAmount());
         offlineRechargeCallRequest.setTxstsFlag(offlineRechargeCallbackResponse.getTxstsFlag());
-        OfflineRechargeCallResponse offlineRechargeCallResponse = jixinManager.send(JixinTxCodeEnum.OFFLINE_RECHARGE_CALL,
-                offlineRechargeCallRequest,
-                OfflineRechargeCallResponse.class);
-
+        OfflineRechargeCallResponse offlineRechargeCallResponse = safeOfflineRechargeCallBack(offlineRechargeCallRequest, 4);
         if (ObjectUtils.isEmpty(offlineRechargeCallResponse)
-                || !JixinResultContants.SUCCESS.equals(offlineRechargeCallbackResponse.getTxCode())) {
-            log.error(String.format("充值回调, 请求确认线下充值失败: %s", gson.toJson(offlineRechargeCallRequest)));
+                || (!JixinResultContants.SUCCESS.equalsIgnoreCase(offlineRechargeCallResponse.getRetCode()))) {
+            exceptionEmailHelper.sendErrorMessage("线下充值回调异常", GSON.toJson(offlineRechargeCallRequest));
             return ResponseEntity.ok("success");
         }
+
 
         String accountId = offlineRechargeCallbackResponse.getAccountId(); // 当前账户类型
         String orgSeqNo = offlineRechargeCallbackResponse.getOrgSeqNo();  // 原始流水号
@@ -1590,4 +1590,38 @@ public class AssetBizImpl implements AssetBiz {
         // 返回成功
         return ResponseEntity.ok("success");
     }
+
+
+    /**
+     * 安全查询线下充值记录
+     *
+     * @param offlineRechargeCallRequest
+     * @param retryNum
+     * @return
+     */
+    private OfflineRechargeCallResponse safeOfflineRechargeCallBack(OfflineRechargeCallRequest offlineRechargeCallRequest, int retryNum) {
+        if (retryNum <= 0) {
+            log.error("安全查询线下充值记录严重BUG");
+            return null;
+        }
+
+        OfflineRechargeCallResponse offlineRechargeCallResponse = jixinManager.send(JixinTxCodeEnum.OFFLINE_RECHARGE_CALL,
+                offlineRechargeCallRequest,
+                OfflineRechargeCallResponse.class);
+        if (ObjectUtils.isEmpty(offlineRechargeCallResponse)  // 意外情况
+                || (JixinResultContants.ERROR_502.equalsIgnoreCase(offlineRechargeCallResponse.getRetCode())) // 502
+                || (JixinResultContants.ERROR_504.equalsIgnoreCase(offlineRechargeCallResponse.getRetCode())) // 504
+                || (JixinResultContants.ERROR_JX900032.equalsIgnoreCase(offlineRechargeCallResponse.getRetCode()))) { // 频率超限
+
+            try {
+                Thread.sleep(2 * 1000);
+            } catch (Exception e) {
+            }
+
+            return safeOfflineRechargeCallBack(offlineRechargeCallRequest, retryNum - 1);
+        }
+
+        return offlineRechargeCallResponse;
+    }
+
 }
