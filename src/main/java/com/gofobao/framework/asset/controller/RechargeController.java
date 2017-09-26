@@ -59,7 +59,12 @@ public class RechargeController {
      */
     @PostMapping("/pub/asset/offline/recharge/callback")
     public ResponseEntity<String> offlineRechargeCallback(HttpServletRequest request, HttpServletResponse response) throws Exception{
-        return assetBiz.offlineRechargeCallback(request, response) ;
+        try {
+            return assetBiz.offlineRechargeCallback(request, response) ;
+        }catch (Exception e){
+            log.error("即信线下充值回调异常", e);
+            return ResponseEntity.ok("success");
+        }
     }
 
 

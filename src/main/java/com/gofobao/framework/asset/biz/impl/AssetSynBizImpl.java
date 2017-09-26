@@ -49,6 +49,7 @@ import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 
 @Component
@@ -149,6 +150,11 @@ public class AssetSynBizImpl implements AssetSynBiz {
             if (CollectionUtils.isEmpty(accountDetailsQueryItems)) {
                 break;
             }
+            // 排除拨正数据
+            accountDetailsQueryItems = accountDetailsQueryItems
+                    .stream()
+                    .filter(accountDetailsQueryItem ->  !"R".equalsIgnoreCase(accountDetailsQueryItem.getOrFlag()))
+                    .collect(Collectors.toList()) ;
             realSize = accountDetailsQueryItems.size();
             accountDetailsQueryItemList.addAll(accountDetailsQueryItems);
         } while (realSize == pageSize);
@@ -311,6 +317,7 @@ public class AssetSynBizImpl implements AssetSynBiz {
                     .eq("cardnbr", userThirdAccount.getAccountId()) // 电子账户
                     .eq("transtype", transtype) // 线下转账类型
                     .eq("queryDate", DateHelper.dateToString(synDate, DateHelper.DATE_FORMAT_YMD_NUM))  // 某一天
+                    .ne("revind", 1)  // 不能为拨正数据
                     .build();
             List<Aleve> aleveLists = aleveService.findAll(specification);
             if (!ObjectUtils.isEmpty(aleveLists)) {
@@ -352,6 +359,12 @@ public class AssetSynBizImpl implements AssetSynBiz {
                 if (CollectionUtils.isEmpty(accountDetailsQueryItems)) {
                     break;
                 }
+
+                // 排除拨正数据
+                accountDetailsQueryItems = accountDetailsQueryItems
+                        .stream()
+                        .filter(accountDetailsQueryItem ->  !"R".equalsIgnoreCase(accountDetailsQueryItem.getOrFlag()))
+                        .collect(Collectors.toList()) ;
                 realSize = accountDetailsQueryItems.size();
                 accountDetailsQueryItemList.addAll(accountDetailsQueryItems);
             } while (realSize == pageSize);
@@ -441,13 +454,6 @@ public class AssetSynBizImpl implements AssetSynBiz {
         return true;
     }
 
-    public static void main(String[] args) {
-        Date nowDate = new Date() ;
-        Date synDate = DateHelper.stringToDate("20170922", DateHelper.DATE_FORMAT_YMD_NUM) ;
-        int i = DateHelper.diffInDays(nowDate, DateHelper.beginOfDate(synDate), false);
-        System.err.println(i);
-    }
-
     @Override
     public void doOfflineSyn(Long userId, String txAmount, String orgSeqNo, String date) throws Exception {
         Users user = userService.findByIdLock(userId);
@@ -490,9 +496,17 @@ public class AssetSynBizImpl implements AssetSynBiz {
             if (CollectionUtils.isEmpty(accountDetailsQueryItems)) {
                 break;
             }
+
+            // 排除拨正数据
+            accountDetailsQueryItems = accountDetailsQueryItems
+                    .stream()
+                    .filter(accountDetailsQueryItem ->  !"R".equalsIgnoreCase(accountDetailsQueryItem.getOrFlag()))
+                    .collect(Collectors.toList()) ;
             realSize = accountDetailsQueryItems.size();
             accountDetailsQueryItemList.addAll(accountDetailsQueryItems);
         } while (realSize == pageSize);
+
+
 
         // 同步开始
         if (CollectionUtils.isEmpty(accountDetailsQueryItemList)) {

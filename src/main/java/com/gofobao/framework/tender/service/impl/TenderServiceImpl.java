@@ -52,7 +52,6 @@ public class TenderServiceImpl implements TenderService {
     private UserService userService;
 
 
-
     /**
      * 投标用户列表
      *
@@ -100,7 +99,33 @@ public class TenderServiceImpl implements TenderService {
             VoBorrowTenderUserRes tenderUserRes = new VoBorrowTenderUserRes();
             tenderUserRes.setValidMoney(StringHelper.formatMon(item.getValidMoney() / 100d) + MoneyConstans.RMB);
             tenderUserRes.setDate(DateHelper.dateToString(item.getCreatedAt(), DateHelper.DATE_FORMAT_YMDHMS));
-            tenderUserRes.setType(item.getIsAuto() ? TenderConstans.AUTO + "(" + item.getAutoOrder() + ")" : TenderConstans.MANUAL);
+
+
+            // 此处进行优化
+            if (item.getIsAuto()) {
+                tenderUserRes.setType(TenderConstans.AUTO + "(" + item.getAutoOrder() + ")");
+            } else {
+                String tenderPlatform;
+                Integer source = item.getSource();
+                if (ObjectUtils.isEmpty(source)) {
+                    source = 0;
+                }
+
+                if (source == 0) {
+                    tenderPlatform = "电脑端";
+                } else if (source == 1) {
+                    tenderPlatform = "安卓端";
+                } else if (source == 2) {
+                    tenderPlatform = "苹果端";
+                } else if (source == 3) {
+                    tenderPlatform = "触屏端";
+                } else {
+                    tenderPlatform = "未知设备";
+                }
+
+                tenderUserRes.setType(tenderPlatform);
+            }
+
             Users user = usersRepository.findOne(new Long(item.getUserId()));
             //如果当前用户是管理员或者本人 用户名可见
             tenderUserRes.setUserName((user.getId().equals(tenderUserReq.getUserId()) || finalUserType.equals("manager"))
