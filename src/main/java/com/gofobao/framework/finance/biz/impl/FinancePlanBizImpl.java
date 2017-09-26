@@ -215,6 +215,10 @@ public class FinancePlanBizImpl implements FinancePlanBiz {
         }
         /* 购买理财计划有效金额 */
         long validateMoney = NumberHelper.toLong(iterator.next());
+        //判断是否是递增金额的整数倍
+        if (!(financePlan.getAppendMultipleAmount() % 1000 == 0) && financePlan.getAppendMultipleAmount() > validateMoney) {
+            ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "购买计划金额必须是递增金额的整数倍!"));
+        }
         //验证理财计划
         flag = verifyFinancePlan(errerMessage, financePlanId, userId, financePlan);
         errorSet = errerMessage.elementSet();
@@ -262,7 +266,7 @@ public class FinancePlanBizImpl implements FinancePlanBiz {
 
     private FinancePlan updateFinancePlan(FinancePlan financePlan, long validMoney) {
         financePlan.setMoneyYes(financePlan.getMoneyYes() + validMoney);
-        financePlan.setLeftMoney(+validMoney);
+        financePlan.setLeftMoney(financePlan.getLeftMoney() + validMoney);
         financePlan.setRightMoney(0L);
         financePlan.setTotalSubPoint(financePlan.getTotalSubPoint() + 1);
         financePlan.setUpdatedAt(new Date());
@@ -310,7 +314,7 @@ public class FinancePlanBizImpl implements FinancePlanBiz {
      */
     private void updateAssetByBuyFinancePlan(FinancePlan financePlan, UserThirdAccount buyUserAccount, long validateMoney, FinancePlanBuyer financePlanBuyer, String orderId) throws Exception {
         //冻结资金，将购买资金划到计划冻结 不要冻结
-/*        AssetChange assetChange = new AssetChange();
+        AssetChange assetChange = new AssetChange();
         assetChange.setForUserId(financePlanBuyer.getUserId());
         assetChange.setUserId(financePlanBuyer.getUserId());
         assetChange.setType(AssetChangeTypeEnum.financePlanFreeze);
@@ -319,9 +323,9 @@ public class FinancePlanBizImpl implements FinancePlanBiz {
         assetChange.setMoney(validateMoney);
         assetChange.setGroupSeqNo(assetChangeProvider.getGroupSeqNo());
         assetChange.setSourceId(financePlanBuyer.getId());
-        assetChangeProvider.commonAssetChange(assetChange);*/
+        assetChangeProvider.commonAssetChange(assetChange);
         //冻结购买债权转让人资金账户
-        BalanceFreezeReq balanceFreezeReq = new BalanceFreezeReq();
+        /*BalanceFreezeReq balanceFreezeReq = new BalanceFreezeReq();
         balanceFreezeReq.setAccountId(buyUserAccount.getAccountId());
         balanceFreezeReq.setTxAmount(StringHelper.formatDouble(validateMoney, 100, false));
         balanceFreezeReq.setOrderId(orderId);
@@ -329,7 +333,7 @@ public class FinancePlanBizImpl implements FinancePlanBiz {
         BalanceFreezeResp balanceFreezeResp = jixinManager.send(JixinTxCodeEnum.BALANCE_FREEZE, balanceFreezeReq, BalanceFreezeResp.class);
         if ((ObjectUtils.isEmpty(balanceFreezeReq)) || (!JixinResultContants.SUCCESS.equalsIgnoreCase(balanceFreezeResp.getRetCode()))) {
             throw new Exception("即信批次还款冻结资金失败：" + balanceFreezeResp.getRetMsg());
-        }
+        }*/
         //保存存管冻结orderId
 /*        financePlanBuyer.setFreezeOrderId(orderId);*/
         financePlanBuyerService.save(financePlanBuyer);
@@ -439,8 +443,6 @@ public class FinancePlanBizImpl implements FinancePlanBiz {
     @Transactional(rollbackFor = Exception.class)
     public ResponseEntity<VoViewFinancePlanTender> financePlanTender(VoFinancePlanTender voFinancePlanTender) {
         try {
-
-
             Date nowDate = new Date();
             //获取paramStr参数、校验参数有效性
             String paramStr = voFinancePlanTender.getParamStr();/* 理财计划投标 */
@@ -451,26 +453,26 @@ public class FinancePlanBizImpl implements FinancePlanBiz {
 
             }
             Map<String, String> paramMap = GSON.fromJson(paramStr, TypeTokenContants.MAP_ALL_STRING_TOKEN);
-        /* 购买债权转让金额 分 */
+            /* 购买债权转让金额 分 */
             long money = (long) NumberHelper.toDouble(paramMap.get("money")) * 100;
-        /* 债权转让id */
+            /* 债权转让id */
             long transferId = NumberHelper.toLong(paramMap.get("transferId"));
-        /* 购买理财计划id */
+            /* 购买理财计划id */
             long buyerId = NumberHelper.toLong(paramMap.get("buyerId"));
-        /* 理财计划id */
+            /* 理财计划id */
             long planId = NumberHelper.toLong(paramMap.get("planId"));
-        /* 购买计划人id */
+            /* 购买计划人id */
             long userId = NumberHelper.toLong(paramMap.get("userId"));
-        /* 理财计划购买记录 */
+            /* 理财计划购买记录 */
             FinancePlanBuyer financePlanBuyer = financePlanBuyerService.findByIdLock(buyerId);
             Preconditions.checkNotNull(financePlanBuyer, "理财计划购买记录不存在!");
-        /* 理财计划记录 */
+            /* 理财计划记录 */
             FinancePlan financePlan = financePlanService.findById(planId);
             Preconditions.checkNotNull(financePlan, "理财计划记录不存在!");
-        /* 债权转让记录*/
+            /* 债权转让记录*/
             Transfer transfer = transferService.findById(transferId);
             Preconditions.checkNotNull(transfer, "债权转让记录不存在!");
-        /* 理财计划购买人存管账户 */
+            /* 理财计划购买人存管账户 */
             UserThirdAccount buyUserAccount = userThirdAccountService.findByUserId(userId);
             ThirdAccountHelper.allConditionCheck(buyUserAccount);
             //判断是否是购买人操作
@@ -481,7 +483,7 @@ public class FinancePlanBizImpl implements FinancePlanBiz {
             if (transfer.getTransferMoney() == transfer.getTransferMoneyYes()) {
                 return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "债权转让已全部转出!", VoViewFinancePlanTender.class));
             }
-        /*购买债权有效金额*/
+            /*购买债权有效金额*/
             long validMoney = (long) MathHelper.min(transfer.getTransferMoney() - transfer.getTransferMoneyYes(), money);
 
             //理财计划购买债权转让
