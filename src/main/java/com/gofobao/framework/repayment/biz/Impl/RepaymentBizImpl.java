@@ -57,6 +57,7 @@ import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.finance.entity.FinancePlan;
 import com.gofobao.framework.finance.entity.FinancePlanBuyer;
 import com.gofobao.framework.finance.service.FinancePlanBuyerService;
+import com.gofobao.framework.finance.service.FinancePlanService;
 import com.gofobao.framework.helper.*;
 import com.gofobao.framework.helper.project.BatchAssetChangeHelper;
 import com.gofobao.framework.helper.project.IntegralChangeHelper;
@@ -197,6 +198,8 @@ public class RepaymentBizImpl implements RepaymentBiz {
     private FinancePlanBuyerService financePlanBuyerService;
     @Autowired
     private ThirdBatchDealLogBiz thirdBatchDealLogBiz;
+    @Autowired
+    private FinancePlanService financePlanService;
 
     /**
      * pc还款
@@ -286,6 +289,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
         Preconditions.checkNotNull(tenderList, "立即还款: 投标记录为空!");
         /* 投标记录id集合 */
         Set<Long> tenderIds = tenderList.stream().map(tender -> tender.getId()).collect(Collectors.toSet());
+        Map<Long, Tender> tenderMap = tenderList.stream().collect(Collectors.toMap(Tender::getId, Function.identity()));
         //迭代还款集合,逐期还款
         for (BorrowRepayment borrowRepayment : borrowRepaymentList) {
             /* 是否垫付 */
@@ -315,6 +319,8 @@ public class RepaymentBizImpl implements RepaymentBiz {
             updateUserCacheByReceivedRepay(borrowCollectionList, borrow);
             //10.项目回款短信通知
             smsNoticeByReceivedRepay(borrowCollectionList, borrow, borrowRepayment);
+            //11.变更理财计划参数
+            updateFinanceByReceivedRepay(tenderList, tenderMap, borrowCollectionList);
         }
         //2.进行批次资产改变
         //2.处理资金还款人、收款人资金变动
@@ -1000,19 +1006,36 @@ public class RepaymentBizImpl implements RepaymentBiz {
     public void updateFinanceByReceivedRepay(List<Tender> tenderList, Map<Long, Tender> tenderMap, List<BorrowCollection> borrowCollectionList) {
         //理财计划购买ids
         Set<Long> financeBuyIds = tenderList.stream().map(Tender::getFinanceBuyId).collect(Collectors.toSet());
-        Specification<FinancePlanBuyer> fps = Specifications
+        Specification<FinancePlanBuyer> fpps = Specifications
                 .<FinancePlanBuyer>and()
                 .in("id", financeBuyIds.toArray())
                 .build();
-        List<FinancePlanBuyer> financePlanBuyerList = financePlanBuyerService.findList(fps);
+        List<FinancePlanBuyer> financePlanBuyerList = financePlanBuyerService.findList(fpps);
+        Map<Long/* buyId */, FinancePlanBuyer> financePlanBuyerMap = financePlanBuyerList.stream().collect(Collectors.toMap(FinancePlanBuyer::getId, Function.identity()));
+        //理财计划购买记录ids
+        Set<Long> financePlanIds = financePlanBuyerList.stream().map(FinancePlanBuyer::getPlanId).collect(Collectors.toSet());
+        Specification<FinancePlan> fps = Specifications
+                .<FinancePlan>and()
+                .in("id", financePlanIds.toArray())
+                .build();
+        List<FinancePlan> financePlanList = financePlanService.findList(fps);
+        Map<Long/* financePlanId */, FinancePlan> financePlanMap = financePlanList.stream().collect(Collectors.toMap(FinancePlan::getId, Function.identity()));
         borrowCollectionList.stream().forEach(borrowCollection -> {
             Tender tender = tenderMap.get(borrowCollection.getTenderId());
             if (tender.getType().intValue() == 1) { //理财计划需要变更理财计划参数
-                /**
-                 * @// TODO: 2017/9/25 理财计划
-                 */
+                /*理财计划购买记录*/
+                FinancePlanBuyer financePlanBuyer = financePlanBuyerMap.get(tender.getFinanceBuyId());
+                /*理财计划记录*/
+                FinancePlan financePlan = financePlanMap.get(financePlanBuyer.getPlanId());
+                long principal = borrowCollection.getPrincipal();
+                financePlanBuyer.setLeftMoney(financePlanBuyer.getLeftMoney() + principal);
+                financePlanBuyer.setRightMoney(financePlanBuyer.getRightMoney() - principal);
+                financePlan.setLeftMoney(financePlan.getLeftMoney() + principal);
+                financePlan.setRightMoney(financePlan.getRightMoney() + principal);
             }
         });
+        financePlanBuyerService.save(financePlanBuyerList);
+        financePlanService.save(financePlanList);
     }
 
     /**
@@ -3038,6 +3061,8 @@ public class RepaymentBizImpl implements RepaymentBiz {
         smsNoticeByReceivedRepay(borrowCollectionList, parentBorrow, borrowRepayment);
         //10修改垫付原回款状态
         updateCollectionByAdvance(borrowCollectionList);
+        //11.变更理财计划参数
+        updateFinanceByReceivedRepay(tenderList, tenderMaps, borrowCollectionList);
 
         return ResponseEntity.ok(VoBaseResp.ok("垫付处理成功!"));
     }
