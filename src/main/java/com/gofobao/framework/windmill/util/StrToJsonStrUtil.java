@@ -12,30 +12,24 @@ import java.util.Map;
  */
 @Slf4j
 public class StrToJsonStrUtil {
-
-    private static final Gson GSON = new Gson();
-    /**解密并封装参数
+    /**
+     * 解密并封装参数
+     *
      * @param cipherStr
      * @return
      */
     public static Map<String, Object> commonUrlParamToMap(String cipherStr, String desKey) throws Exception {
-        log.info("-==========进入解密请求参数方法========");
-        try {
-            String desDecryptStr = WrbCoopDESUtil.desDecrypt(desKey, cipherStr);
-            if (StringUtils.isEmpty(desDecryptStr)) {
-                log.info("請求密文為空");
-                throw new Exception();
-            }
-           return getUrlParams(desDecryptStr);
-
-        } catch (Exception e) {
-            log.info("密文解析失败");
-            throw new Exception();
+        String desDecryptStr = WrbCoopDESUtil.desDecrypt(desKey, cipherStr);
+        if (StringUtils.isEmpty(desDecryptStr)) {
+            throw new Exception("请求密文为空");
         }
+
+        return getUrlParams(desDecryptStr);
     }
 
     /**
      * 将url参数转换成map
+     *
      * @param param aa=11&bb=22&cc=33
      * @return
      */
@@ -47,15 +41,14 @@ public class StrToJsonStrUtil {
         String[] params = param.split("&");
         for (int i = 0; i < params.length; i++) {
             String[] p = params[i].split("=");
-            for (int j = 0; j < p.length ; j++) {
-                if(p.length==1){
-                    map.put(p[0],null);
-                }else{
-                    map.put(p[0],p[1]);
+            for (int j = 0; j < p.length; j++) {
+                if (p.length == 1) {
+                    map.put(p[0], null);
+                } else {
+                    map.put(p[0], p[1]);
                 }
             }
         }
-        log.info("风车理财请求平台 解密后的param参数:"+GSON.toJson(map));
         return map;
     }
 
