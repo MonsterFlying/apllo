@@ -781,3 +781,7 @@ ALTER TABLE gfb_finance_plan ADD   `left_money` int(10) unsigned NOT NULL DEFAUL
 ALTER TABLE gfb_borrow_tender ADD   `finance_buy_id` int(11) DEFAULT NULL COMMENT '理财计划购买id';
 ALTER TABLE gfb_borrow ADD   `is_finance` tinyint(1) DEFAULT '0' COMMENT '是否是理财计划 0否 1是';
 ALTER TABLE gfb_borrow_repayment ADD  `repay_trigger_at` datetime DEFAULT NULL COMMENT '还款触发时间';
+
+ALTER TABLE gfb_third_batch_log ADD `TX_DATE` varchar(11) DEFAULT NULL COMMENT '即信交易日期';
+ALTER TABLE gfb_third_batch_log ADD `TX_TIME` varchar(11) DEFAULT NULL COMMENT '即信交易时间';
+ALTER TABLE gfb_third_batch_log ADD `SEQ_NO` varchar(11) DEFAULT NULL COMMENT '即信交易时间';

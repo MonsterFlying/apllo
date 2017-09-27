@@ -38,11 +38,11 @@ public class FinancePlanListener {
             Map<String, Object> msg = (Map<String, Object>) body.get(MqConfig.MSG_BODY);
             String tag = body.get(MqConfig.MSG_TAG).toString();
             //理财计划满额时通知后台处理
-            if (tag.equals(MqTagEnum.FINANCE_PLAN_FULL_NOTIFY)) {
+            if (tag.equals(MqTagEnum.FINANCE_PLAN_FULL_NOTIFY.getValue())) {
                 financePlanProvider.pullScaleNotify(msg);
             }
         } catch (Exception e) {
-
+            log.error("理财计划复审异常:", e);
         }
 
     }

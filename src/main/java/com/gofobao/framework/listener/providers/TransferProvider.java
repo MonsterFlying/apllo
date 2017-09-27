@@ -456,8 +456,8 @@ public class TransferProvider {
             transferBuyLog.setThirdTransferOrderId(transferOrderId);
             transferBuyLogService.save(transferBuyLogList);
 
-            //解除存管资金冻结
-            String newOrderId = JixinHelper.getOrderId(JixinHelper.BALANCE_UNFREEZE_PREFIX);/* 购买债权转让冻结金额 orderid */
+           /* //解除存管资金冻结
+            String newOrderId = JixinHelper.getOrderId(JixinHelper.BALANCE_UNFREEZE_PREFIX);*//* 购买债权转让冻结金额 orderid *//*
             UserThirdAccount buyUserThirdAccount = userThirdAccountService.findByUserId(transferBuyLog.getUserId());
             BalanceUnfreezeReq balanceUnfreezeReq = new BalanceUnfreezeReq();
             balanceUnfreezeReq.setAccountId(buyUserThirdAccount.getAccountId());
@@ -468,7 +468,7 @@ public class TransferProvider {
             BalanceUnfreezeResp balanceUnfreezeResp = jixinManager.send(JixinTxCodeEnum.BALANCE_UN_FREEZE, balanceUnfreezeReq, BalanceUnfreezeResp.class);
             if ((ObjectUtils.isEmpty(balanceUnfreezeResp)) || (!JixinResultContants.SUCCESS.equalsIgnoreCase(balanceUnfreezeResp.getRetCode()))) {
                 throw new Exception("购买理财计划债权转让解冻资金失败：" + balanceUnfreezeResp.getRetMsg());
-            }
+            }*/
         }
 
         //批次号
@@ -486,8 +486,12 @@ public class TransferProvider {
         request.setChannel(ChannelContant.HTML);
         request.setNotifyURL(javaDomain + "/pub/tender/v2/third/batch/finance/creditinvest/check");
         request.setRetNotifyURL(javaDomain + "/pub/tender/v2/third/batch/finance/creditinvest/run");
+        log.info(GSON.toJson(request));
         BatchCreditInvestResp response = jixinManager.send(JixinTxCodeEnum.BATCH_CREDIT_INVEST, request, BatchCreditInvestResp.class);
         if ((ObjectUtils.isEmpty(response)) || (!JixinResultContants.BATCH_SUCCESS.equalsIgnoreCase(response.getReceived()))) {
+            /*
+            * @// TODO: 2017/9/26 存到redis 进行撤销操作
+            */
             BatchCancelReq batchCancelReq = new BatchCancelReq();
             batchCancelReq.setBatchNo(batchNo);
             batchCancelReq.setTxAmount(StringHelper.formatDouble(sumAmount, 100, false));
@@ -506,6 +510,9 @@ public class TransferProvider {
         thirdBatchLog.setBatchNo(batchNo);
         thirdBatchLog.setCreateAt(nowDate);
         thirdBatchLog.setUpdateAt(nowDate);
+        thirdBatchLog.setTxDate(request.getTxDate());
+        thirdBatchLog.setTxTime(request.getTxTime());
+        thirdBatchLog.setSeqNo(request.getSeqNo());
         thirdBatchLog.setSourceId(transfer.getId());
         thirdBatchLog.setType(ThirdBatchLogContants.BATCH_FINANCE_CREDIT_INVEST);
         thirdBatchLog.setAcqRes(GSON.toJson(acqResMap));
@@ -714,6 +721,9 @@ public class TransferProvider {
         ThirdBatchLog thirdBatchLog = new ThirdBatchLog();
         thirdBatchLog.setBatchNo(batchNo);
         thirdBatchLog.setCreateAt(nowDate);
+        thirdBatchLog.setTxDate(request.getTxDate());
+        thirdBatchLog.setTxTime(request.getTxTime());
+        thirdBatchLog.setSeqNo(request.getSeqNo());
         thirdBatchLog.setUpdateAt(nowDate);
         thirdBatchLog.setSourceId(transfer.getId());
         thirdBatchLog.setType(ThirdBatchLogContants.BATCH_CREDIT_INVEST);

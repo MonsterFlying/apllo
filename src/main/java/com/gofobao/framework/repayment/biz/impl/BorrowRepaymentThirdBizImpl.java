@@ -261,6 +261,9 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
             ThirdBatchLog thirdBatchLog = new ThirdBatchLog();
             thirdBatchLog.setBatchNo(batchNo);
             thirdBatchLog.setCreateAt(nowDate);
+            thirdBatchLog.setTxDate(batchLendPayReq.getTxDate());
+            thirdBatchLog.setTxTime(batchLendPayReq.getTxTime());
+            thirdBatchLog.setSeqNo(batchLendPayReq.getSeqNo());
             thirdBatchLog.setUpdateAt(nowDate);
             thirdBatchLog.setSourceId(borrowId);
             thirdBatchLog.setType(ThirdBatchLogContants.BATCH_FINANCE_LEND_REPAY);
@@ -560,6 +563,9 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
             ThirdBatchLog thirdBatchLog = new ThirdBatchLog();
             thirdBatchLog.setBatchNo(batchNo);
             thirdBatchLog.setCreateAt(nowDate);
+            thirdBatchLog.setTxDate(batchLendPayReq.getTxDate());
+            thirdBatchLog.setTxTime(batchLendPayReq.getTxTime());
+            thirdBatchLog.setSeqNo(batchLendPayReq.getSeqNo());
             thirdBatchLog.setUpdateAt(nowDate);
             thirdBatchLog.setSourceId(borrowId);
             thirdBatchLog.setType(ThirdBatchLogContants.BATCH_LEND_REPAY);

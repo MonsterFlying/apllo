@@ -90,6 +90,13 @@ public class UserCache {
     private Long cashTotal;
 
 
+    /**
+     * @// TODO: 2017/9/26  添加字段
+     * $userCache->jh_wait_collection_principal += $collectionDetails->sum('principal');
+    $userCache->jh_wait_collection_interest += $collectionDetails->sum('interest');
+     * @return
+     */
+
     public long getIncomeTotal() {
         return this.incomeInterest
                 + this.incomeAward

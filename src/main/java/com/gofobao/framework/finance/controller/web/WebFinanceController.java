@@ -35,11 +35,11 @@ public class WebFinanceController {
      */
     @ApiOperation("理财计划匹配债权转让")
     @PostMapping("/v2/pub/finance/plan/tender")
-    public ResponseEntity<VoViewFinancePlanTender> financePlanTender(@Valid @ModelAttribute VoFinancePlanTender voFinancePlanTender) {
+    public ResponseEntity<String> financePlanTender(@Valid @ModelAttribute VoFinancePlanTender voFinancePlanTender) {
         try {
             return financePlanBiz.financePlanTender(voFinancePlanTender);
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "系统开小差了，请稍后再试!", VoViewFinancePlanTender.class));
+            return ResponseEntity.badRequest().body("匹配失败!");
         }
     }
 
@@ -50,7 +50,7 @@ public class WebFinanceController {
      * @return
      */
     @ApiOperation("理财计划资金变动")
-    @PostMapping("/v2/pub/finance/plan/asset/change")
+    @PostMapping("/v2/pub/finance/asset/change")
     public ResponseEntity<VoBaseResp> financePlanAssetChange(@Valid @ModelAttribute VoFinancePlanAssetChange voFinancePlanAssetChange) {
         try {
             return financePlanBiz.financePlanAssetChange(voFinancePlanAssetChange);

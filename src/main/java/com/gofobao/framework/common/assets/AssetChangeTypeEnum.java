@@ -3,37 +3,41 @@ package com.gofobao.framework.common.assets;
 
 public enum AssetChangeTypeEnum {
 
-
     /**
      * 投资人到期收回本息
      */
+    financeSettlement("理财计划结算", "financeSettlement", "2833", "add@useMoney", "add@incomeInterest#interest", "C"),
+
+/*    *//**
+     * 投资人到期收回本息
+     *//*
     makeUpReceivedPayments("正常回款", "makeUpReceivedPayments", "7781", "add@useMoney", "add@incomeInterest#interest", "D"),
 
-    /**
+    *//**
      * 净值标借款入账
-     */
+     *//*
     lendPaymentRepair("净值标借款入账", "lendPaymentRepair", "0", "add@useMoney", "", "B"),
 
-    /**
+    *//**
      * 投资人到期收回本息
-     */
+     *//*
     amendUseMoney("验证服可用金额数据修正", "amendUseMoney", "0", "add@useMoney", "", "B"),
 
-    /**
+    *//**
      * 投资人到期收回本息
-     */
+     *//*
     amendNotUseMoney("验证服冻结金额数据修正", "amendNotUseMoney", "0", "sub@noUseMoney", "", "B"),
 
-    /**
+    *//**
      * 投资人到期收回本息
-     */
+     *//*
     amendPayment("验证服冻结金额数据修正", "amendPayment", "0", "sub@payment", "", "B"),
 
 
-    /**
+    *//**
      * 投资人到期收回本息
-     */
-    initAsset("数据迁移资产初始化", "initAsset", "0", "", "", "B"),
+     *//*
+    initAsset("数据迁移资产初始化", "initAsset", "0", "", "", "B"),*/
 
     /**
      * 联机充值

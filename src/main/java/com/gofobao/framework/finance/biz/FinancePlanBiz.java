@@ -27,6 +27,7 @@ public interface FinancePlanBiz {
 
     /**
      * 理财计划资金变动
+     *
      * @param voFinancePlanAssetChange
      * @return
      * @throws Exception
@@ -39,7 +40,7 @@ public interface FinancePlanBiz {
      * @param voFinancePlanTender
      * @return
      */
-    ResponseEntity<VoViewFinancePlanTender> financePlanTender(VoFinancePlanTender voFinancePlanTender);
+    ResponseEntity<String> financePlanTender(VoFinancePlanTender voFinancePlanTender) throws Exception;
 
     /**
      * 理财列表

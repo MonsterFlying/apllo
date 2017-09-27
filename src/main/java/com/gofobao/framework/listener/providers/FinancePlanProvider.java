@@ -15,18 +15,18 @@ import java.util.Map;
 /**
  * Created by Zeke on 2017/8/14.
  */
-@Component
 @Slf4j
+@Component
 public class FinancePlanProvider {
     static Gson GSON = new GsonBuilder().create();
 
-    @Value("{gofobao.adminDomain}")
-    private static String adminDomain;
+    @Value("${gofobao.adminDomain}")
+    private String adminDomain;
 
     /**n
      * 理财计划满标后通知
      */
-    public static void pullScaleNotify(Map<String, Object> msg) {
+    public void pullScaleNotify(Map<String, Object> msg) {
         try {
             Map<String, String> requestMaps = ImmutableMap.of("paramStr",GSON.toJson(msg),"sign",SecurityHelper.getSign(GSON.toJson(msg)));
             String resultStr=OKHttpHelper.postForm(adminDomain+"/api/open/finance-plan/review",requestMaps, null);
@@ -37,9 +37,4 @@ public class FinancePlanProvider {
         }
     }
 
-
-    public static void main(String[] args) {
-        Map<String,Object>resultMaps= ImmutableMap.of("planId",1);
-        pullScaleNotify(resultMaps);
-    }
 }

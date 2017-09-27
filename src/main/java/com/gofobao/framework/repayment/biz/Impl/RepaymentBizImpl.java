@@ -200,6 +200,8 @@ public class RepaymentBizImpl implements RepaymentBiz {
     private ThirdBatchDealLogBiz thirdBatchDealLogBiz;
     @Autowired
     private FinancePlanService financePlanService;
+    @Value("${gofobao.adminDomain}")
+    private String adminDomain;
 
     /**
      * pc还款
@@ -645,6 +647,9 @@ public class RepaymentBizImpl implements RepaymentBiz {
             ThirdBatchLog thirdBatchLog = new ThirdBatchLog();
             thirdBatchLog.setBatchNo(batchNo);
             thirdBatchLog.setCreateAt(nowDate);
+            thirdBatchLog.setTxDate(request.getTxDate());
+            thirdBatchLog.setTxTime(request.getTxTime());
+            thirdBatchLog.setSeqNo(request.getSeqNo());
             thirdBatchLog.setUpdateAt(nowDate);
             thirdBatchLog.setSourceId(borrowId);
             thirdBatchLog.setType(ThirdBatchLogContants.BATCH_REPAY_ALL);
@@ -1004,6 +1009,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
      * @param borrowCollectionList
      */
     public void updateFinanceByReceivedRepay(List<Tender> tenderList, Map<Long, Tender> tenderMap, List<BorrowCollection> borrowCollectionList) {
+        boolean flag = false;
         //理财计划购买ids
         Set<Long> financeBuyIds = tenderList.stream().map(Tender::getFinanceBuyId).collect(Collectors.toSet());
         Specification<FinancePlanBuyer> fpps = Specifications
@@ -1020,7 +1026,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
                 .build();
         List<FinancePlan> financePlanList = financePlanService.findList(fps);
         Map<Long/* financePlanId */, FinancePlan> financePlanMap = financePlanList.stream().collect(Collectors.toMap(FinancePlan::getId, Function.identity()));
-        borrowCollectionList.stream().forEach(borrowCollection -> {
+        for (BorrowCollection borrowCollection : borrowCollectionList) {
             Tender tender = tenderMap.get(borrowCollection.getTenderId());
             if (tender.getType().intValue() == 1) { //理财计划需要变更理财计划参数
                 /*理财计划购买记录*/
@@ -1032,10 +1038,18 @@ public class RepaymentBizImpl implements RepaymentBiz {
                 financePlanBuyer.setRightMoney(financePlanBuyer.getRightMoney() - principal);
                 financePlan.setLeftMoney(financePlan.getLeftMoney() + principal);
                 financePlan.setRightMoney(financePlan.getRightMoney() + principal);
+                if (!flag) {
+                    flag = true;
+                }
             }
-        });
+        }
         financePlanBuyerService.save(financePlanBuyerList);
         financePlanService.save(financePlanList);
+        //存在理财计划时通知后台
+        if (flag) {
+            String resultStr = OKHttpHelper.postForm(adminDomain + "/api/open/finance-plan/auto-match", new HashMap<>(), null);
+            System.out.print("返回响应:" + resultStr);
+        }
     }
 
     /**
@@ -1756,6 +1770,9 @@ public class RepaymentBizImpl implements RepaymentBiz {
             thirdBatchLog.setBatchNo(batchNo);
             thirdBatchLog.setCreateAt(nowDate);
             thirdBatchLog.setUpdateAt(nowDate);
+            thirdBatchLog.setTxDate(request.getTxDate());
+            thirdBatchLog.setTxTime(request.getTxTime());
+            thirdBatchLog.setSeqNo(request.getSeqNo());
             thirdBatchLog.setSourceId(borrowRepayment.getId());
             thirdBatchLog.setType(ThirdBatchLogContants.BATCH_REPAY);
             thirdBatchLog.setRemark("即信批次还款.");
@@ -2736,6 +2753,9 @@ public class RepaymentBizImpl implements RepaymentBiz {
             thirdBatchLog.setBatchNo(batchNo);
             thirdBatchLog.setCreateAt(nowDate);
             thirdBatchLog.setUpdateAt(nowDate);
+            thirdBatchLog.setTxDate(request.getTxDate());
+            thirdBatchLog.setTxTime(request.getTxTime());
+            thirdBatchLog.setSeqNo(request.getSeqNo());
             thirdBatchLog.setSourceId(borrowRepayment.getId());
             thirdBatchLog.setType(ThirdBatchLogContants.BATCH_BAIL_REPAY);
             thirdBatchLog.setRemark("批次名义借款人垫付");

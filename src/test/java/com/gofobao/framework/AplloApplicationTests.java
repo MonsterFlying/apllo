@@ -57,6 +57,7 @@ import com.gofobao.framework.common.rabbitmq.MqTagEnum;
 import com.gofobao.framework.helper.*;
 import com.gofobao.framework.listener.providers.BorrowProvider;
 import com.gofobao.framework.listener.providers.CreditProvider;
+import com.gofobao.framework.listener.providers.TransferProvider;
 import com.gofobao.framework.marketing.biz.MarketingProcessBiz;
 import com.gofobao.framework.member.biz.BrokerBounsBiz;
 import com.gofobao.framework.member.biz.impl.WebUserThirdBizImpl;
@@ -394,9 +395,9 @@ public class AplloApplicationTests {
 
     private void batchDetailsQuery() {
         BatchDetailsQueryReq batchDetailsQueryReq = new BatchDetailsQueryReq();
-        batchDetailsQueryReq.setBatchNo("093205");
+        batchDetailsQueryReq.setBatchNo("184940");
 
-        batchDetailsQueryReq.setBatchTxDate("20170918");
+        batchDetailsQueryReq.setBatchTxDate("20170926");
         batchDetailsQueryReq.setType("0");
         batchDetailsQueryReq.setPageNum("1");
         batchDetailsQueryReq.setPageSize("10");
@@ -663,8 +664,8 @@ public class AplloApplicationTests {
         System.out.println(GSON.toJson(borrow1));
     }
 
-@Test
-    public void mqTest(){
+    @Test
+    public void mqTest() {
         Map<String, String> bodyMap = ImmutableMap.of("planId", "4");
         MqConfig mqConfig = new MqConfig();
         mqConfig.setSendTime(new Date());
@@ -677,117 +678,21 @@ public class AplloApplicationTests {
     }
 
 
+    @Autowired
+    TransferProvider transferProvider;
+
     @Test
     @Transactional(rollbackFor = Exception.class)
     public void test() {
-        Map<String, String> bodyMap = ImmutableMap.of("plan", "7");
-        MqConfig mqConfig = new MqConfig();
-        mqConfig.setSendTime(new Date());
-        mqConfig.setQueue(MqQueueEnum.RABBITMQ_FINANCE_PLAN);
-        mqConfig.setTag(MqTagEnum.FINANCE_PLAN_FULL_NOTIFY);
-        mqConfig.setMsg(bodyMap);
-        mqHelper.convertAndSend(mqConfig);
 
-        /*Borrow borrow = borrowService.findById(179937l);
-        System.out.println(GSON.toJson(borrow));
-        Borrow borrow1 = borrowService.findByIdLock(179937l);
-        System.out.println(GSON.toJson(borrow1));*/
-
-
-        /*dailyAssetBackupScheduler.process();
-*/
-     /*   //记录批次处理日志
-        thirdBatchDealLogBiz.recordThirdBatchDealLog(String.valueOf(113841),169974, ThirdBatchDealLogContants.PROCESSED,true,
-                ThirdBatchLogContants.BATCH_LEND_REPAY, "");
-*/
-        /*MqConfig mqConfig = new MqConfig();
-        mqConfig.setQueue(MqQueueEnum.RABBITMQ_TENDER);
-        mqConfig.setTag(MqTagEnum.AUTO_TENDER);
-        ImmutableMap<String, String> body = ImmutableMap
-                .of(MqConfig.MSG_BORROW_ID, StringHelper.toString("170190"), MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
-        mqConfig.setMsg(body);
+       /* ImmutableMap<String, String> body = ImmutableMap
+                .of(MqConfig.MSG_TRANSFER_ID, StringHelper.toString("132"), MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
+        // mqConfig.setMsg(body);
         try {
-            mqHelper.convertAndSend(mqConfig);
-        } catch (Throwable e) {
-            log.error("borrowProvider autoTender send mq exception", e);
-        }*/
-
-        /*BorrowCalculatorHelper borrowCalculatorHelper = new BorrowCalculatorHelper(
-                NumberHelper.toDouble(StringHelper.toString(9)),
-                NumberHelper.toDouble(StringHelper.toString(1500)), 12, new Date());
-        Map<String, Object> rsMap = borrowCalculatorHelper.simpleCount(0);
-        List<Map<String, Object>> repayDetailList = (List<Map<String, Object>>) rsMap.get("repayDetailList");
-        System.out.println(repayDetailList);*/
-/*        Borrow borrow = borrowService.findById(170185l);
-        UserCache userCache = userCacheService.findById(22002l);
-        Date nowDate = new Date();
-        Date releaseAt = borrow.getReleaseAt();
-
-        if (borrow.getIsNovice()) {  // 新手
-            releaseAt = DateHelper.max(DateHelper.addHours(DateHelper.beginOfDate(releaseAt), 20), borrow.getReleaseAt());
-        }
-        if (ObjectUtils.isEmpty(borrow.getLendId())  && releaseAt.getTime() > nowDate.getTime() && !userCache.isNovice()) {
-            log.info(String.valueOf(ObjectUtils.isEmpty(borrow.getLendId())));
-            log.info(String.valueOf(releaseAt.getTime() > nowDate.getTime()));
-            log.info(String.valueOf(!userCache.isNovice()));
-        }*/
-
-        /*Borrow borrow = new Borrow();
-        long takeUserId = borrow.getTakeUserId();
-        if (ObjectUtils.isEmpty(takeUserId)){
-
-        }*/
-        /*MqConfig mqConfig = new MqConfig();
-        mqConfig.setQueue(MqQueueEnum.RABBITMQ_TENDER);
-        mqConfig.setTag(MqTagEnum.AUTO_TENDER);
-        ImmutableMap<String, String> body = ImmutableMap
-                .of(MqConfig.MSG_BORROW_ID, StringHelper.toString("170183"), MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
-        mqConfig.setMsg(body);
-        try {
-            mqHelper.convertAndSend(mqConfig);
-        } catch (Throwable e) {
-            log.error("borrowProvider autoTender send mq exception", e);
-        }*/
-        /*long redpackAccountId = 0;
-        try {
-            redpackAccountId = assetChangeProvider.getRedpackAccountId();
-        } catch (ExecutionException e) {
+            Boolean result = transferProvider.againVerifyFinanceTransfer(body);
+        } catch (Exception e) {
             e.printStackTrace();
-        }
-
-        UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(redpackAccountId);
-        UserThirdAccount userThirdAccount1 = userThirdAccountService.findByUserId(45255l);
-        //3.发送红包
-        VoucherPayRequest voucherPayRequest = new VoucherPayRequest();
-        voucherPayRequest.setAccountId(userThirdAccount.getAccountId());
-        voucherPayRequest.setTxAmount("10.22");
-        voucherPayRequest.setForAccountId(userThirdAccount1.getAccountId());
-        voucherPayRequest.setDesLineFlag(DesLineFlagContant.TURE);
-        voucherPayRequest.setDesLine("数据迁移账户初始化！");
-        voucherPayRequest.setChannel(ChannelContant.HTML);
-        VoucherPayResponse response = jixinManager.send(JixinTxCodeEnum.SEND_RED_PACKET, voucherPayRequest, VoucherPayResponse.class);
-        if ((ObjectUtils.isEmpty(response)) || (!JixinResultContants.SUCCESS.equals(response.getRetCode()))) {
-            String msg = ObjectUtils.isEmpty(response) ? "当前网络不稳定，请稍候重试" : response.getRetMsg();
         }*/
-
-   /*   //推送队列结束债权
-        MqConfig mqConfig = new MqConfig();
-        mqConfig.setQueue(MqQueueEnum.RABBITMQ_CREDIT);
-        mqConfig.setTag(MqTagEnum.END_CREDIT);
-        mqConfig.setSendTime(DateHelper.addMinutes(new Date(), 1));
-        ImmutableMap<String, String> body = ImmutableMap
-                .of(MqConfig.MSG_BORROW_ID, StringHelper.toString(170106), MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
-        mqConfig.setMsg(body);
-        try {
-            log.info(String.format("thirdBatchProvider creditInvestDeal send mq %s", GSON.toJson(body)));
-            mqHelper.convertAndSend(mqConfig);
-        } catch (Throwable e) {
-            log.error("thirdBatchProvider creditInvestDeal send mq exception", e);
-        }*/
-
-        //dealThirdBatchScheduler.process();
-        //                  dataMigration();
-
 
        /* //批次处理
        batchDeal();
@@ -821,7 +726,7 @@ public class AplloApplicationTests {
         //batchQuery();
         //freezeDetailsQuery();
         //批次详情查询
-        //batchDetailsQuery();
+        batchDetailsQuery();
         //查询投标申请
         //bidApplyQuery();
         //转让标复审回调

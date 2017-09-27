@@ -100,7 +100,8 @@ public class ThirdBatchLogBizImpl implements ThirdBatchLogBiz {
         Preconditions.checkNotNull(thirdBatchLog, "即信批次记录不存在!");
 
         String batchNo = StringHelper.toString(thirdBatchLog.getBatchNo());
-        String txDate = DateHelper.dateToString(thirdBatchLog.getCreateAt(), DateHelper.DATE_FORMAT_YMD_NUM);
+        String txDate = thirdBatchLog.getTxDate();
+        txDate = ObjectUtils.isEmpty(txDate) ? DateHelper.dateToString(thirdBatchLog.getCreateAt(), DateHelper.DATE_FORMAT_YMD_NUM) : txDate;
 
         BatchQueryReq req = new BatchQueryReq();
         req.setChannel(ChannelContant.HTML);
@@ -297,7 +298,7 @@ public class ThirdBatchLogBizImpl implements ThirdBatchLogBiz {
         BatchQueryReq req = new BatchQueryReq();
         req.setChannel(ChannelContant.HTML);
         req.setBatchNo(thirdBatchLog.getBatchNo());
-        req.setBatchTxDate(DateHelper.dateToString(thirdBatchLog.getCreateAt(), DateHelper.DATE_FORMAT_YMD_NUM));
+        req.setBatchTxDate(thirdBatchLog.getTxDate());
         BatchQueryResp resp = jixinManager.send(JixinTxCodeEnum.BATCH_QUERY, req, BatchQueryResp.class);
         if ((ObjectUtils.isEmpty(resp)) || (!JixinResultContants.SUCCESS.equals(resp.getRetCode()))) {
             log.error(ObjectUtils.isEmpty(resp) ? "当前网络不稳定，请稍候重试" : resp.getRetMsg());

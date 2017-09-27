@@ -191,6 +191,9 @@ public class CreditProvider {
         thirdBatchLog.setBatchNo(batchNo);
         thirdBatchLog.setCreateAt(nowDate);
         thirdBatchLog.setUpdateAt(nowDate);
+        thirdBatchLog.setTxDate(request.getTxDate());
+        thirdBatchLog.setTxTime(request.getTxTime());
+        thirdBatchLog.setSeqNo(request.getSeqNo());
         thirdBatchLog.setSourceId(borrowId);
         thirdBatchLog.setType(ThirdBatchLogContants.BATCH_CREDIT_END);
         thirdBatchLog.setAcqRes(gson.toJson(acqResMap));
