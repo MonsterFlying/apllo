@@ -321,6 +321,7 @@ public class TransferBizImpl implements TransferBiz {
          */
         Transfer transfer = transferService.findByIdLock(transferId);/* 理财计划债权转让记录 */
         Preconditions.checkNotNull(transfer, "理财计划债权转让记录不存在!");
+        Preconditions.checkState(transfer.getState() != 2, "债权状态为已转出状态!");
         Tender parentTender = tenderService.findById(transfer.getTenderId());/* 理财计划债权转让原投资记录 */
         Preconditions.checkNotNull(parentTender, "理财计划债权转让源投资记录不存在!tenderId:" + transfer.getTenderId());
         Borrow parentBorrow = borrowService.findById(parentTender.getBorrowId());
@@ -331,7 +332,7 @@ public class TransferBizImpl implements TransferBiz {
                 .eq("state", 0)
                 .build();
         List<TransferBuyLog> transferBuyLogList = transferBuyLogService.findList(tbls);/* 购买理财计划债权转让记录 */
-        Preconditions.checkNotNull(transferBuyLogList, "购买理财计划债权转让记录不存在!");
+        Preconditions.checkNotNull(!CollectionUtils.isEmpty(transferBuyLogList), "购买理财计划债权转让记录不存在!");
         long failure = transferBuyLogList
                 .stream()
                 .filter(transferBuyLog -> BooleanHelper.isFalse(transferBuyLog.getThirdTransferFlag())).count(); /* 登记即信存管失败条数 */
@@ -434,18 +435,26 @@ public class TransferBizImpl implements TransferBiz {
             for (int i = 0; i < repayDetailList.size(); i++) {
                 borrowCollection = new BorrowCollection();
                 Map<String, Object> repayDetailMap = repayDetailList.get(i);
+                long principal = NumberHelper.toLong(repayDetailMap.get("principal"));
+                long interest = NumberHelper.toLong(repayDetailMap.get("interest"));
+                Date collectionAt = DateHelper.stringToDate(StringHelper.toString(repayDetailMap.get("repayAt")));
+                Date frontCollectionAt = DateHelper.stringToDate(StringHelper.toString(repayDetailList.get(i - 1).get("repayAt")));
+                //如果是理财计划借款不需要生成利息
+                if (childTender.getType().intValue() == 1) {
+                    interest = 0;
+                }
 
                 borrowCollection.setTenderId(childTender.getId());
                 borrowCollection.setStatus(0);
                 borrowCollection.setOrder(startOrder++);
                 borrowCollection.setUserId(childTender.getUserId());
-                borrowCollection.setStartAt(i > 0 ? DateHelper.stringToDate(StringHelper.toString(repayDetailList.get(i - 1).get("repayAt"))) : startAt);
-                borrowCollection.setStartAtYes(i > 0 ? DateHelper.stringToDate(StringHelper.toString(repayDetailList.get(i - 1).get("repayAt"))) : nowDate);
-                borrowCollection.setCollectionAt(DateHelper.stringToDate(StringHelper.toString(repayDetailMap.get("repayAt"))));
-                borrowCollection.setCollectionAtYes(DateHelper.stringToDate(StringHelper.toString(repayDetailMap.get("repayAt"))));
-                borrowCollection.setCollectionMoney(NumberHelper.toLong(repayDetailMap.get("principal")));
-                borrowCollection.setPrincipal(NumberHelper.toLong(repayDetailMap.get("principal")));
-                borrowCollection.setInterest(0l);
+                borrowCollection.setStartAt(i > 0 ? frontCollectionAt : startAt);
+                borrowCollection.setStartAtYes(i > 0 ? frontCollectionAt : nowDate);
+                borrowCollection.setCollectionAt(collectionAt);
+                borrowCollection.setCollectionAtYes(collectionAt);
+                borrowCollection.setCollectionMoney(principal);
+                borrowCollection.setPrincipal(principal);
+                borrowCollection.setInterest(interest);
                 borrowCollection.setCreatedAt(nowDate);
                 borrowCollection.setUpdatedAt(nowDate);
                 borrowCollection.setCollectionMoneyYes(0l);
@@ -571,6 +580,7 @@ public class TransferBizImpl implements TransferBiz {
          */
         Transfer transfer = transferService.findByIdLock(transferId);/* 债权转让记录 */
         Preconditions.checkNotNull(transfer, "债权转让记录不存在!");
+        Preconditions.checkState(transfer.getState() != 2, "债权状态为已转出状态!");
         Tender parentTender = tenderService.findById(transfer.getTenderId());/* 债权转让原投资记录 */
         Preconditions.checkNotNull(parentTender, "债权转让源投资记录不存在!tenderId:" + transfer.getTenderId());
         Borrow parentBorrow = borrowService.findById(parentTender.getBorrowId());
@@ -581,7 +591,7 @@ public class TransferBizImpl implements TransferBiz {
                 .eq("state", 0)
                 .build();
         List<TransferBuyLog> transferBuyLogList = transferBuyLogService.findList(tbls);/* 购买债权转让记录 */
-        Preconditions.checkNotNull(transferBuyLogList, "购买债权转让记录不存在!");
+        Preconditions.checkState(!CollectionUtils.isEmpty(transferBuyLogList), "购买债权转让记录不存在!");
         long failure = transferBuyLogList
                 .stream()
                 .filter(transferBuyLog -> BooleanHelper.isFalse(transferBuyLog.getThirdTransferFlag())).count(); /* 登记即信存管失败条数 */

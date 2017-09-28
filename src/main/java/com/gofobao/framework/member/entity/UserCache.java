@@ -89,13 +89,15 @@ public class UserCache {
 
     private Long cashTotal;
 
+    /**
+     * 理财计划回款本金
+     */
+    private Long jhWaitCollectionPrincipal;
 
     /**
-     * @// TODO: 2017/9/26  添加字段
-     * $userCache->jh_wait_collection_principal += $collectionDetails->sum('principal');
-    $userCache->jh_wait_collection_interest += $collectionDetails->sum('interest');
-     * @return
+     * 理财计划回款利息
      */
+    private Long jhWaitCollectionInterest;
 
     public long getIncomeTotal() {
         return this.incomeInterest
