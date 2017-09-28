@@ -199,7 +199,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
         List<LendPay> lendPayList = new ArrayList<>();
         LendPay lendPay;
         UserThirdAccount tenderUserThirdAccount;
-        double sumTxAmount = 0, validMoney, debtFee;
+        long sumTxAmount = 0, validMoney, debtFee;
         for (Tender tender : tenderList) {
             debtFee = 0;
             //投标有效金额
@@ -468,13 +468,13 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
             }
         }
 
-        double totalManageFee = 0; // 净值标, 收取账户管理费
+        long totalManageFee = 0; // 净值标, 收取账户管理费
         if (borrow.getType() == 1) {
             double manageFeeRate = 0.0012;
             if (borrow.getRepayFashion() == 1) {
-                totalManageFee = MoneyHelper.round(borrow.getMoney() * manageFeeRate / 30 * borrow.getTimeLimit(), 0);
+                totalManageFee = new Double(MoneyHelper.round(borrow.getMoney() * manageFeeRate / 30 * borrow.getTimeLimit(), 0)).longValue();
             } else {
-                totalManageFee = MoneyHelper.round(borrow.getMoney() * manageFeeRate * borrow.getTimeLimit(), 0);
+                totalManageFee = new Double(MoneyHelper.round(borrow.getMoney() * manageFeeRate * borrow.getTimeLimit(), 0)).longValue();
             }
         }
 
@@ -488,7 +488,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
             //投标有效金额
             validMoney = tender.getValidMoney();
             /*净值管理费*/
-            double newWorthFee = MoneyHelper.round(MoneyHelper.multiply(MoneyHelper.divide(validMoney, borrow.getMoney()), totalManageFee), 0);
+            long newWorthFee = new Double(MoneyHelper.round(MoneyHelper.multiply(MoneyHelper.divide(validMoney, borrow.getMoney()), totalManageFee), 0)).longValue();
             //净值账户管理费
             if (borrow.getType() == 1) {
                 sumNetWorthFee = MoneyHelper.add(sumNetWorthFee, newWorthFee);
@@ -614,9 +614,10 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
 
     /**
      * 安全放款
-     *<p>此处会调用即信批次查询接口, 判断是否存在该放款批次记录</p>
+     * <p>此处会调用即信批次查询接口, 判断是否存在该放款批次记录</p>
      * <p>如果查询到该批次, 直接返回放款成功</p>
      * <p>如果查询不到该批次, 执行批次放款</p>
+     *
      * @param batchLendPayReq
      * @return
      */

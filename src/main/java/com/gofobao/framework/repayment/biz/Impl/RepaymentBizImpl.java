@@ -699,7 +699,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
                 /*取出关联的tender记录*/
                 Tender tender = tenderMaps.get(repay.getAuthCode());
                 if (tender.getType().intValue() != 1) { //理财计划不需要收取违约金
-                    double partPenalty = MoneyHelper.round(NumberHelper.toDouble(repay.getTxAmount()) / sumTxAmount * penalty, 0);/*分摊违约金*/
+                    long partPenalty = MoneyHelper.doubleToLong(MoneyHelper.round(NumberHelper.toDouble(repay.getTxAmount()) / sumTxAmount * penalty, 0));/*分摊违约金*/
                     sumPenalty += partPenalty;
 
                     UserThirdAccount userThirdAccount = userThirdAccountService.findByAccountId(repay.getForAccountId());
@@ -1888,7 +1888,6 @@ public class RepaymentBizImpl implements RepaymentBiz {
 
             RepayAssetChange repayAssetChange = new RepayAssetChange();
             repayAssetChanges.add(repayAssetChange);
-            // inIn = new Double(MoneyHelper.round(borrowCollection.getInterest() * interestPercent, 0)).longValue();
             double inInDouble = MoneyHelper.multiply(borrowCollection.getInterest(), interestPercent, 0);
             inIn = MoneyHelper.doubleToLong(inInDouble);  // 还款利息
 
@@ -1921,7 +1920,6 @@ public class RepaymentBizImpl implements RepaymentBiz {
                         log.info(String.format("风车理财：%s", user));
                         inFee += 0;
                     } else {
-                        // inFee += new Double(MoneyHelper.round(inIn * 0.1, 0)).longValue();
                         // 利息管理费
                         inFee += MoneyHelper.doubleToint(MoneyHelper.multiply(inIn, 0.1D, 0));  // 利息问题
                     }
@@ -2994,7 +2992,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
             overdueAssetChangeItem.setState(0);
             overdueAssetChangeItem.setType(AssetChangeTypeEnum.compensatoryRepaymentOverdueFee.getLocalType());  // 名义借款人垫付还款
             overdueAssetChangeItem.setUserId(bailAccountId);
-            overdueAssetChangeItem.setMoney(new Double(MoneyHelper.divide(lateInterest.doubleValue(), 2D)).longValue());
+            overdueAssetChangeItem.setMoney(new Double(MoneyHelper.round(MoneyHelper.divide(lateInterest.doubleValue(), 2D), 0)).longValue());
             overdueAssetChangeItem.setRemark(String.format("对借款[%s]第%s期的垫付滞纳金", parentBorrow.getName(), (borrowRepayment.getOrder() + 1)));
             overdueAssetChangeItem.setCreatedAt(nowDate);
             overdueAssetChangeItem.setUpdatedAt(nowDate);

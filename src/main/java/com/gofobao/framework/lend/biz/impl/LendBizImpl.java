@@ -13,6 +13,7 @@ import com.gofobao.framework.common.rabbitmq.MqQueueEnum;
 import com.gofobao.framework.common.rabbitmq.MqTagEnum;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.helper.DateHelper;
+import com.gofobao.framework.helper.MoneyHelper;
 import com.gofobao.framework.helper.StringHelper;
 import com.gofobao.framework.helper.ThirdAccountHelper;
 import com.gofobao.framework.helper.project.UserHelper;
@@ -306,7 +307,10 @@ public class LendBizImpl implements LendBiz {
         Asset userAsset = assetService.findByUserIdLock(userId);
         Preconditions.checkNotNull(lend, "摘草: 用户资产记录获取失败!");
 
-        double totalMoney = (userAsset.getUseMoney() + userCache.getWaitCollectionPrincipal()) * 0.8 - userAsset.getPayment();  // 用户净值金额
+        /* 总资产 */
+        long assets = userAsset.getUseMoney() + userCache.getWaitCollectionPrincipal();
+        /* 净值额度 */
+        long totalMoney = new Double(MoneyHelper.multiply(assets, 0.8)).longValue() - userAsset.getPayment();
         if (money > totalMoney) {
             return ResponseEntity
                     .badRequest()

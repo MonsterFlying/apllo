@@ -422,6 +422,9 @@ public class AplloApplicationTests {
     @Autowired
     CertHelper certHelper;
 
+    public static void main(String[] args) {
+        System.out.println(MoneyHelper.divide(123.3,100));
+    }
 
     public void balanceQuery() {
         BalanceQueryRequest balanceQueryRequest = new BalanceQueryRequest();
