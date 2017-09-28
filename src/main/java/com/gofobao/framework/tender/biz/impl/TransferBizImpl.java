@@ -733,13 +733,12 @@ public class TransferBizImpl implements TransferBiz {
     private void updateStatisticByTransferReview(Transfer transfer) {
         //全站统计
         Statistic statistic = new Statistic();
-        /*statistic.setLzBorrowTotal(transfer.getPrincipal());*/
-
+        statistic.setLzBorrowTotal(transfer.getPrincipal());
         if (!ObjectUtils.isEmpty(statistic)) {
             try {
                 statisticBiz.caculate(statistic);
             } catch (Throwable e) {
-                log.error("borrowProvider updateStatisticByTransferReview 异常:", e);
+                log.error("transferBizImpl updateStatisticByTransferReview 异常:", e);
             }
         }
     }

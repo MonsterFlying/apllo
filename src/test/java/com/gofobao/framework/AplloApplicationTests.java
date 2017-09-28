@@ -395,7 +395,7 @@ public class AplloApplicationTests {
 
     private void batchDetailsQuery() {
         BatchDetailsQueryReq batchDetailsQueryReq = new BatchDetailsQueryReq();
-        batchDetailsQueryReq.setBatchNo("154410");
+        batchDetailsQueryReq.setBatchNo("191212");
 
         batchDetailsQueryReq.setBatchTxDate("20170927");
         batchDetailsQueryReq.setType("0");
