@@ -411,6 +411,7 @@ public class TransferBizImpl implements TransferBiz {
                     .build();
         }
         List<BorrowCollection> borrowCollectionList = borrowCollectionService.findList(bcs);/* 债权转让原投资回款记录 */
+        long transferInterest = borrowCollectionList.stream().mapToLong(BorrowCollection::getInterest).sum();/* 债权转让总利息 */
         Date repayAt = transfer.getRepayAt();/* 原借款下一期还款日期 */
         Date startAt = null;/* 计息开始时间 */
         if (parentBorrow.getRepayFashion() == 1) {
@@ -432,6 +433,7 @@ public class TransferBizImpl implements TransferBiz {
             Preconditions.checkNotNull(repayDetailList, "生成用户回款计划开始: 计划生成为空");
             BorrowCollection borrowCollection;
             int startOrder = borrowCollectionList.get(0).getOrder();/* 获取开始转让期数,期数下标从0开始 */
+            long sumCollectionInterest = 0l;/*总回款利息*/
             for (int i = 0; i < repayDetailList.size(); i++) {
                 borrowCollection = new BorrowCollection();
                 Map<String, Object> repayDetailMap = repayDetailList.get(i);
@@ -439,6 +441,12 @@ public class TransferBizImpl implements TransferBiz {
                 long interest = NumberHelper.toLong(repayDetailMap.get("interest"));
                 Date collectionAt = DateHelper.stringToDate(StringHelper.toString(repayDetailMap.get("repayAt")));
                 Date frontCollectionAt = DateHelper.stringToDate(StringHelper.toString(repayDetailList.get(i - 1).get("repayAt")));
+                sumCollectionInterest += interest;
+                //最后一个购买债权转让的最后一期回款，需要把还款溢出的利息补给新的回款记录
+                if ((j == childTenderList.size() - 1) && (i == repayDetailList.size() - 1)) {
+                    interest += transferInterest - sumCollectionInterest;/* 新的回款利息添加溢出的利息 */
+                }
+
                 //如果是理财计划借款不需要生成利息
                 if (childTender.getType().intValue() == 1) {
                     interest = 0;
