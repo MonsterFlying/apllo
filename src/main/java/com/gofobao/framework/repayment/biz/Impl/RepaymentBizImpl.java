@@ -1037,7 +1037,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
                 financePlanBuyer.setLeftMoney(financePlanBuyer.getLeftMoney() + principal);
                 financePlanBuyer.setRightMoney(financePlanBuyer.getRightMoney() - principal);
                 financePlan.setLeftMoney(financePlan.getLeftMoney() + principal);
-                financePlan.setRightMoney(financePlan.getRightMoney() + principal);
+                financePlan.setRightMoney(financePlan.getRightMoney() - principal);
                 if (!flag) {
                     flag = true;
                 }
@@ -1990,6 +1990,9 @@ public class RepaymentBizImpl implements RepaymentBiz {
             BatchAssetChangeItem batchAssetChangeItem = new BatchAssetChangeItem();
             batchAssetChangeItem.setBatchAssetChangeId(batchAssetChangeId);
             batchAssetChangeItem.setState(0);
+            /**
+             * @// TODO: 2017/9/28 增加理财计划回款到理财金中  交易记录加标识
+             */
             if (advance) {//判断是否是垫付
                 batchAssetChangeItem.setType(AssetChangeTypeEnum.compensatoryReceivedPayments.getLocalType());  // 名义借款人收到垫付还款
             } else {
