@@ -29,18 +29,14 @@ import com.gofobao.framework.finance.entity.FinancePlan;
 import com.gofobao.framework.finance.entity.FinancePlanBuyer;
 import com.gofobao.framework.finance.service.FinancePlanBuyerService;
 import com.gofobao.framework.finance.service.FinancePlanService;
-import com.gofobao.framework.finance.vo.request.VoFinanceAgainVerifyTransfer;
-import com.gofobao.framework.finance.vo.request.VoFinancePlanAssetChange;
-import com.gofobao.framework.finance.vo.request.VoFinancePlanTender;
-import com.gofobao.framework.finance.vo.request.VoTenderFinancePlan;
+import com.gofobao.framework.finance.vo.request.*;
 import com.gofobao.framework.finance.vo.response.PlanDetail;
 import com.gofobao.framework.finance.vo.response.PlanList;
 import com.gofobao.framework.finance.vo.response.PlanListWarpRes;
-import com.gofobao.framework.finance.vo.response.VoViewFinancePlanTender;
 import com.gofobao.framework.helper.*;
 import com.gofobao.framework.helper.project.BorrowCalculatorHelper;
 import com.gofobao.framework.helper.project.SecurityHelper;
-import com.gofobao.framework.listener.providers.TransferProvider;
+import com.gofobao.framework.listener.providers.FinancePlanProvider;
 import com.gofobao.framework.member.entity.UserThirdAccount;
 import com.gofobao.framework.member.entity.Users;
 import com.gofobao.framework.member.service.UserService;
@@ -50,13 +46,13 @@ import com.gofobao.framework.tender.entity.TransferBuyLog;
 import com.gofobao.framework.tender.service.TransferBuyLogService;
 import com.gofobao.framework.tender.service.TransferService;
 import com.google.common.base.Preconditions;
-import com.google.common.collect.*;
 import com.google.common.collect.HashMultiset;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Multiset;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.sun.org.apache.bcel.internal.generic.NEW;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.BooleanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -101,7 +97,7 @@ public class FinancePlanBizImpl implements FinancePlanBiz {
     @Autowired
     private MqHelper mqHelper;
     @Autowired
-    private TransferProvider transferProvider;
+    private FinancePlanProvider financePlanProvider;
     @Value("${gofobao.adminDomain}")
     private String adminDomain;
 
@@ -111,6 +107,62 @@ public class FinancePlanBizImpl implements FinancePlanBiz {
             FinannceContants.CHECKED_NO_PASS,
             FinannceContants.NO_PASS,
             FinannceContants.PENDINGTRIAL);
+
+
+    /**
+     * 理财计划回购
+     *
+     * @param voFinanceRepurchase
+     * @return
+     * @throws Exception
+     */
+    public ResponseEntity<VoBaseResp> financeRepurchase(VoFinanceRepurchase voFinanceRepurchase) throws Exception {
+        Date nowDate = new Date();
+        //获取paramStr参数、校验参数有效性
+        String paramStr = voFinanceRepurchase.getParamStr();/* 理财计划投标 */
+        if (!SecurityHelper.checkSign(voFinanceRepurchase.getSign(), paramStr)) {
+            return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "理财计划回购 签名验证不通过!"));
+        }
+        Map<String, String> paramMap = GSON.fromJson(paramStr, TypeTokenContants.MAP_ALL_STRING_TOKEN);
+        /* 理财计划回购债权转让id */
+        long transferId = NumberHelper.toLong(paramMap.get("transferId"));
+        /* 理财计划回购债权转让记录 */
+        Transfer transfer = transferService.findByIdLock(transferId);
+        //默认zfh为回购人
+        long repurchaseUserId = 22002;
+        //回购金额
+        long principal = transfer.getPrincipal();
+        /* 债权购买记录 */
+        TransferBuyLog transferBuyLog = new TransferBuyLog();
+        transferBuyLog.setTransferId(transferId);
+        transferBuyLog.setState(0);
+        transferBuyLog.setAlreadyInterest(0l);
+        transferBuyLog.setBuyMoney(principal);
+        transferBuyLog.setValidMoney(principal);
+        transferBuyLog.setPrincipal(principal);
+        transferBuyLog.setUserId(repurchaseUserId);
+        transferBuyLog.setAuto(false);
+        transferBuyLog.setAutoOrder(0);
+        transferBuyLog.setDel(false);
+        transferBuyLog.setSource(0);
+        transferBuyLog.setType(0);
+        transferBuyLog.setCreatedAt(nowDate);
+        transferBuyLog.setUpdatedAt(nowDate);
+        transferBuyLogService.save(transferBuyLog);
+
+        //理财计划回购债权转让
+        if (transfer.getTransferMoneyYes() >= transfer.getTransferMoney()) {
+            ImmutableMap<String, String> body = ImmutableMap
+                    .of(MqConfig.MSG_TRANSFER_ID, StringHelper.toString(transferId),
+                            MqConfig.IS_REPURCHASE, "true",
+                            MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
+            Boolean result = financePlanProvider.againVerifyFinanceTransfer(body);
+            if (!result) {
+                throw new Exception("回购失败!");
+            }
+        }
+        return ResponseEntity.ok(VoBaseResp.ok("回购成功!"));
+    }
 
     /**
      * 理财计划资金变动
@@ -252,7 +304,7 @@ public class FinancePlanBizImpl implements FinancePlanBiz {
         }
         //是否满额 满额通知后台
         if (financePlan.getMoney().intValue() == financePlan.getMoneyYes().intValue()) {
-            log.info("当前理财已满标,通知后台");
+            log.info(String.format("当前理财已满标,通知后台：planId%s", financePlan.getId()));
             Map<String, String> bodyMap = ImmutableMap.of("planId", financePlan.getId().toString());
             try {
                 Map<String, String> requestMaps = ImmutableMap.of("paramStr", GSON.toJson(bodyMap), "sign", SecurityHelper.getSign(GSON.toJson(bodyMap)));
@@ -293,7 +345,7 @@ public class FinancePlanBizImpl implements FinancePlanBiz {
 
         FinancePlanBuyer financePlanBuyer = new FinancePlanBuyer();
         financePlanBuyer.setUserId(userId);
-        financePlanBuyer.setMoney(voTenderFinancePlan.getMoney());
+        financePlanBuyer.setMoney(new Double(voTenderFinancePlan.getMoney()).longValue());
         financePlanBuyer.setValidMoney(validateMoney); //有效金额
         financePlanBuyer.setLeftMoney(+validateMoney);  //剩余未匹配金额(池子里面的钱)
         financePlanBuyer.setRightMoney(0L);//已匹配金额
@@ -458,26 +510,26 @@ public class FinancePlanBizImpl implements FinancePlanBiz {
             return ResponseEntity.badRequest().body("理财计划投标 签名验证不通过!");
         }
         Map<String, String> paramMap = GSON.fromJson(paramStr, TypeTokenContants.MAP_ALL_STRING_TOKEN);
-            /* 购买债权转让金额 分 */
+        /* 购买债权转让金额 分 */
         long money = (long) NumberHelper.toDouble(paramMap.get("money")) * 100;
-            /* 债权转让id */
+        /* 债权转让id */
         long transferId = NumberHelper.toLong(paramMap.get("transferId"));
-            /* 购买理财计划id */
+        /* 购买理财计划id */
         long buyerId = NumberHelper.toLong(paramMap.get("buyerId"));
-            /* 理财计划id */
+        /* 理财计划id */
         long planId = NumberHelper.toLong(paramMap.get("planId"));
-            /* 购买计划人id */
+        /* 购买计划人id */
         long userId = NumberHelper.toLong(paramMap.get("userId"));
-            /* 理财计划购买记录 */
+        /* 理财计划购买记录 */
         FinancePlanBuyer financePlanBuyer = financePlanBuyerService.findByIdLock(buyerId);
         Preconditions.checkNotNull(financePlanBuyer, "理财计划购买记录不存在!");
-            /* 理财计划记录 */
-        FinancePlan financePlan = financePlanService.findById(planId);
+        /* 理财计划记录 */
+        FinancePlan financePlan = financePlanService.findByIdLock(planId);
         Preconditions.checkNotNull(financePlan, "理财计划记录不存在!");
-            /* 债权转让记录*/
+        /* 债权转让记录*/
         Transfer transfer = transferService.findById(transferId);
         Preconditions.checkNotNull(transfer, "债权转让记录不存在!");
-            /* 理财计划购买人存管账户 */
+        /* 理财计划购买人存管账户 */
         UserThirdAccount buyUserAccount = userThirdAccountService.findByUserId(userId);
         ThirdAccountHelper.allConditionCheck(buyUserAccount);
         //判断是否是购买人操作
@@ -494,11 +546,11 @@ public class FinancePlanBizImpl implements FinancePlanBiz {
         //理财计划购买债权转让
         TransferBuyLog transferBuyLog = financePlanBuyTransfer(nowDate, money, transferId, userId, financePlanBuyer, financePlan, transfer, validMoney);
         if (transfer.getTransferMoneyYes() >= transfer.getTransferMoney()) {
-
             ImmutableMap<String, String> body = ImmutableMap
-                    .of(MqConfig.MSG_TRANSFER_ID, StringHelper.toString(transferId), MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
-            // mqConfig.setMsg(body);
-            Boolean result = transferProvider.againVerifyFinanceTransfer(body);
+                    .of(MqConfig.MSG_TRANSFER_ID, StringHelper.toString(transferId),
+                            MqConfig.IS_REPURCHASE, "false",
+                            MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
+            Boolean result = financePlanProvider.againVerifyFinanceTransfer(body);
             if (!result) {
                 throw new Exception("匹配失败!");
             }
@@ -526,10 +578,12 @@ public class FinancePlanBizImpl implements FinancePlanBiz {
         Transfer transfer = transferService.findByIdLock(transferId);
         if (transfer.getTransferMoneyYes() > 0 && transfer.getType().intValue() == 1 && transfer.getState().intValue() == 1) {
             MqConfig mqConfig = new MqConfig();
-            mqConfig.setQueue(MqQueueEnum.RABBITMQ_TRANSFER);
+            mqConfig.setQueue(MqQueueEnum.RABBITMQ_FINANCE_PLAN);
             mqConfig.setTag(MqTagEnum.AGAIN_VERIFY_FINANCE_TRANSFER);
             ImmutableMap<String, String> body = ImmutableMap
-                    .of(MqConfig.MSG_TRANSFER_ID, StringHelper.toString(transferId), MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
+                    .of(MqConfig.MSG_TRANSFER_ID, StringHelper.toString(transferId),
+                            MqConfig.IS_REPURCHASE, "false",
+                            MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
             mqConfig.setMsg(body);
             log.info(String.format("FinancePlanBizImpl financeAgainVerifyTransfer send mq %s", GSON.toJson(body)));
             mqHelper.convertAndSend(mqConfig);
@@ -571,6 +625,7 @@ public class FinancePlanBizImpl implements FinancePlanBiz {
         transferBuyLog.setAuto(false);
         transferBuyLog.setAutoOrder(0);
         transferBuyLog.setDel(false);
+        transferBuyLog.setFinanceBuyId(financePlanBuyer.getId());
         transferBuyLog.setSource(0);
         transferBuyLog.setType(1);
         transferBuyLog.setCreatedAt(nowDate);
@@ -666,7 +721,8 @@ public class FinancePlanBizImpl implements FinancePlanBiz {
         //已投金额
         Long moneyYes = financePlan.getMoneyYes();
         //剩余金额
-        planDetail.setSurplusMoney(StringHelper.formatMon((money - moneyYes) / 100D));
+        planDetail.setShowSurplusMoney(StringHelper.formatMon((money - moneyYes) / 100D));
+        planDetail.setSurplusMoney(new Double(MoneyHelper.divide((money - moneyYes), 100D)).longValue());
         planDetail.setSpend(MoneyHelper.round((moneyYes / money.doubleValue()) * 100, 1));
         Integer timeLimit = financePlan.getTimeLimit();
         //预期收益

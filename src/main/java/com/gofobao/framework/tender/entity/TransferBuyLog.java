@@ -42,4 +42,5 @@ public class TransferBuyLog {
     private String transferAuthCode;
     private Boolean thirdCreditEndFlag;
     private String freezeOrderId;
+    private Long financeBuyId;
 }

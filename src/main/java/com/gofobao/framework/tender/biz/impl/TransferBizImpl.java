@@ -36,6 +36,10 @@ import com.gofobao.framework.common.rabbitmq.MqHelper;
 import com.gofobao.framework.common.rabbitmq.MqQueueEnum;
 import com.gofobao.framework.common.rabbitmq.MqTagEnum;
 import com.gofobao.framework.core.vo.VoBaseResp;
+import com.gofobao.framework.finance.entity.FinancePlan;
+import com.gofobao.framework.finance.entity.FinancePlanBuyer;
+import com.gofobao.framework.finance.service.FinancePlanBuyerService;
+import com.gofobao.framework.finance.service.FinancePlanService;
 import com.gofobao.framework.helper.*;
 import com.gofobao.framework.helper.project.BatchAssetChangeHelper;
 import com.gofobao.framework.helper.project.BorrowCalculatorHelper;
@@ -117,7 +121,6 @@ public class TransferBizImpl implements TransferBiz {
     private BorrowCollectionService borrowCollectionService;
     @Autowired
     private UserThirdAccountService userThirdAccountService;
-
     @Autowired
     private AssetService assetService;
     @Autowired
@@ -140,18 +143,20 @@ public class TransferBizImpl implements TransferBiz {
     private BorrowRepaymentService borrowRepaymentService;
     @Autowired
     private ThirdBatchLogService thirdBatchLogService;
-
     @Autowired
     private TransferBuyLogService transferBuyLogService;
     @Autowired
     private UsersRepository usersRepository;
-
     @Autowired
     private TransferRepository transferRepository;
-
-
     @Value("${gofobao.imageDomain}")
     private String imageDomain;
+    @Autowired
+    private FinancePlanService financePlanService;
+    @Autowired
+    private FinancePlanBuyerService financePlanBuyerService;
+    @Value("${gofobao.adminDomain}")
+    private String adminDomain;
 
     final Gson GSON = new GsonBuilder().create();
 
@@ -301,10 +306,11 @@ public class TransferBizImpl implements TransferBiz {
      * 理财计划债权转让复审
      *
      * @param transferId
+     * @param repurchaseFlag 理财计划债权转让是否是赎回
      * @return
      */
     @Transactional(rollbackFor = Exception.class)
-    public ResponseEntity<VoBaseResp> againFinanceVerifyTransfer(long transferId, String batchNo) throws Exception {
+    public ResponseEntity<VoBaseResp> againFinanceVerifyTransfer(long transferId, String batchNo, boolean repurchaseFlag) throws Exception {
         Date nowDate = new Date();
         /*
         1.查询债权转让记录与购买记录
@@ -332,15 +338,46 @@ public class TransferBizImpl implements TransferBiz {
         if (failure > 0) {
             return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "存在未登记即信存管的购买" + failure + "失败记录"));
         }
-
         // 新增子级投标记录,更新老债权记录
-        List<Tender> childTenderList = addFinanceChildTender(nowDate, transfer, parentTender, transferBuyLogList);
-
-        // 理财计划债权转让，生成子级债权回款记录，标注老债权回款已经转出
-        addFinanceChildTenderCollection(nowDate, transfer, parentBorrow, childTenderList);
-
+        List<Tender> childTenderList = null;
+        //理财计划债权转让是否是赎回
+        if (repurchaseFlag) {
+            //理财计划债权匹配赎回生成子tender
+            childTenderList = addChildTender(nowDate, transfer, parentTender, transferBuyLogList);
+        } else {
+            //理财计划债权匹配购买生成子tender
+            childTenderList = addFinanceChildTender(nowDate, transfer, parentTender, transferBuyLogList);
+        }
+        //理财计划债权转让是否是赎回
+        if (repurchaseFlag) {
+            // 赎回理财计划债权转让，生成子级债权回款记录，标注老债权回款已经转出
+            addChildTenderCollection(nowDate, transfer, parentBorrow, childTenderList);
+        } else {
+            // 理财计划债权转让，生成子级债权回款记录，标注老债权回款已经转出
+            addFinanceChildTenderCollection(nowDate, transfer, parentBorrow, childTenderList);
+        }
         // 发放债权转让资金
-        batchAssetChangeHelper.batchAssetChangeAndCollection(transferId, batchNo, BatchAssetChangeContants.BATCH_CREDIT_INVEST);
+        batchAssetChangeHelper.batchAssetChangeAndCollection(transferId, batchNo, BatchAssetChangeContants.BATCH_FINANCE_CREDIT_INVEST);
+        //理财计划债权转让是否是赎回
+        if (repurchaseFlag) {
+            /* 债权转让本金 */
+            long principal = transfer.getPrincipal();
+            /* 理财计划购买id */
+            long financeBuyId = parentTender.getFinanceBuyId();
+            /* 理财计划购买记录 */
+            FinancePlanBuyer financePlanBuyer = financePlanBuyerService.findByIdLock(financeBuyId);
+            financePlanBuyer.setLeftMoney(financePlanBuyer.getLeftMoney() + principal);
+            financePlanBuyer.setRightMoney(financePlanBuyer.getRightMoney() - principal);
+            /* 理财计划记录 */
+            FinancePlan financePlan = financePlanService.findByIdLock(financePlanBuyer.getPlanId());
+            financePlan.setLeftMoney(financePlan.getLeftMoney() + principal);
+            financePlan.setRightMoney(financePlan.getRightMoney() - principal);
+            //存在理财计划时通知后台
+            String resultStr = OKHttpHelper.postForm(adminDomain + "/api/open/finance-plan/auto-match", new HashMap<>(), null);
+            log.info(" 理财计划债权转让复审 url:" + adminDomain + "/api/open/finance-plan/auto-match");
+            log.info(" 理财计划债权转让复审 调用后台返回响应:" + resultStr);
+
+        }
 
         return ResponseEntity.ok(VoBaseResp.ok("理财计划债权转让复审成功!"));
     }
@@ -493,6 +530,7 @@ public class TransferBizImpl implements TransferBiz {
             childTender.setTransferFlag(0);
             childTender.setTUserId(parentTender.getUserId());
             childTender.setState(2);
+            childTender.setAutoOrder(0);
             childTender.setParentId(parentTender.getId());
             childTender.setAlreadyInterest(0l);//无当期应计利息
             childTender.setThirdTenderOrderId(parentTender.getThirdTransferOrderId());
@@ -843,6 +881,7 @@ public class TransferBizImpl implements TransferBiz {
             childTender.setAutoOrder(transferBuyLog.getAutoOrder());
             childTender.setMoney(transferBuyLog.getBuyMoney());
             childTender.setValidMoney(transferBuyLog.getPrincipal());
+            childTender.setFinanceBuyId(transferBuyLog.getFinanceBuyId());
             childTender.setTransferFlag(0);
             childTender.setTUserId(buyUserThirdAccount.getUserId());
             childTender.setState(2);

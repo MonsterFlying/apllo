@@ -30,7 +30,7 @@ public interface TransferBiz {
      * @param transferId
      * @return
      */
-    ResponseEntity<VoBaseResp> againFinanceVerifyTransfer(long transferId, String batchNo) throws Exception;
+    ResponseEntity<VoBaseResp> againFinanceVerifyTransfer(long transferId, String batchNo, boolean repurchaseFlag) throws Exception;
 
 
     /**
@@ -182,6 +182,7 @@ public interface TransferBiz {
 
     /**
      * 投标合同
+     *
      * @param tenderId
      * @param userId
      * @return

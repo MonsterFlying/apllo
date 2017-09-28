@@ -367,7 +367,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
         if (!JixinResultContants.SUCCESS.equals(lendRepayCheckResp.getRetCode())) {
             log.error("=============================理财计划即信批次放款检验参数回调===========================");
             log.error("回调失败! msg:" + lendRepayCheckResp.getRetMsg());
-            thirdBatchLogBiz.updateBatchLogState(lendRepayCheckResp.getBatchNo(), borrowId, 2, ThirdBatchLogContants.BATCH_LEND_REPAY);
+            thirdBatchLogBiz.updateBatchLogState(lendRepayCheckResp.getBatchNo(), borrowId, 2, ThirdBatchLogContants.BATCH_FINANCE_LEND_REPAY);
             //改变批次放款状态 处理失败
             Borrow borrow = borrowService.findById(borrowId);
             borrow.setLendRepayStatus(ThirdDealStatusContrants.INDISPOSE);
@@ -379,7 +379,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
             log.info("=============================理财计划即信批次放款检验参数回调===========================");
             log.info("回调成功!");
             //更新批次状态
-            thirdBatchLogBiz.updateBatchLogState(lendRepayCheckResp.getBatchNo(), borrowId, 1, ThirdBatchLogContants.BATCH_LEND_REPAY);
+            thirdBatchLogBiz.updateBatchLogState(lendRepayCheckResp.getBatchNo(), borrowId, 1, ThirdBatchLogContants.BATCH_FINANCE_LEND_REPAY);
             //记录批次处理日志
             thirdBatchDealLogBiz.recordThirdBatchDealLog(lendRepayCheckResp.getBatchNo(), borrowId, ThirdBatchDealLogContants.PARAM_CHECK, true,
                     ThirdBatchLogContants.BATCH_LEND_REPAY, lendRepayCheckResp.getRetMsg());

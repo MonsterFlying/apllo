@@ -785,3 +785,4 @@ ALTER TABLE gfb_borrow_repayment ADD  `repay_trigger_at` datetime DEFAULT NULL C
 ALTER TABLE gfb_third_batch_log ADD `TX_DATE` varchar(11) DEFAULT NULL COMMENT '即信交易日期';
 ALTER TABLE gfb_third_batch_log ADD `TX_TIME` varchar(11) DEFAULT NULL COMMENT '即信交易时间';
 ALTER TABLE gfb_third_batch_log ADD `SEQ_NO` varchar(11) DEFAULT NULL COMMENT '即信交易时间';
+ALTER TABLE gfb_transfer_buy_log ADD  `finance_buy_id` int(11) DEFAULT NULL COMMENT '理财计划购买id';

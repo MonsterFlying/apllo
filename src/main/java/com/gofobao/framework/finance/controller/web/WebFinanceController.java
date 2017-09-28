@@ -4,6 +4,7 @@ import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.finance.biz.FinancePlanBiz;
 import com.gofobao.framework.finance.vo.request.VoFinancePlanAssetChange;
 import com.gofobao.framework.finance.vo.request.VoFinancePlanTender;
+import com.gofobao.framework.finance.vo.request.VoFinanceRepurchase;
 import com.gofobao.framework.finance.vo.response.VoViewFinancePlanTender;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -26,6 +27,24 @@ public class WebFinanceController {
 
     @Autowired
     private FinancePlanBiz financePlanBiz;
+
+
+    /**
+     * 理财计划回购
+     *
+     * @param voFinanceRepurchase
+     * @return
+     * @throws Exception
+     */
+    @ApiOperation("理财计划匹配债权转让")
+    @PostMapping("/v2/pub/finance/plan/repurchase")
+    public ResponseEntity<VoBaseResp> financeRepurchase(VoFinanceRepurchase voFinanceRepurchase) {
+        try {
+            return financePlanBiz.financeRepurchase(voFinanceRepurchase);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "回购失败!"));
+        }
+    }
 
     /**
      * 理财计划投标
