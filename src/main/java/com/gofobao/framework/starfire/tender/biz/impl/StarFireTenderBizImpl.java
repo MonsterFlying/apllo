@@ -361,9 +361,9 @@ public class StarFireTenderBizImpl implements StarFireTenderBiz {
         if (tenderState == TenderConstans.BIDDING) {
             if (borrowStatus == BorrowContants.CANCEL) {
                 return StarFireBorrowConstant.LIUBIAO;
-            } else if (borrowStatus == BorrowContants.BIDDING) {
-                return StarFireBorrowConstant.HUANKUANZHONG;
-            } else if (!StringUtils.isEmpty(borrow.getSuccessAt()) && StringUtils.isEmpty(borrow.getRecheckAt())) {
+            } else if (borrow.getMoneyYes() < borrow.getMoney()) {
+                return StarFireBorrowConstant.WEIMIANBIAO;
+            } else {
                 return StarFireBorrowConstant.SHENHEZHONG;
             }
             //是否转让
@@ -388,7 +388,6 @@ public class StarFireTenderBizImpl implements StarFireTenderBiz {
         } else {
             return StarFireBorrowConstant.YIJIEQING;
         }
-        return null;
     }
 
     /**
@@ -422,11 +421,10 @@ public class StarFireTenderBizImpl implements StarFireTenderBiz {
             Date nowDate = new Date();
             if (collectionAt.getTime() > nowDate.getTime()) {  //未到还款截至时间
                 return "";
-            } else if (collectionAt.getTime() < nowDate.getTime()) {
+            } else  {
                 return StarFireBorrowCollectionConstant.YUQI;
             }
         }
-        return "";
     }
 
 }
