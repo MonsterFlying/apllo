@@ -46,4 +46,6 @@ public interface TenderRepository extends JpaRepository<Tender, Long>, JpaSpecif
 
     @Query("SELECT COUNT ( DISTINCT tender.userId) FROM Tender tender ")
     Long  tenderUserCount();
+
+
 }

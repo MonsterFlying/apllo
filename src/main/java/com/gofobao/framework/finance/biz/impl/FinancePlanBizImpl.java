@@ -243,9 +243,6 @@ public class FinancePlanBizImpl implements FinancePlanBiz {
                 VoucherPayResponse response = jixinManager.send(JixinTxCodeEnum.SEND_RED_PACKET, voucherPayRequest, VoucherPayResponse.class);
                 if ((ObjectUtils.isEmpty(response)) || (!JixinResultContants.SUCCESS.equals(response.getRetCode()))) {
                     String msg = ObjectUtils.isEmpty(response) ? "当前网络不稳定，请稍候重试" : response.getRetMsg();
-                    /**
-                     * @// TODO: 2017/9/28  强化代码
-                     */
 
                     log.error("redPacket" + msg);
                     throw new Exception(msg);
@@ -305,7 +302,7 @@ public class FinancePlanBizImpl implements FinancePlanBiz {
         errorSet = errerMessage.elementSet();
         iterator = errorSet.iterator();
         if (flag) {
-            ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, iterator.next(), VoBaseResp.class));
+            return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, iterator.next(), VoBaseResp.class));
         }
         //生成理财计划购买记录
         FinancePlanBuyer financePlanBuyer = addFinancePlanBuyer(voTenderFinancePlan, userId, financePlan, validateMoney);
@@ -389,6 +386,7 @@ public class FinancePlanBizImpl implements FinancePlanBiz {
         financePlanBuyer.setSource(requestSource);
         financePlanBuyer.setPlanId(financePlan.getId());
         financePlanBuyer.setUpdatedAt(new Date());
+        financePlanBuyer.setState(1);
         financePlanBuyerService.save(financePlanBuyer);
         return financePlanBuyer;
     }
@@ -541,7 +539,7 @@ public class FinancePlanBizImpl implements FinancePlanBiz {
         }
         Map<String, String> paramMap = GSON.fromJson(paramStr, TypeTokenContants.MAP_ALL_STRING_TOKEN);
         /* 购买债权转让金额 分 */
-        long money = (long) NumberHelper.toDouble(paramMap.get("money")) * 100;
+        long money = new Double(MoneyHelper.round(MoneyHelper.multiply(NumberHelper.toDouble(paramMap.get("money")), 100d), 0)).longValue();
         /* 债权转让id */
         long transferId = NumberHelper.toLong(paramMap.get("transferId"));
         /* 购买理财计划id */
@@ -570,9 +568,11 @@ public class FinancePlanBizImpl implements FinancePlanBiz {
         if (transfer.getTransferMoney() == transfer.getTransferMoneyYes()) {
             throw new Exception("匹配失败!");
         }
-            /*购买债权有效金额*/
+        /*购买债权有效金额*/
         long validMoney = (long) MathHelper.min(transfer.getTransferMoney() - transfer.getTransferMoneyYes(), money);
-
+        if (validMoney <= 0) {
+            throw new Exception("匹配失败!");
+        }
         //理财计划购买债权转让
         TransferBuyLog transferBuyLog = financePlanBuyTransfer(nowDate, money, transferId, userId, financePlanBuyer, financePlan, transfer, validMoney);
         if (transfer.getTransferMoneyYes() >= transfer.getTransferMoney()) {
@@ -752,7 +752,8 @@ public class FinancePlanBizImpl implements FinancePlanBiz {
         Long moneyYes = financePlan.getMoneyYes();
         //剩余金额
         planDetail.setShowSurplusMoney(StringHelper.formatMon((money - moneyYes) / 100D));
-        planDetail.setSurplusMoney(new Double(MoneyHelper.divide((money - moneyYes), 100D)).longValue());
+        planDetail.setSurplusMoney(money - moneyYes);
+
         planDetail.setSpend(MoneyHelper.round((moneyYes / money.doubleValue()) * 100, 1));
         Integer timeLimit = financePlan.getTimeLimit();
         //预期收益

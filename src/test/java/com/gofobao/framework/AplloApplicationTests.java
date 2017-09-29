@@ -684,6 +684,13 @@ public class AplloApplicationTests {
     @Transactional(rollbackFor = Exception.class)
     public void test() {
 
+        Specification<Tender> ts = Specifications
+                .<Tender>and()
+                .eq("status", 1)
+                .eq("thirdCreditEndFlag", 1)
+                .build();
+        List<Tender> tenderList = tenderService.findList(ts);
+        System.out.println(tenderList);
        /* ImmutableMap<String, String> body = ImmutableMap
                 .of(MqConfig.MSG_TRANSFER_ID, StringHelper.toString("132"), MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
         // mqConfig.setMsg(body);
@@ -725,7 +732,7 @@ public class AplloApplicationTests {
         //batchQuery();
         //freezeDetailsQuery();
         //批次详情查询
-        batchDetailsQuery();
+        //batchDetailsQuery();
         //查询投标申请
         //bidApplyQuery();
         //转让标复审回调

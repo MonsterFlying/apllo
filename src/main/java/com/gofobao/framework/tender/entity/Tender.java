@@ -45,8 +45,8 @@ public class Tender {
     private String thirdTenderCancelOrderId;
     private String thirdLendPayOrderId;
     private String thirdCreditEndOrderId;
-    private Boolean thirdTransferFlag;
-    private Boolean thirdTenderFlag;
+    private Boolean thirdTransferFlag = false;
+    private Boolean thirdTenderFlag = false;
     /**
      * 是否在存管进行登记 0否 1.是否
      */

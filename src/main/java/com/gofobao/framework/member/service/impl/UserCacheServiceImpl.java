@@ -306,4 +306,9 @@ public class UserCacheServiceImpl implements UserCacheService {
         UserCache userCache = userCacheRepository.findByUserId(user.getId());
         return !BooleanUtils.toBoolean(userCache.getTenderQudao()) && !BooleanUtils.toBoolean(userCache.getTenderTuijian());
     }
+
+    @Override
+    public List<UserCache> findByUserIds(List<Long> userIds) {
+        return userCacheRepository.findByUserIdIn(userIds);
+    }
 }

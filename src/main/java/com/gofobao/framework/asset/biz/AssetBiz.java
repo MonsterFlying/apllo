@@ -249,4 +249,10 @@ public interface AssetBiz {
      */
     ResponseEntity<String> offlineRechargeCallback(HttpServletRequest request, HttpServletResponse response) throws Exception;
 
+    /**
+     * 理财待收
+     * @param userId
+     * @return
+     */
+    ResponseEntity<VoDueInRes>dueInInfo(Long userId);
 }

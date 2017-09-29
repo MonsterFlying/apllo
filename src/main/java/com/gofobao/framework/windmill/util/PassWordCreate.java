@@ -17,7 +17,7 @@ public class PassWordCreate {
         return this.createPassWord(random, len);
     }
 
-    public String createPassWord(int random,int len){
+    public  String createPassWord(int random,int len){
         Random rd = new Random(random);
         final int  maxNum = 62;
         StringBuffer sb = new StringBuffer();
