@@ -781,3 +781,63 @@ ALTER TABLE gfb_finance_plan ADD   `left_money` int(10) unsigned NOT NULL DEFAUL
 ALTER TABLE gfb_borrow_tender ADD   `finance_buy_id` int(11) DEFAULT NULL COMMENT '理财计划购买id';
 ALTER TABLE gfb_borrow ADD   `is_finance` tinyint(1) DEFAULT '0' COMMENT '是否是理财计划 0否 1是';
 ALTER TABLE gfb_borrow_repayment ADD  `repay_trigger_at` datetime DEFAULT NULL COMMENT '还款触发时间';
+
+ALTER TABLE gfb_third_batch_log ADD `TX_DATE` varchar(11) DEFAULT NULL COMMENT '即信交易日期';
+ALTER TABLE gfb_third_batch_log ADD `TX_TIME` varchar(11) DEFAULT NULL COMMENT '即信交易时间';
+ALTER TABLE gfb_third_batch_log ADD `SEQ_NO` varchar(11) DEFAULT NULL COMMENT '即信交易时间';
+ALTER TABLE gfb_transfer_buy_log ADD  `finance_buy_id` int(11) DEFAULT NULL COMMENT '理财计划购买id';
+
+
+# 2017-09-29 新版new_aleve
+create table gfb_new_aleve
+(
+  id int auto_increment
+    primary key,
+  bank  varchar(4) default '' null  comment '银行号',
+  cardnbr  varchar(19) default '' null  comment '电子账号',
+  amount  varchar(17) default '' null  comment '交易金额',
+  cur_num  varchar(3) default '' null  comment '货币代码',
+  crflag  varchar(1) default '' null  comment '交易金额符号',
+  valdate  varchar(8) default '' null  comment '入帐日期',
+  inpdate  varchar(8) default '' null  comment '交易日期',
+  reldate  varchar(8) default '' null  comment '自然日期',
+  inptime  varchar(8) default '' null  comment '交易时间',
+  tranno  varchar(6) default '' null  comment '交易流水号',
+  ori_tranno  varchar(6) default '' null  comment '关联交易流水号',
+  transtype  varchar(4) default '' null  comment '交易类型',
+  desline  varchar(42) default '' null  comment '交易描述',
+  curr_bal  varchar(17) default '' null  comment '交易后余额',
+  forcardnbr  varchar(19) default '' null  comment '对手交易帐号',
+  revind  varchar(1) default '' null  comment '冲正、撤销标志',
+  accchg  varchar(1) default '' null  comment '交易标识',
+  seqno  varchar(6) default '' null  comment '系统跟踪号',
+  ori_num  varchar(6) default '' null  comment '原交易流水号',
+  resv  varchar(187) default '' null  comment '保留域',
+  query_time varchar(8) default '' null  comment '入库时间'
+) comment '新版ALEVE日志' engine=InnoDB charset=utf8;
+
+# 2017-09-29 新版new_aleve
+create table gfb_new_eve
+(
+  id int auto_increment
+    primary key,
+  forcode varchar(11) default '' null  comment '发送方标识码',
+  seqno varchar(6) default '' null  comment '系统跟踪号',
+  cendt varchar(10) default '' null  comment '交易传输时间',
+  cardnbr varchar(19) default '' null  comment '主账号',
+  amount varchar(12) default '' null  comment '交易金额',
+  crflag varchar(1) default '' null  comment '交易金额符号',
+  msgtype varchar(4) default '' null  comment '消息类型',
+  proccode varchar(6) default '' null  comment '交易类型码',
+  orderno varchar(40) default '' null  comment '订单号',
+  tranno varchar(6) default '' null  comment '内部交易流水号',
+  reserved varchar(19) default '' null  comment '内部保留域',
+  ervind varchar(1) default '' null  comment '冲正、撤销标志',
+  transtype varchar(4) default '' null  comment '主机交易类型',
+  query_time varchar(8) default '' null  comment '创建时间'
+) comment '新版EVE日志' engine=InnoDB charset=utf8;
+
+
+
+ALTER TABLE gfb_finance_plan_buyer ADD   `state` int(10) DEFAULT '1' COMMENT '1:投标中； 2:还款中 ;3:已结清';
+ALTER TABLE gfb_new_asset_log ADD  `state` int(11) NOT NULL DEFAULT '0' COMMENT '记录状态：0普通 1.理财计划';

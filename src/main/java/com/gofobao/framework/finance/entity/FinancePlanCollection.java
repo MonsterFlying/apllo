@@ -22,6 +22,9 @@ public class FinancePlanCollection {
     @Id
     @GeneratedValue
     private Long id;
+    private Long userId;
+    private Long planId;
+    private Long buyerId;
     private Integer orderNum;
     private Integer status;
     private Long principal;

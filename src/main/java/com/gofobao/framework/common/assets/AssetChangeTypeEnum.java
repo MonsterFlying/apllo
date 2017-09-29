@@ -3,37 +3,41 @@ package com.gofobao.framework.common.assets;
 
 public enum AssetChangeTypeEnum {
 
-
     /**
      * 投资人到期收回本息
      */
+    financeSettlement("理财计划结算", "financeSettlement", "2833", "add@useMoney", "add@incomeInterest#interest", "C"),
+
+/*    *//**
+     * 投资人到期收回本息
+     *//*
     makeUpReceivedPayments("正常回款", "makeUpReceivedPayments", "7781", "add@useMoney", "add@incomeInterest#interest", "D"),
 
-    /**
+    *//**
      * 净值标借款入账
-     */
+     *//*
     lendPaymentRepair("净值标借款入账", "lendPaymentRepair", "0", "add@useMoney", "", "B"),
 
-    /**
+    *//**
      * 投资人到期收回本息
-     */
+     *//*
     amendUseMoney("验证服可用金额数据修正", "amendUseMoney", "0", "add@useMoney", "", "B"),
 
-    /**
+    *//**
      * 投资人到期收回本息
-     */
+     *//*
     amendNotUseMoney("验证服冻结金额数据修正", "amendNotUseMoney", "0", "sub@noUseMoney", "", "B"),
 
-    /**
+    *//**
      * 投资人到期收回本息
-     */
+     *//*
     amendPayment("验证服冻结金额数据修正", "amendPayment", "0", "sub@payment", "", "B"),
 
 
-    /**
+    *//**
      * 投资人到期收回本息
-     */
-    initAsset("数据迁移资产初始化", "initAsset", "0", "", "", "B"),
+     *//*
+    initAsset("数据迁移资产初始化", "initAsset", "0", "", "", "B"),*/
 
     /**
      * 联机充值
@@ -58,12 +62,22 @@ public enum AssetChangeTypeEnum {
     /**
      * 用户购买理财计划债权
      */
-    financeBatchBuyClaims("购买理财计划债权", "finance_batch_buy_claims", "2789", "sub@financePlanMoney", "", "C"),
+    InvestorsFinanceBatchBuyClaims("用户购买理财计划债权", "finance_batch_buy_claims", "2789", "sub@financePlanMoney", "", "C"),
 
     /**
-     * 出售理财计划债权
+     * 平台出售理财计划债权
      */
-    financeBatchSellBonds("出售理财计划债权", "finance_batch_sell_bonds", "7785", "add@financePlanMoney", "", "D"),
+    platformFinanceBatchSellBonds("平台出售理财计划债权", "finance_batch_sell_bonds", "7785", "add@useMoney", "", "D"),
+
+    /**
+     * 平台回购理财计划债权
+     */
+    platformFinanceBatchBuyClaims("平台回购理财计划债权", "finance_batch_buy_claims", "2789", "sub@noUseMoney", "", "C"),
+
+    /**
+     * 用户出售理财计划债权
+     */
+    InvestorsFinanceBatchSellBonds("用户出售理财计划债权", "finance_batch_sell_bonds", "7785", "add@financePlanMoney", "", "D"),
 
     /**
      * 理财计划接触冻结
@@ -315,7 +329,7 @@ public enum AssetChangeTypeEnum {
     /**
      * 活期收益
      */
-    currentIncome("活期收益", "currentIncome", "5500", "add@useMoney", "", "D");
+    currentIncome("活期收益", "currentIncome", "5500", "add@useMoney", "add@incomeOther", "D");
 
 
     /**

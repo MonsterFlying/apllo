@@ -442,13 +442,13 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
         if (!JixinResultContants.SUCCESS.equals(batchCreditInvestCheckCall.getRetCode())) {
             log.error("=============================即信投资人批次购买债权参数验证回调===========================");
             log.error("回调失败! msg:" + batchCreditInvestCheckCall.getRetMsg());
-            thirdBatchLogBiz.updateBatchLogState(batchCreditInvestCheckCall.getBatchNo(), transferId, 2, ThirdBatchLogContants.BATCH_CREDIT_INVEST);
+            thirdBatchLogBiz.updateBatchLogState(batchCreditInvestCheckCall.getBatchNo(), transferId, 2, ThirdBatchLogContants.BATCH_FINANCE_CREDIT_INVEST);
             ResponseEntity.ok("error");
         } else {
             log.error("=============================即信投资人批次购买债权参数验证回调===========================");
             log.error("回调成功!");
             //更新批次状态
-            thirdBatchLogBiz.updateBatchLogState(batchCreditInvestCheckCall.getBatchNo(), transferId, 1, ThirdBatchLogContants.BATCH_CREDIT_INVEST);
+            thirdBatchLogBiz.updateBatchLogState(batchCreditInvestCheckCall.getBatchNo(), transferId, 1, ThirdBatchLogContants.BATCH_FINANCE_CREDIT_INVEST);
         }
 
         return ResponseEntity.ok("success");

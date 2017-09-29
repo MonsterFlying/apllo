@@ -51,7 +51,6 @@ public class RestExceptionController {
     @ExceptionHandler(value = BindException.class)
     @ResponseBody
     public ResponseEntity<VoBaseResp> processValidationError(BindException ex) throws Exception {
-        log.error("参数绑定错误", ex);
         BindingResult result = ex.getBindingResult();
         List<ObjectError> allErrors = result.getAllErrors();
         for (ObjectError error : allErrors) {

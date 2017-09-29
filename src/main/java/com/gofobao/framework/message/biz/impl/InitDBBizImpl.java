@@ -104,7 +104,7 @@ public class InitDBBizImpl implements InitDBBiz {
     private static final String DBFILE = "db";
 
 
-    public void initUseAsset() throws Exception {
+   /* public void initUseAsset() throws Exception {
         String groupSeqNo = assetChangeProvider.getGroupSeqNo(); // 资产记录分组流水号
         //红包账户
         long redId = assetChangeProvider.getRedpackAccountId();
@@ -214,7 +214,7 @@ public class InitDBBizImpl implements InitDBBiz {
         } while (userThirdAccountList.size() >= pageSize);
 
     }
-
+*/
 
     @Override
     public void initDb(long startIndex) {

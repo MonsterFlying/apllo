@@ -40,7 +40,7 @@ public class FinancePlanBuyerServiceImpl implements FinancePlanBuyerService {
                 .eq("userId", userId)
                 .eq("planId", planId)
                 .eq("status", 1)
-                .predicate(new GeSpecification<FinancePlanBuyer>("updatedAt", new DataObject(DateHelper.subMinutes(new Date(), 1))))
+                .predicate(new GeSpecification<FinancePlanBuyer>("createdAt", new DataObject(DateHelper.subMinutes(new Date(), 1))))
                 .build();
         List<FinancePlanBuyer> tenderList = financePlanBuyerRepository.findAll(specification);
         return !CollectionUtils.isEmpty(tenderList);

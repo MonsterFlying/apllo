@@ -1606,7 +1606,8 @@ public class JixinResultContants {
 
 
     /**
-     *  是否需要
+     * 是否需要
+     *
      * @param jixinBaseResponse
      * @return
      */
@@ -1660,6 +1661,16 @@ public class JixinResultContants {
     public static final String ERROR_504 = "ERROR_504";
 
     /**
+     * 通用请求错误
+     */
+    public static final String ERROR_COMMON_CONNECT = "ERROR_COMMON_CONNECT";
+
+    /**
+     * 验签失败
+     */
+    public static final String ERROR_SIGN = "ERROR_SIGN";
+
+    /**
      * 访问频率超限
      */
     public static final String ERROR_JX900032 = "JX900032";
@@ -1668,10 +1679,55 @@ public class JixinResultContants {
      */
     public static final String ERROR_JX900663 = "JX900663";
 
+    /**
+     * 即信系统异常
+     */
+    public static final String ERROR_JX999999 = "JX999999";
 
 
+    /**
+     * 交易重复,请保证instCode,txDate,txTime,seqNo唯一
+     */
+    public static final String ERROR_JX900014 = "JX900014";
 
 
+    /**
+     * 是否网络错误
+     *
+     * @param jixinBaseResponse
+     * @return true, 存在网络错误, false, 正常
+     */
+    public static boolean isNetWordError(JixinBaseResponse jixinBaseResponse) {
+        if (ObjectUtils.isEmpty(jixinBaseResponse)) {
+            return true;
+        }
+
+        if ((JixinResultContants.ERROR_COMMON_CONNECT.equalsIgnoreCase(jixinBaseResponse.getRetCode()))
+                || (JixinResultContants.ERROR_502.equalsIgnoreCase(jixinBaseResponse.getRetCode()))
+                || (JixinResultContants.ERROR_504.equalsIgnoreCase(jixinBaseResponse.getRetCode()))) {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * 是否访问过于频繁, 建议线程休眠2秒
+     *
+     * @param jixinBaseResponse
+     * @return
+     */
+    public static boolean isBusy(JixinBaseResponse jixinBaseResponse) {
+        if (ObjectUtils.isEmpty(jixinBaseResponse)) {
+            return true;
+        }
+
+        if ((JixinResultContants.ERROR_JX900032.equalsIgnoreCase(jixinBaseResponse.getRetCode()))) {
+            return true;
+        }
+
+        return false;
+    }
 
     public static final String[] TO_BE_CONFIRM_ARRS;
 

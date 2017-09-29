@@ -40,7 +40,7 @@ public class FinanceController {
      * @param voFinanceAgainVerifyTransfer
      */
     @ApiOperation("理财计划复审")
-    @GetMapping("/pub/finance/pub/again/verify")
+    @PostMapping("/pub/finance/pub/again/verify")
     public ResponseEntity<VoBaseResp> financeAgainVerifyTransfer(@Valid @ModelAttribute VoFinanceAgainVerifyTransfer voFinanceAgainVerifyTransfer) {
         return financePlanBiz.financeAgainVerifyTransfer(voFinanceAgainVerifyTransfer);
     }
