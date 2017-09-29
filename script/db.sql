@@ -837,7 +837,14 @@ create table gfb_new_eve
   query_time varchar(8) default '' null  comment '创建时间'
 ) comment '新版EVE日志' engine=InnoDB charset=utf8;
 
-
-
 ALTER TABLE gfb_finance_plan_buyer ADD   `state` int(10) DEFAULT '1' COMMENT '1:投标中； 2:还款中 ;3:已结清';
 ALTER TABLE gfb_new_asset_log ADD  `state` int(11) NOT NULL DEFAULT '0' COMMENT '记录状态：0普通 1.理财计划';
+
+#2017-09-29
+ALTER TABLE gfb_users ADD starfire_register_token VARCHAR(100) NULL comment '星火智投token';
+ALTER TABLE gfb_users ADD starfire_user_id VARCHAR(50) NULL COMMENT '星火平台id';
+ALTER TABLE gfb_users ADD starfire_bind_date DATETIME NULL COMMENT '星火用户绑定时间';
+ALTER TABLE gfb_borrow ADD is_starfire tinyint(1)  DEFAULT 0 COMMENT '是否推星火平台';
+
+
+
