@@ -1,4 +1,4 @@
-package com.gofobao.framework.starfire.borrrow.biz;
+package com.gofobao.framework.starfire.borrow.biz;
 
 import com.gofobao.framework.starfire.tender.vo.request.BorrowsQuery;
 import com.gofobao.framework.starfire.tender.vo.response.BorrowQueryRes;

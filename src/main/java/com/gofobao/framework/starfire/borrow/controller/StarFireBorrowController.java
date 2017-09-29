@@ -1,5 +1,5 @@
-package com.gofobao.framework.starfire.borrrow.controller;
-import com.gofobao.framework.starfire.borrrow.biz.StarFireBorrowBiz;
+package com.gofobao.framework.starfire.borrow.controller;
+import com.gofobao.framework.starfire.borrow.biz.StarFireBorrowBiz;
 import com.gofobao.framework.starfire.tender.vo.request.BorrowsQuery;
 import com.gofobao.framework.starfire.tender.vo.response.BorrowQueryRes;
 import org.springframework.beans.factory.annotation.Autowired;

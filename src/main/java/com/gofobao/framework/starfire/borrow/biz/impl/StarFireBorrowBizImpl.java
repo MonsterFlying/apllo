@@ -1,18 +1,16 @@
-package com.gofobao.framework.starfire.borrrow.biz.impl;
+package com.gofobao.framework.starfire.borrow.biz.impl;
 
 import com.github.wenhao.jpa.Specifications;
 import com.gofobao.framework.borrow.contants.BorrowContants;
 import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.borrow.service.BorrowService;
 import com.gofobao.framework.helper.DateHelper;
-import com.gofobao.framework.helper.MoneyHelper;
 import com.gofobao.framework.helper.StringHelper;
-import com.gofobao.framework.starfire.borrrow.biz.StarFireBorrowBiz;
+import com.gofobao.framework.starfire.borrow.biz.StarFireBorrowBiz;
 import com.gofobao.framework.starfire.common.request.BaseRequest;
 import com.gofobao.framework.starfire.common.response.CodeTypeConstant;
 import com.gofobao.framework.starfire.common.response.ResultCodeEnum;
 import com.gofobao.framework.starfire.common.response.ResultCodeMsgEnum;
-import com.gofobao.framework.starfire.tender.constants.StarFireBorrowCollectionConstant;
 import com.gofobao.framework.starfire.tender.constants.StarFireBorrowConstant;
 import com.gofobao.framework.starfire.tender.vo.request.BorrowsQuery;
 import com.gofobao.framework.starfire.tender.vo.response.BorrowQueryRes;
@@ -91,11 +89,11 @@ public class StarFireBorrowBizImpl implements StarFireBorrowBiz {
             if (CollectionUtils.isEmpty(borrowIds)) {
                 borrowSpecification = Specifications.<Borrow>and()
                         .in("id", borrowIds.toArray())
-                        .eq("isStarFire", true)
+                        .eq("isWindmill", true)
                         .build();
             } else {
                 borrowSpecification = Specifications.<Borrow>and()
-                        .eq("isStarFire", true)
+                        .eq("isWindmill", true)
                         .eq("status", BorrowContants.BIDDING)
                         .eq("successAt", null)
                         .build();

@@ -333,6 +333,12 @@ public class MarketingProcessBizImpl implements MarketingProcessBiz {
             default:
                 throw new Exception("MarketingProcessBizImpl.filterDataByDimension: not found marketingType");
         }
+
+        if(money <= 0){
+            log.error("红包金额为零, 不进行派发红包") ;
+            return;
+        }
+
         marketingRedpackRecord.setMarketingId(marketing.getId());
         marketingRedpackRecord.setUserId(opUser.getId());
         marketingRedpackRecord.setMoney(money);
