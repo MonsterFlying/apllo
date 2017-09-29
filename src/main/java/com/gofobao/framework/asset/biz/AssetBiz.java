@@ -255,5 +255,4 @@ public interface AssetBiz {
      * @return
      */
     ResponseEntity<VoDueInRes>dueInInfo(Long userId);
-
 }

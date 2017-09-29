@@ -181,6 +181,7 @@ public class NewAleveBizImpl implements NewAleveBiz {
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void calculationCurrentInterest(String date) {
         try {
             Specification<NewAleve> specification = Specifications
