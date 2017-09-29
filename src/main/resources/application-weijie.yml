@@ -103,4 +103,9 @@ logging:
 #    root: INFO
 #    org.springframework.web: INFO
 #    org.hibernate: INFO
-
+starfire: # 星火
+  key: gofobao_hyfbGxll  #asc加密key值
+  initVector: gofobao_hyfbGxll  #
+  channelCode: gofobao_xhzt   #星火分配渠道简称
+  request_url: https://www.xxdai.com/xeenho/ #星火请求地址
+  notify_url: https://www.xeenho.com/openapi/user_bind/notify/
