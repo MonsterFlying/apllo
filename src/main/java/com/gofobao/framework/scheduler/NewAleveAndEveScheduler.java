@@ -56,7 +56,7 @@ public class NewAleveAndEveScheduler {
         }
 
         // 针对线下充值进行对账
-       // boolean offlineRechargeSysState = offlineRechargeSynBiz.process(date) ;
+        boolean offlineRechargeSysState = offlineRechargeSynBiz.process(date) ;
     }
 
 }
