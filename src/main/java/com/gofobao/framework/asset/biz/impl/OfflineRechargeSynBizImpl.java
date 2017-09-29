@@ -30,6 +30,12 @@ public class OfflineRechargeSynBizImpl implements OfflineRechargeSynBiz {
         Specification<NewEve> eveSpecification = Specifications.<NewEve>and()
                 .eq("transtype", transtype)
                 .build();
+        long count = newEveService.countByTranstypeAndQueryTime(transtype, date) ;
+        if(count <= 0){
+            log.info("查询当天线下转账数据为0");
+            return true ;
+        }
+
 
         // 查询所有资金变动记录
         return false;

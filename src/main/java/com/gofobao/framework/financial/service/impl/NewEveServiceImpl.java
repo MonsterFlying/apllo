@@ -21,4 +21,9 @@ public class NewEveServiceImpl implements NewEveService {
     public NewEve save(NewEve newEve) {
         return newEveRepository.save(newEve);
     }
+
+    @Override
+    public long countByTranstypeAndQueryTime(String transtype, String date) {
+        return newEveRepository.countByTranstypeAndQueryTime(transtype, date) ;
+    }
 }
