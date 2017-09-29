@@ -1,6 +1,7 @@
 package com.gofobao.framework;
 
 import com.gofobao.framework.asset.biz.AssetSynBiz;
+import com.gofobao.framework.financial.biz.NewAleveBiz;
 import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.helper.ExceptionEmailHelper;
 import com.google.gson.Gson;
@@ -32,6 +33,9 @@ public class AssetTests {
 
     @Autowired
     ExceptionEmailHelper exceptionEmailHelper;
+
+    @Autowired
+    NewAleveBiz newAleveBiz ;
 
     @Test
     public void test01() throws Exception {
@@ -65,4 +69,11 @@ public class AssetTests {
             }
         }
     }
+
+    @Test
+    public void test04() throws Exception {
+        newAleveBiz.importDatabase("20170927", "3005-ALEVE0110-20170927");
+    }
+
+
 }

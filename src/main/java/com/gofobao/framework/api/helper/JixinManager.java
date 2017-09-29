@@ -301,7 +301,7 @@ public class JixinManager {
 
 
         log.info("=============================================");
-        log.info(String.format("[%s]报文流水：%s%s%s", txCodeEnum.getName(), req.getTxDate(), req.getTxTime(), req.getSeqNo()));
+        log.info(String.format("[%s]报文流水请求：%s%s%s", txCodeEnum.getName(), req.getTxDate(), req.getTxTime(), req.getSeqNo()));
         log.info("=============================================");
         log.info(String.format("即信请求报文: url=%s body=%s", url, gson.toJson(params)));
         initHttps();
@@ -365,16 +365,19 @@ public class JixinManager {
             return s;
         }
 
+        log.info("=============================================");
+        log.info(String.format("[%s]报文流水响应：%s%s%s", txCodeEnum.getName(), req.getTxDate(), req.getTxTime(), req.getSeqNo()));
+        log.info("=============================================");
         log.info(String.format("即信响应报文:url=%s body=%s", url, gson.toJson(body)));
         body.setRetMsg(JixinResultContants.getMessage(body.getRetCode()));
 
         // 未开通交易接口发送邮件通知
         if (JixinResultContants.ERROR_JX900663.equalsIgnoreCase(body.getRetCode())) {
-            exceptionEmailHelper.sendErrorMessage("访问权限受限, 需要联系即信", body.getTxCode());
+            exceptionEmailHelper.sendErrorMessage("访问权限受限, 需要联系即信", gson.toJson(req));
         }
 
         if (JixinResultContants.ERROR_JX999999.equalsIgnoreCase(body.getRetCode())) {
-            exceptionEmailHelper.sendErrorMessage("FES系统异常", body.getTxCode());
+            exceptionEmailHelper.sendErrorMessage("FES系统异常", gson.toJson(req));
         }
 
         return body;

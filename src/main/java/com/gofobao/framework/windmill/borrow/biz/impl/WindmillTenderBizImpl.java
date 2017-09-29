@@ -311,8 +311,6 @@ public class WindmillTenderBizImpl implements WindmillTenderBiz {
      */
     @Override
     public void tenderNotify(Tender tender) {
-        log.info("================进入用戶投资成功平台通知到风车理财================");
-
         log.info("打印当前用户的投资信息:" + GSON.toJson(tender));
         //拼接请求参数
         String requestParamStr = "";

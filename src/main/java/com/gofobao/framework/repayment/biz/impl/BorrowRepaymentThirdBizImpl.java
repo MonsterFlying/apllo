@@ -35,6 +35,7 @@ import com.gofobao.framework.common.assets.AssetChangeTypeEnum;
 import com.gofobao.framework.common.constans.TypeTokenContants;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.helper.*;
+import com.gofobao.framework.helper.project.TrusteePayQueryHelper;
 import com.gofobao.framework.member.entity.UserCache;
 import com.gofobao.framework.member.entity.UserThirdAccount;
 import com.gofobao.framework.member.service.UserCacheService;
@@ -78,6 +79,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
+import org.springframework.util.StringUtils;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -153,6 +155,9 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
 
     @Value("${gofobao.javaDomain}")
     private String javaDomain;
+
+    @Autowired
+    TrusteePayQueryHelper trusteePayQueryHelper;
 
     /**
      * 非流转标的 理财计划即信批次放款 （满标后调用）
@@ -448,18 +453,16 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
         Preconditions.checkNotNull(takeUserThirdAccount, "借款人未开户!");
 
         /*查询受托支付是否成功*/
-        TrusteePayQueryReq trusteePayQueryReq = new TrusteePayQueryReq();
-        trusteePayQueryReq.setAccountId(takeUserThirdAccount.getAccountId());
-        trusteePayQueryReq.setProductId(borrow.getProductId());
-        trusteePayQueryReq.setChannel(ChannelContant.HTML);
-        TrusteePayQueryResp trusteePayQueryResp = jixinManager.send(JixinTxCodeEnum.TRUSTEE_PAY_QUERY, trusteePayQueryReq, TrusteePayQueryResp.class);
+        TrusteePayQueryResp trusteePayQueryResp = trusteePayQueryHelper.queryTrusteePayQuery(takeUserThirdAccount.getAccountId(),
+                borrow.getProductId(),
+                4);
+
         if (ObjectUtils.isEmpty(trusteePayQueryResp)) {
             throw new Exception("批次放款调用：受托支付查询失败,msg->" + trusteePayQueryResp.getRetMsg());
         }
 
         if ("1".equals(trusteePayQueryResp.getState())) {
-            /*收款人id*/
-            Long takeUserId = borrow.getTakeUserId();
+            Long takeUserId = borrow.getTakeUserId();  //收款人id
             if (!ObjectUtils.isEmpty(takeUserId)) {
                 takeUserThirdAccount = userThirdAccountService.findByUserId(takeUserId);
             }
@@ -519,53 +522,39 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
         }
         tenderService.save(tenderList);
 
-        //批次号
-        String batchNo = jixinHelper.getBatchNo();
-        //请求保留参数
+        String batchNo = jixinHelper.getBatchNo();  // 批次放款
         Map<String, Object> acqResMap = new HashMap<>();
         acqResMap.put("borrowId", borrowId);
-
         String data = "";
+        BatchLendPayReq batchLendPayReq = new BatchLendPayReq();
+
         try {
-            BatchLendPayReq batchLendPayReq = new BatchLendPayReq();
             batchLendPayReq.setBatchNo(batchNo);
             batchLendPayReq.setAcqRes(GSON.toJson(acqResMap));
             batchLendPayReq.setNotifyURL(javaDomain + "/pub/repayment/v2/third/batch/lendrepay/check");
             batchLendPayReq.setRetNotifyURL(javaDomain + "/pub/repayment/v2/third/batch/lendrepay/run");
             batchLendPayReq.setTxAmount(StringHelper.formatDouble(sumTxAmount, 100, false));
-            batchLendPayReq.setChannel(ChannelContant.HTML);
             batchLendPayReq.setTxCounts(StringHelper.toString(lendPayList.size()));
             batchLendPayReq.setSubPacks(GSON.toJson(lendPayList));
-            BatchLendPayResp batchLendPayResp = jixinManager.send(JixinTxCodeEnum.BATCH_LEND_REPAY, batchLendPayReq, BatchLendPayResp.class);
-            data = GSON.toJson(batchLendPayResp);
-
+            // BatchLendPayResp batchLendPayResp = jixinManager.send(JixinTxCodeEnum.BATCH_LEND_REPAY, batchLendPayReq, BatchLendPayResp.class);
+            BatchLendPayResp batchLendPayResp = safetyLend(batchLendPayReq);  // 安全放款
+            data = gson.toJson(batchLendPayReq) ;
             log.info("==============================");
             log.info(String.format("批次放款请求， 数据[%s]", data));
             log.info("==============================");
 
-            String retCode = batchLendPayResp.getRetCode();
-            if ((ObjectUtils.isEmpty(batchLendPayResp)) || (!ObjectUtils.isEmpty(retCode) && !JixinResultContants.SUCCESS.equals(retCode))) {
-                BatchCancelReq batchCancelReq = new BatchCancelReq();
-                batchCancelReq.setBatchNo(batchNo);
-                batchCancelReq.setTxAmount(StringHelper.formatDouble(sumTxAmount, 100, false));
-                batchCancelReq.setTxCounts(StringHelper.toString(lendPayList.size()));
-                batchCancelReq.setChannel(ChannelContant.HTML);
-                BatchCancelResp batchCancelResp = jixinManager.send(JixinTxCodeEnum.BATCH_CANCEL, batchCancelReq, BatchCancelResp.class);
-                if ((ObjectUtils.isEmpty(batchCancelResp)) || (!ObjectUtils.isEmpty(batchCancelResp.getRetCode()))) {
-                    throw new Exception("即信批次撤销失败!");
-                }
-            }
-            if ((ObjectUtils.isEmpty(batchLendPayResp)) || (!ObjectUtils.isEmpty(retCode) && !JixinResultContants.BATCH_SUCCESS.equalsIgnoreCase(batchLendPayResp.getReceived()))) {
-                BatchCancelReq batchCancelReq = new BatchCancelReq();
-                batchCancelReq.setBatchNo(batchNo);
-                batchCancelReq.setTxAmount(StringHelper.formatDouble(sumTxAmount, 100, false));
-                batchCancelReq.setTxCounts(StringHelper.toString(lendPayList.size()));
-                batchCancelReq.setChannel(ChannelContant.HTML);
-                BatchCancelResp batchCancelResp = jixinManager.send(JixinTxCodeEnum.BATCH_CANCEL, batchCancelReq, BatchCancelResp.class);
-                if ((ObjectUtils.isEmpty(batchCancelResp)) || (!ObjectUtils.isEmpty(batchCancelResp.getRetCode()))) {
-                    throw new Exception("即信批次撤销失败!");
-                }
-                throw new Exception("即信批次放款失败!");
+            if ((ObjectUtils.isEmpty(batchLendPayResp))
+                    || (!JixinResultContants.SUCCESS.equalsIgnoreCase(batchLendPayResp.getRetCode()))) {
+                log.error(String.format("批次放款失败, 请求[%s], 响应[%s]",
+                        GSON.toJson(batchLendPayReq),
+                        GSON.toJson(batchLendPayResp)));
+
+                exceptionEmailHelper.sendErrorMessage("批次放款失败",
+                        String.format("请求: [%s], 响应: [%s]",
+                                GSON.toJson(batchLendPayReq),
+                                GSON.toJson(batchLendPayResp)));
+
+                throw new Exception("请求存管放款失败");
             }
 
             //新增放款资产变动记录
@@ -592,15 +581,8 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
             borrowService.save(borrow);
             return ResponseEntity.ok(VoBaseResp.ok("放款申请成功!"));
         } catch (Exception e) {
-            BatchCancelReq batchCancelReq = new BatchCancelReq();
-            batchCancelReq.setBatchNo(batchNo);
-            batchCancelReq.setTxAmount(StringHelper.formatDouble(0, 100, false));
-            batchCancelReq.setTxCounts(StringHelper.toString(lendPayList.size()));
-            batchCancelReq.setChannel(ChannelContant.HTML);
-            BatchCancelResp batchCancelResp = jixinManager.send(JixinTxCodeEnum.BATCH_CANCEL, batchCancelReq, BatchCancelResp.class);
-            if ((ObjectUtils.isEmpty(batchCancelResp)) || (!ObjectUtils.isEmpty(batchCancelResp.getRetCode()))) {
-                throw new Exception("即信批次撤销失败!");
-            }
+            log.error("放款失败异常", e);
+            safeCancelLend(batchLendPayReq); // 安全取消批次
             throw new Exception(e);
         }
     }
@@ -608,9 +590,10 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
 
     /**
      * 安全放款
-     *<p>此处会调用即信批次查询接口, 判断是否存在该放款批次记录</p>
+     * <p>此处会调用即信批次查询接口, 判断是否存在该放款批次记录</p>
      * <p>如果查询到该批次, 直接返回放款成功</p>
      * <p>如果查询不到该批次, 执行批次放款</p>
+     *
      * @param batchLendPayReq
      * @return
      */
@@ -618,7 +601,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
         BatchQueryResp batchQueryResp = queryBatchQuery(batchLendPayReq.getTxDate(), batchLendPayReq.getBatchNo(), 4);   // 先查询即信
         if ((ObjectUtils.isEmpty(batchQueryResp))
                 || (!JixinResultContants.SUCCESS.equalsIgnoreCase(batchQueryResp.getRetCode()))) {
-            log.error(String.format("批次查询严重BUG, 数据[%s]", GSON.toJson(batchLendPayReq)));
+            log.error(String.format("批次查询, 数据[%s]", GSON.toJson(batchLendPayReq)));
             return doLend(batchLendPayReq, 4);
         } else {
             log.info(String.format("即信批次重复放款, TxDate: %s, batchNo:%s ", batchLendPayReq.getTxDate(), batchLendPayReq.getBatchNo()));
@@ -652,55 +635,65 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
         BatchLendPayResp batchLendPayResp = jixinManager.send(JixinTxCodeEnum.BATCH_LEND_REPAY,
                 batchLendPayReq,
                 BatchLendPayResp.class);
-        if (JixinResultContants.isNetWordError(batchLendPayResp)) {  // 网络请求失败. 需要查询确认
-            log.info("=========================================");
-            log.info("批次放款出现网络问题, 系统进行容错处理");
-            log.info("=========================================");
-            BatchQueryResp batchQueryResp = queryBatchQuery(batchLendPayReq.getTxDate(), batchLendPayReq.getBatchNo(), 4);
-            if (ObjectUtils.isEmpty(batchQueryResp)) {
-                log.error(String.format("批次查询严重BUG, 数据[%s]", GSON.toJson(batchLendPayReq)));
-                return null;
+
+        if ((!ObjectUtils.isEmpty(batchLendPayResp))
+                && (!StringUtils.isEmpty(batchLendPayResp.getReceived()))
+                && ("success".equalsIgnoreCase(batchLendPayResp.getReceived()))) {  // 成功
+            return getSuccessBatchLendPayResp(batchLendPayReq);
+        } else { // 失败
+            if (JixinResultContants.isNetWordError(batchLendPayResp)) {  // 网络请求失败. 需要查询确认
+                log.info("=========================================");
+                log.info("批次放款出现网络问题, 系统进行容错处理");
+                log.info("=========================================");
+                BatchQueryResp batchQueryResp = queryBatchQuery(batchLendPayReq.getTxDate(), batchLendPayReq.getBatchNo(), 4);
+                if (ObjectUtils.isEmpty(batchQueryResp)) {
+                    log.error(String.format("批次查询严重BUG, 数据[%s]", GSON.toJson(batchLendPayReq)));
+                    return null;
+                }
+
+                if (JixinResultContants.SUCCESS.equalsIgnoreCase(batchQueryResp.getRetCode())) {   // 查询成功
+                    return getSuccessBatchLendPayResp(batchLendPayReq);
+                } else {
+                    return doLend(batchLendPayReq, retryNum - 1);
+                }
             }
 
-            if (JixinResultContants.SUCCESS.equalsIgnoreCase(batchQueryResp.getRetCode())) {   // 查询成功
-                batchLendPayResp = new BatchLendPayResp();
-                batchLendPayResp.setRetCode(JixinResultContants.SUCCESS);
-                batchLendPayResp.setRetMsg("成功");
-                batchLendPayResp.setBatchNo(batchLendPayReq.getBatchNo());
-                batchLendPayResp.setNotifyURL(batchLendPayReq.getNotifyURL());
-                batchLendPayResp.setRetNotifyURL(batchLendPayReq.getRetNotifyURL());
-                batchLendPayResp.setSubPacks(batchLendPayReq.getSubPacks());
-                batchLendPayResp.setTxAmount(batchLendPayReq.getTxAmount());
-                batchLendPayResp.setTxCounts(batchLendPayReq.getTxCounts());
-                return batchLendPayResp;
-            } else {
+            if (JixinResultContants.isBusy(batchLendPayResp)) { //频率受限. 重新尝试即可
+                log.info("=========================================");
+                log.info("批次放款出现频率受限问题, 系统进行容错处理");
+                log.info("=========================================");
+                try {
+                    Thread.sleep(1 * 1000);
+                } catch (Exception e) {
+                }
+
                 return doLend(batchLendPayReq, retryNum - 1);
             }
-        }
 
-        if (JixinResultContants.isBusy(batchLendPayResp)) { //频率受限. 重新尝试即可
-            log.info("=========================================");
-            log.info("批次放款出现频率受限问题, 系统进行容错处理");
-            log.info("=========================================");
-
-            try {
-                Thread.sleep(1 * 1000);
-            } catch (Exception e) {
+            if ("JX900014".equalsIgnoreCase(batchLendPayResp.getRetCode())) { // 流水号重复, 重置请求, 重新发送
+                log.info("=========================================");
+                log.info("批次放款出现流水号重复问题, 系统进行容错处理");
+                log.info("=========================================");
+                batchLendPayReq.setTxTime(null);
+                batchLendPayReq.setSeqNo(null);
+                return doLend(batchLendPayReq, retryNum - 1);
             }
 
-            return doLend(batchLendPayReq, retryNum - 1);
+            return batchLendPayResp;
         }
+    }
 
-        if ("JX900014".equalsIgnoreCase(batchLendPayResp.getRetCode())) { // 流水号重复, 重置请求, 重新发送
-            log.info("=========================================");
-            log.info("批次放款出现流水号重复问题, 系统进行容错处理");
-            log.info("=========================================");
-            batchLendPayReq.setTxDate(null);
-            batchLendPayReq.setTxTime(null);
-            batchLendPayReq.setSeqNo(null);
-            return doLend(batchLendPayReq, retryNum - 1);
-        }
-
+    private BatchLendPayResp getSuccessBatchLendPayResp(BatchLendPayReq batchLendPayReq) {
+        BatchLendPayResp batchLendPayResp;
+        batchLendPayResp = new BatchLendPayResp();
+        batchLendPayResp.setRetCode(JixinResultContants.SUCCESS);
+        batchLendPayResp.setRetMsg("成功");
+        batchLendPayResp.setBatchNo(batchLendPayReq.getBatchNo());
+        batchLendPayResp.setNotifyURL(batchLendPayReq.getNotifyURL());
+        batchLendPayResp.setRetNotifyURL(batchLendPayReq.getRetNotifyURL());
+        batchLendPayResp.setSubPacks(batchLendPayReq.getSubPacks());
+        batchLendPayResp.setTxAmount(batchLendPayReq.getTxAmount());
+        batchLendPayResp.setTxCounts(batchLendPayReq.getTxCounts());
         return batchLendPayResp;
     }
 
@@ -720,19 +713,28 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
                 // 进行标的撤销
                 BatchCancelReq batchCancelReq = new BatchCancelReq();
                 batchCancelReq.setBatchNo(batchLendPayReq.getBatchNo());
-                batchCancelReq.setTxAmount(StringHelper.formatDouble(0, 100, false));
+                batchCancelReq.setTxAmount(batchLendPayReq.getTxAmount());
                 batchCancelReq.setTxCounts(StringHelper.toString(batchLendPayReq.getTxCounts()));
-                batchCancelReq.setChannel(ChannelContant.HTML);
-                BatchCancelResp batchCancelResp = jixinManager.send(JixinTxCodeEnum.BATCH_CANCEL, batchCancelReq, BatchCancelResp.class);
+                boolean b = doCancelBatch(batchCancelReq, 4);
+                if (b) {
+                    log.info("放款取消成功");
+                } else {
+                    log.error("放款取消失败");
+                }
+
+                exceptionEmailHelper.sendErrorMessage("取消放款",
+                        String.format("数据:[%s], 状态: %s", GSON.toJson(batchLendPayReq), b ? "成功" : "失败"));
+
             } else if ("C".equalsIgnoreCase(batchQueryResp.getBatchState())) {
                 log.info("=========================================");
-                log.info("批次已经撤销, 请勿重复操作");
+                log.info(String.format("批次已经撤销, 请勿重复操作"));
                 log.info("=========================================");
             } else {
                 log.error(String.format("安全撤销放款: 当前批次不在待处理范围, 数据[%s]", GSON.toJson(batchQueryResp)));
             }
-        } else { // 其他原因强制撤销
-
+        } else {
+            exceptionEmailHelper.sendErrorMessage("取消放款, 查询批次信息异常",
+                    String.format("数据:[%s], 返回数据:[%s]", GSON.toJson(batchLendPayReq), GSON.toJson(batchQueryResp)));
         }
     }
 
@@ -745,10 +747,6 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
      * @return
      */
     private boolean doCancelBatch(BatchCancelReq batchCancelReq, int retryNum) {
-        batchCancelReq.setTxDate(null);
-        batchCancelReq.setTxTime(null);
-        batchCancelReq.setSeqNo(null);
-
         if (retryNum <= 0) {
             log.error(String.format("取消批次严重问题, 数据[%s]", GSON.toJson(batchCancelReq)));
             exceptionEmailHelper.sendErrorMessage("批次取消异常", GSON.toJson(batchCancelReq));
@@ -761,8 +759,13 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
                     && (JixinResultContants.SUCCESS.equalsIgnoreCase(batchQueryResp.getRetCode()))) {
                 if ("C".equalsIgnoreCase(batchQueryResp.getBatchState())) {
                     return true;
-                } else {
+                } else if ("A".equalsIgnoreCase(batchQueryResp.getBatchState())) {
                     return doCancelBatch(batchCancelReq, retryNum - 1);
+                } else {
+                    log.error("=================================");
+                    log.error(String.format("批次为不可取消状态, 数据[%s]", GSON.toJson(batchCancelReq)));
+                    log.error("=================================");
+                    return false;
                 }
             } else {
                 log.error("出现严重撤销批次问题");
@@ -772,6 +775,10 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
 
         // 频率受限
         if (JixinResultContants.isBusy(batchCancelResp)) {
+            log.info("=========================================");
+            log.info("取消批次频率受限");
+            log.info("=========================================");
+
             try {
                 Thread.sleep(1 * 1000);
             } catch (Exception e) {
@@ -780,6 +787,8 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
         }
 
         if ("JX900014".equalsIgnoreCase(batchCancelResp.getRetCode())) { // 流水号重复, 重置请求, 重新发送
+            batchCancelReq.setTxTime(null);
+            batchCancelReq.setSeqNo(null);
             log.info("=========================================");
             log.info("取消批次流水号重复问题, 系统进行容错处理");
             log.info("=========================================");
@@ -809,7 +818,6 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
             exceptionEmailHelper.sendErrorMessage("查询批次状态严重BUG", String.format("批次:%s, 日期:%s", batchNo, batchTxDate));
             return null;
         }
-
 
         BatchQueryReq batchQueryReq = new BatchQueryReq();
         batchQueryReq.setBatchNo(batchNo);
