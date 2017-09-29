@@ -1,21 +1,25 @@
 package com.gofobao.framework.financial.biz.impl;
 
+import com.github.wenhao.jpa.Specifications;
 import com.gofobao.framework.api.helper.JixinFileManager;
 import com.gofobao.framework.api.helper.JixinTxDateHelper;
 import com.gofobao.framework.financial.biz.NewEveBiz;
 import com.gofobao.framework.financial.entity.NewEve;
 import com.gofobao.framework.financial.service.NewEveService;
 import com.gofobao.framework.helper.ExceptionEmailHelper;
+import com.gofobao.framework.helper.MoneyHelper;
 import com.gofobao.framework.migrate.FormatHelper;
 import com.google.common.io.Files;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.util.ObjectUtils;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.nio.charset.StandardCharsets;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
@@ -59,12 +63,8 @@ public class NewEveBizImpl implements NewEveBiz {
             if (!downloadState) {
                 throw new Exception("EVE下载失败");
             }
-            File file = new File(String.format("%s%s%s", filePath, File.separator, fileName));
-            BufferedReader bufferedReader = Files.newReader(file, StandardCharsets.UTF_8);
-
-            Stream<String> lines = bufferedReader.lines();
-            importEveToDatabase(date, lines);
-            return true ;
+            importEveDataToDatabase(date, fileName);
+            return true;
         } catch (Exception ex) {
             exceptionEmailHelper.sendErrorMessage("EVE文件下载失败", String.format("时间: %s", date));
             log.error("EVE调度执行失败", ex);
@@ -72,12 +72,11 @@ public class NewEveBizImpl implements NewEveBiz {
         return false;
     }
 
-    /**
-     *  导入eve到数据
-     * @param date
-     * @param lines
-     */
-    public void importEveToDatabase(String date, Stream<String> lines) {
+    public void importEveDataToDatabase(String date, String fileName) throws FileNotFoundException {
+        File file = new File(String.format("%s%s%s", filePath, File.separator, fileName));
+        BufferedReader bufferedReader = Files.newReader(file, StandardCharsets.UTF_8);
+
+        Stream<String> lines = bufferedReader.lines();
         lines.forEach(new Consumer<String>() {
             @Override
             public void accept(String line) {
@@ -95,8 +94,9 @@ public class NewEveBizImpl implements NewEveBiz {
                     String tranno = FormatHelper.getStrForGBK(bytes, 109, 115); // 内部交易流水号
                     String reserved = FormatHelper.getStrForGBK(bytes, 115, 134); // 内部保留域
                     String ervind = FormatHelper.getStrForGBK(bytes, 134, 135); // 冲正、撤销标志
-                    String transtype = FormatHelper.getStrForGBK(bytes, 135, 1399); // 主机交易类型
+                    String transtype = FormatHelper.getStrForGBK(bytes, 135, 139); // 主机交易类型
 
+                    amount = MoneyHelper.divide(amount, "100", 2);
                     NewEve newEve = new NewEve();
                     newEve.setQueryTime(date);
                     newEve.setAmount(amount);
@@ -124,4 +124,6 @@ public class NewEveBizImpl implements NewEveBiz {
             }
         });
     }
+
+
 }

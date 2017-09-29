@@ -19,4 +19,10 @@ public interface NewAleveBiz {
      * @throws FileNotFoundException
      */
     void importDatabase(String date, String fileName) throws FileNotFoundException ;
+
+    /**
+     * 计算活期利息
+     * @param date
+     */
+    void calculationCurrentInterest(String date) ;
 }

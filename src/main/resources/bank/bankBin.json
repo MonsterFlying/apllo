@@ -574,6 +574,7 @@
 , {"bankName":"中国农业银行", "bankOrgNo": "01030000", "cardName": "借记卡(银联卡)", "cardType": "借记卡", "cardLength": "19", "cardPrdLength": "5", "cardId": "95597"}
 , {"bankName":"中国农业银行", "bankOrgNo": "01030000", "cardName": "借记卡(银联卡)", "cardType": "借记卡", "cardLength": "19", "cardPrdLength": "5", "cardId": "95598"}
 , {"bankName":"中国农业银行", "bankOrgNo": "01030000", "cardName": "借记卡(银联卡)", "cardType": "借记卡", "cardLength": "19", "cardPrdLength": "5", "cardId": "95599"}
+, {"bankName":"中国农业银行", "bankOrgNo": "01030000", "cardName": "借记卡(银联卡)", "cardType": "借记卡", "cardLength": "19", "cardPrdLength": "5", "cardId": "623052"}
 , {"bankName":"中国农业银行", "bankOrgNo": "01030000", "cardName": "农行钻石信用卡", "cardType": "贷记卡", "cardLength": "16", "cardPrdLength": "6", "cardId": "622839"}
 , {"bankName":"中国农业银行贷记卡", "bankOrgNo": "01030001", "cardName": "IC普卡", "cardType": "贷记卡", "cardLength": "16", "cardPrdLength": "6", "cardId": "625826"}
 , {"bankName":"中国农业银行贷记卡", "bankOrgNo": "01030001", "cardName": "IC金卡", "cardType": "贷记卡", "cardLength": "16", "cardPrdLength": "6", "cardId": "625827"}
