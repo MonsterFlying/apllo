@@ -10,20 +10,28 @@ public class BorrowContants {
      */
     public static final int CE_DAI = 0;
 
+    public static  final  String CE_DAI_STR="车贷标";
     /**
      * 净值标
      */
     public static final int JING_ZHI = 1;
+
+    public static  final  String JING_ZHI_STR="净值标";
 
     /**
      *秒标
      */
     public static final int MIAO_BIAO = 2;
 
+    public static  final  String MIAO_BIAO_STR="秒标";
+
     /**
      * 渠道标
      */
     public static final int QU_DAO = 4;
+
+
+    public static  final  String QU_DAO_STR="渠道标";
 
     /**
      * 发标待审

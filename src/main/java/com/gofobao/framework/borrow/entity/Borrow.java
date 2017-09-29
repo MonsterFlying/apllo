@@ -1,5 +1,6 @@
 package com.gofobao.framework.borrow.entity;
 
+import com.gofobao.framework.borrow.contants.BorrowContants;
 import lombok.Data;
 import org.hibernate.annotations.DynamicInsert;
 import org.hibernate.annotations.DynamicUpdate;
@@ -107,9 +108,10 @@ public class Borrow implements Serializable {
 
     private Boolean thirdTransferFlag;
 
-
     private Date recheckAt;
 
+    @Column(name = "is_starfire")
+    private Boolean isStarFire;
 
     @Column(name = "is_windmill")
     private Boolean isWindmill;
@@ -135,4 +137,46 @@ public class Borrow implements Serializable {
     public Integer getTotalOrder() {
         return this.repayFashion == 1 ? 1 : this.getTimeLimit();
     }
+
+
+    /**
+     * 标的还款方式
+     *
+     * @return
+     */
+    public String getBorrowBackWayStr() {
+        Integer repayFashion = this.getRepayFashion();
+        String back_way = "";
+        if (repayFashion == BorrowContants.REPAY_FASHION_ONCE) {
+            back_way = BorrowContants.REPAY_FASHION_ONCE_STR;
+        }
+        if (repayFashion == BorrowContants.REPAY_FASHION_MONTH) {
+            back_way = BorrowContants.REPAY_FASHION_MONTH_STR;
+        }
+        if (repayFashion == BorrowContants.REPAY_FASHION_INTEREST_THEN_PRINCIPAL) {
+            back_way = BorrowContants.REPAY_FASHION_INTEREST_THEN_PRINCIPAL_STR;
+        }
+        return back_way;
+    }
+
+    /**
+     * 标的类型
+     * @return
+     */
+    public String getBorrowTypeStr() {
+        Integer borrowType = this.getType();
+        String typeStr = "";
+        if (borrowType == BorrowContants.CE_DAI) {
+            typeStr = BorrowContants.CE_DAI_STR;
+        } else if (borrowType == BorrowContants.JING_ZHI) {
+            typeStr = BorrowContants.JING_ZHI_STR;
+        } else if (borrowType == BorrowContants.MIAO_BIAO) {
+            typeStr = BorrowContants.MIAO_BIAO_STR;
+        } else {
+            typeStr = BorrowContants.QU_DAO_STR;
+        }
+        return typeStr;
+    }
+
+
 }

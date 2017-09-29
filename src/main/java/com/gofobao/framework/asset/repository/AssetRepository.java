@@ -8,13 +8,17 @@ import org.springframework.data.jpa.repository.Lock;
 import org.springframework.stereotype.Repository;
 
 import javax.persistence.LockModeType;
+import java.util.List;
 
 /**
  * Created by Zeke on 2017/5/19.
  */
 @Repository
-public interface AssetRepository extends JpaRepository<Asset,Long>,JpaSpecificationExecutor<Asset> {
+public interface AssetRepository extends JpaRepository<Asset, Long>, JpaSpecificationExecutor<Asset> {
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     Asset findByUserId(Long id);
+
+    List<Asset> findByUserIdIn(List<Long> userIds);
+
 }
