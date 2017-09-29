@@ -5,5 +5,5 @@ public interface InitDBBiz {
 
     void transfer() ;
 
-    void initUseAsset() throws Exception;
+    /*void initUseAsset() throws Exception;*/
 }

@@ -50,15 +50,6 @@ public class TransferMessageListener {
             } catch (Throwable throwable) {
                 log.error("债权转让复审异常:", throwable);
             }
-        } else if (tag.equals(MqTagEnum.AGAIN_VERIFY_FINANCE_TRANSFER.getValue())) {  // 理财计划债权转让复审
-            try {
-                transferProvider.againVerifyFinanceTransfer(msg);
-                log.info("===========================AutoTenderListener===========================");
-                log.info("理财计划债权转让复审成功! transferId：" + transferId);
-                log.info("========================================================================");
-            } catch (Throwable throwable) {
-                log.error("理财计划债权转让复审异常:", throwable);
-            }
         } else if (tag.equals(MqTagEnum.AUTO_TRANSFER.getValue())) {  // 自动投标
             try {
                 transferProvider.autoTransfer(msg);

@@ -2,10 +2,7 @@ package com.gofobao.framework.finance.biz;
 
 import com.gofobao.framework.common.page.Page;
 import com.gofobao.framework.core.vo.VoBaseResp;
-import com.gofobao.framework.finance.vo.request.VoFinanceAgainVerifyTransfer;
-import com.gofobao.framework.finance.vo.request.VoFinancePlanAssetChange;
-import com.gofobao.framework.finance.vo.request.VoFinancePlanTender;
-import com.gofobao.framework.finance.vo.request.VoTenderFinancePlan;
+import com.gofobao.framework.finance.vo.request.*;
 import com.gofobao.framework.finance.vo.response.PlanDetail;
 import com.gofobao.framework.finance.vo.response.PlanListWarpRes;
 import com.gofobao.framework.finance.vo.response.VoViewFinancePlanTender;
@@ -22,11 +19,11 @@ public interface FinancePlanBiz {
      *
      * @param voFinanceAgainVerifyTransfer
      */
-    @Transactional(rollbackFor = Exception.class)
     ResponseEntity<VoBaseResp> financeAgainVerifyTransfer(VoFinanceAgainVerifyTransfer voFinanceAgainVerifyTransfer);
 
     /**
      * 理财计划资金变动
+     *
      * @param voFinancePlanAssetChange
      * @return
      * @throws Exception
@@ -39,7 +36,7 @@ public interface FinancePlanBiz {
      * @param voFinancePlanTender
      * @return
      */
-    ResponseEntity<VoViewFinancePlanTender> financePlanTender(VoFinancePlanTender voFinancePlanTender);
+    ResponseEntity<String> financePlanTender(VoFinancePlanTender voFinancePlanTender) throws Exception;
 
     /**
      * 理财列表
@@ -66,4 +63,13 @@ public interface FinancePlanBiz {
      * @return
      */
     ResponseEntity<VoBaseResp> tenderFinancePlan(VoTenderFinancePlan voTenderFinancePlan) throws Exception;
+
+    /**
+     * 理财计划回购
+     *
+     * @param voFinanceRepurchase
+     * @return
+     * @throws Exception
+     */
+    ResponseEntity<VoBaseResp> financeRepurchase(VoFinanceRepurchase voFinanceRepurchase) throws Exception;
 }

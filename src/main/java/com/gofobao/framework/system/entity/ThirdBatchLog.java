@@ -29,6 +29,9 @@ public class ThirdBatchLog {
     private String vparam1;
     private String vparam2;
     private String vparam3;
+    private String txDate;
+    private String txTime;
+    private String seqNo;
     private Integer state;
     private Date createAt;
     private Date updateAt;

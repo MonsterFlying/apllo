@@ -63,7 +63,8 @@ public class DealThirdBatchScheduler {
                 BatchQueryReq req = new BatchQueryReq();
                 req.setChannel(ChannelContant.HTML);
                 req.setBatchNo(thirdBatchLog.getBatchNo());
-                req.setBatchTxDate(DateHelper.dateToString(thirdBatchLog.getCreateAt(), DateHelper.DATE_FORMAT_YMD_NUM));
+                String txDate = thirdBatchLog.getTxDate();
+                req.setBatchTxDate(ObjectUtils.isEmpty(txDate) ? DateHelper.dateToString(thirdBatchLog.getCreateAt(), DateHelper.DATE_FORMAT_YMD_NUM) : txDate);
                 BatchQueryResp resp = jixinManager.send(JixinTxCodeEnum.BATCH_QUERY, req, BatchQueryResp.class);
                 if ((!ObjectUtils.isEmpty(resp))
                         && JixinResultContants.SUCCESS.equals(resp.getRetCode())

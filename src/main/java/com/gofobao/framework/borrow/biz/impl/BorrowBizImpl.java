@@ -243,7 +243,7 @@ public class BorrowBizImpl implements BorrowBiz {
                 mqConfig.setMsg(body);
                 log.info(String.format("BorrowBizImpl sendAgainVerify send mq %s", GSON.toJson(body)));
                 mqHelper.convertAndSend(mqConfig);
-            }else {
+            } else {
                 MqConfig mqConfig = new MqConfig();
                 mqConfig.setTag(MqTagEnum.AGAIN_VERIFY);
                 mqConfig.setQueue(MqQueueEnum.RABBITMQ_BORROW);
@@ -533,7 +533,7 @@ public class BorrowBizImpl implements BorrowBiz {
     public ResponseEntity<VoBaseResp> addNetWorth(VoAddNetWorthBorrow voAddNetWorthBorrow) throws Exception {
         Long userId = voAddNetWorthBorrow.getUserId();
         String releaseAtStr = voAddNetWorthBorrow.getReleaseAt();
-        Integer money = (int) voAddNetWorthBorrow.getMoney();
+        Long money = new Double(MoneyHelper.round(voAddNetWorthBorrow.getMoney(), 0)).longValue();
         boolean closeAuto = voAddNetWorthBorrow.isCloseAuto();
 
         Asset asset = assetService.findByUserIdLock(userId);
@@ -556,7 +556,10 @@ public class BorrowBizImpl implements BorrowBiz {
         UserCache userCache = userCacheService.findById(userId);
         Preconditions.checkNotNull(userCache, "净值标的发布: 当前用户资金缓存账户为空!");
 
-        double totalMoney = (asset.getUseMoney() + userCache.getWaitCollectionPrincipal()) * 0.8 - asset.getPayment();
+        /* 总资产 */
+        long assets = asset.getUseMoney() + userCache.getWaitCollectionPrincipal();
+        /* 净值额度 */
+        long totalMoney = new Double(MoneyHelper.multiply(assets, 0.8)).longValue() - asset.getPayment();
         if (totalMoney < money) {
             log.info("新增借款：借款金额大于净值额度。");
             return ResponseEntity
@@ -601,7 +604,8 @@ public class BorrowBizImpl implements BorrowBiz {
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "净值标插入失败!"));
         }
 
-        if (closeAuto) { //关闭用户自动投标
+        //关闭用户自动投标
+        if (closeAuto) {
             AutoTender saveAutoTender = new AutoTender();
             saveAutoTender.setStatus(false);
             saveAutoTender.setUpdatedAt(new Date());

@@ -57,6 +57,7 @@ import com.gofobao.framework.common.rabbitmq.MqTagEnum;
 import com.gofobao.framework.helper.*;
 import com.gofobao.framework.listener.providers.BorrowProvider;
 import com.gofobao.framework.listener.providers.CreditProvider;
+import com.gofobao.framework.listener.providers.TransferProvider;
 import com.gofobao.framework.marketing.biz.MarketingProcessBiz;
 import com.gofobao.framework.member.biz.BrokerBounsBiz;
 import com.gofobao.framework.member.biz.impl.WebUserThirdBizImpl;
@@ -394,9 +395,9 @@ public class AplloApplicationTests {
 
     private void batchDetailsQuery() {
         BatchDetailsQueryReq batchDetailsQueryReq = new BatchDetailsQueryReq();
-        batchDetailsQueryReq.setBatchNo("093205");
+        batchDetailsQueryReq.setBatchNo("191212");
 
-        batchDetailsQueryReq.setBatchTxDate("20170918");
+        batchDetailsQueryReq.setBatchTxDate("20170927");
         batchDetailsQueryReq.setType("0");
         batchDetailsQueryReq.setPageNum("1");
         batchDetailsQueryReq.setPageSize("10");
@@ -420,7 +421,6 @@ public class AplloApplicationTests {
 
     @Autowired
     CertHelper certHelper;
-
 
     public void balanceQuery() {
         BalanceQueryRequest balanceQueryRequest = new BalanceQueryRequest();
@@ -663,8 +663,8 @@ public class AplloApplicationTests {
         System.out.println(GSON.toJson(borrow1));
     }
 
-@Test
-    public void mqTest(){
+    @Test
+    public void mqTest() {
         Map<String, String> bodyMap = ImmutableMap.of("planId", "4");
         MqConfig mqConfig = new MqConfig();
         mqConfig.setSendTime(new Date());
@@ -677,275 +677,21 @@ public class AplloApplicationTests {
     }
 
 
-    @Transactional(rollbackFor = Exception.class)
-    public void sendBorrowCollection() {
-        long redpackAccountId = 0;
-        try {
-            redpackAccountId = assetChangeProvider.getRedpackAccountId();
-        } catch (ExecutionException e) {
-            e.printStackTrace();
-        }
-        UserThirdAccount redpackAccount = userThirdAccountService.findByUserId(redpackAccountId);
-
-        String collectionIds = "418565,418713,418716,419532,419541,420643,420848,420854,420966,420975,421002,421011,421020,421118,421125,422198,423838";
-
-        String sentedCollectionIds = "418565,418713,418716,419532,420643,420848,420966,420975,421020,421118,421125,422198,423838";
-        String[] sendArr = sentedCollectionIds.split(",");
-        Set<Long> scis = new HashSet<Long>();
-        for (String idstr : sendArr) {
-            scis.add(NumberHelper.toLong(idstr));
-        }
-
-        String[] idArr = collectionIds.split(",");
-        Specification<BorrowCollection> bcs = Specifications
-                .<BorrowCollection>and()
-                .in("id", idArr)
-                .build();
-        List<BorrowCollection> borrowCollectionList = borrowCollectionService.findList(bcs);
-        Set<Long> borrowIds = borrowCollectionList.stream().map(BorrowCollection::getBorrowId).collect(Collectors.toSet());
-        Specification<Borrow> bs = Specifications
-                .<Borrow>and()
-                .in("id", borrowIds.toArray())
-                .build();
-        List<Borrow> borrowList = borrowService.findList(bs);
-        Map<Long, Borrow> borrowMap = borrowList.stream().collect(Collectors.toMap(Borrow::getId, Function.identity()));
-
-        Set<Long> userIds = new HashSet<>();
-        for (BorrowCollection borrowCollection : borrowCollectionList) {
-            UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(borrowCollection.getUserId());
-            /*Specification<NewAssetLog> nals = Specifications
-                    .<NewAssetLog>and()
-                    .eq("userId", borrowCollection.getUserId())
-                    .eq("localType", AssetChangeTypeEnum.makeUpReceivedPayments.getLocalType())
-                    .build();
-            long count = newAssetLogService.count(nals);
-            */
-
-            Borrow borrow = borrowMap.get(borrowCollection.getBorrowId());
-            long principal = borrowCollection.getPrincipal();
-            long interest = borrowCollection.getInterest();
-            long interestFee = 0;
-
-            ImmutableSet<Long> stockholder = ImmutableSet.of(2480L, 1753L, 1699L,
-                    3966L, 1413L, 1857L,
-                    183L, 2327L, 2432L,
-                    2470L, 2552L, 2739L,
-                    3939L, 893L, 608L,
-                    1216L);
-            boolean between = isBetween(new Date(), DateHelper.stringToDate("2015-12-25 00:00:00"),
-                    DateHelper.stringToDate("2017-12-31 23:59:59"));
-
-            if ((stockholder.contains(borrowCollection.getUserId())) && (between)) {
-            } else {
-                Long feeAccountId = null;  // 平台收费账户ID
-                try {
-                    feeAccountId = assetChangeProvider.getFeeAccountId();
-                } catch (ExecutionException e) {
-                    e.printStackTrace();
-                }
-                interestFee = MoneyHelper.doubleToint(MoneyHelper.multiply(interest, 0.1D, 0));  // 利息问题
-
-                AssetChange assetChange = new AssetChange();   // 还款本金和利息
-                assetChange = new AssetChange();
-                assetChange.setType(AssetChangeTypeEnum.interestManagementFee);  // 扣除投资人利息管理费
-                assetChange.setUserId(borrowCollection.getUserId());
-                assetChange.setForUserId(feeAccountId);
-                assetChange.setMoney(interestFee);
-                assetChange.setRemark(String.format("扣除借款标的[%s]利息管理费%s元(补收)", borrow.getName(), StringHelper.formatDouble(interestFee / 100D, false)));
-                assetChange.setSeqNo(assetChangeProvider.getSeqNo());
-                assetChange.setGroupSeqNo(assetChangeProvider.getGroupSeqNo());
-
-                if (!scis.contains(borrowCollection.getId())) {
-                    log.info(GSON.toJson(assetChange));
-                    try {
-                        assetChangeProvider.commonAssetChange(assetChange);
-                    } catch (Exception e) {
-                        log.error("补发失败:", e);
-                    }
-                }
-            }
-
-            AssetChange assetChange = new AssetChange();   // 还款本金和利息
-            assetChange.setType(AssetChangeTypeEnum.makeUpReceivedPayments);  // 投资人收到还款
-            assetChange.setUserId(borrowCollection.getUserId());
-            assetChange.setForUserId(0l);
-            assetChange.setMoney(principal + interest);   // 本金加利息
-            assetChange.setInterest(interest);  // 利息
-            assetChange.setRemark(String.format("收到客户对借款[%s]第%s期的还款(补发)", borrow.getName(), (borrowCollection.getOrder() + 1)));
-            assetChange.setSourceId(borrowCollection.getId());
-            assetChange.setSeqNo(assetChangeProvider.getSeqNo());
-            assetChange.setGroupSeqNo(assetChangeProvider.getGroupSeqNo());
-            if (!scis.contains(borrowCollection.getId())) {
-                log.info(GSON.toJson(assetChange));
-                try {
-                    assetChangeProvider.commonAssetChange(assetChange);
-                } catch (Exception e) {
-                    log.error("补发失败:", e);
-                }
-            }
-
-
-            //扣除投资人待收
-            assetChange = new AssetChange();
-            assetChange.setType(AssetChangeTypeEnum.collectionSub);  //  扣除投资人待收
-            assetChange.setUserId(borrowCollection.getUserId());
-            assetChange.setMoney(borrowCollection.getInterest() + borrowCollection.getPrincipal());
-            assetChange.setInterest(borrowCollection.getInterest());
-            assetChange.setRemark(String.format("收到客户对[%s]借款的还款,扣除待收(补发)", borrow.getName()));
-            assetChange.setSourceId(borrowCollection.getId());
-            assetChange.setSeqNo(assetChangeProvider.getSeqNo());
-            assetChange.setGroupSeqNo(assetChangeProvider.getGroupSeqNo());
-            if (!scis.contains(borrowCollection.getId())) {
-                log.info(GSON.toJson(assetChange));
-                try {
-                    assetChangeProvider.commonAssetChange(assetChange);
-                } catch (Exception e) {
-                    log.error("补发失败:", e);
-                }
-            }
-            int lateDays = DateHelper.diffInDays(DateHelper.beginOfDate(DateHelper.addHours(new Date(), 3)),
-                    DateHelper.beginOfDate(borrowCollection.getCollectionAt()), false);
-            long overPricipal = new Double(MoneyHelper.round(MoneyHelper.multiply(MoneyHelper.multiply(borrowCollection.getPrincipal(), 0.001), lateDays), 0)).longValue();  // 每天逾期费
-
-            assetChange = new AssetChange();
-            assetChange.setType(AssetChangeTypeEnum.receivedPaymentsPenalty);  // 收取逾期管理费
-            assetChange.setUserId(borrowCollection.getUserId());
-            assetChange.setForUserId(0l);
-            assetChange.setMoney(overPricipal);
-            assetChange.setRemark(String.format("收取借款标的[%s]逾期管理费%s元(补发)", borrow.getName(), StringHelper.formatDouble(overPricipal / 100D, false)));
-            assetChange.setSeqNo(assetChangeProvider.getSeqNo());
-            assetChange.setGroupSeqNo(assetChangeProvider.getGroupSeqNo());
-            if (!scis.contains(borrowCollection.getId())) {
-                log.info(GSON.toJson(assetChange));
-                try {
-                    assetChangeProvider.commonAssetChange(assetChange);
-                } catch (Exception e) {
-                    log.error("补发失败:", e);
-                }
-            }
-
-            //3.发送红包
-            VoucherPayRequest voucherPayRequest = new VoucherPayRequest();
-            voucherPayRequest.setAccountId(redpackAccount.getAccountId());
-            voucherPayRequest.setTxAmount(StringHelper.formatDouble(borrowCollection.getCollectionMoney() + overPricipal - interestFee, 100, false));
-            voucherPayRequest.setForAccountId(userThirdAccount.getAccountId());
-            voucherPayRequest.setDesLineFlag(DesLineFlagContant.TURE);
-            voucherPayRequest.setDesLine("债权转让回款补发!");
-            voucherPayRequest.setChannel(ChannelContant.HTML);
-            log.info(GSON.toJson(voucherPayRequest));
-            /* VoucherPayResponse response = jixinManager.send(JixinTxCodeEnum.SEND_RED_PACKET, voucherPayRequest, VoucherPayResponse.class);
-            if ((ObjectUtils.isEmpty(response)) || (!JixinResultContants.SUCCESS.equals(response.getRetCode()))) {
-                String msg = ObjectUtils.isEmpty(response) ? "当前网络不稳定，请稍候重试" : response.getRetMsg();
-                log.error("redPacket" + msg);
-            }*/
-        }
-    }
+    @Autowired
+    TransferProvider transferProvider;
 
     @Test
     @Transactional(rollbackFor = Exception.class)
     public void test() {
-        sendBorrowCollection();
 
-        /*Borrow borrow = borrowService.findById(179937l);
-        System.out.println(GSON.toJson(borrow));
-        Borrow borrow1 = borrowService.findByIdLock(179937l);
-        System.out.println(GSON.toJson(borrow1));*/
-
-
-        /*dailyAssetBackupScheduler.process();
-*/
-     /*   //记录批次处理日志
-        thirdBatchDealLogBiz.recordThirdBatchDealLog(String.valueOf(113841),169974, ThirdBatchDealLogContants.PROCESSED,true,
-                ThirdBatchLogContants.BATCH_LEND_REPAY, "");
-*/
-        /*MqConfig mqConfig = new MqConfig();
-        mqConfig.setQueue(MqQueueEnum.RABBITMQ_TENDER);
-        mqConfig.setTag(MqTagEnum.AUTO_TENDER);
-        ImmutableMap<String, String> body = ImmutableMap
-                .of(MqConfig.MSG_BORROW_ID, StringHelper.toString("170190"), MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
-        mqConfig.setMsg(body);
+       /* ImmutableMap<String, String> body = ImmutableMap
+                .of(MqConfig.MSG_TRANSFER_ID, StringHelper.toString("132"), MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
+        // mqConfig.setMsg(body);
         try {
-            mqHelper.convertAndSend(mqConfig);
-        } catch (Throwable e) {
-            log.error("borrowProvider autoTender send mq exception", e);
-        }*/
-
-        /*BorrowCalculatorHelper borrowCalculatorHelper = new BorrowCalculatorHelper(
-                NumberHelper.toDouble(StringHelper.toString(9)),
-                NumberHelper.toDouble(StringHelper.toString(1500)), 12, new Date());
-        Map<String, Object> rsMap = borrowCalculatorHelper.simpleCount(0);
-        List<Map<String, Object>> repayDetailList = (List<Map<String, Object>>) rsMap.get("repayDetailList");
-        System.out.println(repayDetailList);*/
-/*        Borrow borrow = borrowService.findById(170185l);
-        UserCache userCache = userCacheService.findById(22002l);
-        Date nowDate = new Date();
-        Date releaseAt = borrow.getReleaseAt();
-
-        if (borrow.getIsNovice()) {  // 新手
-            releaseAt = DateHelper.max(DateHelper.addHours(DateHelper.beginOfDate(releaseAt), 20), borrow.getReleaseAt());
-        }
-        if (ObjectUtils.isEmpty(borrow.getLendId())  && releaseAt.getTime() > nowDate.getTime() && !userCache.isNovice()) {
-            log.info(String.valueOf(ObjectUtils.isEmpty(borrow.getLendId())));
-            log.info(String.valueOf(releaseAt.getTime() > nowDate.getTime()));
-            log.info(String.valueOf(!userCache.isNovice()));
-        }*/
-
-        /*Borrow borrow = new Borrow();
-        long takeUserId = borrow.getTakeUserId();
-        if (ObjectUtils.isEmpty(takeUserId)){
-
-        }*/
-        /*MqConfig mqConfig = new MqConfig();
-        mqConfig.setQueue(MqQueueEnum.RABBITMQ_TENDER);
-        mqConfig.setTag(MqTagEnum.AUTO_TENDER);
-        ImmutableMap<String, String> body = ImmutableMap
-                .of(MqConfig.MSG_BORROW_ID, StringHelper.toString("170183"), MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
-        mqConfig.setMsg(body);
-        try {
-            mqHelper.convertAndSend(mqConfig);
-        } catch (Throwable e) {
-            log.error("borrowProvider autoTender send mq exception", e);
-        }*/
-        /*long redpackAccountId = 0;
-        try {
-            redpackAccountId = assetChangeProvider.getRedpackAccountId();
-        } catch (ExecutionException e) {
+            Boolean result = transferProvider.againVerifyFinanceTransfer(body);
+        } catch (Exception e) {
             e.printStackTrace();
-        }
-
-        UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(redpackAccountId);
-        UserThirdAccount userThirdAccount1 = userThirdAccountService.findByUserId(45255l);
-        //3.发送红包
-        VoucherPayRequest voucherPayRequest = new VoucherPayRequest();
-        voucherPayRequest.setAccountId(userThirdAccount.getAccountId());
-        voucherPayRequest.setTxAmount("10.22");
-        voucherPayRequest.setForAccountId(userThirdAccount1.getAccountId());
-        voucherPayRequest.setDesLineFlag(DesLineFlagContant.TURE);
-        voucherPayRequest.setDesLine("数据迁移账户初始化！");
-        voucherPayRequest.setChannel(ChannelContant.HTML);
-        VoucherPayResponse response = jixinManager.send(JixinTxCodeEnum.SEND_RED_PACKET, voucherPayRequest, VoucherPayResponse.class);
-        if ((ObjectUtils.isEmpty(response)) || (!JixinResultContants.SUCCESS.equals(response.getRetCode()))) {
-            String msg = ObjectUtils.isEmpty(response) ? "当前网络不稳定，请稍候重试" : response.getRetMsg();
         }*/
-
-   /*   //推送队列结束债权
-        MqConfig mqConfig = new MqConfig();
-        mqConfig.setQueue(MqQueueEnum.RABBITMQ_CREDIT);
-        mqConfig.setTag(MqTagEnum.END_CREDIT);
-        mqConfig.setSendTime(DateHelper.addMinutes(new Date(), 1));
-        ImmutableMap<String, String> body = ImmutableMap
-                .of(MqConfig.MSG_BORROW_ID, StringHelper.toString(170106), MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
-        mqConfig.setMsg(body);
-        try {
-            log.info(String.format("thirdBatchProvider creditInvestDeal send mq %s", GSON.toJson(body)));
-            mqHelper.convertAndSend(mqConfig);
-        } catch (Throwable e) {
-            log.error("thirdBatchProvider creditInvestDeal send mq exception", e);
-        }*/
-
-        //dealThirdBatchScheduler.process();
-        //                  dataMigration();
-
 
        /* //批次处理
        batchDeal();
@@ -979,7 +725,7 @@ public class AplloApplicationTests {
         //batchQuery();
         //freezeDetailsQuery();
         //批次详情查询
-        //batchDetailsQuery();
+        batchDetailsQuery();
         //查询投标申请
         //bidApplyQuery();
         //转让标复审回调

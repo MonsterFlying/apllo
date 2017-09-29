@@ -204,7 +204,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
         List<LendPay> lendPayList = new ArrayList<>();
         LendPay lendPay;
         UserThirdAccount tenderUserThirdAccount;
-        double sumTxAmount = 0, validMoney, debtFee;
+        long sumTxAmount = 0, validMoney, debtFee;
         for (Tender tender : tenderList) {
             debtFee = 0;
             //投标有效金额
@@ -283,6 +283,9 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
             ThirdBatchLog thirdBatchLog = new ThirdBatchLog();
             thirdBatchLog.setBatchNo(batchNo);
             thirdBatchLog.setCreateAt(nowDate);
+            thirdBatchLog.setTxDate(batchLendPayReq.getTxDate());
+            thirdBatchLog.setTxTime(batchLendPayReq.getTxTime());
+            thirdBatchLog.setSeqNo(batchLendPayReq.getSeqNo());
             thirdBatchLog.setUpdateAt(nowDate);
             thirdBatchLog.setSourceId(borrowId);
             thirdBatchLog.setType(ThirdBatchLogContants.BATCH_FINANCE_LEND_REPAY);
@@ -369,7 +372,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
         if (!JixinResultContants.SUCCESS.equals(lendRepayCheckResp.getRetCode())) {
             log.error("=============================理财计划即信批次放款检验参数回调===========================");
             log.error("回调失败! msg:" + lendRepayCheckResp.getRetMsg());
-            thirdBatchLogBiz.updateBatchLogState(lendRepayCheckResp.getBatchNo(), borrowId, 2, ThirdBatchLogContants.BATCH_LEND_REPAY);
+            thirdBatchLogBiz.updateBatchLogState(lendRepayCheckResp.getBatchNo(), borrowId, 2, ThirdBatchLogContants.BATCH_FINANCE_LEND_REPAY);
             //改变批次放款状态 处理失败
             Borrow borrow = borrowService.findById(borrowId);
             borrow.setLendRepayStatus(ThirdDealStatusContrants.INDISPOSE);
@@ -381,7 +384,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
             log.info("=============================理财计划即信批次放款检验参数回调===========================");
             log.info("回调成功!");
             //更新批次状态
-            thirdBatchLogBiz.updateBatchLogState(lendRepayCheckResp.getBatchNo(), borrowId, 1, ThirdBatchLogContants.BATCH_LEND_REPAY);
+            thirdBatchLogBiz.updateBatchLogState(lendRepayCheckResp.getBatchNo(), borrowId, 1, ThirdBatchLogContants.BATCH_FINANCE_LEND_REPAY);
             //记录批次处理日志
             thirdBatchDealLogBiz.recordThirdBatchDealLog(lendRepayCheckResp.getBatchNo(), borrowId, ThirdBatchDealLogContants.PARAM_CHECK, true,
                     ThirdBatchLogContants.BATCH_LEND_REPAY, lendRepayCheckResp.getRetMsg());
@@ -468,13 +471,13 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
             }
         }
 
-        double totalManageFee = 0; // 净值标, 收取账户管理费
+        long totalManageFee = 0; // 净值标, 收取账户管理费
         if (borrow.getType() == 1) {
             double manageFeeRate = 0.0012;
             if (borrow.getRepayFashion() == 1) {
-                totalManageFee = MoneyHelper.round(borrow.getMoney() * manageFeeRate / 30 * borrow.getTimeLimit(), 0);
+                totalManageFee = new Double(MoneyHelper.round(borrow.getMoney() * manageFeeRate / 30 * borrow.getTimeLimit(), 0)).longValue();
             } else {
-                totalManageFee = MoneyHelper.round(borrow.getMoney() * manageFeeRate * borrow.getTimeLimit(), 0);
+                totalManageFee = new Double(MoneyHelper.round(borrow.getMoney() * manageFeeRate * borrow.getTimeLimit(), 0)).longValue();
             }
         }
 
@@ -488,7 +491,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
             //投标有效金额
             validMoney = tender.getValidMoney();
             /*净值管理费*/
-            double newWorthFee = MoneyHelper.round(MoneyHelper.multiply(MoneyHelper.divide(validMoney, borrow.getMoney()), totalManageFee), 0);
+            long newWorthFee = new Double(MoneyHelper.round(MoneyHelper.multiply(MoneyHelper.divide(validMoney, borrow.getMoney()), totalManageFee), 0)).longValue();
             //净值账户管理费
             if (borrow.getType() == 1) {
                 sumNetWorthFee = MoneyHelper.add(sumNetWorthFee, newWorthFee);
@@ -566,6 +569,9 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
             ThirdBatchLog thirdBatchLog = new ThirdBatchLog();
             thirdBatchLog.setBatchNo(batchNo);
             thirdBatchLog.setCreateAt(nowDate);
+            thirdBatchLog.setTxDate(batchLendPayReq.getTxDate());
+            thirdBatchLog.setTxTime(batchLendPayReq.getTxTime());
+            thirdBatchLog.setSeqNo(batchLendPayReq.getSeqNo());
             thirdBatchLog.setUpdateAt(nowDate);
             thirdBatchLog.setSourceId(borrowId);
             thirdBatchLog.setType(ThirdBatchLogContants.BATCH_LEND_REPAY);

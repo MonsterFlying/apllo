@@ -265,8 +265,9 @@ public class AssetBizImpl implements AssetBiz {
         Preconditions.checkNotNull(asset, "用户资产记录不存在!");
         UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(userId);
         Preconditions.checkNotNull(userThirdAccount, "存管账户记录不存在!");
+
         /* 红包发放金额 */
-        double money = MoneyHelper.multiply(NumberHelper.toDouble(paramMap.get("money")), 100d);
+        long money = new Double(MoneyHelper.multiply(NumberHelper.toDouble(paramMap.get("money")), 100d)).longValue();
         if (money <= 0) {
             return ResponseEntity
                     .badRequest()
@@ -282,7 +283,7 @@ public class AssetBizImpl implements AssetBiz {
         //3.发送红包
         VoucherPayRequest voucherPayRequest = new VoucherPayRequest();
         voucherPayRequest.setAccountId(redpackAccount.getAccountId());
-        voucherPayRequest.setTxAmount(StringHelper.formatDouble(asset.getUseMoney(), 100, false));
+        voucherPayRequest.setTxAmount(StringHelper.formatDouble(MoneyHelper.divide(asset.getUseMoney(), 100d), false));
         voucherPayRequest.setForAccountId(userThirdAccount.getAccountId());
         voucherPayRequest.setDesLineFlag(DesLineFlagContant.TURE);
         voucherPayRequest.setDesLine("红包发送!");

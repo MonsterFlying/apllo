@@ -31,7 +31,7 @@ public class LendScheduler {
     @Autowired
     private ExceptionEmailHelper exceptionEmailHelper;
 
-    @Scheduled(cron = "0 3 0 * * ? ")
+    @Scheduled(cron = "0 0 0,21 * * ? ")
     @Transactional(rollbackOn = Exception.class)
     public void process() {
         try {

@@ -71,7 +71,6 @@ public class VoCreateTenderReq extends VoBaseReq {
                 requestSource = "0";
             }
             this.requestSource = requestSource;
-
         }
     }
 }

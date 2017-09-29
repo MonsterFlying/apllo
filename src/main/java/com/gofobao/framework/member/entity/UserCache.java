@@ -89,6 +89,15 @@ public class UserCache {
 
     private Long cashTotal;
 
+    /**
+     * 理财计划回款本金
+     */
+    private Long jhWaitCollectionPrincipal;
+
+    /**
+     * 理财计划回款利息
+     */
+    private Long jhWaitCollectionInterest;
 
     public long getIncomeTotal() {
         return this.incomeInterest

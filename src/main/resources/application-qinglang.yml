@@ -1,9 +1,9 @@
 spring:
   datasource:
     type: com.alibaba.druid.pool.DruidDataSource
-    url: jdbc:mysql://192.168.1.5:3306/gfb0918?useUnicode=true&characterEncoding=utf8&autoReconnect=true&failOverReadOnly=false&&useSSL=true
-    username: root
-    password:
+    url: jdbc:mysql://192.168.1.5:3306/gfb0810?useUnicode=true&characterEncoding=utf8&autoReconnect=true&failOverReadOnly=false&&useSSL=true
+    username: gfb0810
+    password: GOFOBAO@0701.
     driver-class-name: com.mysql.jdbc.Driver
   jpa:
     database: mysql
@@ -77,7 +77,8 @@ gofobao:
   h5Domain:  http://18164xy341.51mypc.cn
   imageDomain : http://www.gofobao.com
   pcDomain: http://gofobao.55555.io
-  adminDomain: http://m7ocvas9.gofobao.com  #管理员后台地址
+  #adminDomain: http://m7ocvas9.gofobao.com  #管理员后台地址
+  adminDomain: "http://gofobao-admin.dev" #管理员后台地址
   captcha: false # 全站是否开启图形验证码验证
   close-email-send: true # 关闭邮箱发送
   close-phone-send: true # 关闭短信发送
