@@ -33,7 +33,7 @@ public class NewAleveAndEveScheduler {
     /**
      * 自动投标
      */
-    @Scheduled(cron = "0 0 3 * * ?")
+    @Scheduled(cron = "0 0 4 * * ?")
     public void process() {
         String date = jixinTxDateHelper.getSubDateStr(1);
         log.info("=======================================");
