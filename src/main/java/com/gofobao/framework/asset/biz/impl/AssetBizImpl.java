@@ -1656,10 +1656,20 @@ public class AssetBizImpl implements AssetBiz {
 
     @Override
     public ResponseEntity<VoDueInRes> dueInInfo(Long userId) {
-        VoDueInRes voDueInRes = VoBaseResp.ok("查询成功", VoDueInRes.class);
-        UserCache userCache = userCacheService.findById(userId);
-       // voDueInRes.setDueInInterest(userCache.get);
-
-        return null;
+        try {
+            VoDueInRes voDueInRes = VoBaseResp.ok("查询成功", VoDueInRes.class);
+            UserCache userCache = userCacheService.findById(userId);
+            Long jhWaitCollectionInterest = userCache.getJhWaitCollectionInterest();
+            Long jhWaitCollectionPrincipal = userCache.getJhWaitCollectionPrincipal();
+            voDueInRes.setDueInInterest(StringHelper.formatMon(jhWaitCollectionInterest / 100D));
+            voDueInRes.setDuePrincipal(StringHelper.formatMon(jhWaitCollectionPrincipal / 100D));
+            voDueInRes.setDueInTotal(StringHelper.formatMon((jhWaitCollectionInterest + jhWaitCollectionPrincipal) / 100D));
+            return ResponseEntity.ok(voDueInRes);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR,
+                            "查询异常,请稍后在试",
+                            VoDueInRes.class));
+        }
     }
 }
