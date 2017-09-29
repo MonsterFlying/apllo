@@ -2,6 +2,7 @@ package com.gofobao.framework.finance.biz.impl;
 
 import com.github.wenhao.jpa.Specifications;
 import com.gofobao.framework.api.contants.ChannelContant;
+import com.gofobao.framework.api.contants.DesLineFlagContant;
 import com.gofobao.framework.api.contants.JixinResultContants;
 import com.gofobao.framework.api.helper.JixinManager;
 import com.gofobao.framework.api.helper.JixinTxCodeEnum;
@@ -11,6 +12,8 @@ import com.gofobao.framework.api.model.balance_query.BalanceQueryRequest;
 import com.gofobao.framework.api.model.balance_query.BalanceQueryResponse;
 import com.gofobao.framework.api.model.balance_un_freeze.BalanceUnfreezeReq;
 import com.gofobao.framework.api.model.balance_un_freeze.BalanceUnfreezeResp;
+import com.gofobao.framework.api.model.voucher_pay.VoucherPayRequest;
+import com.gofobao.framework.api.model.voucher_pay.VoucherPayResponse;
 import com.gofobao.framework.asset.entity.Asset;
 import com.gofobao.framework.asset.service.AssetService;
 import com.gofobao.framework.common.assets.AssetChange;
@@ -67,6 +70,7 @@ import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 
 import java.util.*;
+import java.util.concurrent.ExecutionException;
 
 /**
  * Created by Zeke on 2017/8/10.
@@ -171,6 +175,7 @@ public class FinancePlanBizImpl implements FinancePlanBiz {
      * @return
      * @throws Exception
      */
+    @Transactional(rollbackFor = Exception.class)
     public ResponseEntity<VoBaseResp> financePlanAssetChange(VoFinancePlanAssetChange voFinancePlanAssetChange) throws Exception {
         String paramStr = voFinancePlanAssetChange.getParamStr();
         if (!SecurityHelper.checkSign(voFinancePlanAssetChange.getSign(), paramStr)) {
@@ -186,6 +191,7 @@ public class FinancePlanBizImpl implements FinancePlanBiz {
         String type = StringHelper.toString(paramMap.get("type"));/* 资金变动类型 */
         String remark = paramMap.get("remark");/* 备注 */
         boolean freezeFlag = BooleanUtils.toBoolean(paramMap.get("freezeFlag"));/* 是否冻结标识 */
+        boolean sendRedPacKetFlag = BooleanUtils.toBoolean(paramMap.get("sendRedPacKetFlag"));/* 是否冻结标识 */
         /* 理财计划购买记录 */
         FinancePlanBuyer financePlanBuyer = financePlanBuyerService.findByIdLock(planBuyId);
         Preconditions.checkNotNull(financePlanBuyer, "理财计划购买记录不存在!");
@@ -222,6 +228,29 @@ public class FinancePlanBizImpl implements FinancePlanBiz {
                     throw new Exception("理财计划资金变动冻结资金失败：" + balanceFreezeResp.getRetMsg());
                 }
             }
+            //是否发红包
+            if (sendRedPacKetFlag) {
+                long redpackAccountId = assetChangeProvider.getRedpackAccountId();
+
+                UserThirdAccount redpackAccount = userThirdAccountService.findByUserId(redpackAccountId);
+                VoucherPayRequest voucherPayRequest = new VoucherPayRequest();
+                voucherPayRequest.setAccountId(redpackAccount.getAccountId());
+                voucherPayRequest.setTxAmount(StringHelper.formatDouble(money, 100, false));
+                voucherPayRequest.setForAccountId(buyUserThirdAccount.getAccountId());
+                voucherPayRequest.setDesLineFlag(DesLineFlagContant.TURE);
+                voucherPayRequest.setDesLine(typeEnum.getOpName());
+                voucherPayRequest.setChannel(ChannelContant.HTML);
+                VoucherPayResponse response = jixinManager.send(JixinTxCodeEnum.SEND_RED_PACKET, voucherPayRequest, VoucherPayResponse.class);
+                if ((ObjectUtils.isEmpty(response)) || (!JixinResultContants.SUCCESS.equals(response.getRetCode()))) {
+                    String msg = ObjectUtils.isEmpty(response) ? "当前网络不稳定，请稍候重试" : response.getRetMsg();
+                    /**
+                     * @// TODO: 2017/9/28  强化代码
+                     */
+
+                    log.error("redPacket" + msg);
+                    throw new Exception(msg);
+                }
+            }
         } catch (Throwable t) {
             String newOrderId = JixinHelper.getOrderId(JixinHelper.BALANCE_UNFREEZE_PREFIX);/* 购买债权转让冻结金额 orderid */
             //解除存管资金冻结
@@ -235,6 +264,7 @@ public class FinancePlanBizImpl implements FinancePlanBiz {
             if ((ObjectUtils.isEmpty(balanceUnfreezeResp)) || (!JixinResultContants.SUCCESS.equalsIgnoreCase(balanceUnfreezeResp.getRetCode()))) {
                 throw new Exception("理财计划资金变动解冻资金失败：" + balanceUnfreezeResp.getRetMsg());
             }
+            throw new Exception(t);
         }
 
         return ResponseEntity.ok(VoBaseResp.ok("理财计划资金变动!"));

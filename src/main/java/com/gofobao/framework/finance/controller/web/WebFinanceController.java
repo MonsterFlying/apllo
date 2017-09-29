@@ -8,6 +8,7 @@ import com.gofobao.framework.finance.vo.request.VoFinanceRepurchase;
 import com.gofobao.framework.finance.vo.response.VoViewFinancePlanTender;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ModelAttribute;
@@ -23,6 +24,7 @@ import javax.validation.Valid;
 @RestController
 @RequestMapping("/plan/pc")
 @Api(description = "理财计划功能模块")
+@Slf4j
 public class WebFinanceController {
 
     @Autowired
@@ -42,6 +44,7 @@ public class WebFinanceController {
         try {
             return financePlanBiz.financeRepurchase(voFinanceRepurchase);
         } catch (Exception e) {
+            log.error("理财计划匹配债权转让 异常：",e);
             return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "回购失败!"));
         }
     }
@@ -58,6 +61,7 @@ public class WebFinanceController {
         try {
             return financePlanBiz.financePlanTender(voFinancePlanTender);
         } catch (Exception e) {
+            log.error("理财计划匹配债权转让 异常：",e);
             return ResponseEntity.badRequest().body("匹配失败!");
         }
     }
@@ -74,6 +78,7 @@ public class WebFinanceController {
         try {
             return financePlanBiz.financePlanAssetChange(voFinancePlanAssetChange);
         } catch (Exception e) {
+
             return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "系统开小差了，请稍后再试!", VoViewFinancePlanTender.class));
         }
     }

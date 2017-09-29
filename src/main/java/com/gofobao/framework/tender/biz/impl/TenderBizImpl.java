@@ -130,11 +130,11 @@ public class TenderBizImpl implements TenderBiz {
         Preconditions.checkNotNull(user, "投标: 用户信息为空!");
 
         UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(voCreateTenderReq.getUserId());
-       if(ObjectUtils.isEmpty(userThirdAccount)){
-           return ResponseEntity
-                   .badRequest()
-                   .body(VoBaseResp.error(VoBaseResp.ERROR_CREDIT, "当前用户未开户！", VoBaseResp.class));
-       }
+        if (ObjectUtils.isEmpty(userThirdAccount)) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR_CREDIT, "当前用户未开户！", VoBaseResp.class));
+        }
 
         if (userThirdAccount.getAutoTenderState() != 1) {
             return ResponseEntity
@@ -169,7 +169,7 @@ public class TenderBizImpl implements TenderBiz {
         long validateMoney = Long.parseLong(iterator.next());
         Tender borrowTender = createBorrowTenderRecord(voCreateTenderReq, user, nowDate, validateMoney);    // 生成投标记录
         borrowTender = registerJixinTenderRecord(borrow, borrowTender);  // 投标的存管报备
-        if(ObjectUtils.isEmpty(borrowTender)){
+        if (ObjectUtils.isEmpty(borrowTender)) {
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "非常抱歉, 自动投标存管申报失败"));
@@ -476,7 +476,10 @@ public class TenderBizImpl implements TenderBiz {
         boolean isAutoTender = voCreateTenderReq.getIsAutoTender();
 
         if (borrow.getIsNovice()) {  // 新手
-            releaseAt = DateHelper.max(DateHelper.addHours(DateHelper.beginOfDate(releaseAt), 20), borrow.getReleaseAt());
+            releaseAt = DateHelper.max(DateHelper.addHours(DateHelper.beginOfDate(nowDate), 20), borrow.getReleaseAt());
+            if (DateHelper.getHour(nowDate) >= 20) {
+                releaseAt = DateHelper.addDays(releaseAt, 1);
+            }
         }
 
         UserCache userCache = userCacheService.findById(user.getId());

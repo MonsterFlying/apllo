@@ -323,8 +323,8 @@ public class DateHelper {
      * @param date
      * @return
      */
-    public static int getDate(final Date date) {
-        return get(date, Calendar.DATE);
+    public static int getHour(final Date date) {
+        return get(date, Calendar.HOUR_OF_DAY);
     }
 
     /**
