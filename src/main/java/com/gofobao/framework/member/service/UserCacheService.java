@@ -68,4 +68,7 @@ public interface UserCacheService {
      * @return
      */
     boolean isNew(Users user);
+
+
+    List<UserCache> findByUserIds(List<Long>userIds);
 }

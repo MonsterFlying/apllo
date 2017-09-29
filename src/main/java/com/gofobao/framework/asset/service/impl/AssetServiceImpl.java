@@ -61,4 +61,9 @@ public class AssetServiceImpl implements AssetService {
         }
         return assetRepository.save(asset);
     }
+
+    @Override
+    public List<Asset> findByUserIds(List<Long> userIds) {
+        return assetRepository.findByUserIdIn(userIds);
+    }
 }

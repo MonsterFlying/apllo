@@ -34,6 +34,9 @@ public class PlanDetail extends VoBaseResp {
     @ApiModelProperty("剩余总额")
     private String surplusMoney;
 
+    @ApiModelProperty("隐藏剩余金额")
+    private String hideSurplusMoney;
+
     @ApiModelProperty("进度")
     private Double spend;
 

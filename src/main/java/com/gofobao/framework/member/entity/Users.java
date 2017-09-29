@@ -75,4 +75,14 @@ public class Users implements Serializable {
 
     private String avatarPath;
 
+    @Column(name = "starfire_register_token") //星火token
+    private String starFireRegisterToken;
+
+    @Column(name = "starfire_user_id")
+    private String starFireUserId;
+
+    @Column(name = "starfire_bind_date")
+    private Date starFireBindAt;
+
+
 }

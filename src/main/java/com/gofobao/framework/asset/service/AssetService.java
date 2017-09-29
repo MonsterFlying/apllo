@@ -20,6 +20,8 @@ public interface AssetService {
      */
     Asset findByUserId(Long id);
 
+    List<Asset>findByUserIds(List<Long> userIds);
+
     Asset findByUserIdLock(Long id);
 
     Asset save(Asset asset);

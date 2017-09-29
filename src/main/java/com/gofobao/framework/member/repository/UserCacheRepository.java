@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import javax.persistence.LockModeType;
+import java.util.List;
 
 /**
  * Created by Zeke on 2017/5/19.
@@ -16,6 +17,7 @@ import javax.persistence.LockModeType;
 public interface UserCacheRepository extends JpaRepository<UserCache, Long>, JpaSpecificationExecutor<UserCache> {
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     UserCache findByUserId(Long userId);
+
     /**
      * 用户总计收益
      *
@@ -27,4 +29,7 @@ public interface UserCacheRepository extends JpaRepository<UserCache, Long>, Jpa
             "+incomeIntegralCash" +
             "+incomeBonus+incomeOther) FROM UserCache")
     Long userIncomeTotal();
+
+    List<UserCache> findByUserIdIn(List<Long> userId);
+
 }

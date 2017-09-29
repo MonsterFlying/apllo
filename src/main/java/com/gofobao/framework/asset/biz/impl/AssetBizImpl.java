@@ -1624,4 +1624,12 @@ public class AssetBizImpl implements AssetBiz {
         return offlineRechargeCallResponse;
     }
 
+    @Override
+    public ResponseEntity<VoDueInRes> dueInInfo(Long userId) {
+        VoDueInRes voDueInRes = VoBaseResp.ok("查询成功", VoDueInRes.class);
+        UserCache userCache = userCacheService.findById(userId);
+       // voDueInRes.setDueInInterest(userCache.get);
+
+        return null;
+    }
 }
