@@ -1,31 +1,61 @@
 package com.gofobao.framework.financial.biz.impl;
 
+import com.github.wenhao.jpa.Specifications;
 import com.gofobao.framework.api.helper.JixinFileManager;
 import com.gofobao.framework.api.helper.JixinTxDateHelper;
+import com.gofobao.framework.asset.entity.CurrentIncomeLog;
+import com.gofobao.framework.asset.service.CurrentIncomeLogService;
+import com.gofobao.framework.common.assets.AssetChange;
+import com.gofobao.framework.common.assets.AssetChangeProvider;
+import com.gofobao.framework.common.assets.AssetChangeTypeEnum;
 import com.gofobao.framework.financial.biz.NewAleveBiz;
 import com.gofobao.framework.financial.entity.NewAleve;
 import com.gofobao.framework.financial.entity.NewEve;
 import com.gofobao.framework.financial.service.NewAleveService;
 import com.gofobao.framework.helper.ExceptionEmailHelper;
 import com.gofobao.framework.helper.MoneyHelper;
+import com.gofobao.framework.helper.NumberHelper;
+import com.gofobao.framework.helper.StringHelper;
+import com.gofobao.framework.member.entity.UserThirdAccount;
+import com.gofobao.framework.member.service.UserService;
+import com.gofobao.framework.member.service.UserThirdAccountService;
 import com.gofobao.framework.migrate.FormatHelper;
+import com.google.common.base.Preconditions;
 import com.google.common.io.Files;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
+import org.springframework.util.StringUtils;
 
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.nio.charset.StandardCharsets;
+import java.util.Date;
+import java.util.List;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 
 @Service
 @Slf4j
 public class NewAleveBizImpl implements NewAleveBiz {
+    @Autowired
+    AssetChangeProvider assetChangeProvider;
+
+    @Autowired
+    UserThirdAccountService userThirdAccountService;
+
+    @Autowired
+    UserService userService;
 
     @Autowired
     NewAleveService newAleveService;
@@ -47,6 +77,9 @@ public class NewAleveBizImpl implements NewAleveBiz {
 
     @Autowired
     ExceptionEmailHelper exceptionEmailHelper;
+
+    @Autowired
+    CurrentIncomeLogService currentIncomeLogService;
 
 
     @Override
@@ -88,7 +121,7 @@ public class NewAleveBizImpl implements NewAleveBiz {
             @Override
             public void accept(String line) {
                 try {
-                    byte[] bytes = line.getBytes("gbk") ;
+                    byte[] bytes = line.getBytes("gbk");
                     String bank = FormatHelper.getStrForGBK(bytes, 0, 4); // 银行号
                     String cardnbr = FormatHelper.getStrForGBK(bytes, 4, 23); // 电子账号
                     String amount = FormatHelper.getStrForGBK(bytes, 23, 40); // 交易金额
@@ -111,7 +144,7 @@ public class NewAleveBizImpl implements NewAleveBiz {
                     String resv = FormatHelper.getStrForGBK(bytes, 184, 371); // 保留域
 
                     // 资金处理
-                    amount = MoneyHelper.divide(amount, "100", 2) ;  // 将分转成元
+                    amount = MoneyHelper.divide(amount, "100", 2);  // 将分转成元
                     curr_bal = MoneyHelper.divide(curr_bal, "100", 2);//  将分转成元
                     NewAleve newAleve = new NewAleve();
                     newAleve.setAccchg(accchg);
@@ -146,4 +179,95 @@ public class NewAleveBizImpl implements NewAleveBiz {
             }
         });
     }
+
+    @Override
+    public void calculationCurrentInterest(String date) {
+        try {
+            Specification<NewAleve> specification = Specifications
+                    .<NewAleve>and()
+                    .eq("transtype", "5500")  // 活期收益
+                    .eq("queryTime", date)  // 日期
+                    .build();
+            Long count = newAleveService.count(specification);
+            if (count <= 0) {
+                log.info("当前无活期利息");
+            }
+            int pageSize = 20, pageIndex = 0, pageIndexTotal = 0;
+            pageIndexTotal = count.intValue() / pageSize;
+            pageIndexTotal = count.intValue() % pageSize == 0 ? pageIndexTotal : pageIndexTotal + 1;
+
+            for (; pageIndex < pageIndexTotal; pageIndex++) {
+                Pageable pageable = new PageRequest(pageIndex, pageSize, new Sort(new Sort.Order(Sort.Direction.DESC, "id")));
+                Page<NewAleve> newAleves = newAleveService.findAll(specification, pageable);
+                List<NewAleve> data = newAleves.getContent();
+
+                for (NewAleve item : data) {
+                    String cardnbr = item.getCardnbr();  // 账户
+                    String amount = item.getAmount(); // 金额 元
+                    String accountId = StringUtils.trimAllWhitespace(cardnbr);
+                    String money = StringUtils.trimAllWhitespace(amount);
+                    UserThirdAccount userThirdAccount = userThirdAccountService.findByAccountId(accountId);
+                    if (ObjectUtils.isEmpty(userThirdAccount)) {
+                        log.error(String.format("活期收益派发, 开户信息为空: %s", accountId));
+                        continue;
+                    }
+
+                    try {
+                        doAssetChangeByCurrentInterest(item, userThirdAccount, money);
+                    } catch (Exception e) {
+                        log.error("活期收益资金变动异常", e);
+                    }
+                }
+            }
+
+        } catch (Exception e) {
+            log.error("派发用户活期收益异常", e);
+            exceptionEmailHelper.sendException("派发用户活期收益异常", e);
+        }
+    }
+
+    /**
+     * 执行活期派发
+     *
+     * @param eve
+     * @param userThirdAccount
+     * @param money
+     */
+    @Transactional(rollbackFor = Exception.class)
+    public void doAssetChangeByCurrentInterest(NewAleve eve, UserThirdAccount userThirdAccount, String money) throws Exception {
+        Date nowDate = new Date();
+        long currMoney = MoneyHelper.yuanToFen(money);  // 元转分
+        String accountId = userThirdAccount.getAccountId(); // 账号
+        String reldate = StringUtils.trimAllWhitespace(eve.getReldate());  // 日期
+        String inputTime = StringUtils.trimAllWhitespace(eve.getInptime()); // 时间
+        String seqNo = StringUtils.trimAllWhitespace(eve.getSeqno());
+        String no = String.format("%s%s%s", reldate, inputTime, seqNo); // 序列号
+        List<CurrentIncomeLog> currentIncomeLogs = currentIncomeLogService.findBySeqNoAndState(no, 1);
+        if (!CollectionUtils.isEmpty(currentIncomeLogs)) {
+            log.error(String.format("当前用户已添加活期收益: %s - %s", accountId, no));
+            return;
+        }
+
+        CurrentIncomeLog currentIncomeLog = new CurrentIncomeLog();
+        currentIncomeLog.setCreateAt(nowDate);
+        currentIncomeLog.setUserId(userThirdAccount.getUserId());
+        currentIncomeLog.setSeqNo(no);
+        currentIncomeLog.setState(1);
+        currentIncomeLog.setMoney(currMoney);
+
+        currentIncomeLog = currentIncomeLogService.save(currentIncomeLog);
+        AssetChange assetChange = new AssetChange();
+        assetChange.setUserId(userThirdAccount.getUserId());
+        assetChange.setForUserId(0L);
+        assetChange.setSeqNo(no);
+        assetChange.setRemark(String.format("收到活期收益%s元", money));
+        assetChange.setGroupSeqNo(assetChangeProvider.getGroupSeqNo());
+        assetChange.setSourceId(currentIncomeLog.getId());
+        assetChange.setType(AssetChangeTypeEnum.currentIncome);  //活期收益
+        assetChange.setMoney(currMoney);
+        assetChangeProvider.commonAssetChange(assetChange);
+        log.info(String.format("处理活期收益成功: %s", no));
+    }
+
+
 }

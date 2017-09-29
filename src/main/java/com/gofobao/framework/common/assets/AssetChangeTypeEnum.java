@@ -329,7 +329,7 @@ public enum AssetChangeTypeEnum {
     /**
      * 活期收益
      */
-    currentIncome("活期收益", "currentIncome", "5500", "add@useMoney", "", "D");
+    currentIncome("活期收益", "currentIncome", "5500", "add@useMoney", "add@incomeOther", "D");
 
 
     /**
