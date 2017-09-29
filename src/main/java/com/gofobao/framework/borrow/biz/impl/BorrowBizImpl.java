@@ -1887,9 +1887,12 @@ public class BorrowBizImpl implements BorrowBiz {
                 && (autoTenderBorrowType.contains(borrowType)) && borrow.getApr() > 800) {
             borrow.setIsLock(true);
             borrowService.updateById(borrow);  // 锁住标的,禁止手动投标
-            if (borrow.getIsNovice()) {   // 对于新手标直接延迟8点后推送
-                Date noviceBorrowStandeReaseAt = DateHelper.addHours(DateHelper.beginOfDate(new Date()), 20);  // 新手标 能进行制动的时间
-                releaseAt = DateHelper.max(noviceBorrowStandeReaseAt, releaseAt);
+
+            if (borrow.getIsNovice()) {  // 新手
+                releaseAt = DateHelper.max(DateHelper.addHours(DateHelper.beginOfDate(nowDate), 20), borrow.getReleaseAt());
+                if (DateHelper.getHour(nowDate) >= 20) {
+                    releaseAt = DateHelper.addDays(releaseAt, 1);
+                }
             }
 
             //触发自动投标队列

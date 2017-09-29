@@ -168,23 +168,21 @@ public class StarFireBorrowBizImpl implements StarFireBorrowBiz {
      */
     private String getBorrowStatus(Borrow borrow) {
         if (borrow.getStatus() == BorrowContants.BIDDING) {
+            Date endAt = DateHelper.addDays(borrow.getReleaseAt(), borrow.getValidDay() + 1);
             if (!StringUtils.isEmpty(borrow.getSuccessAt())) {
                 return StarFireBorrowConstant.SHENHEZHONG;
             }
-            Date endAt = DateHelper.addDays(borrow.getReleaseAt(), borrow.getValidDay() + 1);
-            if (endAt.getTime() < new Date().getTime()) {
+            else if (endAt.getTime() < new Date().getTime()) {
                 return StarFireBorrowConstant.LIUBIAO;
             } else {
                 return StarFireBorrowConstant.WEIMIANBIAO;
             }
-
         } else if (borrow.getStatus() == BorrowContants.PASS) {
             if (StringUtils.isEmpty(borrow.getCloseAt())) {
                 return StarFireBorrowConstant.YIJIEQING;
             } else {
                 return StarFireBorrowConstant.HUANKUANZHONG;
             }
-
         }
         return "";
     }

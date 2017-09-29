@@ -480,10 +480,7 @@ public class TenderBizImpl implements TenderBiz {
         boolean isAutoTender = voCreateTenderReq.getIsAutoTender();
 
         if (borrow.getIsNovice()) {  // 新手
-            releaseAt = DateHelper.max(DateHelper.addHours(DateHelper.beginOfDate(nowDate), 20), borrow.getReleaseAt());
-            if (DateHelper.getHour(nowDate) >= 20) {
-                releaseAt = DateHelper.addDays(releaseAt, 1);
-            }
+            releaseAt = DateHelper.max(DateHelper.addHours(DateHelper.beginOfDate(releaseAt), 20), borrow.getReleaseAt());
         }
 
         UserCache userCache = userCacheService.findById(user.getId());
