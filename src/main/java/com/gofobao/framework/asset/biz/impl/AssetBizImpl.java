@@ -399,6 +399,7 @@ public class AssetBizImpl implements AssetBiz {
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public ResponseEntity<VoBaseResp> rechargeOnline(HttpServletRequest request, VoRechargeReq voRechargeReq) throws Exception {
         try {
             Users users = userService.findById(voRechargeReq.getUserId());

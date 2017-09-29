@@ -376,9 +376,9 @@ public class JixinManager {
             exceptionEmailHelper.sendErrorMessage("访问权限受限, 需要联系即信", gson.toJson(req));
         }
 
-        if (JixinResultContants.ERROR_JX999999.equalsIgnoreCase(body.getRetCode())) {
+        /*if (JixinResultContants.ERROR_JX999999.equalsIgnoreCase(body.getRetCode())) {
             exceptionEmailHelper.sendErrorMessage("FES系统异常", gson.toJson(req));
-        }
+        }*/
 
         return body;
     }
