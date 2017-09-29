@@ -1,4 +1,4 @@
-package com.gofobao.framework.tender.service.impl;
+package com.gofobao.framework.finance.service.impl;
 
 import com.github.wenhao.jpa.Specifications;
 import com.gofobao.framework.borrow.contants.BorrowContants;
@@ -11,6 +11,7 @@ import com.gofobao.framework.finance.entity.FinancePlan;
 import com.gofobao.framework.finance.entity.FinancePlanBuyer;
 import com.gofobao.framework.finance.entity.FinancePlanCollection;
 import com.gofobao.framework.finance.service.FinancePlanBuyerService;
+import com.gofobao.framework.finance.service.FinancePlanCollectionService;
 import com.gofobao.framework.finance.service.FinancePlanService;
 import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.helper.NumberHelper;
@@ -21,9 +22,7 @@ import com.gofobao.framework.tender.contants.TransferContants;
 import com.gofobao.framework.tender.entity.Tender;
 import com.gofobao.framework.tender.entity.Transfer;
 import com.gofobao.framework.tender.repository.InvestRepository;
-import com.gofobao.framework.tender.service.FinanceInvestService;
-import com.gofobao.framework.tender.service.InvestService;
-import com.gofobao.framework.tender.service.TransferService;
+import com.gofobao.framework.finance.service.FinanceInvestService;
 import com.gofobao.framework.tender.vo.request.ReturnedMoney;
 import com.gofobao.framework.tender.vo.request.VoDetailReq;
 import com.gofobao.framework.tender.vo.request.VoInvestListReq;
@@ -31,7 +30,6 @@ import com.gofobao.framework.tender.vo.response.*;
 import com.google.common.collect.Maps;
 import groovy.util.logging.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
@@ -72,6 +70,9 @@ public class FinanceInvestServiceImpl implements FinanceInvestService {
     @Autowired
     private FinancePlanBuyerService financePlanBuyerService;
 
+    @Autowired
+    private FinancePlanCollectionService financePlanCollectionService;
+
     @PersistenceContext
     private EntityManager entityManager;
 
@@ -84,42 +85,48 @@ public class FinanceInvestServiceImpl implements FinanceInvestService {
     @Override
     public Map<String, Object> backMoneyList(VoInvestListReq voInvestListReq) {
         Map<String, Object> resultMaps = commonQuery(voInvestListReq);
-        List<Tender> tenderList = (List<Tender>) resultMaps.get("tenderList");
-        if (CollectionUtils.isEmpty(tenderList)) {
-            resultMaps.put("backMoneyList", new ArrayList<>(0));
+        //理财计划购买记录
+        List<FinancePlanBuyer> financePlanBuyerList = (List<FinancePlanBuyer>) resultMaps.get("financePlanBuyerList");
+        if (CollectionUtils.isEmpty(financePlanBuyerList)) {
+            resultMaps.put("settleResList", new ArrayList<>(0));
             return resultMaps;
         }
-        //投标id 集合
-        List<Long> tenderIdArray = tenderList.stream()
-                .map(p -> p.getId())
-                .collect(Collectors.toList());
-        //标Id集合
-        Set<Long> borrowIdArray = tenderList.stream()
-                .map(p -> p.getBorrowId())
+
+        //理财计划id集合
+        Set<Long> planIds = financePlanBuyerList.stream()
+                .map(p -> p.getPlanId())
                 .collect(Collectors.toSet());
+        Specification<FinancePlan> fps = Specifications
+                .<FinancePlan>and()
+                .in("id", planIds.toArray())
+                .build();
+        List<FinancePlan> financePlanList = financePlanService.findList(fps);
+        Map<Long, FinancePlan> financePlanMap = financePlanList.stream()
+                .collect(Collectors.toMap(FinancePlan::getId, Function.identity()));
         //期数集合
-        List<BorrowCollection> borrowCollections = borrowCollectionRepository.findByTenderIdIn(tenderIdArray);
+        //查询理财计划回款记录
+        Set<Long> buyerIds = financePlanBuyerList.stream().map(FinancePlanBuyer::getId).collect(Collectors.toSet());
+        Specification<FinancePlanCollection> fpcs = Specifications
+                .<FinancePlanCollection>and()
+                .in("buyerId", buyerIds.toArray())
+                .build();
+        List<FinancePlanCollection> financePlanCollectionList = financePlanCollectionService.findList(fpcs);
+        Map<Long, List<FinancePlanCollection>> financePlanCollectionMap = financePlanCollectionList.stream()
+                .collect(groupingBy(FinancePlanCollection::getBuyerId));
 
-        //标集合
-        List<Borrow> borrowList = borrowRepository.findByIdIn(new ArrayList(borrowIdArray));
+        List<VoViewFinanceBackMoney> viewFinanceBackMoneyList = new ArrayList<>();
+        financePlanBuyerList.stream().forEach(p -> {
+            List<FinancePlanCollection> financePlanCollections = financePlanCollectionMap.get(p.getId());
+            FinancePlan financePlan = financePlanMap.get(p.getPlanId());
 
-        Map<Long, Borrow> borrowMap = borrowList.stream()
-                .collect(Collectors.toMap(Borrow::getId, Function.identity()));
 
-        Map<Long, List<BorrowCollection>> borrowCollectionMap = borrowCollections.stream()
-                .collect(groupingBy(BorrowCollection::getTenderId));
-
-        List<VoViewBackMoney> backMoneyList = new ArrayList<>();
-        tenderList.stream().forEach(p -> {
-            VoViewBackMoney voViewBackMoney = new VoViewBackMoney();
-            voViewBackMoney.setMoney(StringHelper.formatMon(p.getValidMoney() / 100D));
-            List<BorrowCollection> borrowCollectionList = borrowCollectionMap.get(p.getId());
-            Borrow borrow = borrowMap.get(p.getBorrowId());
-            voViewBackMoney.setBorrowName(borrow.getName());
-            List<BorrowCollection> tempCollection = borrowCollectionList.stream()
-                    .filter(w -> w.getStatus() == BorrowCollectionContants.STATUS_NO)
+            VoViewFinanceBackMoney voViewFinanceBackMoney = new VoViewFinanceBackMoney();
+            voViewFinanceBackMoney.setMoney(StringHelper.formatMon(p.getValidMoney() / 100D));
+            voViewFinanceBackMoney.setBorrowName(financePlan.getName());
+            List<FinancePlanCollection> tempCollection = financePlanCollections.stream()
+                    .filter(w -> w.getStatus() == 0)
                     .collect(Collectors.toList());
-            voViewBackMoney.setOrder(tempCollection.size());
+            voViewFinanceBackMoney.setOrder(tempCollection.size());
             //待收本金
             long principal = tempCollection.stream()
                     .mapToLong(s -> s.getPrincipal()).sum();
@@ -128,17 +135,17 @@ public class FinanceInvestServiceImpl implements FinanceInvestService {
                     .mapToLong(s -> s.getInterest()).sum();
             //待收本息
             long collectionMoney = tempCollection.stream()
-                    .mapToLong(w -> w.getCollectionMoney()).sum();
+                    .mapToLong(w -> w.getPrincipal() + w.getInterest()).sum();
 
-            voViewBackMoney.setCollectionMoney(StringHelper.formatMon(collectionMoney / 100D));
-            voViewBackMoney.setInterest(StringHelper.formatMon(interest / 100D));
-            voViewBackMoney.setPrincipal(StringHelper.formatMon(principal / 100D));
-            voViewBackMoney.setTenderId(p.getId());
-            voViewBackMoney.setCreatedAt(DateHelper.dateToString(p.getCreatedAt()));
-            voViewBackMoney.setBorrowId(borrow.getId());
-            backMoneyList.add(voViewBackMoney);
+            voViewFinanceBackMoney.setCollectionMoney(StringHelper.formatMon(collectionMoney / 100D));
+            voViewFinanceBackMoney.setInterest(StringHelper.formatMon(interest / 100D));
+            voViewFinanceBackMoney.setPrincipal(StringHelper.formatMon(principal / 100D));
+            voViewFinanceBackMoney.setBuyerId(p.getId());
+            voViewFinanceBackMoney.setCreatedAt(DateHelper.dateToString(p.getCreatedAt()));
+            voViewFinanceBackMoney.setPlanId(financePlan.getId());
+            viewFinanceBackMoneyList.add(voViewFinanceBackMoney);
         });
-        resultMaps.put("backMoneyList", backMoneyList);
+        resultMaps.put("backMoneyList", viewFinanceBackMoneyList);
         return resultMaps;
     }
 
@@ -151,53 +158,53 @@ public class FinanceInvestServiceImpl implements FinanceInvestService {
     @Override
     public Map<String, Object> biddingList(VoInvestListReq voInvestListReq) {
         Map<String, Object> resultMaps = commonQuery(voInvestListReq);
-        List<Tender> tenderList = (List<Tender>) resultMaps.get("tenderList");
-        if (CollectionUtils.isEmpty(tenderList)) {
-            resultMaps.put("biddingResList", new ArrayList<>(0));
+        //理财计划购买记录
+        List<FinancePlanBuyer> financePlanBuyerList = (List<FinancePlanBuyer>) resultMaps.get("financePlanBuyerList");
+        if (CollectionUtils.isEmpty(financePlanBuyerList)) {
+            resultMaps.put("settleResList", new ArrayList<>(0));
             return resultMaps;
         }
 
-        //标ID集合
-        Set<Long> borrowIdArrray = tenderList.stream()
-                .map(p -> p.getBorrowId())
+        //理财计划id集合
+        Set<Long> planIds = financePlanBuyerList.stream()
+                .map(p -> p.getPlanId())
                 .collect(Collectors.toSet());
+        Specification<FinancePlan> fps = Specifications
+                .<FinancePlan>and()
+                .in("id", planIds.toArray())
+                .build();
+        List<FinancePlan> financePlanList = financePlanService.findList(fps);
+        Map<Long, FinancePlan> financePlanMap = financePlanList.stream()
+                .collect(Collectors.toMap(FinancePlan::getId, Function.identity()));
 
-        //标集合
-        List<Borrow> borrowList = borrowRepository.findByIdIn(new ArrayList(borrowIdArrray));
-        Map<Long, Borrow> borrowMap = borrowList.stream()
-                .collect(Collectors.toMap(Borrow::getId, Function.identity()));
-
-        List<VoViewBiddingRes> viewBiddingResList = new ArrayList<>();
-        tenderList.stream().forEach(p -> {
-            VoViewBiddingRes voViewBiddingRes = new VoViewBiddingRes();
-            Borrow borrow = borrowMap.get(p.getBorrowId());
-            voViewBiddingRes.setTenderId(p.getId());
-            Double aDouble = borrow.getMoneyYes().doubleValue() / borrow.getMoney().doubleValue();
-            voViewBiddingRes.setSpend(new Double(StringHelper.formatDouble(aDouble, false)));
-            voViewBiddingRes.setCreatedAt(DateHelper.dateToString(p.getCreatedAt()));
-            Integer timeLimit = borrow.getTimeLimit();
-            if (borrow.getRepayFashion() == BorrowContants.REPAY_FASHION_ONCE) {
-                voViewBiddingRes.setTimeLimit(timeLimit + BorrowContants.DAY);
-            } else {
-                voViewBiddingRes.setTimeLimit(timeLimit + BorrowContants.MONTH);
-            }
+        List<VoViewFinanceBiddingRes> voViewFinanceBiddingResList = new ArrayList<>();
+        financePlanBuyerList.stream().forEach(p -> {
+            VoViewFinanceBiddingRes voViewFinanceBiddingRes = new VoViewFinanceBiddingRes();
+            FinancePlan financePlan = financePlanMap.get(p.getPlanId());
+            voViewFinanceBiddingRes.setTenderId(p.getId());
+            Double aDouble = financePlan.getMoneyYes().doubleValue() / financePlan.getMoney().doubleValue();
+            voViewFinanceBiddingRes.setSpend(new Double(StringHelper.formatDouble(aDouble, false)));
+            voViewFinanceBiddingRes.setCreatedAt(DateHelper.dateToString(p.getCreatedAt()));
+            Integer timeLimit = financePlan.getTimeLimit();
+            voViewFinanceBiddingRes.setTimeLimit(timeLimit + BorrowContants.MONTH);
             Long validMoney = p.getValidMoney();
-            Integer apr = borrow.getApr();
+            Integer apr = p.getApr();
 
             //预期收益
-            BorrowCalculatorHelper borrowCalculatorHelper = new BorrowCalculatorHelper(new Double(validMoney), new Double(apr), borrow.getTimeLimit(), borrow.getRecheckAt());
-            Map<String, Object> calculatorMap = borrowCalculatorHelper.simpleCount(borrow.getRepayFashion());
+            BorrowCalculatorHelper borrowCalculatorHelper = new BorrowCalculatorHelper(new Double(validMoney), new Double(apr),
+                    financePlan.getTimeLimit(), DateHelper.subDays(financePlan.getSuccessAt(), 1));
+            Map<String, Object> calculatorMap = borrowCalculatorHelper.simpleCount(2);
             Integer earnings = NumberHelper.toInt(StringHelper.toString(calculatorMap.get("earnings")));
 
-            voViewBiddingRes.setExpectEarnings(StringHelper.formatMon(earnings / 100D));
-            voViewBiddingRes.setApr(StringHelper.formatMon(apr / 100D));
-            voViewBiddingRes.setMoney(StringHelper.formatMon(validMoney / 100D));
-            voViewBiddingRes.setBorrowName(borrow.getName());
-            voViewBiddingRes.setTenderId(p.getId());
-            voViewBiddingRes.setBorrowId(borrow.getId());
-            viewBiddingResList.add(voViewBiddingRes);
+            voViewFinanceBiddingRes.setExpectEarnings(StringHelper.formatMon(earnings / 100D));
+            voViewFinanceBiddingRes.setApr(StringHelper.formatMon(apr / 100D));
+            voViewFinanceBiddingRes.setMoney(StringHelper.formatMon(validMoney / 100D));
+            voViewFinanceBiddingRes.setBorrowName(financePlan.getName());
+            voViewFinanceBiddingRes.setTenderId(p.getId());
+            voViewFinanceBiddingRes.setPlanId(financePlan.getId());
+            voViewFinanceBiddingResList.add(voViewFinanceBiddingRes);
         });
-        resultMaps.put("biddingResList", viewBiddingResList);
+        resultMaps.put("biddingResList", voViewFinanceBiddingResList);
         return resultMaps;
     }
 
@@ -231,46 +238,41 @@ public class FinanceInvestServiceImpl implements FinanceInvestService {
         Set<Long> buyerIds = financePlanBuyerList.stream().map(FinancePlanBuyer::getId).collect(Collectors.toSet());
         Specification<FinancePlanCollection> fpcs = Specifications
                 .<FinancePlanCollection>and()
-                .in("buyerId",buyerIds.toArray())
+                .in("buyerId", buyerIds.toArray())
                 .build();
+        List<FinancePlanCollection> financePlanCollectionList = financePlanCollectionService.findList(fpcs);
+        Map<Long, List<FinancePlanCollection>> financePlanCollectionMap = financePlanCollectionList.stream()
+                .collect(groupingBy(FinancePlanCollection::getBuyerId));
 
-        Set<Long> tenderIds = financePlanBuyerList.stream()
-                .map(p -> p.getId())
-                .collect(Collectors.toSet());
-        List<BorrowCollection> borrowCollections = borrowCollectionRepository.findByTenderIdIn(new ArrayList(tenderIds));
-
-        Map<Long, List<BorrowCollection>> borrowCollectionMaps = borrowCollections.stream()
-                .collect(groupingBy(BorrowCollection::getTenderId));
-
-        List<VoViewSettleRes> voViewSettleResList = new ArrayList<>();
+        List<VoViewFinanceSettleRes> voViewFinanceSettleResArrayList = new ArrayList<>();
         financePlanBuyerList.stream().forEach(p -> {
-            VoViewSettleRes voViewSettleRes = new VoViewSettleRes();
+            VoViewFinanceSettleRes voViewFinanceSettleRes = new VoViewFinanceSettleRes();
             FinancePlan financePlan = financePlanMap.get(p.getPlanId());
+            List<FinancePlanCollection> financePlanCollections = financePlanCollectionMap.get(p.getId());
 
-            /*voViewSettleRes.setBorrowName(borrow.getName());
-            voViewSettleRes.setMoney(StringHelper.formatMon(p.getValidMoney() / 100D));
-            voViewSettleRes.setCloseAt(DateHelper.dateToString(borrow.getCloseAt()));
-            List<BorrowCollection> borrowCollectionList = borrowCollectionMaps.get(p.getId());
-            List<BorrowCollection> borrowCollections1 = borrowCollectionList.stream()
-                    .filter(w -> w.getStatus() == BorrowCollectionContants.STATUS_YES)
+            voViewFinanceSettleRes.setBorrowName(financePlan.getName());
+            voViewFinanceSettleRes.setMoney(StringHelper.formatMon(p.getValidMoney() / 100D));
+            voViewFinanceSettleRes.setCloseAt(DateHelper.dateToString(financePlan.getEndLockAt()));
+            List<FinancePlanCollection> financePlanCollectionList1 = financePlanCollections.stream()
+                    .filter(w -> w.getStatus() == 1)
                     .collect(Collectors.toList());
-            long interest = borrowCollections1.stream()
+            long interest = financePlanCollectionList1.stream()
                     .mapToLong(s -> s.getInterest()).sum();
-            long principal = borrowCollections1.stream().
+            long principal = financePlanCollectionList1.stream().
                     mapToLong(s -> s.getPrincipal()).sum();
-            long collectionMoneyYes = borrowCollections1.stream()
-                    .mapToLong(s -> s.getCollectionMoneyYes()).sum();
-            voViewSettleRes.setInterest(StringHelper.formatMon(interest / 100D));
-            voViewSettleRes.setPrincipal(StringHelper.formatMon(principal / 100D));
-            voViewSettleRes.setCreatedAt(DateHelper.dateToString(p.getCreatedAt()));
-            voViewSettleRes.setCollectionMoneyYes(StringHelper.formatMon(collectionMoneyYes / 100D));
-            voViewSettleRes.setCloseAt(DateHelper.dateToString(p.getUpdatedAt(), DateHelper.DATE_FORMAT_YMD));
-            voViewSettleRes.setTenderId(p.getId());
-            voViewSettleRes.setBorrowId(borrow.getId());
-            voViewSettleRes.setRemark("正常结清");
-            voViewSettleResList.add(voViewSettleRes);*/
+            long collectionMoneyYes = financePlanCollectionList1.stream()
+                    .mapToLong(s -> s.getPrincipal() + s.getInterest()).sum();
+            voViewFinanceSettleRes.setInterest(StringHelper.formatMon(interest / 100D));
+            voViewFinanceSettleRes.setPrincipal(StringHelper.formatMon(principal / 100D));
+            voViewFinanceSettleRes.setCreatedAt(DateHelper.dateToString(p.getCreatedAt()));
+            voViewFinanceSettleRes.setCollectionMoneyYes(StringHelper.formatMon(collectionMoneyYes / 100D));
+            voViewFinanceSettleRes.setCloseAt(DateHelper.dateToString(p.getUpdatedAt(), DateHelper.DATE_FORMAT_YMD));
+            voViewFinanceSettleRes.setTenderId(p.getId());
+            voViewFinanceSettleRes.setPlanId(financePlan.getId());
+            voViewFinanceSettleRes.setRemark("正常结清");
+            voViewFinanceSettleResArrayList.add(voViewFinanceSettleRes);
         });
-        resultMaps.put("settleResList", voViewSettleResList);
+        resultMaps.put("settleResList", voViewFinanceSettleResArrayList);
         return resultMaps;
     }
 

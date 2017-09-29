@@ -1,4 +1,4 @@
-package com.gofobao.framework.tender.service;
+package com.gofobao.framework.finance.service;
 
 import com.gofobao.framework.tender.vo.request.VoDetailReq;
 import com.gofobao.framework.tender.vo.request.VoInvestListReq;

@@ -77,6 +77,9 @@ public class FinanceCollectionBizImpl implements FinanceCollectionBiz {
     @Override
     public ResponseEntity<VoViewFinanceCollectionListResp> orderList(VoCollectionOrderReq voCollectionOrderReq) {
         VoViewFinanceCollectionListResp voViewFinanceCollectionListResp = VoBaseResp.ok("查询成功!", VoViewFinanceCollectionListResp.class);
+        voViewFinanceCollectionListResp.setSumCollectionMoneyYes(StringHelper.formatDouble(0, 100d, true));
+        voViewFinanceCollectionListResp.setOrder(0);
+        voViewFinanceCollectionListResp.setOrderResList(new ArrayList<>());
         //需要查询的用户id
         long userId = voCollectionOrderReq.getUserId();
         Date date = DateHelper.stringToDate(voCollectionOrderReq.getTime(), DateHelper.DATE_FORMAT_YMD);/*yyyy-MM-dd*/
@@ -87,6 +90,9 @@ public class FinanceCollectionBizImpl implements FinanceCollectionBiz {
                 .eq("status", 1)
                 .build();
         List<FinancePlanBuyer> financePlanBuyerList = financePlanBuyerService.findList(fpbs);
+        if (CollectionUtils.isEmpty(financePlanBuyerList)) {
+            return ResponseEntity.ok(voViewFinanceCollectionListResp);
+        }
         //理财计划购买id集合
         Set<Long> buyerIds = financePlanBuyerList.stream().map(FinancePlanBuyer::getId).collect(Collectors.toSet());
         /*理财计划id集合*/
@@ -97,6 +103,9 @@ public class FinanceCollectionBizImpl implements FinanceCollectionBiz {
                 .eq("status", 3)
                 .build();
         List<FinancePlan> financePlanList = financePlanService.findList(fps);
+        if (CollectionUtils.isEmpty(financePlanList)) {
+            return ResponseEntity.ok(voViewFinanceCollectionListResp);
+        }
         Map<Long/*planId*/, FinancePlan> financePlanMap = financePlanList.stream().collect(Collectors.toMap(FinancePlan::getId, Function.identity()));
         /*理财计划id集合*/
         planIds = financePlanList.stream().map(FinancePlan::getId).collect(Collectors.toSet());
