@@ -753,6 +753,7 @@ public class FinancePlanBizImpl implements FinancePlanBiz {
         //剩余金额
         planDetail.setShowSurplusMoney(StringHelper.formatMon((money - moneyYes) / 100D));
         planDetail.setSurplusMoney(money - moneyYes);
+
         planDetail.setSpend(MoneyHelper.round((moneyYes / money.doubleValue()) * 100, 1));
         Integer timeLimit = financePlan.getTimeLimit();
         //预期收益
