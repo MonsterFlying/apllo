@@ -151,6 +151,7 @@ public class TenderBizImpl implements TenderBiz {
         Multiset<String> extendMessage = HashMultiset.create();
         boolean state = verifyBorrowInfo4Borrow(borrow, user, voCreateTenderReq, extendMessage);  // 标的判断
         if (!state) {
+            log.error("标判断不通过");
             Set<String> errorSet = extendMessage.elementSet();
             Iterator<String> iterator = errorSet.iterator();
             return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, iterator.next()));
@@ -160,6 +161,7 @@ public class TenderBizImpl implements TenderBiz {
         Set<String> errorSet = extendMessage.elementSet();
         Iterator<String> iterator = errorSet.iterator();
         if (!state) {
+            log.error("标的判断资产不通过");
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, iterator.next()));
@@ -170,6 +172,7 @@ public class TenderBizImpl implements TenderBiz {
         Tender borrowTender = createBorrowTenderRecord(voCreateTenderReq, user, nowDate, validateMoney);    // 生成投标记录
         borrowTender = registerJixinTenderRecord(borrow, borrowTender);  // 投标的存管报备
         if (ObjectUtils.isEmpty(borrowTender)) {
+            log.error("标的报备失败");
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "非常抱歉, 自动投标存管申报失败"));
@@ -184,6 +187,7 @@ public class TenderBizImpl implements TenderBiz {
         borrowService.save(borrow);  // 更改标的信息
 
         if (borrow.getMoneyYes() >= borrow.getMoney()) {   // 对于投标金额等于招标金额触发复审
+            log.info("标的满标");
             //更新满标时间
             if (ObjectUtils.isEmpty(borrow.getSuccessAt())) {
                 borrow.setSuccessAt(nowDate);

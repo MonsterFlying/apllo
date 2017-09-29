@@ -1011,7 +1011,10 @@ public class RepaymentBizImpl implements RepaymentBiz {
     public void updateFinanceByReceivedRepay(List<Tender> tenderList, Map<Long, Tender> tenderMap, List<BorrowCollection> borrowCollectionList) {
         boolean flag = false;
         //理财计划购买ids
-        Set<Long> financeBuyIds = tenderList.stream().map(Tender::getFinanceBuyId).collect(Collectors.toSet());
+        Set<Long> financeBuyIds = tenderList.stream().filter(tender -> tender.getType().intValue() == 1).map(Tender::getFinanceBuyId).collect(Collectors.toSet());
+        if (CollectionUtils.isEmpty(financeBuyIds)) {
+            return;
+        }
         Specification<FinancePlanBuyer> fpps = Specifications
                 .<FinancePlanBuyer>and()
                 .in("id", financeBuyIds.toArray())
@@ -1056,7 +1059,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
 
     public static void main(String[] args) {
         Date releaseAt = DateHelper.max(DateHelper.addHours(DateHelper.beginOfDate(new Date()), 20), DateHelper.stringToDate("2017-09-28 20:30:00"));
-        if (DateHelper.getHour( DateHelper.stringToDate("2017-09-28 20:30:00")) >= 20) {
+        if (DateHelper.getHour(DateHelper.stringToDate("2017-09-28 20:30:00")) >= 20) {
             releaseAt = DateHelper.addDays(releaseAt, 1);
         }
         System.out.println(DateHelper.dateToString(releaseAt));

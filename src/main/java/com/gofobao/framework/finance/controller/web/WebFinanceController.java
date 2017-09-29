@@ -37,6 +37,7 @@ public class WebFinanceController {
      * @param voFinanceRepurchase
      * @return
      * @throws Exception
+     * @// TODO: 2017/9/29 financeBuyer  已完成 需要更改状态
      */
     @ApiOperation("理财计划匹配债权转让")
     @PostMapping("/v2/pub/finance/plan/repurchase")
@@ -44,7 +45,7 @@ public class WebFinanceController {
         try {
             return financePlanBiz.financeRepurchase(voFinanceRepurchase);
         } catch (Exception e) {
-            log.error("理财计划匹配债权转让 异常：",e);
+            log.error("理财计划匹配债权转让 异常：", e);
             return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "回购失败!"));
         }
     }
@@ -61,7 +62,7 @@ public class WebFinanceController {
         try {
             return financePlanBiz.financePlanTender(voFinancePlanTender);
         } catch (Exception e) {
-            log.error("理财计划匹配债权转让 异常：",e);
+            log.error("理财计划匹配债权转让 异常：", e);
             return ResponseEntity.badRequest().body("匹配失败!");
         }
     }
