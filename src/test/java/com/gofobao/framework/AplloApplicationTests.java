@@ -725,7 +725,7 @@ public class AplloApplicationTests {
         //batchQuery();
         //freezeDetailsQuery();
         //批次详情查询
-        batchDetailsQuery();
+        //batchDetailsQuery();
         //查询投标申请
         //bidApplyQuery();
         //转让标复审回调

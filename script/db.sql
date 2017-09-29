@@ -835,7 +835,8 @@ create table gfb_new_eve
   ervind varchar(1) default '' null  comment '冲正、撤销标志',
   transtype varchar(4) default '' null  comment '主机交易类型',
   query_time varchar(8) default '' null  comment '创建时间'
-) comment '新版EVE日志' engine=InnoDB charset=utf8
+) comment '新版EVE日志' engine=InnoDB charset=utf8;
 
 
 
+ALTER TABLE gfb_finance_plan_buyer ADD   `state` int(10) DEFAULT '1' COMMENT '1:投标中； 2:还款中 ;3:已结清'
