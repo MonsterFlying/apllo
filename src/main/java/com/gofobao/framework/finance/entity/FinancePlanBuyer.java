@@ -38,4 +38,5 @@ public class FinancePlanBuyer {
     private String freezeOrderId;
     private Date createdAt;
     private Date updatedAt;
+    private Integer state;
 }

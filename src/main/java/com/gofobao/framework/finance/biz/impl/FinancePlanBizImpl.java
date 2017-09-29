@@ -386,6 +386,7 @@ public class FinancePlanBizImpl implements FinancePlanBiz {
         financePlanBuyer.setSource(requestSource);
         financePlanBuyer.setPlanId(financePlan.getId());
         financePlanBuyer.setUpdatedAt(new Date());
+        financePlanBuyer.setState(1);
         financePlanBuyerService.save(financePlanBuyer);
         return financePlanBuyer;
     }
