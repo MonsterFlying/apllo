@@ -243,9 +243,6 @@ public class FinancePlanBizImpl implements FinancePlanBiz {
                 VoucherPayResponse response = jixinManager.send(JixinTxCodeEnum.SEND_RED_PACKET, voucherPayRequest, VoucherPayResponse.class);
                 if ((ObjectUtils.isEmpty(response)) || (!JixinResultContants.SUCCESS.equals(response.getRetCode()))) {
                     String msg = ObjectUtils.isEmpty(response) ? "当前网络不稳定，请稍候重试" : response.getRetMsg();
-                    /**
-                     * @// TODO: 2017/9/28  强化代码
-                     */
 
                     log.error("redPacket" + msg);
                     throw new Exception(msg);

@@ -1,18 +1,11 @@
 package com.gofobao.framework.finance.biz;
 
-import com.gofobao.framework.collection.vo.request.OrderListReq;
-import com.gofobao.framework.collection.vo.request.VoCollectionListReq;
 import com.gofobao.framework.collection.vo.request.VoCollectionOrderReq;
-import com.gofobao.framework.collection.vo.request.VoOrderDetailReq;
 import com.gofobao.framework.collection.vo.response.VoViewCollectionDaysWarpRes;
-import com.gofobao.framework.collection.vo.response.VoViewCollectionOrderListWarpResp;
-import com.gofobao.framework.collection.vo.response.VoViewOrderDetailResp;
-import com.gofobao.framework.collection.vo.response.web.VoCollectionListByDays;
-import com.gofobao.framework.collection.vo.response.web.VoViewCollectionListWarpRes;
-import com.gofobao.framework.collection.vo.response.web.VoViewCollectionWarpRes;
+import com.gofobao.framework.finance.vo.request.VoFinanceCollectionDetailReq;
+import com.gofobao.framework.finance.vo.response.VoViewFinanceCollectionDetailResp;
+import com.gofobao.framework.finance.vo.response.VoViewFinanceCollectionListResp;
 import org.springframework.http.ResponseEntity;
-
-import javax.servlet.http.HttpServletResponse;
 
 /**
  * Created by admin on 2017/6/6.
@@ -25,20 +18,26 @@ public interface FinanceCollectionBiz {
      * @param voCollectionOrderReq
      * @return
      */
-    ResponseEntity<VoViewCollectionOrderListWarpResp> orderList(VoCollectionOrderReq voCollectionOrderReq);
-
+    ResponseEntity<VoViewFinanceCollectionListResp> orderList(VoCollectionOrderReq voCollectionOrderReq);
 
 
     /**
      * 回款详情
      *
-     * @param voOrderDetailReq
+     * @param voFinanceCollectionDetailReq
      * @return
      */
-    ResponseEntity<VoViewOrderDetailResp> orderDetail(VoOrderDetailReq voOrderDetailReq);
+    ResponseEntity<VoViewFinanceCollectionDetailResp> orderDetail(VoFinanceCollectionDetailReq voFinanceCollectionDetailReq);
 
 
+    /**
+     * 回款日期
+     *
+     * @param date
+     * @param userId
+     * @return
+     */
     ResponseEntity<VoViewCollectionDaysWarpRes> collectionDays(String date, Long userId);
-    
+
 
 }
