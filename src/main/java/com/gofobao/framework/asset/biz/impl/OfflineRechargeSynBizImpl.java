@@ -29,7 +29,6 @@ public class OfflineRechargeSynBizImpl implements OfflineRechargeSynBiz {
         String transtype = "7820";  // 线下转账类型
         Specification<NewEve> eveSpecification = Specifications.<NewEve>and()
                 .eq("transtype", transtype)
-                .eq("ran")
                 .build();
 
         // 查询所有资金变动记录
