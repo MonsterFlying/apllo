@@ -839,4 +839,5 @@ create table gfb_new_eve
 
 
 
-ALTER TABLE gfb_finance_plan_buyer ADD   `state` int(10) DEFAULT '1' COMMENT '1:投标中； 2:还款中 ;3:已结清'
+ALTER TABLE gfb_finance_plan_buyer ADD   `state` int(10) DEFAULT '1' COMMENT '1:投标中； 2:还款中 ;3:已结清';
+ALTER TABLE gfb_new_asset_log ADD  `state` int(11) NOT NULL DEFAULT '0' COMMENT '记录状态：0普通 1.理财计划';

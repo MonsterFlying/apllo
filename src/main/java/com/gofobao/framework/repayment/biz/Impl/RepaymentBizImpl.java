@@ -1999,7 +1999,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
             batchAssetChangeItem.setBatchAssetChangeId(batchAssetChangeId);
             batchAssetChangeItem.setState(0);
             /**
-             * @// TODO: 2017/9/28 增加理财计划回款到理财金中  交易记录加标识
+             * @// TODO: 2017/9/28 增加理财计划回款到理财金中  交易记录加标识 不加  在逻辑上加
              */
             if (advance) {//判断是否是垫付
                 batchAssetChangeItem.setType(AssetChangeTypeEnum.compensatoryReceivedPayments.getLocalType());  // 名义借款人收到垫付还款
