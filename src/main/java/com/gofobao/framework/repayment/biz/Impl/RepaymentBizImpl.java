@@ -445,7 +445,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
      * @param voBuildThirdRepayReqs 还款请求
      */
     private ImmutableList<Long> buildRepayReqList(List<VoBuildThirdRepayReq> voBuildThirdRepayReqs, Borrow borrow) {
-                /* 有效未还的还款记录 */
+        /* 有效未还的还款记录 */
         Specification<BorrowRepayment> brs = Specifications
                 .<BorrowRepayment>and()
                 .eq("borrowId", borrow.getId())
@@ -527,7 +527,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
                 .build();
         List<Tender> tenderList = tenderService.findList(specification);
         Preconditions.checkState(!CollectionUtils.isEmpty(tenderList), "投资记录不存在!");
-            /* 投资id集合 */
+        /* 投资id集合 */
         List<Long> tenderIds = tenderList.stream().map(p -> p.getId()).collect(Collectors.toList());
         /* 生成存管还款记录(提前结清) */
         List<Repay> repays = new ArrayList<>();
@@ -1267,8 +1267,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
                 return;
             }
             long actualInterest = borrowCollection.getCollectionMoneyYes() - borrowCollection.getPrincipal();/* 实收利息 */
-            //投资积分
-            long integral = actualInterest / 100 * 10;
+            long integral = MoneyHelper.doubleToLong(MoneyHelper.multiply(MoneyHelper.divide(actualInterest, 100), 10));  //投资积分
             if ((parentBorrow.getType() == 0 || parentBorrow.getType() == 4) && 0 < integral) {
                 Long userId = borrowCollection.getUserId();
                 if (ObjectUtils.isEmpty(userId)) {
@@ -1909,7 +1908,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
             //借款类型集合
             ImmutableSet<Integer> borrowTypeSet = ImmutableSet.of(0, 4);
             //用户来源集合
-/*            ImmutableSet<Integer> userSourceSet = ImmutableSet.of(12);*/
+            /*            ImmutableSet<Integer> userSourceSet = ImmutableSet.of(12);*/
             // 车贷标和渠道标利息管理费，风车理财不收
             if (borrowTypeSet.contains(borrow.getType())) {
                 ImmutableSet<Long> stockholder = ImmutableSet.of(2480L, 1753L, 1699L,

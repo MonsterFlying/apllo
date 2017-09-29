@@ -53,7 +53,7 @@ public class UserServiceImpl implements UserService {
         return null;
     }
 
-    @Lock(LockModeType.PESSIMISTIC_WRITE)
+
     public Users findById(Long id) {
         return userRepository.findOne(id);
     }
@@ -72,8 +72,9 @@ public class UserServiceImpl implements UserService {
      * @param userId
      * @return
      */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
     public Users findByIdLock(Long userId) {
-        return userRepository.findById(userId);
+        return userRepository.findOne(userId);
     }
 
     @Override

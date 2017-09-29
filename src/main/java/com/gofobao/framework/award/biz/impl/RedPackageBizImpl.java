@@ -31,6 +31,7 @@ import com.gofobao.framework.common.rabbitmq.MqQueueEnum;
 import com.gofobao.framework.common.rabbitmq.MqTagEnum;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.helper.DateHelper;
+import com.gofobao.framework.helper.ExceptionEmailHelper;
 import com.gofobao.framework.helper.MoneyHelper;
 import com.gofobao.framework.helper.StringHelper;
 import com.gofobao.framework.marketing.constans.MarketingTypeContants;
@@ -103,6 +104,9 @@ public class RedPackageBizImpl implements RedPackageBiz {
     @Autowired
     NewAssetLogService newAssetLogService;
 
+    @Autowired
+    ExceptionEmailHelper exceptionEmailHelper;
+
     @Override
     @Transactional(rollbackFor = Exception.class)
     public boolean commonPublishRedpack(Long userId, long money, AssetChangeTypeEnum assetChangeTypeEnum, String onlyNo, String remark, long sourceId) throws Exception {
@@ -122,6 +126,8 @@ public class RedPackageBizImpl implements RedPackageBiz {
         Preconditions.checkNotNull(redpackAsset, "publishRedpack redpackAsset is null");
 
         if (redpackAsset.getUseMoney() - money < 0) {
+            exceptionEmailHelper.sendErrorMessage("红包余额不足警告",
+                    String.format("当前红包余额: %s 元", StringHelper.formatDouble(redpackAsset.getUseMoney() / 100, true)));
             throw new Exception("非常抱歉, 红包账户余额不足, 请致电平台客服! (红包还可以继续使用)");
         }
 
@@ -150,7 +156,6 @@ public class RedPackageBizImpl implements RedPackageBiz {
         voucherPayRequest.setChannel(ChannelContant.HTML);
         VoucherPayResponse voucherPayResponse = jixinManager.send(JixinTxCodeEnum.SEND_RED_PACKET, voucherPayRequest, VoucherPayResponse.class);
         log.info(String.format("开始派发红包:%s", gson.toJson(voucherPayRequest)));
-        log.info(String.format("结束派发红包:%s", gson.toJson(voucherPayResponse)));
         if ((ObjectUtils.isEmpty(voucherPayResponse)) || (!JixinResultContants.SUCCESS.equals(voucherPayResponse.getRetCode()))) {
             String msg = ObjectUtils.isEmpty(voucherPayResponse) ? "当前网络不稳定，请稍候重试" : voucherPayResponse.getRetMsg();
             log.error(String.format("派发红包异常, 主动撤回: %s", msg));
@@ -170,6 +175,7 @@ public class RedPackageBizImpl implements RedPackageBiz {
             }
             return false;
         }
+        log.info(String.format("结束派发红包:%s", gson.toJson(voucherPayResponse)));
 
         // 执行资金变动
         try {
@@ -222,6 +228,7 @@ public class RedPackageBizImpl implements RedPackageBiz {
             throw new Exception("派发红包失败");
         }
     }
+
 
     @Override
     public ResponseEntity<VoViewRedPackageWarpRes> list(VoRedPackageReq voRedPackageReq) {
