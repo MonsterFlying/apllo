@@ -93,7 +93,7 @@ public class StarFireBorrowBizImpl implements StarFireBorrowBiz {
                         .build();
             } else {
                 borrowSpecification = Specifications.<Borrow>and()
-                        .eq("isStarFire", true)
+                        .eq("isWindmill", true)
                         .eq("status", BorrowContants.BIDDING)
                         .eq("successAt", null)
                         .build();
