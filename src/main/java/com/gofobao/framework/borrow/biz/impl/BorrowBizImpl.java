@@ -1224,7 +1224,7 @@ public class BorrowBizImpl implements BorrowBiz {
                 userCache.setQdWaitCollectionPrincipal(userCache.getQdWaitCollectionPrincipal() + tender.getValidMoney());
                 userCache.setQdWaitCollectionInterest(userCache.getQdWaitCollectionInterest() + countInterest);
             }
-
+            //每日统计记录
             IncrStatistic incrStatistic = new IncrStatistic();
             incrStatistic.setCashSum(0l);
             incrStatistic.setJzSumPublish(0);
@@ -1371,7 +1371,6 @@ public class BorrowBizImpl implements BorrowBiz {
             }
         }
     }
-
 
     /**
      * 添加用户回款计划
@@ -1570,45 +1569,6 @@ public class BorrowBizImpl implements BorrowBiz {
         }
     }
 
-   /* @Override
-    @Transactional(rollbackFor = Exception.class)
-    public boolean doTrusteePay(Long borrowId) {
-        Borrow borrow = borrowService.findByIdLock(borrowId);
-        String productId = borrow.getProductId();
-        Preconditions.checkNotNull(productId, String.format("受托支付记录查询, 当前标的为登记:borrowId%s", borrowId));
-        Long userId = borrow.getUserId();
-        UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(userId);
-
-        TrusteePayQueryReq trusteePayQueryReq = new TrusteePayQueryReq();
-        trusteePayQueryReq.setChannel(ChannelContant.HTML);
-        trusteePayQueryReq.setAccountId(userThirdAccount.getAccountId());
-        trusteePayQueryReq.setProductId(productId);
-        TrusteePayQueryResp trusteePayQueryResp = jixinManager.send(JixinTxCodeEnum.TRUSTEE_PAY_QUERY, trusteePayQueryReq, TrusteePayQueryResp.class);
-        if ((ObjectUtils.isEmpty(trusteePayQueryResp))
-                || !(JixinResultContants.SUCCESS.equals(trusteePayQueryResp.getRetCode()))) {
-            return false;
-        }
-
-        if (!trusteePayQueryResp.getState().equals("1")) {
-            return false;
-        }
-
-        // 确认后初审
-        MqConfig mqConfig = new MqConfig();
-        mqConfig.setQueue(MqQueueEnum.RABBITMQ_BORROW);
-        mqConfig.setTag(MqTagEnum.FIRST_VERIFY);
-        ImmutableMap<String, String> body = ImmutableMap
-                .of(MqConfig.MSG_BORROW_ID, StringHelper.toString(borrowId), MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
-        mqConfig.setMsg(body);
-        try {
-            log.info(String.format("borrowBizImpl firstVerify send mq %s", GSON.toJson(body)));
-            mqHelper.convertAndSend(mqConfig);
-        } catch (Throwable e) {
-            log.error("borrowBizImpl firstVerify send mq exception", e);
-        }
-        return true;
-    }*/
-
     /**
      * 发送借款协议
      *
@@ -1627,7 +1587,6 @@ public class BorrowBizImpl implements BorrowBiz {
         if (!ObjectUtils.isEmpty(borrow)) {
 
             //查询借款信息
-
             borrowMap = GSON.fromJson(GSON.toJson(borrow), new TypeToken<Map<String, Object>>() {
             }.getType());
             borrowUser = userService.findById(borrow.getUserId());
