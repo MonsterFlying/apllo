@@ -444,15 +444,6 @@ public class TenderBizImpl implements TenderBiz {
     }
 
 
-    public static void main(String[] args) {
-        double availBal = MoneyHelper.round(MoneyHelper.multiply(NumberHelper.toDouble("1251.14"), 100d), 0);// 可用余额  账面余额-可用余额=冻结金额
-
-        System.err.println(availBal);
-        System.err.println("125114");
-        System.err.println(availBal < 125114);
-
-    }
-
     /**
      * 验证标的信息是否符合投标要求
      * 主要从:

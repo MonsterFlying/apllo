@@ -14,4 +14,6 @@ public interface NewAleveService {
     Long count(Specification<NewAleve> specification);
 
     Page<NewAleve> findAll(Specification<NewAleve> specification, Pageable pageable);
+
+    NewAleve findTopByReldateAndInptimeAndTranno(String reldate, String inptime, String tranno);
 }
