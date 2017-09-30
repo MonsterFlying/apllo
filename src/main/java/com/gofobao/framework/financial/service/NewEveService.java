@@ -1,6 +1,10 @@
 package com.gofobao.framework.financial.service;
 
 import com.gofobao.framework.financial.entity.NewEve;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
+
+import java.util.List;
 
 public interface NewEveService {
 
@@ -19,4 +23,39 @@ public interface NewEveService {
      * @return
      */
     long countByTranstypeAndQueryTime(String transtype, String date);
+
+
+    /**
+     * 查询EVE数据
+     * @param orderno
+     * @param date
+     * @return
+     */
+    NewEve findTopByOrdernoAndQueryTime(String orderno, String date);
+
+    /**
+     * 查询EVE数据
+     * @param cendt
+     * @param tranno
+     * @return
+     */
+    NewEve findTopByCendtAndTranno(String cendt, String tranno);
+
+    /**
+     * 查询类型和时间
+     * @param transtype
+     * @param date
+     * @param pageable
+     * @return
+     */
+    List<NewEve> findByTranstypeAndQueryTime(String transtype, String date, Pageable pageable);
+
+
+    /**
+     * 根据条件查询类型
+     * @param specification
+     * @return
+     */
+    List<NewEve> findAll(Specification<NewEve> specification);
+
 }

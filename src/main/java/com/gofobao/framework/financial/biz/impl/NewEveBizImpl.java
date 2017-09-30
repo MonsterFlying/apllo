@@ -113,8 +113,15 @@ public class NewEveBizImpl implements NewEveBiz {
                     newEve.setOrderno(orderno);
                     newEve.setReserved(reserved);
 
+                    // 当order等于空使用其他信息确定他的唯一性
                     // 防止重复录入
-                    NewEve existsNewEve = newEveService.findTopByOrderno(orderno);
+                    NewEve existsNewEve = null ;
+                    if(ObjectUtils.isEmpty(orderno)){
+                        existsNewEve = newEveService.findTopByCendtAndTranno(cendt, tranno) ;
+                    }else{
+                        existsNewEve = newEveService.findTopByOrdernoAndQueryTime(orderno, date);
+                    }
+
                     if (ObjectUtils.isEmpty(existsNewEve)) {
                         newEveService.save(newEve);
                     }

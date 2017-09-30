@@ -11,5 +11,5 @@ public interface OfflineRechargeSynBiz {
      * @param date
      * @return
      */
-    boolean process(String date);
+    boolean process(String date) throws Exception;
 }

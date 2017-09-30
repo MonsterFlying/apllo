@@ -34,4 +34,9 @@ public class NewAleveServiceImpl implements NewAleveService {
     public Page<NewAleve> findAll(Specification<NewAleve> specification, Pageable pageable) {
         return newAleveRepository.findAll(specification, pageable);
     }
+
+    @Override
+    public NewAleve findTopByReldateAndInptimeAndTranno(String reldate, String inptime, String tranno) {
+        return  newAleveRepository.findTopByReldateAndInptimeAndTranno(reldate, inptime, tranno) ;
+    }
 }
