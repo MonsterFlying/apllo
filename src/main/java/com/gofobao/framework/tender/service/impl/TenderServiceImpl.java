@@ -67,17 +67,21 @@ public class TenderServiceImpl implements TenderService {
             return Collections.EMPTY_LIST;
         }
         List<VoBorrowTenderUserRes> tenderUserResList = new ArrayList<>();
-        Tender tender = new Tender();
+
+      /* Tender tender = new Tender();
         tender.setBorrowId(borrowId);
         tender.setStatus(TenderConstans.SUCCESS);
-
         ExampleMatcher matcher = ExampleMatcher.matching().withIgnorePaths("isAuto");
         Example<Tender> ex = Example.of(tender, matcher);
+        */
         PageRequest pageRequest = new PageRequest(tenderUserReq.getPageIndex(),
                 tenderUserReq.getPageSize(),
-                new Sort(Sort.Direction.DESC, "id"));
-
-        Page<Tender> tenderPage = tenderRepository.findAll(ex, pageRequest);
+                new Sort(Sort.Direction.DESC, "createdAt"));
+        Specification<Tender> tenderSpecification = Specifications.<Tender>and()
+                .eq("borrowId", borrowId)
+                .eq("status", TenderConstans.SUCCESS)
+                .build();
+        Page<Tender> tenderPage = tenderRepository.findAll(tenderSpecification, pageRequest);
         //Optional<List<Tender>> listOptional = Optional.ofNullable(tenderList);
         List<Tender> tenderList = tenderPage.getContent();
         if (CollectionUtils.isEmpty(tenderList)) {
