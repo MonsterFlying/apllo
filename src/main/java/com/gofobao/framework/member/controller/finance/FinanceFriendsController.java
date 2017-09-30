@@ -88,7 +88,7 @@ public class FinanceFriendsController {
          //   res.setDesc("新手福利,投资即可发放红包+加息0.5%-3%");
             res.setRequestHtmlUrl(resultMaps.get("inviteUrl").toString());
             res.setIcon(javaDomain + "/images/bankLogo/logo.png");
-            content = thymeleafHelper.build("user/friends", resultMaps);
+            content = thymeleafHelper.build("user/financeFriends", resultMaps);
             res.setHtml(content);
         } catch (Throwable e) {
             e.printStackTrace();
