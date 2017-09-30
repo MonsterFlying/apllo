@@ -14,7 +14,8 @@ public enum ResultCodeEnum {
     //其他错误
     OTHER_ERROR("OTHER_ERROR", "0002"),
 
-    // 未注册    NOT_EXIST_REGISTER("NOT_EXIST_REGISTER", "1000"),
+    // 未注册
+    NOT_EXIST_REGISTER("NOT_EXIST_REGISTER", "1000"),
 
     //已注册，未绑定任何渠道（含星火智投）
     EXIST_NO_BIND("EXIST_NO_BIND", "1001"),

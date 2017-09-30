@@ -29,11 +29,17 @@ import java.util.Map;
  */
 
 @RestController
-@RequestMapping("pub/starFire/user")
+@RequestMapping("pub/starfire/user")
 public class StarFireUserController {
 
     @Autowired
     private StarFireUserBiz starFireUserBiz;
+
+    @Value("${gofobao.h5Domain}")
+    private String h5Domain;
+
+    @Value("${gofobao.pcDomain}")
+    private String pcDomain;
 
     @Autowired
     private ThymeleafHelper thymeleafHelper;
@@ -53,13 +59,21 @@ public class StarFireUserController {
         return starFireUserBiz.register(registerModel, request);
     }
 
-    @RequestMapping(value = "bind/html", method = RequestMethod.POST)
+    @RequestMapping(value = "bind/html")
     @ApiOperation("绑定接口")
-    public String loginHtml(BindUserModel bindUserModel) {
+    public String loginHtml(BindUserModel bindUserModel, HttpServletResponse response) {
         Map<String, Object> paramMap = Maps.newHashMap();
-        paramMap.put("param", new Gson().toJson(bindUserModel));
+        paramMap.put("params", new Gson().toJson(bindUserModel));
         paramMap.put("address", javaDomain);
-        return thymeleafHelper.build("starfire/user/login", paramMap);
+        try {
+            //TODO 以后该外网地址
+         //   response.sendRedirect(thymeleafHelper.build(pcDomain + "/starfire/user/login", paramMap));
+            String loginUrl="http://192.168.1.119:8080/third/xhzlogin?params="+new Gson().toJson(bindUserModel);
+            response.sendRedirect(loginUrl);
+        } catch (Exception e) {
+            return thymeleafHelper.build("load_error", null);
+        }
+        return null;
     }
 
     @RequestMapping(value = "bind/login", method = RequestMethod.POST)
@@ -70,7 +84,7 @@ public class StarFireUserController {
         return starFireUserBiz.bindLogin(request, response, bindLoginReq);
     }
 
-    @RequestMapping(value = " fetchLoginToken", method = RequestMethod.POST)
+    @RequestMapping(value = "fetchLoginToken", method = RequestMethod.POST)
     @ApiOperation("获取登录token")
     public FetchLoginTokenRes fetchLoginToken(FetchLoginToken fetchLoginToken) {
         return starFireUserBiz.fetchLoginToken(fetchLoginToken);
@@ -82,8 +96,8 @@ public class StarFireUserController {
         response.sendRedirect(starFireUserBiz.requestUrl(loginModel, request, response));
     }
 
-    @RequestMapping(value = "account",method = RequestMethod.POST)
-    public UserAccountRes userAccount(UserAccount userAccount){
+    @RequestMapping(value = "account", method = RequestMethod.POST)
+    public UserAccountRes userAccount(UserAccount userAccount) {
         return starFireUserBiz.userAccount(userAccount);
     }
 

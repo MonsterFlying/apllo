@@ -131,8 +131,10 @@ public class StarFireBorrowBizImpl implements StarFireBorrowBiz {
                         : borrow.getTimeLimit().toString());
                 record.setBid_status(getBorrowStatus(borrow));
                 record.setBond_code(borrowId.toString());
-                record.setBid_url(pcDomain + "/borrow/" + borrowId);
+                // TODO pc页面没出来 默认跳转h5
+            /*    record.setBid_url(pcDomain + "/borrow/" + borrowId);*/
                 record.setWap_bid_url(h5Domain + "/#/borrow/" + borrowId);
+                record.setBid_url(h5Domain + "/borrow/" + borrowId);
                 record.setIsPromotion(false);
                 record.setIsRecommend(false);
                 record.setIsNovice(borrow.getIsNovice());

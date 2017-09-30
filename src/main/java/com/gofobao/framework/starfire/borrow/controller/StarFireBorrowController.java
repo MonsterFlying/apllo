@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.RestController;
  * Created by master on 2017/9/29.
  */
 @RestController
-@RequestMapping("pub/starFire/borrow")
+@RequestMapping("pub/starfire/borrow")
 public class StarFireBorrowController {
 
     @Autowired

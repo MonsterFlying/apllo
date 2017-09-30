@@ -6,19 +6,22 @@ import com.gofobao.framework.finance.biz.FinancePlanBiz;
 import com.gofobao.framework.finance.biz.FinancePlanBuyerBiz;
 import com.gofobao.framework.finance.vo.request.VoFinanceAgainVerifyTransfer;
 import com.gofobao.framework.finance.vo.request.VoTenderFinancePlan;
-import com.gofobao.framework.finance.vo.response.PlanBuyUserListWarpRes;
-import com.gofobao.framework.finance.vo.response.PlanDetail;
-import com.gofobao.framework.finance.vo.response.PlanListWarpRes;
-import com.gofobao.framework.finance.vo.response.VoViewFinancePlanTender;
+import com.gofobao.framework.finance.vo.response.*;
+import com.gofobao.framework.helper.ThymeleafHelper;
 import com.gofobao.framework.security.contants.SecurityContants;
+import com.gofobao.framework.security.helper.JwtTokenHelper;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 import springfox.documentation.annotations.ApiIgnore;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
+import java.util.Map;
 
 /**
  * Created by Zeke on 2017/8/10.
@@ -33,6 +36,18 @@ public class FinanceController {
 
     @Autowired
     private FinancePlanBuyerBiz financePlanBuyerBiz;
+
+    @Autowired
+    private JwtTokenHelper jwtTokenHelper;
+
+    @Value("${jwt.header}")
+    private String tokenHeader;
+
+    @Value("${jwt.prefix}")
+    private String prefix;
+
+    @Autowired
+    private ThymeleafHelper thymeleafHelper;
 
     /**
      * 理财计划复审
@@ -67,6 +82,28 @@ public class FinanceController {
         return financePlanBuyerBiz.buyUserList(id);
     }
 
+    @ApiOperation(value = "标合同")
+    @GetMapping(value = "/pub/finance/plan/flanContract/{planId}")
+    public ResponseEntity<String> flanContract(@PathVariable Long planId, HttpServletRequest request)throws Exception {
+        Long userId = 0L;
+        String authToken = request.getHeader(this.tokenHeader);
+        if (!StringUtils.isEmpty(authToken) && (authToken.contains(prefix))) {
+            authToken = authToken.substring(7);
+        }
+        String username = jwtTokenHelper.getUsernameFromToken(authToken);
+        if (!StringUtils.isEmpty(username)) {
+            userId = jwtTokenHelper.getUserIdFromToken(authToken);
+        }
+
+        Map<String,Object> paramMaps=financePlanBiz.flanContract(planId,userId);
+        String content="";
+        try {
+            content = thymeleafHelper.build("licai/contract", paramMaps);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return ResponseEntity.ok(content);
+    }
 
     /**
      * 购买理财计划

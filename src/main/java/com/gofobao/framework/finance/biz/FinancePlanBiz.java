@@ -5,9 +5,9 @@ import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.finance.vo.request.*;
 import com.gofobao.framework.finance.vo.response.PlanDetail;
 import com.gofobao.framework.finance.vo.response.PlanListWarpRes;
-import com.gofobao.framework.finance.vo.response.VoViewFinancePlanTender;
 import org.springframework.http.ResponseEntity;
-import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Map;
 
 /**
  * Created by Zeke on 2017/8/10.
@@ -72,4 +72,14 @@ public interface FinancePlanBiz {
      * @throws Exception
      */
     ResponseEntity<VoBaseResp> financeRepurchase(VoFinanceRepurchase voFinanceRepurchase) throws Exception;
+
+    /**
+     *
+     * @param plan
+     * @param userId
+     * @return
+     */
+    Map<String, Object> flanContract(Long plan, Long userId);
+
+
 }

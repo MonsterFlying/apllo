@@ -22,7 +22,4 @@ public class FetchLoginToken extends BaseRequest {
     @ApiModelProperty("用户手机号")
     private String register_token;
 
-    @ApiModelProperty("安全数字签名")
-    private String sign;
-
 }

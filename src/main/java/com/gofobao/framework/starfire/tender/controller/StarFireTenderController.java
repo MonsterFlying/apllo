@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
  * Created by master on 2017/9/29.
  */
 @RestController
-@RequestMapping("pub/starFire/tender")
+@RequestMapping("pub/starfire/tender")
 public class StarFireTenderController {
 
     @Autowired
