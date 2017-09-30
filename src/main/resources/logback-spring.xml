@@ -6,7 +6,7 @@
             <charset>utf-8</charset>
         </encoder>
     </appender> <!-- 日志记录器，日期滚动记录 -->
-    <property name="gofobao.logDir" value="D:/apollo/logback"/>  <!--保存路径-->
+    <property name="gofobao.logDir" value="/var/logs/apollo/logback"/>  <!--保存路径-->
     <appender name="FILE_LOG" class="ch.qos.logback.core.rolling.RollingFileAppender"> <!-- 正在记录的日志文件的路径及文件名 -->
         <file>${gofobao.logDir}/spring.log</file> <!-- 日志记录器的滚动策略，按日期，按大小记录:这里是每天产生一个文件 -->
         <rollingPolicy
