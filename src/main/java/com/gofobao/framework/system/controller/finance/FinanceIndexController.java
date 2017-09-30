@@ -3,6 +3,7 @@ package com.gofobao.framework.system.controller.finance;
 import com.gofobao.framework.system.biz.BannerBiz;
 import com.gofobao.framework.system.biz.HomeBiz;
 import com.gofobao.framework.system.biz.StatisticBiz;
+import com.gofobao.framework.system.vo.response.VoFinanceIndexResp;
 import com.gofobao.framework.system.vo.response.VoIndexResp;
 import com.gofobao.framework.system.vo.response.VoViewIndexStatisticsWarpRes;
 import io.swagger.annotations.Api;
@@ -41,8 +42,8 @@ public class FinanceIndexController {
 
     @ApiOperation("首页")
     @GetMapping("/pub/finance/index/v2/home")
-    public ResponseEntity<VoIndexResp> home() {
-        return homeBiz.home() ;
+    public ResponseEntity<VoFinanceIndexResp> home() {
+        return homeBiz.financeHome() ;
     }
 
 
