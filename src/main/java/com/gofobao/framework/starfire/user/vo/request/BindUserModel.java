@@ -28,9 +28,6 @@ public class BindUserModel extends BaseRequest {
     @ApiModelProperty("请求地址")
     private String bid_url;
 
-    @ApiModelProperty("安全数字签名，用来防止伪造请求")
-    private String sign;
-
     @ApiModelProperty("来源 PC端：1 WAP端：2")
     private String source;
 

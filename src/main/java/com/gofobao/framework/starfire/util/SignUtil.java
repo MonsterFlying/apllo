@@ -33,8 +33,7 @@ public class SignUtil {
         //验证参数
         if (StringUtils.isEmpty(sign)
                 || StringUtils.isEmpty(serialNum)
-                || StringUtils.isEmpty(cCode)
-                || StringUtils.isEmpty(tCode)) {
+                || StringUtils.isEmpty(cCode)                || StringUtils.isEmpty(tCode)) {
             return false;
         }
         //解密参数 并 拼借参数
@@ -53,5 +52,8 @@ public class SignUtil {
             log.info("签名验证成功");
             return true;
         }
+
+
     }
+
 }

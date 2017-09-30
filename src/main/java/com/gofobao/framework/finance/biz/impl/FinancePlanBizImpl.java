@@ -16,6 +16,7 @@ import com.gofobao.framework.api.model.voucher_pay.VoucherPayRequest;
 import com.gofobao.framework.api.model.voucher_pay.VoucherPayResponse;
 import com.gofobao.framework.asset.entity.Asset;
 import com.gofobao.framework.asset.service.AssetService;
+import com.gofobao.framework.borrow.contants.BorrowContants;
 import com.gofobao.framework.common.assets.AssetChange;
 import com.gofobao.framework.common.assets.AssetChangeProvider;
 import com.gofobao.framework.common.assets.AssetChangeTypeEnum;
@@ -33,6 +34,7 @@ import com.gofobao.framework.finance.entity.FinancePlanBuyer;
 import com.gofobao.framework.finance.service.FinancePlanBuyerService;
 import com.gofobao.framework.finance.service.FinancePlanService;
 import com.gofobao.framework.finance.vo.request.*;
+import com.gofobao.framework.finance.vo.response.PlanContract;
 import com.gofobao.framework.finance.vo.response.PlanDetail;
 import com.gofobao.framework.finance.vo.response.PlanList;
 import com.gofobao.framework.finance.vo.response.PlanListWarpRes;
@@ -49,10 +51,8 @@ import com.gofobao.framework.tender.entity.TransferBuyLog;
 import com.gofobao.framework.tender.service.TransferBuyLogService;
 import com.gofobao.framework.tender.service.TransferService;
 import com.google.common.base.Preconditions;
-import com.google.common.collect.HashMultiset;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Multiset;
+import com.google.common.collect.*;
+import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import lombok.extern.slf4j.Slf4j;
@@ -807,5 +807,41 @@ public class FinancePlanBizImpl implements FinancePlanBiz {
         return status;
     }
 
-
+    /**
+     * 计划合同
+     * @param planId
+     * @param userId
+     * @return
+     */
+    @Transactional(rollbackFor =Exception.class)
+    @Override
+    public Map<String, Object> flanContract(Long planId, Long userId) {
+        FinancePlan financePlan = financePlanService.findById(planId);
+        PlanContract planContract = new PlanContract();
+        planContract.setTimeLimit(financePlan.getTimeLimit()+ BorrowContants.MONTH);
+        planContract.setMoney(StringHelper.formatMon(financePlan.getMoney()/100d));
+        planContract.setRepayFashion("按月分期");
+        planContract.setPlanName(financePlan.getName());
+        Users users = null;
+        if (userId.intValue()>0) {
+            users = userService.findUserByUserId(userId);
+        }
+        if (!ObjectUtils.isEmpty(users)) {
+            Specification<FinancePlanBuyer> planBuyerSpecification = Specifications.<FinancePlanBuyer>and()
+                    .eq("userId", userId)
+                    .eq("planId", planId)
+                    .eq("status", 1)
+                    .build();
+            List<FinancePlanBuyer> financePlanBuyers = financePlanBuyerService.findList(planBuyerSpecification);
+            if (!CollectionUtils.isEmpty(financePlanBuyers)) {
+                FinancePlanBuyer financePlanBuyer = financePlanBuyers.get(0);
+                planContract.setApr(StringHelper.formatMon(financePlan.getBaseApr()));
+                planContract.setCreatedAt(DateHelper.dateToString(financePlanBuyer.getCreatedAt()));
+                planContract.setTenderMoney(StringHelper.formatMon(financePlanBuyer.getValidMoney()/100D));
+                planContract.setIdCard(users.getCardId());
+            }
+        }
+        return GSON.fromJson(GSON.toJson(planContract),  new TypeToken<Map<String, Object>>() {
+        }.getType());
+    }
 }

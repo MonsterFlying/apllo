@@ -18,10 +18,10 @@ import com.gofobao.framework.member.service.UserService;
 import com.gofobao.framework.member.vo.response.VoBasicUserInfoResp;
 import com.gofobao.framework.security.helper.JwtTokenHelper;
 import com.gofobao.framework.security.vo.VoLoginReq;
+import com.gofobao.framework.starfire.common.request.BaseRequest;
 import com.gofobao.framework.starfire.common.response.CodeTypeConstant;
 import com.gofobao.framework.starfire.common.response.ResultCodeEnum;
 import com.gofobao.framework.starfire.common.response.ResultCodeMsgEnum;
-import com.gofobao.framework.starfire.common.request.BaseRequest;
 import com.gofobao.framework.starfire.user.biz.StarFireUserBiz;
 import com.gofobao.framework.starfire.user.vo.request.*;
 import com.gofobao.framework.starfire.user.vo.response.*;
@@ -29,9 +29,7 @@ import com.gofobao.framework.starfire.util.AES;
 import com.gofobao.framework.starfire.util.SignUtil;
 import com.gofobao.framework.windmill.user.vo.request.BindLoginReq;
 import com.gofobao.framework.windmill.util.PassWordCreate;
-import com.google.common.base.Functions;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Lists;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;
@@ -61,10 +59,10 @@ import static io.netty.handler.codec.http.multipart.DiskFileUpload.prefix;
 public class StarFireUserBizImpl implements StarFireUserBiz {
 
     @Value("${starfire.key}")
-    private static String key;
+    private String key;
 
     @Value("${starfire.initVector}")
-    private static String initVector;
+    private String initVector;
 
     @Value("${starfire.notify_url}")
     private String notifyUrl;
@@ -98,9 +96,6 @@ public class StarFireUserBizImpl implements StarFireUserBiz {
     @Autowired
     private UserCacheService userCacheService;
 
-
-    @Autowired
-    private ThymeleafHelper thymeleafHelper;
 
     /**
      * 1.注册绑定查询
@@ -199,6 +194,7 @@ public class StarFireUserBizImpl implements StarFireUserBiz {
         RegisterRes resultMsg = new RegisterRes();
         resultMsg.setUser_id(registerModel.getUser_id());
         resultMsg.setMobile(registerModel.getMobile());
+        resultMsg.setSerial_num(registerModel.getSerial_num());
         if (ObjectUtils.isEmpty(registerModel) || !SignUtil.checkSign(baseRequest, key, initVector)) {
             //未通过安全校验
             String code = ResultCodeEnum.getCode(CodeTypeConstant.CHECK_SIGN_NO_PASS);
@@ -212,7 +208,8 @@ public class StarFireUserBizImpl implements StarFireUserBiz {
         String identity = AES.decrypt(key, initVector, registerModel.getUser_identity());
         try {
             //判断用户是否存在
-            if (!userService.notExistsByPhone(mobile)) {
+            if (!ObjectUtils.isEmpty(userService.findByAccount(mobile))
+                    ||!userService.notExistsByIdCard(identity)) {
                 resultMsg.setRealNameAuthenticResult(!userService.notExistsByIdCard(identity) ? "1" : "");
                 String code = ResultCodeEnum.getCode(CodeTypeConstant.FAIL_USER_EXIST);
                 resultMsg.setResult(code);
@@ -227,7 +224,6 @@ public class StarFireUserBizImpl implements StarFireUserBiz {
             Users starFireUser = new Users();
             starFireUser.setStarFireUserId(starFireUserId);
             starFireUser.setEmail(null);
-            starFireUser.setUsername("");
             starFireUser.setPhone(mobile);
             starFireUser.setCardId(identity);
             PassWordCreate pwc = new PassWordCreate();
@@ -293,7 +289,7 @@ public class StarFireUserBizImpl implements StarFireUserBiz {
             resultMsg.setResult(ResultCodeEnum.getCode(CodeTypeConstant.SUCCESS));
             resultMsg.setRegister_token(AES.encrypt(key, initVector, registerToken));
             resultMsg.setPlatform_uid(AES.encrypt(key, initVector, String.valueOf(starFireUser.getId())));
-            log.info("星火智投用户注册");
+            log.info("星火智投用户注册成功");
             return resultMsg;
         } catch (Exception e) {
             resultMsg.setResult(ResultCodeEnum.getCode(CodeTypeConstant.OTHER_ERROR));
@@ -385,12 +381,13 @@ public class StarFireUserBizImpl implements StarFireUserBiz {
                     mqHelper.convertAndSend(mqConfig);
                     VoBasicUserInfoResp voBasicUserInfoResp = VoBaseResp.ok("操作成功", VoBasicUserInfoResp.class);
                     //跳转target_url
-                    if (StringUtils.isEmpty(bindUserModel.getBid_url())) {
+                   // TODO pc页面没出来 默认跳转h5
+                /*    if (StringUtils.isEmpty(bindUserModel.getBid_url())) {
                         voBasicUserInfoResp.setTarget_url(h5Domain + "?token=" + token);
                     } else {
                         voBasicUserInfoResp.setTarget_url(bindUserModel.getBid_url() + "?token=" + token);
-                    }
-
+                    }*/
+                    voBasicUserInfoResp.setTarget_url(h5Domain + "?token=" + token);
                     userLoginBind.setPlatform_uid(AES.decrypt(key, initVector, String.valueOf(user.getId())));
                     userLoginBind.setResult(ResultCodeEnum.getCode(CodeTypeConstant.SUCCESS));
                     return ResponseEntity.ok(voBasicUserInfoResp);
@@ -482,7 +479,6 @@ public class StarFireUserBizImpl implements StarFireUserBiz {
                 String code = ResultCodeEnum.getCode(CodeTypeConstant.SUCCESS);
                 loginTokenRes.setLogin_token(fetchLoginToken.getRegister_token());
                 loginTokenRes.setResult(code);
-                loginTokenRes.setResult(ResultCodeMsgEnum.getResultMsg(code));
                 return loginTokenRes;
             } catch (Exception e) {
                 log.info("获取登陆授权失败，系统异常", e);

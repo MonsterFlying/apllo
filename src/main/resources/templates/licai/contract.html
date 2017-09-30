@@ -1,0 +1,225 @@
+<html xmlns:th="http://www.thymeleaf.org">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+<div style="background: rgb(255, 255, 255);">
+    <meta content="width=device-width, initial-scale=1, maximum-scale=1" name="viewport">
+    <style>
+        article, aside, blockquote, body, button, code form, dd, details, div, dl, dt, fieldset, figcaption, figure, footer, h1, h2, h3, h4, h5, h6, header, hgroup, hr, input, legend, li, menu, nav, ol, p, pre, section, td, textarea, th, ul {
+            margin: 0;
+            padding: 0;
+        }
+
+        p {
+            position: relative;
+            z-index: 20;
+        }
+    </style>
+
+
+    <div class="container"
+         style="padding: 10px; word-wrap: break-word; font: 14px/1.5 Microsoft YaHei, droidsansfallback; color: #5e5e5e; background: #fff; position: relative">
+        <div class="wrapper-xl padder-v-xl bg-white animated fadeIn">
+
+            <p style="margin-top: 10px">甲方（用户）：<span th:text="${userName}"> </span></p>
+            <p style="margin-top: 10px">身份证号码：<span th:text="${idCard}"> </span></p>
+            <p style="margin-top: 10px">乙方（服务方）：深圳市广富宝金融信息服务有限公司</p>
+            <p style="margin-top: 10px">法定代表人：蔡永平</p>
+
+            <p style="margin-top: 10px; text-indent: 10px;">
+                 甲方拥有富余资金拟供出借或收购债权以获取利息收益，乙方掌握丰富的借款人资源信息并拥有专业的信用评价和管理服务平台，现甲方自愿加入乙方通过网络平台（以下简称“广富理财”）推出的“广富理财”服务，以便获得更高效的资金利用率。现甲乙双方本着平等自愿、诚实信用的原则，并自愿遵守广富理财现有的相关协议及规则，达成如下协议：
+            </p>
+
+            <p style="margin-top: 20px;">
+                <b>一、释义</b>
+            </p>
+
+            <p style="margin-top: 10px;text-indent: 10px;">
+                1、广富理财：广富理财是广富宝金服为方便用户投资推出的标准化理财计划。用户加入广富理财后，广富理财将依照用户加入的广富理财的详情（见本协议第二条），冻结相应投标资金，并使用投标资金为甲方自动投标具体的投资项目（投资项目包括不限于民间借贷、债权收购等），投标完成后，甲方将持有相应的债权。广富理财能够灵活、高效的为用户提供投资匹配服务，从而显著提高用户的资金利用率，亦称为“管家服务”。
+            </p>
+
+            <p style="margin-top: 10px;text-indent: 10px;">
+                2、投资期限：广富理财产品设定了不同的投资期限，用户在选择加入广富理财时，应当选择符合用户投资需求和特点的期限。无论用户选择何种期限，起算时间点均为所匹配标的满标放款成功之日。
+            </p>
+
+            <p style="margin-top: 10px;text-indent: 10px;">
+                3、投标资金：即用户自主决定加入广富理财的资金总额。
+            </p>
+
+            <p style="margin-top: 10px;text-indent: 10px;">
+                4、资金冻结期限：用户加入广富理财之日起3天内，其加入广富理财的投标资金将被冻结。在此期间，甲方不能退出广富理财、不能要求撤回投标资金，由乙方根据甲方加入的广富理财的详情进行优先自动投标。
+            </p>
+
+            <p style="margin-top: 10px;text-indent: 10px;">
+                5、匹配资金：投标资金将优先由乙方进行自动投标（即投资匹配），但乙方并不保证所有投标资金均能完成投标。所有完成投标的资金即为匹配资金。
+            </p>
+
+            <p style="margin-top: 10px;text-indent: 10px;">
+                6、到期退出：投资期限届满，乙方平台系统将自动完成甲方所持债权，甲方按照本协议约定实现收益。
+            </p>
+
+            <p style="margin-top: 20px;">
+                <b>二、本次广富理财详情</b>
+            </p>
+
+            <table border="1" bordercolor="#9e9e9e" cellspacing="0" style="border-collapse: collapse; margin-top: 10px">
+                <tbody>
+                <tr style="height: 35px">
+                    <td style="padding: 0 20px" width="140">名称：</td>
+                    <td style="padding: 0 20px" width="360" th:text="${planName}"></td>
+                </tr>
+                <tr style="height: 35px">
+                    <td style="padding: 0 20px">总金额：</td>
+                    <td style="padding: 0 20px" th:text="${money}">
+                    </td>
+                </tr>
+                <tr style="height: 35px">
+                    <td style="padding: 0 20px">投资期限：</td>
+                    <td style="padding: 0 20px" th:text="${timeLimt}"></td>
+                </tr>
+                <tr style="height: 35px">
+                    <td style="padding: 0 20px">还款方式：</td>
+                    <td style="padding: 0 20px" th:text="${repayFashion}"></td>
+                </tr>
+                <tr style="height: 35px">
+                    <td style="padding: 0 20px">预期年化收：</td>
+                    <td style="padding: 0 20px" th:text="${apr}"></td>
+                </tr>
+                <tr style="height: 35px">
+                    <td style="padding: 0 20px">开放加入时间：</td>
+                    <td style="padding: 0 20px" th:text="${createdAt}"></td>
+                </tr>
+                <tr style="height: 35px">
+                    <td style="padding: 0 20px">加入资金：</td>
+                    <td style="padding: 0 20px" th:text="${tenderMoney}"></td>
+                </tr>
+                </tbody>
+            </table>
+
+            <p style="margin-top: 10px;text-indent: 10px;">
+                注：上表中广富理财详情依据用户选择加入的具体广富理财项目产生；投资范围所列的项目名称详细解释参见广富宝金服公布的相关产品介绍。
+            </p>
+
+            <p style="margin-top: 20px;">
+                <b>三、广富理财的加入</b>
+            </p>
+
+            <p style="margin-top: 10px;text-indent: 10px;">
+                1、甲方在本次广富理财开放加入时间内根据自己的意愿选择加入金额，确认申请加入，首次加入广富理财需要开启自动投标签约，并完成投标资金的全额支付后视为甲方已成功加入本次广富理财。一旦成功加入即不可撤销，乙方将优先为甲方寻找投资项目进行投资。资金冻结期限内，实际投资成功前，甲方的资金不产生任何费用或收益。
+            </p>
+
+            <p style="margin-top: 10px;text-indent: 10px;">
+                2、甲方选择加入广富理财即视为确认同意并接受本协议的所有条款。本协议以广富宝金服《广富宝金服网站服务协议》为前提，甲方参与广富理财的任何行为都应同时遵守广富宝金服《广富宝金服网站服务协议》和广富宝金服公示之交易规则、说明、公告等涉及甲、乙双方权利义务的法律文件及相关规则，如有违反，甲方应当自行承担相关法律后果。
+            </p>
+
+            <p style="margin-top: 20px;">
+                <b>四、优先自动投标</b>
+            </p>
+            <p style="margin-top: 10px;text-indent: 10px;">
+                在本次成功加入广富理财至资金冻结期限届满，乙方系统按照本协议的约定依据用户加入本次广富理财的先后顺序为用户进行优先自动投标。资金冻结期限内，甲方投标资金不得退出本次广富理财。
+            </p>
+
+            <p style="margin-top: 20px;">
+                <b>五、投标完成</b>
+            </p>
+
+            <p style="margin-top: 10px;text-indent: 10px;">
+                1、投标完成，甲方所有投标资金均完成投标的，所有投标资金按照本次广富理财的期限、预期收益率享受权益。
+            </p>
+            <p style="margin-top: 10px;text-indent: 10px;">
+                2、投标完成，仅有部分投标资金投标完成、成为匹配资金的，其余资金将无息自动退回甲方在第三方银行存管平台开设的账户，该退回资金不属于广富理财范围内，甲方可自由支配该部分资金。
+            </p>
+            <p style="margin-top: 10px;text-indent: 10px;">
+                3、匹配资金所完成的投标，用户可通过自己在广富宝金服系统的账户和密码查看。
+            </p>
+
+            <p style="margin-top: 20px;">
+                <b>六、甲方的权利和义务</b>
+            </p>
+            <p style="margin-top: 10px;text-indent: 10px;">
+                1、甲方在此无条件且不可撤销地授权：自甲方加入本次广富理财起，即授权乙方通过广富宝金服系统根据本次广富理财的详情对投标资金进行优先自动投标，并通过广富宝金服系统以甲方名义自动签署相关借款协议、相关投资项目的服务协议等，甲方应提前查看并了解相关协议内容；甲方对此等自动投标和自动签署相关借款协议、相关投资项目的服务协议之安排及内容已充分知悉并理解；该等自动签署的借款协议、相关投资项目的服务协议均视为甲方真实意思的表示，甲方对该等法律文件的效力均予以认可且无任何异议，并无条件接受该等自动签署的法律文件之约束。
+            </p>
+            <p style="margin-top: 10px;text-indent: 10px;">
+                2、甲方的收益：甲方享有加入本次广富理财后成功实现优先自动投标而产生的收益。甲方的收益根据甲方匹配资金的具体投资项目而产生，以匹配资金投标成功且满标复审通过之日起开始计算收益；收益及本金均直接转至甲方在第三方银行存管平台开设的账户。
+                当具体项目收益高于预期收益时，甲方的收益为预期收益，高出部分作为对乙方的奖励费。当具体项目收益低于预期收益时，甲方的收益为项目收益。
+            </p>
+            <p style="margin-top: 10px;text-indent: 10px;">
+                3、收益实现：收益和投标资金（或匹配资金）均将于到期退出当日转至甲方在第三方银行存管平台开设的账户。
+            </p>
+            <p style="margin-top: 10px;text-indent: 10px;">
+                4、甲方已经知悉、了解并同意：甲方加入本次广富理财并不代表必然实现优先自动投标，甲方自行承担任何原因所导致的未能优先自动投标的风险；本次广富理财所示预期年化收益率不代表甲方最终实际收益率，在实际收益率未达到预期收益率的情况下，以具体投资标项目所产生的实际收益为准。
+            </p>
+            <p style="margin-top: 10px;text-indent: 10px;">
+                5、服务费：加入广富理财、到期退出广富理财均不需支付服务费，但甲方应自行承担由具体投资项目所引起的相关费用（如有）。
+            </p>
+            <p style="margin-top: 10px;text-indent: 10px;">
+                6、税费：由甲方自行承担加入本次广富理财所获收益的应纳税费。
+            </p>
+            <p style="margin-top: 10px;text-indent: 10px;">
+                7、甲方保证加入广富理财所使用的资金为合法取得，且甲方对该资金拥有完全、无瑕疵的所有权及处分权。
+            </p>
+            <p style="margin-top: 10px;text-indent: 10px;">
+                8、甲方可通过其注册的广富宝金服账户查询、了解本次广富理财的相关信息、进度、所持债权项目，如未及时查询，或由于通讯故障、系统故障以及其他不可抗力等因素影响使甲方无法及时了解相关信息，由此产生的责任和风险由甲方自行承担。
+            </p>
+            <p style="margin-top: 10px;text-indent: 10px;">
+                9、甲方加入本次广富理财的资金对应具体的投资项目，享有该投资项目本身存在的担保或保障，乙方不向甲方对具体投资项目的出借本金以及相应的利息作任何承诺与保证。
+            </p>
+            <p style="margin-top: 20px;">
+                <b>七、乙方的权利和义务</b>
+            </p>
+            <p style="margin-top: 10px;text-indent: 10px;">
+                1、甲方通过广富宝金服系统自动投标而签署之借款协议、相关投资项目的服务协议等法律文件或其中的相关条款生效后，乙方即可根据该等法律文件和本协议相关约定以及甲方的授权，对甲方的投标资金进行划扣、支付、冻结以及行使其他权利，甲方对此均予以接受和认可。
+            </p>
+            <p style="margin-top: 10px;text-indent: 10px;">
+                2、广富宝金服系统根据用户加入本次广富理财的先后顺序自动安排优先投标。
+            </p>
+            <p style="margin-top: 10px;text-indent: 10px;">
+                3、广富宝金服系统根据本次广富理财的投资范围自动对甲方加入本次管家服务的资金优先自动投标，但乙方不保证甲方的投标资金全部投标成功，且乙方不对甲方参加本管家服务所对应的具体投资项目出借本金的收回、可获收益金额作出任何承诺、保证。
+            </p>
+            <p style="margin-top: 10px;text-indent: 10px;">
+                4、乙方接受甲方的委托行为所产生的法律后果由甲方承担。如因甲方或其他方（包括但不限于技术问题）造成的延误或错误，乙方不承担任何责任。
+            </p>
+            <p style="margin-top: 10px;text-indent: 10px;">
+                5、资金冻结期限届满后，对于甲方加入本次广富理财的资金尚未进行投标的部分，乙方应自动退回该部分资金到甲方在第三方银行存管平台开设的账户上。
+            </p>
+            <p style="margin-top: 10px;text-indent: 10px;">
+                6、乙方仅在本协议明确规定的责任范围内承担相关责任。
+            </p>
+            <p style="margin-top: 20px;">
+                <b>八、其他</b>
+            </p>
+            <p style="margin-top: 10px;text-indent: 10px;">
+                1、如因司法机关或行政机关对甲方采取强制措施导致其本次广富理财对应的资金被全部或部分扣划，视为甲方提前退出本次广富理财，本协议自动终止，甲方将不再享有相应权利。
+            </p>
+            <p style="margin-top: 10px;text-indent: 10px;">
+                2、由于广富宝金服及相关第三方的设备、系统故障或缺陷、黑客攻击、计算机病毒侵入或发作、电力中断、因政府管制而造成的暂时性关闭等影响网络正常经营的不可抗力而造成交易中断、延误的，甲、乙双方互不追究责任。甲、乙双方应在条件允许的情况下，采取一切必要的补救措施以减小不可抗力造成的损失。
+            </p>
+            <p style="margin-top: 10px;text-indent: 10px;">
+                3、甲方确认：在签署本协议书以前已经详细了解广富理财的产品详情，认真阅读了本协议的全部条款，并对协议双方的权利、义务、责任与风险有清楚和准确的理解。
+            </p>
+            <p style="margin-top: 10px;text-indent: 10px;">
+                4、乙方有权修改本协议项下部分条款，并将在广富宝金服以网站公告的形式予以通知。如甲方（用户）在本协议修改后继续使用广富理财的服务，即视为甲方自愿同意并遵守修改后的协议。否则，甲方应当立即停止使用广富理财提供的服务。因此，请甲方务必定期查阅本协议，以确保了解所有关于本协议的最新修改。
+            </p>
+            <p style="margin-top: 20px;">
+                <b>九、争议解决</b>
+            </p>
+
+            <p style="margin-top: 10px;text-indent: 10px;">
+                因本协议所引起的纠纷，双方应协商解决，协商不成的，任何一方可向乙方所在地的人民法院提起诉讼。
+            </p>
+
+            <p style="margin-top: 20px;">
+                <b>十、协议成立和生效</b>
+            </p>
+            <p style="margin-top: 10px;text-indent: 10px;">
+                甲方按照广富理财公示的规则，在本次广富理财下点击“立即加入”后，仔细核对投标的金额、期限和预期收益等内容，确认无误即可点击“确认加入”，加入成功后，自动生成电子协议，本协议生效，甲方同意接受本协议的全部约定及广富理财上与本协议相关的各项规则的规定。本协议一旦生效，即对甲、乙双方均具有法律约束力。
+            </p>
+
+        </div>
+    </div>
+</div>
+</body>
+</html>
