@@ -79,7 +79,6 @@ public class WebFinanceController {
         try {
             return financePlanBiz.financePlanAssetChange(voFinancePlanAssetChange);
         } catch (Exception e) {
-
             return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "系统开小差了，请稍后再试!", VoViewFinancePlanTender.class));
         }
     }

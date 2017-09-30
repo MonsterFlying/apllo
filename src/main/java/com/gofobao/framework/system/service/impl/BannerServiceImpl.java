@@ -38,6 +38,8 @@ public class BannerServiceImpl implements BannerService {
                     List<Banner> banners;
                     if ("pc".equals(s)) {  // pc
                         banners = bannerRepository.findByStatusAndTerminalOrderByIdDesc(new Byte("1"), 0);
+                    } else if ("financer".equals(s)) {
+                        banners = bannerRepository.findByStatusAndTerminalOrderByIdDesc(new Byte("1"), 2);
                     } else {  // 移动端
                         banners = bannerRepository.findByStatusAndTerminalOrderByIdDesc(new Byte("1"), 1);
                     }

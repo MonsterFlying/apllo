@@ -21,10 +21,10 @@ import java.util.Date;
 public class FindController {
 
     @Autowired
-    FindBiz findBiz ;
+    FindBiz findBiz;
 
     @Autowired
-    DictBiz dictBiz ;
+    DictBiz dictBiz;
 
     @Autowired
     private ArticleBiz articleBiz;
@@ -40,13 +40,18 @@ public class FindController {
 
     @GetMapping("/pub/find/index")
     public ResponseEntity<VoFindIndexResp> index() {
-        return  findBiz.index() ;
+        return findBiz.index();
+    }
+
+    @GetMapping("/pub/find/finance/index")
+    public ResponseEntity<VoFindIndexResp> financeIndex() {
+        return findBiz.financeIndex();
     }
 
     @ApiOperation("发现:公告;百科;报道;发现")
     @GetMapping("/pub/find/article")
-    public ResponseEntity<VoViewArticleWarpRes> articleList(VoArticleReq voArticleReq){
-        return  articleBiz.list(voArticleReq);
+    public ResponseEntity<VoViewArticleWarpRes> articleList(VoArticleReq voArticleReq) {
+        return articleBiz.list(voArticleReq);
     }
 
 
@@ -60,7 +65,7 @@ public class FindController {
     @ApiOperation("联系我们")
     @GetMapping("/pub/find/service")
     public ResponseEntity<VoServiceResp> service() {
-        return  dictBiz.service() ;
+        return dictBiz.service();
     }
 
 
@@ -75,15 +80,15 @@ public class FindController {
 
     @ApiOperation("活动列表")
     @GetMapping("/pub/find/event/list")
-    public ResponseEntity<VoEventWarpRes> eventList(){
-      return   marketingBiz.list();
+    public ResponseEntity<VoEventWarpRes> eventList() {
+        return marketingBiz.list();
 
     }
 
 
     @ApiOperation("活动列表")
     @GetMapping("/pub/find/operateData")
-    public ResponseEntity<OperateDataStatistics> operateData(){
+    public ResponseEntity<OperateDataStatistics> operateData() {
         return statisticBiz.queryOperateData();
 
     }

@@ -1651,7 +1651,9 @@ public class BorrowBizImpl implements BorrowBiz {
                     monthAsReimbursement = borrowExpireAtStr;
                 } else {
                     if (successAtBool) {
-                        borrowExpireAtStr = DateHelper.dateToString(DateHelper.subDays(DateHelper.addDays(DateHelper.setDays(borrow.getRecheckAt(), borrow.getTimeLimit()), 1), 1), "yyyy-MM-dd HH:mm:ss");
+                        borrowExpireAtStr = DateHelper.dateToString(DateHelper.subDays(
+                                DateHelper.addDays(DateHelper.setDays(borrow.getRecheckAt(), borrow.getTimeLimit()), 1)
+                                , 1), "yyyy-MM-dd HH:mm:ss");
                     } else {
                         borrowExpireAtStr = DateHelper.dateToString(DateHelper.addMonths(borrow.getRecheckAt(), borrow.getTimeLimit()), "yyyy-MM-dd");
                     }

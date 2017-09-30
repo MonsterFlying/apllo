@@ -40,4 +40,17 @@ public class FindBizImpl implements FindBiz {
         voFindIndexResp.setArticles(articles) ;
         return ResponseEntity.ok(voFindIndexResp);
     }
+
+    @Override
+    public ResponseEntity<VoFindIndexResp> financeIndex() {
+        VoFindIndexResp voFindIndexResp = VoBaseResp.ok("查询成功", VoFindIndexResp.class);
+        // 查询banner图
+        List<IndexBanner> mobile = bannerService.index("financer");
+        voFindIndexResp.setBannerList(mobile);
+        List<FindIndexItem>  findIndexItems = findService.findIndex();
+        voFindIndexResp.setItems(findIndexItems) ;
+        List<FindIndexArticle> articles = articleService.findFindList() ;
+        voFindIndexResp.setArticles(articles) ;
+        return ResponseEntity.ok(voFindIndexResp);
+    }
 }

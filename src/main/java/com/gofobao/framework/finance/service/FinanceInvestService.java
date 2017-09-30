@@ -1,5 +1,8 @@
 package com.gofobao.framework.finance.service;
 
+import com.gofobao.framework.system.vo.request.VoFinanceDetailReq;
+import com.gofobao.framework.system.vo.response.VoViewFinanceReturnedMoney;
+import com.gofobao.framework.system.vo.response.VoViewFinanceTenderDetail;
 import com.gofobao.framework.tender.vo.request.VoDetailReq;
 import com.gofobao.framework.tender.vo.request.VoInvestListReq;
 import com.gofobao.framework.tender.vo.response.VoViewReturnedMoney;
@@ -39,13 +42,13 @@ public interface FinanceInvestService {
      * @param voDetailReq
      * @return
      */
-    VoViewTenderDetail  tenderDetail(VoDetailReq voDetailReq);
+    VoViewFinanceTenderDetail tenderDetail(VoFinanceDetailReq voDetailReq);
 
     /**
      * 回款详情
      * @param voDetailReq
      * @return
      */
-    VoViewReturnedMoney infoList(VoDetailReq voDetailReq);
+    VoViewFinanceReturnedMoney infoList(VoFinanceDetailReq voDetailReq) ;
 
 }

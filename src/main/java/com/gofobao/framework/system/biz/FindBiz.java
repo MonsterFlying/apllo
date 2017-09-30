@@ -15,5 +15,9 @@ public interface FindBiz {
      */
     ResponseEntity<VoFindIndexResp> index();
 
-
+    /**
+     * 理财计划发现首页
+     * @return
+     */
+    ResponseEntity<VoFindIndexResp> financeIndex();
 }
