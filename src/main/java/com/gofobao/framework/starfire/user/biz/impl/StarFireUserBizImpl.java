@@ -209,7 +209,7 @@ public class StarFireUserBizImpl implements StarFireUserBiz {
         try {
             //判断用户是否存在
             if (!ObjectUtils.isEmpty(userService.findByAccount(mobile))
-                    ||!userService.notExistsByIdCard(identity)) {
+                    || !userService.notExistsByIdCard(identity)) {
                 resultMsg.setRealNameAuthenticResult(!userService.notExistsByIdCard(identity) ? "1" : "");
                 String code = ResultCodeEnum.getCode(CodeTypeConstant.FAIL_USER_EXIST);
                 resultMsg.setResult(code);
@@ -381,7 +381,7 @@ public class StarFireUserBizImpl implements StarFireUserBiz {
                     mqHelper.convertAndSend(mqConfig);
                     VoBasicUserInfoResp voBasicUserInfoResp = VoBaseResp.ok("操作成功", VoBasicUserInfoResp.class);
                     //跳转target_url
-                   // TODO pc页面没出来 默认跳转h5
+                    // TODO pc页面没出来 默认跳转h5
                 /*    if (StringUtils.isEmpty(bindUserModel.getBid_url())) {
                         voBasicUserInfoResp.setTarget_url(h5Domain + "?token=" + token);
                     } else {
