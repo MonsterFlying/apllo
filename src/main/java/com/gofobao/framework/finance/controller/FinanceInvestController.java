@@ -1,7 +1,10 @@
 package com.gofobao.framework.finance.controller;
 
 import com.gofobao.framework.finance.biz.MyFinanceInvestBiz;
+import com.gofobao.framework.finance.vo.response.VoViewFinanceTenderDetailWarpRes;
 import com.gofobao.framework.security.contants.SecurityContants;
+import com.gofobao.framework.system.vo.request.VoFinanceDetailReq;
+import com.gofobao.framework.system.vo.response.VoViewFinanceReturnMoneyWarpRes;
 import com.gofobao.framework.tender.vo.request.VoDetailReq;
 import com.gofobao.framework.tender.vo.request.VoInvestListReq;
 import com.gofobao.framework.tender.vo.response.*;
@@ -14,7 +17,7 @@ import org.springframework.web.bind.annotation.*;
 /**
  * Created by admin on 2017/6/1.
  */
-@RequestMapping("/finance/invest/")
+@RequestMapping("/finance/invest")
 @Api(description="pc：我的投资")
 @RestController
 public class FinanceInvestController {
@@ -55,21 +58,21 @@ public class FinanceInvestController {
 
 
     @ApiOperation("pc:投资详情")
-    @GetMapping("v2/tender/detail/{tenderId}")
-    public ResponseEntity<VoViewTenderDetailWarpRes> pcTenderDetail(@PathVariable Long tenderId, @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
-        VoDetailReq voDetailReq = new VoDetailReq();
+    @GetMapping("v2/tender/detail/{buyerId}")
+    public ResponseEntity<VoViewFinanceTenderDetailWarpRes> pcTenderDetail(@PathVariable Long buyerId, @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
+        VoFinanceDetailReq voDetailReq = new VoFinanceDetailReq();
         voDetailReq.setUserId(userId);
-        voDetailReq.setTenderId(tenderId);
+        voDetailReq.setBuyerId(buyerId);
         return financeInvestBiz.tenderDetail(voDetailReq);
     }
 
     @ApiOperation("pc:投资详情列表")
-    @GetMapping("/v2/tender/collection/{tenderId}")
-    public ResponseEntity<VoViewReturnMoneyWarpRes> pcInfoList(@PathVariable Long tenderId,
-                                                             @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
-        VoDetailReq voDetailReq = new VoDetailReq();
+    @GetMapping("/v2/tender/collection/{buyerId}")
+    public ResponseEntity<VoViewFinanceReturnMoneyWarpRes> pcInfoList(@PathVariable Long buyerId,
+                                                                      @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
+        VoFinanceDetailReq voDetailReq = new VoFinanceDetailReq();
         voDetailReq.setUserId(userId);
-        voDetailReq.setTenderId(tenderId);
+        voDetailReq.setBuyerId(buyerId);
         return financeInvestBiz.infoList(voDetailReq);
     }
 

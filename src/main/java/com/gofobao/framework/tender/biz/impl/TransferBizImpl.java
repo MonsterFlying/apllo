@@ -1494,7 +1494,7 @@ public class TransferBizImpl implements TransferBiz {
             transfer.setType(p.getAuto() == true ? "自动" : "手动");
             Users user = usersMap.get(p.getUserId());
             //如果当前用户是管理员或者是投资者本人 用户名可见
-            transfer.setUserName(user.getId().intValue() == transferUserListReq.getUserId() || finalUserType.equals("manager")
+            transfer.setUserName(finalUserType.equals("manager")
                     ? user.getPhone()
                     : UserHelper.hideChar(user.getPhone(), UserHelper.PHONE_NUM));
             tenderUserResList.add(transfer);

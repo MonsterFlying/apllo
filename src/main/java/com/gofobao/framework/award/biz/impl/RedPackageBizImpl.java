@@ -342,7 +342,7 @@ public class RedPackageBizImpl implements RedPackageBiz {
             }
 
             VoViewOpenRedPackageWarpRes voViewOpenRedPackageWarpRes = VoBaseResp.ok("打开红包成功", VoViewOpenRedPackageWarpRes.class);
-            voViewOpenRedPackageWarpRes.setMoney(marketingRedpackRecord.getMoney() / 100D);
+            voViewOpenRedPackageWarpRes.setMoney(MoneyHelper.divide(marketingRedpackRecord.getMoney(), 100D, 2));   // 红包小数点问题
             return ResponseEntity.ok().body(voViewOpenRedPackageWarpRes);
         } else {
             VoViewOpenRedPackageWarpRes voViewOpenRedPackageWarpRes = VoBaseResp.error(VoBaseResp.ERROR, "打开红包失败", VoViewOpenRedPackageWarpRes.class);

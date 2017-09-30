@@ -67,13 +67,6 @@ public class TenderServiceImpl implements TenderService {
             return Collections.EMPTY_LIST;
         }
         List<VoBorrowTenderUserRes> tenderUserResList = new ArrayList<>();
-
-      /* Tender tender = new Tender();
-        tender.setBorrowId(borrowId);
-        tender.setStatus(TenderConstans.SUCCESS);
-        ExampleMatcher matcher = ExampleMatcher.matching().withIgnorePaths("isAuto");
-        Example<Tender> ex = Example.of(tender, matcher);
-        */
         PageRequest pageRequest = new PageRequest(tenderUserReq.getPageIndex(),
                 tenderUserReq.getPageSize(),
                 new Sort(Sort.Direction.DESC, "createdAt"));
@@ -103,8 +96,6 @@ public class TenderServiceImpl implements TenderService {
             VoBorrowTenderUserRes tenderUserRes = new VoBorrowTenderUserRes();
             tenderUserRes.setValidMoney(StringHelper.formatMon(item.getValidMoney() / 100d) + MoneyConstans.RMB);
             tenderUserRes.setDate(DateHelper.dateToString(item.getCreatedAt(), DateHelper.DATE_FORMAT_YMDHMS));
-
-
             // 此处进行优化
             if (item.getIsAuto()) {
                 tenderUserRes.setType(TenderConstans.AUTO + "(" + item.getAutoOrder() + ")");
@@ -132,7 +123,7 @@ public class TenderServiceImpl implements TenderService {
 
             Users user = usersRepository.findOne(new Long(item.getUserId()));
             //如果当前用户是管理员或者本人 用户名可见
-            tenderUserRes.setUserName((user.getId().equals(tenderUserReq.getUserId()) || finalUserType.equals("manager"))
+            tenderUserRes.setUserName(finalUserType.equals("manager")
                     ? user.getPhone()
                     : UserHelper.hideChar(user.getPhone(), UserHelper.PHONE_NUM)
             );

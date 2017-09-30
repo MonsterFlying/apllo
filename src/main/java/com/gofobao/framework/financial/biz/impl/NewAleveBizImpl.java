@@ -169,7 +169,8 @@ public class NewAleveBizImpl implements NewAleveBiz {
                     newAleve.setResv(resv);
                     newAleve.setQueryTime(date);
 
-                    NewAleve existsNewAleve = newAleveService.findTopByQueryTimeAndTranno(date, tranno);
+                    // 查找输入输出
+                    NewAleve existsNewAleve = newAleveService.findTopByReldateAndInptimeAndTranno(reldate, inptime, tranno);
                     if (ObjectUtils.isEmpty(existsNewAleve)) {
                         newAleveService.save(newAleve);
                     }

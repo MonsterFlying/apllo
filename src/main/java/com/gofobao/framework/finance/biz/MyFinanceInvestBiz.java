@@ -1,5 +1,8 @@
 package com.gofobao.framework.finance.biz;
 
+import com.gofobao.framework.finance.vo.response.VoViewFinanceTenderDetailWarpRes;
+import com.gofobao.framework.system.vo.request.VoFinanceDetailReq;
+import com.gofobao.framework.system.vo.response.VoViewFinanceReturnMoneyWarpRes;
 import com.gofobao.framework.tender.vo.request.VoDetailReq;
 import com.gofobao.framework.tender.vo.request.VoInvestListReq;
 import com.gofobao.framework.tender.vo.response.*;
@@ -38,13 +41,13 @@ public interface MyFinanceInvestBiz {
      * @param voDetailReq
      * @return
      */
-    ResponseEntity<VoViewTenderDetailWarpRes>  tenderDetail(VoDetailReq voDetailReq);
+    ResponseEntity<VoViewFinanceTenderDetailWarpRes> tenderDetail(VoFinanceDetailReq voDetailReq) ;
 
     /**
      * 回款详情
      * @param voDetailReq
      * @return
      */
-    ResponseEntity<VoViewReturnMoneyWarpRes> infoList(VoDetailReq voDetailReq);
+    ResponseEntity<VoViewFinanceReturnMoneyWarpRes> infoList(VoFinanceDetailReq voDetailReq) ;
 
 }

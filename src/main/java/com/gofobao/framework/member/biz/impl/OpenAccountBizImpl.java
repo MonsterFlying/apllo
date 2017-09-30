@@ -36,6 +36,7 @@ import java.util.List;
 @Service
 @Slf4j
 public class OpenAccountBizImpl implements OpenAccountBiz {
+
     @Autowired
     UserService userService;
 
