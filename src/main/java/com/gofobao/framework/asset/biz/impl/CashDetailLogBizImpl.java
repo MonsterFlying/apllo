@@ -165,11 +165,11 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
     @Transactional(rollbackFor = Exception.class)
     public ResponseEntity<VoPreCashResp> preCash(Long userId, HttpServletRequest httpServletRequest) {
         //同步资金
-        try {
+       /* try {
             assetBiz.synOffLineRecharge(userId);
         } catch (Exception e) {
             log.error("获取可提现额失败", e);
-        }
+        }*/
 
         Users users = userService.findByIdLock(userId);
         Preconditions.checkNotNull(users, "当前用户不存在");
@@ -276,7 +276,7 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
     @Transactional(rollbackFor = Exception.class)
     public ResponseEntity<VoHtmlResp> cash(HttpServletRequest httpServletRequest, Long userId, VoCashReq voCashReq) throws Exception {
         //同步资金
-        assetBiz.synOffLineRecharge(userId);
+        // assetBiz.synOffLineRecharge(userId);
         //当前用户
         Users users = userService.findByIdLock(userId);
         Preconditions.checkNotNull(users, "当前用户不存在");

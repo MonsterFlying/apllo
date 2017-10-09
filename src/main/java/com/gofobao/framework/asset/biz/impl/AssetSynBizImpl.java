@@ -92,8 +92,9 @@ public class AssetSynBizImpl implements AssetSynBiz {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @Deprecated
     public boolean doAssetSyn(Long userId) throws Exception {
-        Date nowDate = new Date();
+       /* Date nowDate = new Date();
         Users user = userService.findByIdLock(userId);
         Preconditions.checkNotNull(user, "资金同步: 查询用户为空");
         Asset asset = assetService.findByUserIdLock(userId);  // 用户资产
@@ -240,7 +241,7 @@ public class AssetSynBizImpl implements AssetSynBiz {
             mqConfig.setMsg(body);
             mqHelper.convertAndSend(mqConfig);
         }
-
+*/
         return true;
     }
 

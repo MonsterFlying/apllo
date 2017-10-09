@@ -313,11 +313,11 @@ public class UserBizImpl implements UserBiz {
             voBasicUserInfoResp.setBankState(!StringUtils.isEmpty(userThirdAccount.getCardNo()));
             voBasicUserInfoResp.setAutoTenderState(userThirdAccount.getAutoTenderState().equals(1));
             voBasicUserInfoResp.setAutoTranferState(userThirdAccount.getAutoTransferState().equals(1));
-            try {
+           /* try {
                 assetSynBiz.doAssetSyn(user.getId());
             } catch (Exception e) {
                 log.error("资金同步异常", e);
-            }
+            }*/
         }
 
         // 获取vip状态
