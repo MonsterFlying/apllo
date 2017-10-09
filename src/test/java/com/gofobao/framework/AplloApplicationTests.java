@@ -72,6 +72,7 @@ import com.gofobao.framework.repayment.biz.LoanBiz;
 import com.gofobao.framework.repayment.biz.RepaymentBiz;
 import com.gofobao.framework.repayment.entity.BorrowRepayment;
 import com.gofobao.framework.repayment.service.BorrowRepaymentService;
+import com.gofobao.framework.repayment.vo.request.VoRepayReq;
 import com.gofobao.framework.scheduler.DailyAssetBackupScheduler;
 import com.gofobao.framework.scheduler.DealThirdBatchScheduler;
 import com.gofobao.framework.scheduler.biz.FundStatisticsBiz;
@@ -692,8 +693,12 @@ public class AplloApplicationTests {
     public void test() {
 
         try {
-            Statistic statistic = new Statistic();
-            repaymentBiz.newRepayDeal(170651l, "103108", statistic);
+            VoRepayReq voRepayReq = new VoRepayReq();
+            voRepayReq.setRepaymentId(188277l);
+            voRepayReq.setUserId(13724l);
+            voRepayReq.setIsUserOpen(true);
+            voRepayReq.setInterestPercent(0d);
+            repaymentBiz.newRepay(voRepayReq);
         } catch (Exception e) {
             e.printStackTrace();
         }

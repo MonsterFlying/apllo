@@ -2112,7 +2112,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
      */
 
     private long calculateLateInterest(int lateDays, BorrowRepayment borrowRepayment, Borrow repaymentBorrow) {
-        if (0 <= lateDays) {
+        if (0 >= lateDays) {
             return 0;
         }
 
