@@ -117,5 +117,10 @@ public class CashDetailLogServiceImpl implements CashDetailLogService {
         return logs;
     }
 
+    @Override
+    public long count(Specification<CashDetailLog> cashDetailLogSpecification) {
+        return cashDetailLogRepository.count(cashDetailLogSpecification) ;
+    }
+
 
 }

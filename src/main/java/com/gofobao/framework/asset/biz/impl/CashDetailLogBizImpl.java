@@ -1,5 +1,6 @@
 package com.gofobao.framework.asset.biz.impl;
 
+import com.github.wenhao.jpa.Specifications;
 import com.gofobao.framework.api.contants.ChannelContant;
 import com.gofobao.framework.api.contants.IdTypeContant;
 import com.gofobao.framework.api.contants.JixinResultContants;
@@ -62,11 +63,14 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import lombok.extern.slf4j.Slf4j;
+import org.hibernate.type.descriptor.java.DataHelper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Range;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
@@ -238,9 +242,34 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
      * @return
      */
     private int queryFreeTime(Long userId) {
-        ImmutableList<Integer> states = ImmutableList.of(0, 1, 3);
-        List<CashDetailLog> cashDetailLogs = cashDetailLogService.findByStateInAndUserId(states, userId);
-        return CollectionUtils.isEmpty(cashDetailLogs) ? 10 : cashDetailLogs.size() > 10 ? 0 : 10 - cashDetailLogs.size();
+        ImmutableList<Integer> states = ImmutableList.of(0, 1, 3);  // 提现
+        Date nowDate = new Date();
+        Date beginDate = DateHelper.endOfDate(DateHelper.endOfMonth(DateHelper.subMonths(nowDate, 1)));
+        Date endDate = DateHelper.beginOfDate(DateHelper.beginOfMonth(DateHelper.addMonths(nowDate, 1)));
+
+
+        // 加入日期
+        Specification<CashDetailLog> cashDetailLogSpecification = Specifications
+                .<CashDetailLog>and()
+                .eq("userId", userId)
+                .in("state", states.toArray())
+                .between("createTime", new Range<>(beginDate, endDate))
+                .build();
+
+        Long count = cashDetailLogService.count(cashDetailLogSpecification);
+        int cashCount = count.intValue();
+        // List<CashDetailLog> cashDetailLogs = cashDetailLogService.findByStateInAndUserId(states, userId);
+        return 10 - cashCount <= 0 ? 0 : 10 - cashCount;
+    }
+
+    public static void main(String[] args) {
+        Date nowDate = new Date();
+        Date beginDate = DateHelper.endOfDate(DateHelper.endOfMonth(DateHelper.subMonths(nowDate, 1)));
+        Date endDate = DateHelper.beginOfDate(DateHelper.beginOfMonth(DateHelper.addMonths(nowDate, 1)));
+        log.info(DateHelper.dateToString(beginDate));
+        log.info(DateHelper.dateToString(endDate));
+
+
     }
 
     @Override
@@ -503,7 +532,7 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
         } else if (JixinResultContants.toBeConfirm(response)) {
             userAssetCash(users, seqNo, cashDetailLog, nowDate);  // 用户提现资金扣减
             titel = "存管已接收提现受理";
-            content = String.format("敬爱的用户您好! 你在[%s]提交%s元的提现请求, 已被银行受理, 你可以 T + 1后查看结果. 如有疑问, 请联系平台客服!.", DateHelper.dateToString(cashDetailLog.getCreateTime()),
+            content = String.format("敬爱的用户您好! 你在[%s]提交%s元的提现请求, 已被银行受理, 你可以2小时后查看结果. 如有疑问, 请联系平台客服!.", DateHelper.dateToString(cashDetailLog.getCreateTime()),
                     StringHelper.formatDouble(cashDetailLog.getMoney() / 100D, true));
 
             // 发送资金确认
