@@ -128,60 +128,6 @@ public class TestController {
         if (CollectionUtils.isEmpty(thirdBatchLogList)) {
             return;
         }
-
-    }
-
-    private static boolean flag = true;
-
-    @Transactional(rollbackFor = Exception.class)
-    @ApiOperation("获取自动投标列表")
-    @RequestMapping("/pub/packet/send")
-    public void redPacket(@RequestParam("sign") Object sign) {
-        if (sign.equals("langlang") && flag) {
-            long redpackAccountId = 0;
-            try {
-                redpackAccountId = assetChangeProvider.getRedpackAccountId();
-            } catch (ExecutionException e) {
-                e.printStackTrace();
-            }
-            UserThirdAccount redpackAccount = userThirdAccountService.findByUserId(redpackAccountId);
-            UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(4811l);
-
-            long money = 1080l;
-            // 发放理财师奖励
-            AssetChange assetChange = new AssetChange();
-            assetChange.setMoney(money);
-            assetChange.setType(AssetChangeTypeEnum.receiveRedpack);  //  扣除红包
-            assetChange.setUserId(userThirdAccount.getUserId());
-            assetChange.setForUserId(userThirdAccount.getUserId());
-            assetChange.setRemark(String.format("还款逾期费用补偿 %s元", StringHelper.formatDouble(money / 100D, true)));
-            assetChange.setGroupSeqNo(assetChangeProvider.getGroupSeqNo());
-            assetChange.setSeqNo(assetChangeProvider.getSeqNo());
-            assetChange.setForUserId(redpackAccount.getUserId());
-            assetChange.setSourceId(0L);
-            try {
-                assetChangeProvider.commonAssetChange(assetChange);
-            } catch (Exception e) {
-                log.error("还款逾期费用补偿:", e);
-                return;
-            }
-
-            //3.发送红包
-            VoucherPayRequest voucherPayRequest = new VoucherPayRequest();
-            voucherPayRequest.setAccountId(redpackAccount.getAccountId());
-            voucherPayRequest.setTxAmount(StringHelper.formatDouble(money, 100, false));
-            voucherPayRequest.setForAccountId(userThirdAccount.getAccountId());
-            voucherPayRequest.setDesLineFlag(DesLineFlagContant.TURE);
-            voucherPayRequest.setDesLine(String.format("还款逾期费用补偿 %s元", StringHelper.formatDouble(money / 100D, true)));
-            voucherPayRequest.setChannel(ChannelContant.HTML);
-            VoucherPayResponse response = jixinManager.send(JixinTxCodeEnum.SEND_RED_PACKET, voucherPayRequest, VoucherPayResponse.class);
-            if ((ObjectUtils.isEmpty(response)) || (!JixinResultContants.SUCCESS.equals(response.getRetCode()))) {
-                String msg = ObjectUtils.isEmpty(response) ? "当前网络不稳定，请稍候重试" : response.getRetMsg();
-                log.error("redPacket" + msg);
-            } else {
-                flag = false;
-            }
-        }
     }
 
     @ApiOperation("资产查询")
