@@ -585,11 +585,11 @@ public class AssetBizImpl implements AssetBiz {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public ResponseEntity<VoUserAssetInfoResp> synOffLineRecharge(Long userId) throws Exception {
-        try {
+       /* try {
             assetSynBiz.doAssetSyn(userId);
         } catch (Exception e) {
             log.error("资金同步异常", e);
-        }
+        }*/
         return userAssetInfo(userId);
     }
 
@@ -1033,12 +1033,12 @@ public class AssetBizImpl implements AssetBiz {
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "当前用户处于被冻结状态，如有问题请联系客服！", VoAvailableAssetInfoResp.class));
         }
-        try {
+      /*  try {
             assetSynBiz.doAssetSyn(userId);
         } catch (Exception e) {
             log.error("用户余额同步错误", e);
         }
-
+*/
         VoAvailableAssetInfoResp resp = VoBaseResp.ok("查询成功", VoAvailableAssetInfoResp.class);
         Long noUserMoney = asset.getNoUseMoney();
         Long userMoney = asset.getUseMoney();
@@ -1281,11 +1281,11 @@ public class AssetBizImpl implements AssetBiz {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public ResponseEntity<VoAssetIndexResp> synHome(Long userId) throws Exception {
-        try {
+        /*try {
             assetSynBiz.doAssetSyn(userId);
         } catch (Exception e) {
             log.error("资金同步异常", e);
-        }
+        }*/
         return asset(userId);
     }
 
