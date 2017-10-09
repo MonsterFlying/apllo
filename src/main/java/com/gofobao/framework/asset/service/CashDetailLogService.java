@@ -5,6 +5,7 @@ import com.gofobao.framework.asset.vo.request.VoPcCashLogs;
 import com.gofobao.framework.asset.vo.response.pc.VoCashLog;
 import com.google.common.collect.ImmutableList;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 
 import java.util.Date;
 import java.util.List;
@@ -42,4 +43,6 @@ public interface CashDetailLogService {
      * @return
      */
     List<VoCashLog> pcLogs(VoPcCashLogs voPcCashLogs);
+
+    long count(Specification<CashDetailLog> cashDetailLogSpecification);
 }

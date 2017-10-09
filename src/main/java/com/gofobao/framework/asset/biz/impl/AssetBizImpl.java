@@ -80,6 +80,7 @@ import org.springframework.data.domain.*;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.ui.Model;
 import org.springframework.util.Base64Utils;
@@ -1541,9 +1542,18 @@ public class AssetBizImpl implements AssetBiz {
         return ResponseEntity.ok(VoBaseResp.ok(String.format("撤销红包成功：msg->%s", response.getRetMsg())));
     }
 
+
+    /**
+     * 使用并行事务
+     *
+     * @param request
+     * @param response
+     * @return
+     * @throws Exception
+     */
     @Override
     @Transactional(rollbackFor = ExcelException.class)
-    public ResponseEntity<String> offlineRechargeCallback(HttpServletRequest request, HttpServletResponse response) throws Exception {
+    public synchronized ResponseEntity<String>  offlineRechargeCallback(HttpServletRequest request, HttpServletResponse response) throws Exception {
         String bgData = request.getParameter("bgData");
         log.info("==================================");
         log.info(String.format("即信线下充值回调: 数据[%s]", bgData));

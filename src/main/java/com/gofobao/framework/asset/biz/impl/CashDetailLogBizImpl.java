@@ -1,5 +1,6 @@
 package com.gofobao.framework.asset.biz.impl;
 
+import com.github.wenhao.jpa.Specifications;
 import com.gofobao.framework.api.contants.ChannelContant;
 import com.gofobao.framework.api.contants.IdTypeContant;
 import com.gofobao.framework.api.contants.JixinResultContants;
@@ -62,11 +63,14 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import lombok.extern.slf4j.Slf4j;
+import org.hibernate.type.descriptor.java.DataHelper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Range;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
@@ -238,9 +242,34 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
      * @return
      */
     private int queryFreeTime(Long userId) {
-        ImmutableList<Integer> states = ImmutableList.of(0, 1, 3);
-        List<CashDetailLog> cashDetailLogs = cashDetailLogService.findByStateInAndUserId(states, userId);
-        return CollectionUtils.isEmpty(cashDetailLogs) ? 10 : cashDetailLogs.size() > 10 ? 0 : 10 - cashDetailLogs.size();
+        ImmutableList<Integer> states = ImmutableList.of(0, 1, 3);  // 提现
+        Date nowDate = new Date();
+        Date beginDate = DateHelper.endOfDate(DateHelper.endOfMonth(DateHelper.subMonths(nowDate, 1)));
+        Date endDate = DateHelper.beginOfDate(DateHelper.beginOfMonth(DateHelper.addMonths(nowDate, 1)));
+
+
+        // 加入日期
+        Specification<CashDetailLog> cashDetailLogSpecification = Specifications
+                .<CashDetailLog>and()
+                .eq("userId", userId)
+                .in("state", states.toArray())
+                .between("createTime", new Range<>(beginDate, endDate))
+                .build();
+
+        Long count = cashDetailLogService.count(cashDetailLogSpecification);
+        int cashCount = count.intValue();
+        // List<CashDetailLog> cashDetailLogs = cashDetailLogService.findByStateInAndUserId(states, userId);
+        return 10 - cashCount <= 0 ? 0 : 10 - cashCount;
+    }
+
+    public static void main(String[] args) {
+        Date nowDate = new Date();
+        Date beginDate = DateHelper.endOfDate(DateHelper.endOfMonth(DateHelper.subMonths(nowDate, 1)));
+        Date endDate = DateHelper.beginOfDate(DateHelper.beginOfMonth(DateHelper.addMonths(nowDate, 1)));
+        log.info(DateHelper.dateToString(beginDate));
+        log.info(DateHelper.dateToString(endDate));
+
+
     }
 
     @Override
@@ -495,7 +524,7 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
         } else if (JixinResultContants.toBeConfirm(response)) {
             userAssetCash(users, seqNo, cashDetailLog, nowDate);  // 用户提现资金扣减
             titel = "存管已接收提现受理";
-            content = String.format("敬爱的用户您好! 你在[%s]提交%s元的提现请求, 已被银行受理, 你可以 T + 1后查看结果. 如有疑问, 请联系平台客服!.", DateHelper.dateToString(cashDetailLog.getCreateTime()),
+            content = String.format("敬爱的用户您好! 你在[%s]提交%s元的提现请求, 已被银行受理, 你可以2小时后查看结果. 如有疑问, 请联系平台客服!.", DateHelper.dateToString(cashDetailLog.getCreateTime()),
                     StringHelper.formatDouble(cashDetailLog.getMoney() / 100D, true));
 
             // 发送资金确认
@@ -760,78 +789,78 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
     }
 
 
-   /* private void deductionAsset(CashDetailLog cashDetailLog, AccountDetailsQueryItem cash) throws Exception {
-        Date nowDate = new Date();
-        String querySeqNo = String.format("%s%s%s", cash.getInpDate(), cash.getInpTime(), cash.getTraceNo());
-        // 更改用户提现记录
-        cashDetailLog.setState(4);
-        cashDetailLog.setCallbackTime(nowDate);
-        cashDetailLog.setQuerySeqNo(querySeqNo);
-        cashDetailLogService.save(cashDetailLog);
+    /* private void deductionAsset(CashDetailLog cashDetailLog, AccountDetailsQueryItem cash) throws Exception {
+         Date nowDate = new Date();
+         String querySeqNo = String.format("%s%s%s", cash.getInpDate(), cash.getInpTime(), cash.getTraceNo());
+         // 更改用户提现记录
+         cashDetailLog.setState(4);
+         cashDetailLog.setCallbackTime(nowDate);
+         cashDetailLog.setQuerySeqNo(querySeqNo);
+         cashDetailLogService.save(cashDetailLog);
 
-        String seqNo = cashDetailLog.getSeqNo();
-        long userId = cashDetailLog.getUserId();
+         String seqNo = cashDetailLog.getSeqNo();
+         long userId = cashDetailLog.getUserId();
 
-        // 更改用户资金
-        AssetChange entity = new AssetChange();
-        long realCashMoney = cashDetailLog.getMoney() - cashDetailLog.getFee();
-        String groupSeqNo = assetChangeProvider.getGroupSeqNo();
-        entity.setGroupSeqNo(groupSeqNo);
-        entity.setMoney(realCashMoney);
-        entity.setSeqNo(seqNo);
-        entity.setUserId(userId);
-        entity.setRemark(String.format("你在 %s 成功返还提现%s元", DateHelper.dateToString(nowDate), StringHelper.formatDouble(realCashMoney / 100D, true)));
-        entity.setType(AssetChangeTypeEnum.cancelBigCash);
-        assetChangeProvider.commonAssetChange(entity);
-        if (cashDetailLog.getFee() > 0) {   // 扣除用户提现手续费
-            Long feeAccountId = assetChangeProvider.getFeeAccountId();
-            entity = new AssetChange();
-            entity.setGroupSeqNo(groupSeqNo);
-            entity.setMoney(cashDetailLog.getFee());
-            entity.setSeqNo(seqNo);
-            entity.setUserId(userId);
-            entity.setForUserId(feeAccountId);
-            entity.setRemark(String.format("你在 %s 成功返还提现手续费%s元", DateHelper.dateToString(nowDate), StringHelper.formatDouble(cashDetailLog.getFee() / 100D, true)));
-            entity.setType(AssetChangeTypeEnum.cancelBigCashFee);
-            assetChangeProvider.commonAssetChange(entity);
+         // 更改用户资金
+         AssetChange entity = new AssetChange();
+         long realCashMoney = cashDetailLog.getMoney() - cashDetailLog.getFee();
+         String groupSeqNo = assetChangeProvider.getGroupSeqNo();
+         entity.setGroupSeqNo(groupSeqNo);
+         entity.setMoney(realCashMoney);
+         entity.setSeqNo(seqNo);
+         entity.setUserId(userId);
+         entity.setRemark(String.format("你在 %s 成功返还提现%s元", DateHelper.dateToString(nowDate), StringHelper.formatDouble(realCashMoney / 100D, true)));
+         entity.setType(AssetChangeTypeEnum.cancelBigCash);
+         assetChangeProvider.commonAssetChange(entity);
+         if (cashDetailLog.getFee() > 0) {   // 扣除用户提现手续费
+             Long feeAccountId = assetChangeProvider.getFeeAccountId();
+             entity = new AssetChange();
+             entity.setGroupSeqNo(groupSeqNo);
+             entity.setMoney(cashDetailLog.getFee());
+             entity.setSeqNo(seqNo);
+             entity.setUserId(userId);
+             entity.setForUserId(feeAccountId);
+             entity.setRemark(String.format("你在 %s 成功返还提现手续费%s元", DateHelper.dateToString(nowDate), StringHelper.formatDouble(cashDetailLog.getFee() / 100D, true)));
+             entity.setType(AssetChangeTypeEnum.cancelBigCashFee);
+             assetChangeProvider.commonAssetChange(entity);
 
-            // 平台收取提现手续费
-            entity = new AssetChange();
-            entity.setGroupSeqNo(groupSeqNo);
-            entity.setMoney(cashDetailLog.getFee());
-            entity.setSeqNo(seqNo);
-            entity.setUserId(feeAccountId);
-            entity.setForUserId(userId);
-            entity.setRemark(String.format("你在 %s 成功返还提现手续费%s元", DateHelper.dateToString(nowDate), StringHelper.formatDouble(cashDetailLog.getFee() / 100D, true)));
-            entity.setType(AssetChangeTypeEnum.cancelPlatformBigCashFee);
-            assetChangeProvider.commonAssetChange(entity);
-        }
+             // 平台收取提现手续费
+             entity = new AssetChange();
+             entity.setGroupSeqNo(groupSeqNo);
+             entity.setMoney(cashDetailLog.getFee());
+             entity.setSeqNo(seqNo);
+             entity.setUserId(feeAccountId);
+             entity.setForUserId(userId);
+             entity.setRemark(String.format("你在 %s 成功返还提现手续费%s元", DateHelper.dateToString(nowDate), StringHelper.formatDouble(cashDetailLog.getFee() / 100D, true)));
+             entity.setType(AssetChangeTypeEnum.cancelPlatformBigCashFee);
+             assetChangeProvider.commonAssetChange(entity);
+         }
 
-        String titel = "提现失败";
-        String content = String.format("敬爱的用户您好! 你在[%s]提交%s元的提现请求, 由于已被银行拒绝受理, 现在归还提现资金. 如有疑问联系平台客服!", DateHelper.dateToString(cashDetailLog.getCreateTime()),
-                StringHelper.formatDouble(cashDetailLog.getMoney() / 100D, true));
-        try {
-            Notices notices = new Notices();
-            notices.setFromUserId(1L);
-            notices.setUserId(userId);
-            notices.setRead(false);
-            notices.setName(titel);
-            notices.setContent(content);
-            notices.setType("system");
-            notices.setCreatedAt(nowDate);
-            notices.setUpdatedAt(nowDate);
-            MqConfig mqConfig = new MqConfig();
-            mqConfig.setQueue(MqQueueEnum.RABBITMQ_NOTICE);
-            mqConfig.setTag(MqTagEnum.NOTICE_PUBLISH);
-            Map<String, String> body = GSON.fromJson(GSON.toJson(notices), TypeTokenContants.MAP_TOKEN);
-            mqConfig.setMsg(body);
-            log.info(String.format("CashDetailLogBizImpl doFormCash send mq %s", GSON.toJson(body)));
-            mqHelper.convertAndSend(mqConfig);
-        } catch (Throwable e) {
-            log.error("CashDetailLogBizImpl doFormCash send mq exception", e);
-        }
-    }
-*/
+         String titel = "提现失败";
+         String content = String.format("敬爱的用户您好! 你在[%s]提交%s元的提现请求, 由于已被银行拒绝受理, 现在归还提现资金. 如有疑问联系平台客服!", DateHelper.dateToString(cashDetailLog.getCreateTime()),
+                 StringHelper.formatDouble(cashDetailLog.getMoney() / 100D, true));
+         try {
+             Notices notices = new Notices();
+             notices.setFromUserId(1L);
+             notices.setUserId(userId);
+             notices.setRead(false);
+             notices.setName(titel);
+             notices.setContent(content);
+             notices.setType("system");
+             notices.setCreatedAt(nowDate);
+             notices.setUpdatedAt(nowDate);
+             MqConfig mqConfig = new MqConfig();
+             mqConfig.setQueue(MqQueueEnum.RABBITMQ_NOTICE);
+             mqConfig.setTag(MqTagEnum.NOTICE_PUBLISH);
+             Map<String, String> body = GSON.fromJson(GSON.toJson(notices), TypeTokenContants.MAP_TOKEN);
+             mqConfig.setMsg(body);
+             log.info(String.format("CashDetailLogBizImpl doFormCash send mq %s", GSON.toJson(body)));
+             mqHelper.convertAndSend(mqConfig);
+         } catch (Throwable e) {
+             log.error("CashDetailLogBizImpl doFormCash send mq exception", e);
+         }
+     }
+ */
     @Override
     public ResponseEntity<VoHtmlResp> adminWebCash(HttpServletRequest httpServletRequest, VoAdminCashReq voAdminCashReq) throws Exception {
         String paramStr = voAdminCashReq.getParamStr();
