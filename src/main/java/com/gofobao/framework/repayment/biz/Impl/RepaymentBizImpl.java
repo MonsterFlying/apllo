@@ -292,6 +292,8 @@ public class RepaymentBizImpl implements RepaymentBiz {
         /* 投标记录id集合 */
         Set<Long> tenderIds = tenderList.stream().map(tender -> tender.getId()).collect(Collectors.toSet());
         Map<Long, Tender> tenderMap = tenderList.stream().collect(Collectors.toMap(Tender::getId, Function.identity()));
+        //3.处理资金还款人、收款人资金变动
+        batchAssetChangeHelper.batchAssetChangeAndCollection(borrowId, batchNo, BatchAssetChangeContants.BATCH_REPAY_ALL);
         //迭代还款集合,逐期还款
         for (BorrowRepayment borrowRepayment : borrowRepaymentList) {
             /* 是否垫付 */
@@ -306,27 +308,38 @@ public class RepaymentBizImpl implements RepaymentBiz {
                     .build();
             List<BorrowCollection> borrowCollectionList = borrowCollectionService.findList(bcs);
             Preconditions.checkNotNull(borrowCollectionList, "立即还款: 回款记录为空!");
-
             //4.还款成功后变更改还款状态
             changeRepaymentAndRepayStatus(borrow, tenderList, borrowRepayment, borrowCollectionList, advance);
             //5.结束第三方债权并更新借款状态（还款最后一期的时候）
             endThirdTenderAndChangeBorrowStatus(borrow, borrowRepayment);
-            //6.发送投资人收到还款站内信
-            sendCollectionNotices(borrowCollectionList, advance, borrow);
-            //7.发放积分
+            //6.发放积分
             giveInterest(borrowCollectionList, borrow);
-            //8.还款最后新增统计
+            //7.还款最后新增统计
             fillRepaymentStatistics(borrow, borrowRepayment, statistic);
-            //9.更新投资人缓存
+            //8.更新投资人缓存
             updateUserCacheByReceivedRepay(borrowCollectionList, borrow);
-            //10.项目回款短信通知
-            smsNoticeByReceivedRepay(borrowCollectionList, borrow, borrowRepayment);
-            //11.变更理财计划参数
+            //9.变更理财计划参数
             updateFinanceByReceivedRepay(tenderList, tenderMap, borrowCollectionList);
         }
-        //2.进行批次资产改变
-        //2.处理资金还款人、收款人资金变动
-        batchAssetChangeHelper.batchAssetChangeAndCollection(borrowId, batchNo, BatchAssetChangeContants.BATCH_REPAY_ALL);
+        //10发送提前结清站内信、短信
+        for (BorrowRepayment borrowRepayment : borrowRepaymentList) {
+            /* 是否垫付 */
+            boolean advance = !ObjectUtils.isEmpty(borrowRepayment.getAdvanceAtYes());
+            /* 查询未转让的投标记录回款记录 */
+            Specification<BorrowCollection> bcs = Specifications
+                    .<BorrowCollection>and()
+                    .in("tenderId", tenderIds.toArray())
+                    .eq("status", 0)
+                    .eq("order", borrowRepayment.getOrder())
+                    .eq("transferFlag", 0)
+                    .build();
+            List<BorrowCollection> borrowCollectionList = borrowCollectionService.findList(bcs);
+            //6.发送投资人收到还款站内信
+            sendCollectionNotices(borrowCollectionList, advance, borrow);
+            //10.项目回款短信通知
+            smsNoticeByReceivedRepay(borrowCollectionList, borrow, borrowRepayment);
+        }
+
         return ResponseEntity.ok(VoBaseResp.ok("提前结清处理成功!"));
     }
 
@@ -982,21 +995,21 @@ public class RepaymentBizImpl implements RepaymentBiz {
         //5.结束第三方债权并更新借款状态（还款最后一期的时候）
         endThirdTenderAndChangeBorrowStatus(parentBorrow, borrowRepayment);
         if (!advance) { //非转让标需要统计与发放短信
-            //6.发送投资人收到还款站内信
-            sendCollectionNotices(borrowCollectionList, advance, parentBorrow);
-            //7.发放积分
+            //6.发放积分
             giveInterest(borrowCollectionList, parentBorrow);
-            //8.还款最后新增统计
+            //7.还款最后新增统计
             fillRepaymentStatistics(parentBorrow, borrowRepayment, statistic);
-            //9.更新投资人缓存
+            //8.更新投资人缓存
             updateUserCacheByReceivedRepay(borrowCollectionList, parentBorrow);
-            //10.项目回款短信通知
-            smsNoticeByReceivedRepay(borrowCollectionList, parentBorrow, borrowRepayment);
-            //11.变更理财计划参数
+            //9.变更理财计划参数
             updateFinanceByReceivedRepay(tenderList, tenderMap, borrowCollectionList);
+            //10.通知风车理财用户 回款成功
+            windmillTenderBiz.backMoneyNotify(borrowCollectionList);
+            //11.发送投资人收到还款站内信
+            sendCollectionNotices(borrowCollectionList, advance, parentBorrow);
+            //12.项目回款短信通知
+            smsNoticeByReceivedRepay(borrowCollectionList, parentBorrow, borrowRepayment);
         }
-        //通知风车理财用户 回款成功
-        windmillTenderBiz.backMoneyNotify(borrowCollectionList);
 
         return ResponseEntity.ok(VoBaseResp.ok("还款处理成功!"));
     }
@@ -3079,21 +3092,22 @@ public class RepaymentBizImpl implements RepaymentBiz {
         addAdvanceLogAndChangeBorrowRepayment(titularBorrowUserId, borrowRepayment, lateDays, lateInterest);
         //3.5完成垫付债权转让操作
         transferTenderByAdvance(parentBorrow, tenderMaps, tenderIds, borrowRepayment);
-        //5.发送投资人收到还款站内信
-        sendCollectionNotices(borrowCollectionList, advance, parentBorrow);
-        //6.发放积分
+        //4.发放积分
         giveInterest(borrowCollectionList, parentBorrow);
-        //7.还款最后新增统计
+        //5.还款最后新增统计
         fillRepaymentStatistics(parentBorrow, borrowRepayment, statistic);
-        //8.更新投资人缓存
-        updateUserCacheByReceivedRepay(borrowCollectionList, parentBorrow);
-        //9.项目回款短信通知
-        smsNoticeByReceivedRepay(borrowCollectionList, parentBorrow, borrowRepayment);
-        //10修改垫付原回款状态
+        //6修改垫付原回款状态
         updateCollectionByAdvance(borrowCollectionList);
-        //11.变更理财计划参数
+        //7.更新投资人缓存
+        updateUserCacheByReceivedRepay(borrowCollectionList, parentBorrow);
+        //8.变更理财计划参数
         updateFinanceByReceivedRepay(tenderList, tenderMaps, borrowCollectionList);
-
+        //9通知风车理财用户 回款成功
+        windmillTenderBiz.backMoneyNotify(borrowCollectionList);
+        //10.发送投资人收到还款站内信
+        sendCollectionNotices(borrowCollectionList, advance, parentBorrow);
+        //11.项目回款短信通知
+        smsNoticeByReceivedRepay(borrowCollectionList, parentBorrow, borrowRepayment);
         return ResponseEntity.ok(VoBaseResp.ok("垫付处理成功!"));
     }
 

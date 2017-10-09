@@ -77,8 +77,11 @@ import com.gofobao.framework.scheduler.DealThirdBatchScheduler;
 import com.gofobao.framework.scheduler.biz.FundStatisticsBiz;
 import com.gofobao.framework.system.biz.ThirdBatchDealBiz;
 import com.gofobao.framework.system.biz.ThirdBatchDealLogBiz;
+import com.gofobao.framework.system.entity.Statistic;
 import com.gofobao.framework.system.service.IncrStatisticService;
 import com.gofobao.framework.system.service.ThirdBatchLogService;
+import com.gofobao.framework.tender.biz.TransferBiz;
+import com.gofobao.framework.tender.biz.impl.TransferBizImpl;
 import com.gofobao.framework.tender.contants.BorrowContants;
 import com.gofobao.framework.tender.entity.Tender;
 import com.gofobao.framework.tender.service.TenderService;
@@ -680,11 +683,20 @@ public class AplloApplicationTests {
     @Autowired
     TransferProvider transferProvider;
 
+
+    @Autowired
+    private TransferBiz transferBiz;
+
     @Test
     @Transactional(rollbackFor = Exception.class)
     public void test() {
 
-
+        try {
+            Statistic statistic = new Statistic();
+            repaymentBiz.newRepayDeal(170651l, "103108", statistic);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
 
        /* //批次处理
        batchDeal();
