@@ -991,10 +991,6 @@ public class BorrowBizImpl implements BorrowBiz {
         generateBorrowCollectionAndAssetChange(borrow, borrowRepaymentList, tenderList, nowDate, groupSeqNo);
         // 标的自身设置奖励信息:进行存管红包发放
         awardUserByBorrowTender(borrow, tenderList);
-        // 发送投资成功站内信
-        sendNoticsByTender(borrow, tenderList);
-        // 用户投标信息和每日统计
-        userTenderStatistic(borrow, tenderList, nowDate);
         try {
             // 老用户投标
             if (!borrow.getIsNovice()) {
@@ -1023,12 +1019,16 @@ public class BorrowBizImpl implements BorrowBiz {
         }
         // 满标操作
         finishBorrow(borrow);
-        //借款成功发送通知短信
-        smsNoticeByBorrowReview(borrow);
         //发送借款协议
         sendBorrowProtocol(borrow);
+        // 用户投标信息和每日统计
+        userTenderStatistic(borrow, tenderList, nowDate);
         //更新总统计
         fillStatisticByBorrowReview(borrow, borrowRepaymentList, statistic);
+        //借款成功发送通知短信
+        smsNoticeByBorrowReview(borrow);
+        // 发送投资成功站内信
+        sendNoticsByTender(borrow, tenderList);
         return true;
     }
 

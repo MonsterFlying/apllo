@@ -72,13 +72,17 @@ import com.gofobao.framework.repayment.biz.LoanBiz;
 import com.gofobao.framework.repayment.biz.RepaymentBiz;
 import com.gofobao.framework.repayment.entity.BorrowRepayment;
 import com.gofobao.framework.repayment.service.BorrowRepaymentService;
+import com.gofobao.framework.repayment.vo.request.VoRepayReq;
 import com.gofobao.framework.scheduler.DailyAssetBackupScheduler;
 import com.gofobao.framework.scheduler.DealThirdBatchScheduler;
 import com.gofobao.framework.scheduler.biz.FundStatisticsBiz;
 import com.gofobao.framework.system.biz.ThirdBatchDealBiz;
 import com.gofobao.framework.system.biz.ThirdBatchDealLogBiz;
+import com.gofobao.framework.system.entity.Statistic;
 import com.gofobao.framework.system.service.IncrStatisticService;
 import com.gofobao.framework.system.service.ThirdBatchLogService;
+import com.gofobao.framework.tender.biz.TransferBiz;
+import com.gofobao.framework.tender.biz.impl.TransferBizImpl;
 import com.gofobao.framework.tender.contants.BorrowContants;
 import com.gofobao.framework.tender.entity.Tender;
 import com.gofobao.framework.tender.service.TenderService;
@@ -680,11 +684,24 @@ public class AplloApplicationTests {
     @Autowired
     TransferProvider transferProvider;
 
+
+    @Autowired
+    private TransferBiz transferBiz;
+
     @Test
     @Transactional(rollbackFor = Exception.class)
     public void test() {
 
-
+        try {
+            VoRepayReq voRepayReq = new VoRepayReq();
+            voRepayReq.setRepaymentId(188277l);
+            voRepayReq.setUserId(13724l);
+            voRepayReq.setIsUserOpen(true);
+            voRepayReq.setInterestPercent(0d);
+            repaymentBiz.newRepay(voRepayReq);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
 
        /* //批次处理
        batchDeal();

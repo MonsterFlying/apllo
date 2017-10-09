@@ -343,22 +343,32 @@ public class TransferBizImpl implements TransferBiz {
         List<Tender> childTenderList = null;
         //理财计划债权转让是否是赎回
         if (repurchaseFlag) {
+            log.info("理财计划债权匹配赎回生成子tender开始！");
             //理财计划债权匹配赎回生成子tender
             childTenderList = addChildTender(nowDate, transfer, parentTender, transferBuyLogList);
+            log.info("理财计划债权匹配赎回生成子tender结束！");
         } else {
+            log.info("理财计划债权匹配购买生成子tender开始！");
             //理财计划债权匹配购买生成子tender
             childTenderList = addFinanceChildTender(nowDate, transfer, parentTender, transferBuyLogList);
+            log.info("理财计划债权匹配购买生成子tender结束！");
         }
         //理财计划债权转让是否是赎回
         if (repurchaseFlag) {
             // 赎回理财计划债权转让，生成子级债权回款记录，标注老债权回款已经转出
+            log.info("赎回理财计划赎回债权转让，生成子级债权回款记录开始！");
             addChildTenderCollection(nowDate, transfer, parentBorrow, childTenderList);
+            log.info("赎回理财计划赎回债权转让，生成子级债权回款记录结束！");
         } else {
+            log.info("赎回理财计划债权转让，生成子级债权回款记录开始！");
             // 理财计划债权转让，生成子级债权回款记录，标注老债权回款已经转出
             addFinanceChildTenderCollection(nowDate, transfer, parentBorrow, childTenderList);
+            log.info("赎回理财计划债权转让，生成子级债权回款记录结束！");
         }
         // 发放债权转让资金
+        log.info("赎回理财计划债权转让，发放债权转让金开始！");
         batchAssetChangeHelper.batchAssetChangeAndCollection(transferId, batchNo, BatchAssetChangeContants.BATCH_FINANCE_CREDIT_INVEST);
+        log.info("赎回理财计划债权转让，发放债权转让金结束！");
         //理财计划债权转让是否是赎回
         if (repurchaseFlag) {
             /* 债权转让本金 */
@@ -416,7 +426,7 @@ public class TransferBizImpl implements TransferBiz {
         Date startAt = null;/* 计息开始时间 */
         if (parentBorrow.getRepayFashion() == 1) {
             startAt = DateHelper.subDays(repayAt, parentBorrow.getTimeLimit());
-        } else if (parentBorrow.getRepayFashion() == 0 || parentBorrow.getRepayFashion() == 4) {
+        } else if (parentBorrow.getRepayFashion() == 0 || parentBorrow.getRepayFashion() == 2) {
             startAt = DateHelper.subMonths(repayAt, 1);
         }
 
@@ -440,7 +450,6 @@ public class TransferBizImpl implements TransferBiz {
                 long principal = NumberHelper.toLong(repayDetailMap.get("principal"));
                 long interest = NumberHelper.toLong(repayDetailMap.get("interest"));
                 Date collectionAt = DateHelper.stringToDate(StringHelper.toString(repayDetailMap.get("repayAt")));
-                Date frontCollectionAt = DateHelper.stringToDate(StringHelper.toString(repayDetailList.get(i - 1).get("repayAt")));
                 sumCollectionInterest += interest;
                 //最后一个购买债权转让的最后一期回款，需要把还款溢出的利息补给新的回款记录
                 if ((j == childTenderList.size() - 1) && (i == repayDetailList.size() - 1)) {
@@ -456,8 +465,8 @@ public class TransferBizImpl implements TransferBiz {
                 borrowCollection.setStatus(0);
                 borrowCollection.setOrder(startOrder++);
                 borrowCollection.setUserId(childTender.getUserId());
-                borrowCollection.setStartAt(i > 0 ? frontCollectionAt : startAt);
-                borrowCollection.setStartAtYes(i > 0 ? frontCollectionAt : nowDate);
+                borrowCollection.setStartAt(i > 0 ? DateHelper.stringToDate(StringHelper.toString(repayDetailList.get(i - 1).get("repayAt"))) : startAt);
+                borrowCollection.setStartAtYes(i > 0 ? DateHelper.stringToDate(StringHelper.toString(repayDetailList.get(i - 1).get("repayAt"))) : nowDate);
                 borrowCollection.setCollectionAt(collectionAt);
                 borrowCollection.setCollectionAtYes(collectionAt);
                 borrowCollection.setCollectionMoney(principal);
@@ -795,7 +804,7 @@ public class TransferBizImpl implements TransferBiz {
         Date startAt = null;/* 计息开始时间 */
         if (parentBorrow.getRepayFashion() == 1) {
             startAt = DateHelper.subDays(repayAt, parentBorrow.getTimeLimit());
-        } else if (parentBorrow.getRepayFashion() == 0 || parentBorrow.getRepayFashion() == 4) {
+        } else if (parentBorrow.getRepayFashion() == 0 || parentBorrow.getRepayFashion() == 2) {
             startAt = DateHelper.subMonths(repayAt, 1);
         }
 
@@ -1939,7 +1948,7 @@ public class TransferBizImpl implements TransferBiz {
                 //复审中
                 borrowInfoRes.setStatus(6);
                 //已过期
-            } else if (DateHelper.addDays(transfer.getReleaseAt(), 1).getTime() > new Date().getTime()) {
+            } else if (DateHelper.subDays(transfer.getReleaseAt(), 1).getTime() > new Date().getTime()) {
                 borrowInfoRes.setStatus(5);
             } else {
                 //招标中

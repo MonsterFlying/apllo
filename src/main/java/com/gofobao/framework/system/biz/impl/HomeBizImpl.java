@@ -69,7 +69,7 @@ public class HomeBizImpl implements HomeBiz {
     @Override
     public ResponseEntity<VoFinanceIndexResp> financeHome() {
         VoFinanceIndexResp result = VoBaseResp.ok("查询成功", VoFinanceIndexResp.class);
-        result.setBannerList(bannerService.index("mobile")); //获取bannar图
+        result.setBannerList(bannerService.index("financer")); //获取bannar图
         try {
             NewIndexStatisics newIndexStatisics = statisticBiz.queryMobileIndexData();  // 获取首页统计
             result.setNewIndexStatisics(newIndexStatisics);
