@@ -1948,7 +1948,7 @@ public class TransferBizImpl implements TransferBiz {
                 //复审中
                 borrowInfoRes.setStatus(6);
                 //已过期
-            } else if (DateHelper.addDays(transfer.getReleaseAt(), 1).getTime() > new Date().getTime()) {
+            } else if (DateHelper.subDays(transfer.getReleaseAt(), 1).getTime() > new Date().getTime()) {
                 borrowInfoRes.setStatus(5);
             } else {
                 //招标中
