@@ -61,19 +61,18 @@ public class StarFireUserController {
 
     @RequestMapping(value = "bind/html")
     @ApiOperation("绑定接口")
-    public String loginHtml(BindUserModel bindUserModel, HttpServletResponse response) {
+    public void loginHtml(BindUserModel bindUserModel, HttpServletResponse response) {
         Map<String, Object> paramMap = Maps.newHashMap();
         paramMap.put("params", new Gson().toJson(bindUserModel));
         paramMap.put("address", javaDomain);
         try {
             //TODO 以后该外网地址
-         //   response.sendRedirect(thymeleafHelper.build(pcDomain + "/starfire/user/login", paramMap));
-            String loginUrl="http://192.168.1.119:8080/third/xhzlogin?params="+new Gson().toJson(bindUserModel);
+            String loginUrl=pcDomain+"/third/xhzlogin?params="+new Gson().toJson(bindUserModel);
             response.sendRedirect(loginUrl);
         } catch (Exception e) {
-            return thymeleafHelper.build("load_error", null);
+            return;//thymeleafHelper.build("load_error", null);
         }
-        return null;
+        return;
     }
 
     @RequestMapping(value = "bind/login", method = RequestMethod.POST)

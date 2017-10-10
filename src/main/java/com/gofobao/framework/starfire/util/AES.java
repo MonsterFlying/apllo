@@ -94,7 +94,7 @@ public class AES {
     public static void main(String[] args) {
         String key = "gofobao_hyfbGxll"; // 128 bit key
         String initVector = "gofobao_hyfbGxll"; // 16 bytes IV
-        String text = "wendai_xeenho智投";
+        String text = "179942";
         String encryptStr = encrypt(key, initVector, text);
         System.out.println("Encrypt string is: " + encryptStr );
         String decryptStr = decrypt(key, initVector, encryptStr);

@@ -17,9 +17,11 @@ import com.gofobao.framework.starfire.tender.vo.response.BorrowQueryRes;
 import com.gofobao.framework.starfire.util.AES;
 import com.gofobao.framework.starfire.util.SignUtil;
 import com.google.common.collect.Lists;
+import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Range;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
@@ -38,10 +40,10 @@ import java.util.List;
 public class StarFireBorrowBizImpl implements StarFireBorrowBiz {
 
     @Value("${starfire.key}")
-    private static String key;
+    private String key;
 
     @Value("${starfire.initVector}")
-    private static String initVector;
+    private String initVector;
 
     @Autowired
     private BorrowService borrowService;
@@ -51,6 +53,8 @@ public class StarFireBorrowBizImpl implements StarFireBorrowBiz {
 
     @Value("${gofobao.pcDomain}")
     private String pcDomain;
+
+    private static Gson GSON = new Gson();
 
     @Autowired
     private BaseRequest baseRequest;
@@ -64,6 +68,8 @@ public class StarFireBorrowBizImpl implements StarFireBorrowBiz {
     @Override
     public BorrowQueryRes queryBorrows(BorrowsQuery borrowsQuery) {
 
+        log.info("============进入标的查询接口==============");
+        log.info("打印星火请求信息：" + GSON.toJson(borrowsQuery));
         //封装验签参数
         baseRequest.setT_code(borrowsQuery.getT_code());
         baseRequest.setC_code(borrowsQuery.getC_code());
@@ -80,13 +86,15 @@ public class StarFireBorrowBizImpl implements StarFireBorrowBiz {
             return borrowsResult;
         }
         try {
+            Date nowDate=new Date();
             String bidIds = borrowsQuery.getBid_id();
             List<String> borrowIds = null;
             if (!StringUtils.isEmpty(bidIds)) {
-                borrowIds = Lists.newArrayList(AES.decrypt(bidIds, key, initVector).split(";"));
+                borrowIds = Lists.newArrayList(AES.decrypt(key, initVector,bidIds).split(","));
             }
+
             Specification<Borrow> borrowSpecification;
-            if (CollectionUtils.isEmpty(borrowIds)) {
+            if (!CollectionUtils.isEmpty(borrowIds)) {
                 borrowSpecification = Specifications.<Borrow>and()
                         .in("id", borrowIds.toArray())
                         .eq("isWindmill", true)
@@ -96,6 +104,8 @@ public class StarFireBorrowBizImpl implements StarFireBorrowBiz {
                         .eq("isWindmill", true)
                         .eq("status", BorrowContants.BIDDING)
                         .eq("successAt", null)
+                        .between("releaseAt",new Range<>(DateHelper.subDays(nowDate,10),
+                                DateHelper.endOfDate(nowDate)))
                         .build();
             }
             List<Borrow> borrows = borrowService.findList(borrowSpecification,
@@ -133,8 +143,8 @@ public class StarFireBorrowBizImpl implements StarFireBorrowBiz {
                 record.setBond_code(borrowId.toString());
                 // TODO pc页面没出来 默认跳转h5
             /*    record.setBid_url(pcDomain + "/borrow/" + borrowId);*/
-                record.setWap_bid_url(h5Domain + "/#/borrow/" + borrowId);
-                record.setBid_url(h5Domain + "/borrow/" + borrowId);
+                record.setWap_bid_url(pcDomain + "/borrow/" + borrowId);
+                record.setBid_url(pcDomain + "/borrow/" + borrowId);
                 record.setIsPromotion(false);
                 record.setIsRecommend(false);
                 record.setIsNovice(borrow.getIsNovice());
@@ -154,9 +164,11 @@ public class StarFireBorrowBizImpl implements StarFireBorrowBiz {
                 }
                 records.add(record);
             });
+            borrowsResult.setResult(ResultCodeEnum.getCode(CodeTypeConstant.SUCCESS));
             borrowsResult.setRecords(records);
             return borrowsResult;
         } catch (Exception e) {
+            log.error("标的查询失败,打印错误信息:", e);
             String code = ResultCodeEnum.getCode(CodeTypeConstant.OTHER_ERROR);
             borrowsResult.setResult(ResultCodeMsgEnum.getResultMsg(code));
             return borrowsResult;
@@ -165,6 +177,7 @@ public class StarFireBorrowBizImpl implements StarFireBorrowBiz {
 
     /**
      * 标的状态
+     *
      * @param borrow
      * @return
      */
@@ -173,8 +186,7 @@ public class StarFireBorrowBizImpl implements StarFireBorrowBiz {
             Date endAt = DateHelper.addDays(borrow.getReleaseAt(), borrow.getValidDay() + 1);
             if (!StringUtils.isEmpty(borrow.getSuccessAt())) {
                 return StarFireBorrowConstant.SHENHEZHONG;
-            }
-            else if (endAt.getTime() < new Date().getTime()) {
+            } else if (endAt.getTime() < new Date().getTime()) {
                 return StarFireBorrowConstant.LIUBIAO;
             } else {
                 return StarFireBorrowConstant.WEIMIANBIAO;

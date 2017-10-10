@@ -12,7 +12,7 @@ import java.util.List;
 @Data
 public class UserTenderRes extends BaseResponse {
 
-    private String totalCount = "0";
+    private Integer totalCount = 0;
 
     private List<UserRecords> records = Lists.newArrayList();
 

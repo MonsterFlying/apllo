@@ -1892,7 +1892,7 @@ public class BorrowBizImpl implements BorrowBiz {
 
             if (borrow.getIsNovice()) {  // 新手
                 releaseAt = DateHelper.max(DateHelper.addHours(DateHelper.beginOfDate(nowDate), 20), borrow.getReleaseAt());
-                if (DateHelper.getHour(nowDate) >= 20) {
+                if (DateHelper.getDate(nowDate) >= 20) {
                     releaseAt = DateHelper.addDays(releaseAt, 1);
                 }
             }

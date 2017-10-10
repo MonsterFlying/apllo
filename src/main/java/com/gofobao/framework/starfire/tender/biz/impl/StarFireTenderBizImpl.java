@@ -40,6 +40,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
+import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 
 import java.util.*;
@@ -58,10 +59,10 @@ public class StarFireTenderBizImpl implements StarFireTenderBiz {
     private TenderService tenderService;
 
     @Value("${starfire.key}")
-    private static String key;
+    private String key;
 
     @Value("${starfire.initVector}")
-    private static String initVector;
+    private String initVector;
 
     @Autowired
     private BaseRequest baseRequest;
@@ -107,25 +108,34 @@ public class StarFireTenderBizImpl implements StarFireTenderBiz {
                 return userTenderRes;
             }
             //解密参数
-            String userId = AES.decrypt(key, initVector, userTenderQuery.getPlatform_uid());
             String endAt = userTenderQuery.getEnd_time();
             String startAt = userTenderQuery.getStart_time();
-            List<String> userList = Lists.newArrayList(userId.split(";"));
+            String userIdStr = userTenderQuery.getPlatform_uid();
+            List<String> userIdsList = null;
+            if (!StringUtils.isEmpty(userIdStr)) {
+                Lists.newArrayList(AES.decrypt(key, initVector, userIdStr).split(","));
+            } else {
+                Specification<Users> usersSpecification = Specifications.<Users>and()
+                        .ne("starFireUserId", null)
+                        .build();
+                List<Users> usersList = userService.findList(usersSpecification);
+                List<Long> userIds = usersList.stream().map(p -> p.getId()).collect(Collectors.toList());
+                userIdsList = Lists.transform(userIds, Functions.toStringFunction());
+            }
             //查询用户投资
             Specification<Tender> tenderSpecification = Specifications.<Tender>and()
-                    .in("userId", userList.toArray())
-                    .eq("status", TenderConstans.SUCCESS)
-                    .between(!StringUtils.isEmpty(startAt) && !StringUtils.isEmpty(endAt),
-                            "createdAt",
-                            new Range<>(endAt, startAt))
-                    .build();
-
+                            .in(!CollectionUtils.isEmpty(userIdsList), "userId", userIdsList.toArray())
+                            .eq("status", TenderConstans.SUCCESS)
+                            .between(!StringUtils.isEmpty(startAt) && !StringUtils.isEmpty(endAt),
+                                    "createdAt",
+                                    new Range<>(DateHelper.stringToDate(startAt), DateHelper.stringToDate(endAt)))
+                            .build();
             List<Tender> tenders = tenderService.findList(tenderSpecification,
                     new Sort(Sort.Direction.DESC,
                             "createdAt"));
 
             Set<Long> borrowIds = tenders.stream()
-                    .map(p -> p.getId())
+                    .map(p -> p.getBorrowId())
                     .collect(Collectors.toSet());
 
             List<Borrow> borrows = borrowService.findByBorrowIds(new ArrayList<>(borrowIds));
@@ -141,7 +151,7 @@ public class StarFireTenderBizImpl implements StarFireTenderBiz {
                     .collect(Collectors.groupingBy(Tender::getUserId));
             List<UserTenderRes.UserRecords> records = userTenderRes.getRecords();
             for (Long tenderUserId : userTenderMaps.keySet()) {
-                Users users = userService.findUserByUserId(tenderUserId);
+                Users users = userService.findById(tenderUserId);
                 UserTenderRes.UserRecords userRecords = userTenderRes.new UserRecords();
                 userRecords.setMobile(AES.encrypt(key, initVector, users.getPhone()));
                 List<Tender> tendersList = userTenderMaps.get(tenderUserId);
@@ -165,7 +175,7 @@ public class StarFireTenderBizImpl implements StarFireTenderBiz {
                     List<BorrowCollection> borrowCollections = borrowCollectionService.findList(specification);
                     String tenderStuats = getTenderStuats(borrowCollections, p, borrow);
                     userbidRecords.setBidResult(tenderStuats);
-                    BorrowCollection borrowCollection = borrowCollections.get(0);
+                    BorrowCollection borrowCollection = borrowCollections.get(borrowCollections.size()-1);
                     //到期时间
                     if (tenderStuats.equals(StarFireBorrowConstant.YIZHUANGRANG)) {
                         userbidRecords.setExpireDate(DateHelper.dateToString(
@@ -177,12 +187,9 @@ public class StarFireTenderBizImpl implements StarFireTenderBiz {
                                 DateHelper.DATE_FORMAT_YMD));
                     }
                     //计息时间
-                    if (!tenderStuats.equals(StarFireBorrowConstant.LIUBIAO)
-                            && !tenderStuats.equals(StarFireBorrowConstant.WEIMIANBIAO)
-                            && !tenderStuats.equals(StarFireBorrowConstant.SHENHEZHONG)) {
-                        userbidRecords.setInterestDate(DateHelper.dateToString(borrow.getRecheckAt(),
-                                DateHelper.DATE_FORMAT_YMD));
-                    }
+                        userbidRecords.setInterestDate(!ObjectUtils.isEmpty(borrow.getRecheckAt())
+                                ?DateHelper.dateToString(borrow.getRecheckAt(), DateHelper.DATE_FORMAT_YMD)
+                                :"");
                     //投资金额
                     userbidRecords.setInvestAmount(StringHelper.formatDouble(p.getMoney() / 100D, false));
                     //是否可转让
@@ -199,13 +206,18 @@ public class StarFireTenderBizImpl implements StarFireTenderBiz {
                             || userCache.getTenderQudao().intValue() == p.getId()) {
                         userbidRecords.setIsFirstInvest("true");
                     }
+                    userbidRecords.setInvestTime(DateHelper.dateToString(p.getCreatedAt()));
                     userbidRecordsList.add(userbidRecords);
                 });
+                userRecords.setUserbidrecords(userbidRecordsList);
                 records.add(userRecords);
             }
+            userTenderRes.setTotalCount(userTenderMaps.size());
+            userTenderRes.setResult(ResultCodeEnum.getCode(CodeTypeConstant.SUCCESS));
             userTenderRes.setRecords(records);
             return userTenderRes;
         } catch (Exception e) {
+            log.error("查询星火用户投资记录失败,打印错误信息：", e);
             String code = ResultCodeEnum.getCode(CodeTypeConstant.OTHER_ERROR);
             userTenderRes.setResult(code);
             userTenderRes.setErr_msg(ResultCodeMsgEnum.getResultMsg(code));
@@ -231,6 +243,7 @@ public class StarFireTenderBizImpl implements StarFireTenderBiz {
         String platformUid = borrowCollectionRecords.getPlatform_uid();
         //封装返回参数
         UserBorrowCollectionRecordsRes recordsRes = new UserBorrowCollectionRecordsRes();
+        recordsRes.setSerial_num(borrowCollectionRecords.getSerial_num());
         if (!SignUtil.checkSign(baseRequest, key, initVector)) {
             log.info("标的回款信息查询接验签失败");
             String code = ResultCodeEnum.getCode(CodeTypeConstant.CHECK_SIGN_NO_PASS);
@@ -249,7 +262,7 @@ public class StarFireTenderBizImpl implements StarFireTenderBiz {
                         .collect(Collectors.toList());
                 userIds = Lists.transform(userIdArray, Functions.toStringFunction());
             } else {
-                userIds = Lists.newArrayList(platformUid.split(";"));
+                userIds = Lists.newArrayList(platformUid.split(","));
             }
             Specification<Tender> tenderSpecification = Specifications.<Tender>and()
                     .in("userId", userIds.toArray())
@@ -333,12 +346,19 @@ public class StarFireTenderBizImpl implements StarFireTenderBiz {
                         bidRepayRecords.setRepayType(getBorrowCollectionStatus(w));
                         repayRecordsList.add(bidRepayRecords);
                     });
+                    bidRecord.setBidRepayRecords(repayRecordsList);
+                    bidRecords.add(bidRecord);
+
                 });
+                records.setBidRecords(bidRecords);
                 recordsList.add(records);
             }
+            recordsRes.setTotalCount(usersTenderMaps.size());
+            recordsRes.setResult(ResultCodeEnum.getCode(CodeTypeConstant.SUCCESS));
             recordsRes.setRecords(recordsList);
             return recordsRes;
         } catch (Exception e) {
+            log.error("查询标的回款信息查询接失败,打印错误信息：", e);
             String code = ResultCodeEnum.getCode(CodeTypeConstant.OTHER_ERROR);
             recordsRes.setErr_msg(ResultCodeMsgEnum.getResultMsg(code));
             recordsRes.setResult(code);
@@ -421,7 +441,7 @@ public class StarFireTenderBizImpl implements StarFireTenderBiz {
             Date nowDate = new Date();
             if (collectionAt.getTime() > nowDate.getTime()) {  //未到还款截至时间
                 return "";
-            } else  {
+            } else {
                 return StarFireBorrowCollectionConstant.YUQI;
             }
         }

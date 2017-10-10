@@ -12,7 +12,7 @@ import java.util.List;
 @Data
 public class UserBorrowCollectionRecordsRes extends BaseResponse {
 
-    private String totalCount;
+    private Integer totalCount=0;
 
     private List<Records> records = Lists.newArrayList();
 
