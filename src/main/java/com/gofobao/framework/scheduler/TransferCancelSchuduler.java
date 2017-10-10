@@ -9,7 +9,6 @@ import com.gofobao.framework.tender.entity.Transfer;
 import com.gofobao.framework.tender.service.TransferService;
 import com.gofobao.framework.tender.vo.request.VoEndTransfer;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.poi.ss.formula.functions.T;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.scheduling.annotation.Scheduled;
