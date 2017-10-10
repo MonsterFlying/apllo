@@ -133,7 +133,7 @@ public class StatisticBizImpl implements StatisticBiz {
                     indexStatistics.setDueTotal(statistic.getWaitRepayTotal());
                     indexStatistics.setBorrowTotal(statistic.getBorrowItems());
                     //为用户赚取收益
-                    Long userIncomeTotal=userCacheRepository.userIncomeTotal();
+                    Long userIncomeTotal = userCacheRepository.userIncomeTotal();
                     indexStatistics.setEarnings(userIncomeTotal);
                     indexStatistics.setYesterdayDueTotal(0l);
                     // 注册人数
@@ -156,7 +156,7 @@ public class StatisticBizImpl implements StatisticBiz {
             });
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public boolean caculate(Statistic changeEntity) throws Exception {
         try {
             Preconditions.checkNotNull(changeEntity, "StatisticBizImpl.caculate: changeEntity is empty");
@@ -226,7 +226,6 @@ public class StatisticBizImpl implements StatisticBiz {
     }
 
 
-
     LoadingCache<String, OperateDataStatistics> operateData = CacheBuilder
             .newBuilder()
             .expireAfterWrite(60, TimeUnit.MINUTES)
@@ -245,14 +244,14 @@ public class StatisticBizImpl implements StatisticBiz {
                     //注册人数
                     dataStatistics.setRegisterTotal(indexStatistics.getRegisterTotal());
                     //为用户赚取收益
-                    Long userIncomeTotal=userCacheRepository.userIncomeTotal();
+                    Long userIncomeTotal = userCacheRepository.userIncomeTotal();
                     dataStatistics.setEarnings(userIncomeTotal);
                     //累计成交笔数
                     dataStatistics.setBorrowTotal(indexStatistics.getBorrowTotal());
                     //交易总额
                     dataStatistics.setTransactionsTotal(indexStatistics.getTransactionsTotal());
                     //累计投资人数
-                    Long userCount=tenderRepository.tenderUserCount();
+                    Long userCount = tenderRepository.tenderUserCount();
                     dataStatistics.setTenderNoOfPeople(userCount);
 
                 /*    //已还本息

@@ -141,7 +141,7 @@ public class StarFireTenderBizImpl implements StarFireTenderBiz {
                     .collect(Collectors.groupingBy(Tender::getUserId));
             List<UserTenderRes.UserRecords> records = userTenderRes.getRecords();
             for (Long tenderUserId : userTenderMaps.keySet()) {
-                Users users = userService.findUserByUserId(tenderUserId);
+                Users users = userService.findById(tenderUserId);
                 UserTenderRes.UserRecords userRecords = userTenderRes.new UserRecords();
                 userRecords.setMobile(AES.encrypt(key, initVector, users.getPhone()));
                 List<Tender> tendersList = userTenderMaps.get(tenderUserId);

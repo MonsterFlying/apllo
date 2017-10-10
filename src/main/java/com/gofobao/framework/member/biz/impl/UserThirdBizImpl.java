@@ -1644,7 +1644,7 @@ public class UserThirdBizImpl implements UserThirdBiz {
             return userThirdAccount;
         }
 
-        Users user = userService.findUserByUserId(id);
+        Users user = userService.findById(id);
         Preconditions.checkNotNull(user, "UserThirdBizImpl.queryUserThirdInfo: user is null");
         String phone = user.getPhone();
         if (StringUtils.isEmpty(phone)) {
