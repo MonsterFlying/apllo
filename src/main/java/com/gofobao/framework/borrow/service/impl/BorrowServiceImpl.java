@@ -484,15 +484,15 @@ public class BorrowServiceImpl implements BorrowService {
             String borrowExpireAtStr = null;
             String monthAsReimbursement = null;//月截止还款日
             if (borrow.getRepayFashion() == 1) {
-                borrowExpireAtStr = DateHelper.dateToString(DateHelper.addDays(borrow.getReleaseAt(), borrow.getTimeLimit()), "yyyy-MM-dd");
+                borrowExpireAtStr = DateHelper.dateToString(DateHelper.addDays(borrow.getRecheckAt(), borrow.getTimeLimit()), "yyyy-MM-dd");
                 monthAsReimbursement = borrowExpireAtStr;
             } else {
-                monthAsReimbursement = "每月" + DateHelper.getDay(borrow.getReleaseAt()) + "日";
+                monthAsReimbursement = "每月" + DateHelper.getDay(borrow.getRecheckAt()) + "日";
 
                 if (successAtBool) {
                     borrowExpireAtStr = DateHelper.dateToString(DateHelper.subDays(DateHelper.addDays(DateHelper.setDays(borrow.getRecheckAt(), borrow.getTimeLimit()), 1), 1), "yyyy-MM-dd HH:mm:ss");
                 } else {
-                    borrowExpireAtStr = DateHelper.dateToString(DateHelper.addMonths(borrow.getReleaseAt(), borrow.getTimeLimit()), "yyyy-MM-dd");
+                    borrowExpireAtStr = DateHelper.dateToString(DateHelper.addMonths(borrow.getRecheckAt(), borrow.getTimeLimit()), "yyyy-MM-dd");
                 }
             }
             borrowMap.put("borrowExpireAtStr", borrowExpireAtStr);
