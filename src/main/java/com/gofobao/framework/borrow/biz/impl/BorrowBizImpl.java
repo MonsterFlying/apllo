@@ -1475,7 +1475,7 @@ public class BorrowBizImpl implements BorrowBiz {
             collectionAddChangeEntity.setUserId(tender.getUserId());
             collectionAddChangeEntity.setForUserId(tender.getUserId());
             assetChangeProvider.commonAssetChange(collectionAddChangeEntity);
-
+            //更新投标状态
             tender.setState(2);
             tender.setUpdatedAt(new Date());
         }

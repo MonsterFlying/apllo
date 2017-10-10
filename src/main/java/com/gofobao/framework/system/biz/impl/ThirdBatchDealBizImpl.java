@@ -191,7 +191,7 @@ public class ThirdBatchDealBizImpl implements ThirdBatchDealBiz {
             }
         });
 
-        Preconditions.checkState(CollectionUtils.isEmpty(otherOrderIds), "批次处理存在F、S,程序暂停运行!");
+        Preconditions.checkState(CollectionUtils.isEmpty(otherOrderIds), String.format("批次处理存在%s状态,程序暂停运行!", GSON.toJson(otherOrderIds)));
 
         //不存在失败批次进行后续操作
         try {
