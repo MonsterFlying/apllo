@@ -1,12 +1,15 @@
 package com.gofobao.framework.financial.repository;
 
+import com.gofobao.framework.financial.entity.LocalRecord;
 import com.gofobao.framework.financial.entity.NewEve;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -45,4 +48,48 @@ public interface NewEveRepository extends JpaRepository<NewEve, Long>, JpaSpecif
             countQuery = "select count(id) FROM gfb_new_aleve where query_date = ?2 and transtype = ?1 GROUP BY cardnbr",
             nativeQuery =  true)
     List<NewEve> findByTranstypeAndQueryTime(String transtype, String date, Pageable pageable);
+
+
+    /**
+     * 根据
+     * @param beginDate
+     * @param endDate
+     * @return
+     */
+    @Query(value = "SELECT " +
+            "    log.op_money AS opMoney, " +
+            "    log.local_seq_no AS seqNo, " +
+            "    log.op_name AS tranName, " +
+            "    log.tx_flag AS txFlag, " +
+            "    log.platform_type AS tranNo, " +
+            "    users.username AS userName, " +
+            "    users.phone AS phone, " +
+            "    account.name AS realname, " +
+            "    account.account_id AS accountId " +
+            "FROM" +
+            "    gfb_new_asset_log AS log " +
+            "        LEFT JOIN " +
+            "    gfb_user_third_account AS account ON log.user_id = account.user_id " +
+            "        LEFT JOIN " +
+            "    gfb_users AS users ON log.user_id = users.id " +
+            "WHERE " +
+            "    log.create_time <= ?2 " +
+            "        AND log.create_time >= ?1 " +
+            "        AND log.del = 0 " +
+            "ORDER BY ?#{#pageable} ",
+    countQuery = "SELECT " +
+            "COUNT(log.id) " +
+            "FROM" +
+            "    gfb_new_asset_log AS log " +
+            "        LEFT JOIN " +
+            "    gfb_user_third_account AS account ON log.user_id = account.user_id " +
+            "        LEFT JOIN " +
+            "    gfb_users AS users ON log.user_id = users.id " +
+            "WHERE " +
+            "    log.create_time <= ?2 " +
+            "        AND log.create_time >= ?1 " +
+            "        AND log.del = 0 ",
+            nativeQuery = true
+    )
+    Page<LocalRecord> findByCreateTime(String beginDate , String endDate, Pageable pageable) ;
 }

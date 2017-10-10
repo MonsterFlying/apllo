@@ -1553,7 +1553,7 @@ public class AssetBizImpl implements AssetBiz {
      */
     @Override
     @Transactional(rollbackFor = ExcelException.class)
-    public synchronized ResponseEntity<String>  offlineRechargeCallback(HttpServletRequest request, HttpServletResponse response) throws Exception {
+    public ResponseEntity<String>  offlineRechargeCallback(HttpServletRequest request, HttpServletResponse response) throws Exception {
         String bgData = request.getParameter("bgData");
         log.info("==================================");
         log.info(String.format("即信线下充值回调: 数据[%s]", bgData));
@@ -1583,6 +1583,8 @@ public class AssetBizImpl implements AssetBiz {
             UserThirdAccount userThirdAccount = userThirdAccountService.findByAccountId(accountId);
             Preconditions.checkNotNull(userThirdAccount, "线下充值, 当前开户信息为空");
             Long userId = userThirdAccount.getUserId();
+            Users users = userService.findByIdLock(userId);
+            Preconditions.checkNotNull(users) ;
             Date nowDate = new Date();
             Date synDate = DateHelper.stringToDate(orgTxDate, DateHelper.DATE_FORMAT_YMD_NUM);
             // 写入线下充值日志
