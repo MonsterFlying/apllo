@@ -33,7 +33,6 @@ public interface UsersRepository extends JpaRepository<Users, Long>, JpaSpecific
     /**
      * 带锁查询会员
      **/
-    @Lock(LockModeType.PESSIMISTIC_WRITE)
     Users findById(Long userId);
 
     /**

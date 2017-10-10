@@ -245,9 +245,9 @@ public class MarketingProcessBizImpl implements MarketingProcessBiz {
                         // 查询标的信息
                         // tempMoney = validMoney * (timeLimit / 12D) * rule.getApr();
                         // money = tempMoney.longValue();
-                        double principal = tender.getValidMoney() ; // 投标金额
-                        double apr = rule.getApr() * 100 * 100 ;  // 年化收益
-                        BorrowCalculatorHelper borrowCalculatorHelper = new BorrowCalculatorHelper(principal, apr, borrow.getTimeLimit(),  nowDate );
+                        double principal = tender.getValidMoney(); // 投标金额
+                        double apr = rule.getApr() * 100 * 100;  // 年化收益
+                        BorrowCalculatorHelper borrowCalculatorHelper = new BorrowCalculatorHelper(principal, apr, borrow.getTimeLimit(), nowDate);
                         Map<String, Object> calculatorMap = borrowCalculatorHelper.simpleCount(borrow.getRepayFashion());
                         money = NumberHelper.toInt(calculatorMap.get("earnings"));  // 红包派发领取收益
                         remark.append(StringHelper.formatDouble(money / 100D, true));
@@ -334,8 +334,8 @@ public class MarketingProcessBizImpl implements MarketingProcessBiz {
                 throw new Exception("MarketingProcessBizImpl.filterDataByDimension: not found marketingType");
         }
 
-        if(money <= 0){
-            log.error("红包金额为零, 不进行派发红包") ;
+        if (money <= 0) {
+            log.error("红包金额为零, 不进行派发红包");
             return;
         }
 
@@ -384,7 +384,7 @@ public class MarketingProcessBizImpl implements MarketingProcessBiz {
 
         Users user = null;
         try {
-            user = userService.findUserByUserId(Long.parseLong(marketingData.getUserId()));
+            user = userService.findById(Long.parseLong(marketingData.getUserId()));
             if (user.getIsLock()) {
                 throw new Exception("MarketingProcessBizImpl.filterDataByCondition: user lock");
             }
@@ -532,7 +532,7 @@ public class MarketingProcessBizImpl implements MarketingProcessBiz {
         Users user = null;
         try {
             log.info("用户冻结开始");
-            user = userService.findUserByUserId(Long.parseLong(marketingData.getUserId()));
+            user = userService.findById(Long.parseLong(marketingData.getUserId()));
             if (user.getIsLock()) {
                 log.info("该用户为冻结用户");
                 throw new Exception("MarketingProcessBizImpl.filterDataByDimension: user lock");
@@ -833,13 +833,13 @@ public class MarketingProcessBizImpl implements MarketingProcessBiz {
                 }
             } catch (NumberFormatException e) {
                 log.error("查询新手用户异常", e);
-                isNovice = false ;
+                isNovice = false;
             }
         } else {
             UserCache userCache = userCacheService.findById(user.getId());
             isNovice = userCache.isNovice();
         }
-        
+
         if (marketingDimentsion.getMemberType().intValue() == 2) {  //老用户
             return !isNovice;
         } else {  //新用户
@@ -859,7 +859,7 @@ public class MarketingProcessBizImpl implements MarketingProcessBiz {
     private boolean verifyUserParent(MarketingDimentsion marketingDimentsion, Users user) {
         if (marketingDimentsion.getParentState().intValue() == 1) {
             if (!ObjectUtils.isEmpty(user.getParentId()) && user.getParentId() > 0) {
-                Users parentUser = userService.findUserByUserId(user.getParentId());
+                Users parentUser = userService.findById(user.getParentId());
                 if (ObjectUtils.isEmpty(parentUser) || parentUser.getIsLock()) {
                     log.info("判断用户是否为被邀请用户: 邀请用户不存在/邀请用户被冻结");
                     return false;

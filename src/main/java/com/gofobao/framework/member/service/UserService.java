@@ -112,7 +112,5 @@ public interface UserService {
 
     List<Users> findByIdIn(List<Long> ids);
 
-    Users findUserByUserId(Long userId);
-
     Page<Users> findAll(Pageable pageable);
 }

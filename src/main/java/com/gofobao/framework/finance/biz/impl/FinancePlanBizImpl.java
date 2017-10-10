@@ -824,7 +824,7 @@ public class FinancePlanBizImpl implements FinancePlanBiz {
         planContract.setPlanName(financePlan.getName());
         Users users = null;
         if (userId.intValue()>0) {
-            users = userService.findUserByUserId(userId);
+            users = userService.findById(userId);
         }
         if (!ObjectUtils.isEmpty(users)) {
             Specification<FinancePlanBuyer> planBuyerSpecification = Specifications.<FinancePlanBuyer>and()
