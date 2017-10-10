@@ -146,14 +146,6 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public Users findUserByUserId(Long userId) {
-        Users users = userRepository.findById(userId);
-    //    Preconditions.checkNotNull(users, "UserServiceImpl.findUserByUserId: data is null");
-
-        return users;
-    }
-
-    @Override
     public Page<Users> findAll(Pageable pageable) {
         return userRepository.findAll(pageable);
     }

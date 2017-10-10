@@ -119,9 +119,6 @@ public class TestController {
     @RequestMapping("/pub/batch/deal")
     @Transactional
     public void batchDeal(@RequestParam("sourceId") Object sourceId, @RequestParam("batchNo") Object batchNo) {
-       /* Map<String,Object> acqMap = new HashMap<>();
-        acqMap.put("borrowId", 169979);
-        acqMap.put("tag", MqTagEnum.END_CREDIT_BY_TRANSFER);*/
         Specification<ThirdBatchLog> tbls = Specifications
                 .<ThirdBatchLog>and()
                 .eq("sourceId", StringHelper.toString(sourceId))
@@ -131,81 +128,7 @@ public class TestController {
         if (CollectionUtils.isEmpty(thirdBatchLogList)) {
             return;
         }
-
-       /* try {
-            //批次执行问题
-            thirdBatchDealBiz.batchDeal(NumberHelper.toLong(sourceId), StringHelper.toString(batchNo),
-                    thirdBatchLogList.get(0).getAcqRes(), "");
-        } catch (Exception e) {
-            log.error("批次执行异常:", e);
-        }
-
-        /*ThirdBatchLog thirdBatchLog = thirdBatchLogList.get(0);
-        MqConfig mqConfig = new MqConfig();
-        mqConfig.setQueue(MqQueueEnum.RABBITMQ_THIRD_BATCH);
-        mqConfig.setTag(MqTagEnum.BATCH_DEAL);
-        ImmutableMap<String, String> body = ImmutableMap
-                .of(MqConfig.SOURCE_ID, StringHelper.toString(thirdBatchLog.getSourceId()),
-                        MqConfig.BATCH_NO, StringHelper.toString(thirdBatchLog.getBatchNo()),
-                        MqConfig.MSG_TIME, DateHelper.dateToString(new Date()),
-                        MqConfig.ACQ_RES, thirdBatchLogList.get(0).getAcqRes()
-                );
-
-        mqConfig.setMsg(body);
-        try {
-            log.info(String.format("tenderThirdBizImpl thirdBatchRepayAllRunCall send mq %s", GSON.toJson(body)));
-            mqHelper.convertAndSend(mqConfig);
-        } catch (Throwable e) {
-            log.error("tenderThirdBizImpl thirdBatchRepayAllRunCall send mq exception", e);
-        }*/
     }
-
-   /* @Transactional(rollbackFor = Exception.class)
-    @ApiOperation("获取自动投标列表")
-    @RequestMapping("/pub/packet/send")
-    public void redPacket() {
-        long redpackAccountId = 0;
-        try {
-            redpackAccountId = assetChangeProvider.getRedpackAccountId();
-        } catch (ExecutionException e) {
-            e.printStackTrace();
-        }
-        UserThirdAccount redpackAccount = userThirdAccountService.findByUserId(redpackAccountId);
-        UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(22002l);
-
-        long money = 160000*100l;
-        // 发放理财师奖励
-        AssetChange assetChange = new AssetChange();
-        assetChange.setMoney(money);
-        assetChange.setType(AssetChangeTypeEnum.receiveRedpack);  //  扣除红包
-        assetChange.setUserId(userThirdAccount.getUserId());
-        assetChange.setForUserId(userThirdAccount.getUserId());
-        assetChange.setRemark(String.format("发放红包至zfh %s元", StringHelper.formatDouble(money / 100D, true)));
-        assetChange.setGroupSeqNo(assetChangeProvider.getGroupSeqNo());
-        assetChange.setSeqNo(assetChangeProvider.getSeqNo());
-        assetChange.setForUserId(redpackAccount.getUserId());
-        assetChange.setSourceId(0L);
-        try {
-            assetChangeProvider.commonAssetChange(assetChange);
-        } catch (Exception e) {
-            log.error("发送zfh红包失败:", e);
-            return;
-        }
-
-        //3.发送红包
-        VoucherPayRequest voucherPayRequest = new VoucherPayRequest();
-        voucherPayRequest.setAccountId(redpackAccount.getAccountId());
-        voucherPayRequest.setTxAmount(StringHelper.formatDouble(money, 100, false));
-        voucherPayRequest.setForAccountId(userThirdAccount.getAccountId());
-        voucherPayRequest.setDesLineFlag(DesLineFlagContant.TURE);
-        voucherPayRequest.setDesLine("红包发送!");
-        voucherPayRequest.setChannel(ChannelContant.HTML);
-        VoucherPayResponse response = jixinManager.send(JixinTxCodeEnum.SEND_RED_PACKET, voucherPayRequest, VoucherPayResponse.class);
-        if ((ObjectUtils.isEmpty(response)) || (!JixinResultContants.SUCCESS.equals(response.getRetCode()))) {
-            String msg = ObjectUtils.isEmpty(response) ? "当前网络不稳定，请稍候重试" : response.getRetMsg();
-            log.error("redPacket" + msg);
-        }
-    }*/
 
     @ApiOperation("资产查询")
     @RequestMapping("/pub/asset/find")

@@ -102,36 +102,42 @@ public class MarketingProcessBizImpl implements MarketingProcessBiz {
                 log.info("MarketingProcessBizImpl.process marketing not found");
                 return false;
             }
-            // 筛选时间
+
+            log.info("活动时间刷选开始");
             filterMarketingByTime(marketings, marketingData);
+            log.info("活动时间刷选结束");
         } catch (Exception e) {
             log.error("获取活动记录异常", e);
             return false;
         }
 
-        // 刷选范围
         try {
-            log.info("赛选范围开始");
+            log.info("筛选范围开始");
             filterDataByDimension(marketings, marketingData);
-            log.info("赛选范围结束");
+            log.info("筛选范围结束");
         } catch (Exception e) {
-            e.printStackTrace();
-            log.error("筛选范围", e);
+            log.error("筛选范围异常", e);
             return false;
         }
 
         // 筛选条件
         try {
-            log.info("用户条件检测");
+            log.info("用户条件检测开始");
             filterDataByCondition(marketings, marketingData);
-            log.info("用户条件检测结束:", marketings.size());
+            log.info("用户条件检测结束");
         } catch (Exception e) {
+            log.error("活动条件范围异常", e);
             return false;
         }
 
         if (CollectionUtils.isEmpty(marketings)) {
+            log.info("红包派发, 用户参与活动为空");
             return true;
         }
+
+        log.info("=========================");
+        log.info("派发红包条件满足");
+        log.info("=========================");
         //  派发奖励
         for (Marketing marketing : marketings) {
             Integer marketingType = marketing.getMarketingType();
@@ -245,9 +251,9 @@ public class MarketingProcessBizImpl implements MarketingProcessBiz {
                         // 查询标的信息
                         // tempMoney = validMoney * (timeLimit / 12D) * rule.getApr();
                         // money = tempMoney.longValue();
-                        double principal = tender.getValidMoney() ; // 投标金额
-                        double apr = rule.getApr() * 100 * 100 ;  // 年化收益
-                        BorrowCalculatorHelper borrowCalculatorHelper = new BorrowCalculatorHelper(principal, apr, borrow.getTimeLimit(),  nowDate );
+                        double principal = tender.getValidMoney(); // 投标金额
+                        double apr = rule.getApr() * 100 * 100;  // 年化收益
+                        BorrowCalculatorHelper borrowCalculatorHelper = new BorrowCalculatorHelper(principal, apr, borrow.getTimeLimit(), nowDate);
                         Map<String, Object> calculatorMap = borrowCalculatorHelper.simpleCount(borrow.getRepayFashion());
                         money = NumberHelper.toInt(calculatorMap.get("earnings"));  // 红包派发领取收益
                         remark.append(StringHelper.formatDouble(money / 100D, true));
@@ -334,8 +340,8 @@ public class MarketingProcessBizImpl implements MarketingProcessBiz {
                 throw new Exception("MarketingProcessBizImpl.filterDataByDimension: not found marketingType");
         }
 
-        if(money <= 0){
-            log.error("红包金额为零, 不进行派发红包") ;
+        if (money <= 0) {
+            log.error("红包金额为零, 不进行派发红包");
             return;
         }
 
@@ -384,7 +390,7 @@ public class MarketingProcessBizImpl implements MarketingProcessBiz {
 
         Users user = null;
         try {
-            user = userService.findUserByUserId(Long.parseLong(marketingData.getUserId()));
+            user = userService.findById(Long.parseLong(marketingData.getUserId()));
             if (user.getIsLock()) {
                 throw new Exception("MarketingProcessBizImpl.filterDataByCondition: user lock");
             }
@@ -400,12 +406,14 @@ public class MarketingProcessBizImpl implements MarketingProcessBiz {
                 case MarketingTypeContants.LOGIN:
                     Date loginMinTime = condition.getLoginMinTime();
                     if (ObjectUtils.isEmpty(loginMinTime)) {
+                        log.info("红包派发[登录时间未设置]");
                         iterator.remove();
                         continue;
                     }
 
                     Date updatedAt = user.getUpdatedAt();
                     if (DateHelper.diffInDays(updatedAt, loginMinTime, false) < 0) {
+                        log.info("红包派发[登录时间不符合]");
                         iterator.remove();
                         continue;
                     }
@@ -415,12 +423,13 @@ public class MarketingProcessBizImpl implements MarketingProcessBiz {
                         String userId = marketingData.getUserId();
                         Users users = userService.findById(Long.parseLong(userId));
                         if (ObjectUtils.isEmpty(users)) {
+                            log.info("红包派发[用户不存在]");
                             continue;
                         }
 
                         Date createdAt = users.getCreatedAt();
                         if (condition.getRegisterMinTime().getTime() > createdAt.getTime()) {
-                            log.info("不属于活动时间新用户");
+                            log.info("红包派发[活动规定注册时间不符合]");
                             iterator.remove();
                             continue;
                         }
@@ -430,7 +439,7 @@ public class MarketingProcessBizImpl implements MarketingProcessBiz {
                     log.info("验证投标条件开始");
                     Long tenderMoneyMin = condition.getTenderMoneyMin();
                     if (ObjectUtils.isEmpty(tenderMoneyMin) || tenderMoneyMin <= 0) {
-                        log.info("验证投标条件金额失败");
+                        log.info("红包派发[投标金额不满住]");
                         iterator.remove();
                         continue;
                     }
@@ -438,14 +447,14 @@ public class MarketingProcessBizImpl implements MarketingProcessBiz {
                     Tender tender = tenderService.findById(Long.parseLong(marketingData.getSourceId()));
                     Preconditions.checkNotNull(tender, "MarketingProcessBizImpl.filterDataByCondition tender is null");
                     if (tender.getStatus().intValue() != 1) {
-                        log.info("验证投标条件标的状态不对");
+                        log.info("红包派发[标的状态未满足]");
                         iterator.remove();
                         continue;
                     }
 
                     Long validMoney = tender.getValidMoney();
                     if (validMoney < tenderMoneyMin) {
-                        log.info("验证投标条件标的投标金额不对");
+                        log.info("红包派发[小于规定投标金额]");
                         iterator.remove();
                         continue;
                     }
@@ -453,6 +462,7 @@ public class MarketingProcessBizImpl implements MarketingProcessBiz {
                 case MarketingTypeContants.RECHARGE:
                     Long rechargeMoneyMin = condition.getRechargeMoneyMin();
                     if (ObjectUtils.isEmpty(rechargeMoneyMin) || rechargeMoneyMin <= 0) {
+                        log.info("红包派发[充值金额不满足]");
                         iterator.remove();
                         continue;
                     }
@@ -460,11 +470,13 @@ public class MarketingProcessBizImpl implements MarketingProcessBiz {
                     RechargeDetailLog rechargeData = rechargeDetailLogService.findById(Long.parseLong(marketingData.getSourceId()));
                     Preconditions.checkNotNull(rechargeData, "MarketingProcessBizImpl.filterDataByCondition rechargeData is null");
                     if (rechargeData.getState() != 1) {
+                        log.info("红包派发[充值状态属于未成功]");
                         iterator.remove();
                         continue;
                     }
 
                     if (rechargeData.getMoney() < rechargeMoneyMin) {
+                        log.info("红包派发[充值金额不满足]");
                         iterator.remove();
                         continue;
                     }
@@ -473,12 +485,14 @@ public class MarketingProcessBizImpl implements MarketingProcessBiz {
                 case MarketingTypeContants.REGISTER:
                     Date registerMinTime = condition.getRegisterMinTime();
                     if (ObjectUtils.isEmpty(registerMinTime)) {
+                        log.info("红包派发[未设置最小注册时间]");
                         iterator.remove();
                         continue;
                     }
 
                     Date createdAt = user.getCreatedAt();
                     if (DateHelper.diffInDays(createdAt, registerMinTime, false) < 0) {
+                        log.info("红包派发[小于注册时间]");
                         iterator.remove();
                         continue;
                     }
@@ -486,6 +500,7 @@ public class MarketingProcessBizImpl implements MarketingProcessBiz {
                 case MarketingTypeContants.OPEN_ACCOUNT:
                     Date openAccountMinTime = condition.getOpenAccountMinTime();
                     if (ObjectUtils.isEmpty(openAccountMinTime)) {
+                        log.info("红包派发[开户时间未设置]");
                         iterator.remove();
                         continue;
                     }
@@ -493,12 +508,14 @@ public class MarketingProcessBizImpl implements MarketingProcessBiz {
                     UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(user.getId());
                     Preconditions.checkNotNull(userThirdAccount, "MarketingProcessBizImpl.filterDataByCondition rechargeData is null");
                     if (StringUtils.isEmpty(userThirdAccount.getAccountId())) {
+                        log.info("红包派发[当前用户未开户]");
                         iterator.remove();
                         continue;
                     }
 
                     Date createAt = userThirdAccount.getCreateAt();
                     if (DateHelper.diffInDays(createAt, openAccountMinTime, false) < 0) {
+                        log.info("红包派发[开户时间不匹配]");
                         iterator.remove();
                         continue;
                     }
@@ -531,10 +548,9 @@ public class MarketingProcessBizImpl implements MarketingProcessBiz {
         //===============================
         Users user = null;
         try {
-            log.info("用户冻结开始");
-            user = userService.findUserByUserId(Long.parseLong(marketingData.getUserId()));
+            user = userService.findById(Long.parseLong(marketingData.getUserId()));
             if (user.getIsLock()) {
-                log.info("该用户为冻结用户");
+                log.info("红包派发[用户处于冻结状态]");
                 throw new Exception("MarketingProcessBizImpl.filterDataByDimension: user lock");
             }
         } catch (Exception e) {
@@ -552,20 +568,20 @@ public class MarketingProcessBizImpl implements MarketingProcessBiz {
             //============================
             boolean channelState = verifyRegisterChannel(marketingDimentsion, user);
             if (!channelState) {
-                log.info(String.format("促销活动: 渠道用户验证不通过: %s", marketingDataStr));
+                log.info("红包派发[用户注册渠道不通过]");
                 iterator.remove();
                 continue;
             }
             boolean verifyParentState = verifyUserParent(marketingDimentsion, user);  // 验证是否被邀请
             if (!verifyParentState) {
-                log.info(String.format("促销活动: 当前用户不属于邀请用户, %s", marketingDataStr));
+                log.info("红包派发[邀请人判断不通过]");
                 iterator.remove();
                 continue;
             }
-            log.info("验证用户是否为新用户");
+
             boolean verifyUserNewState = verifyMemberType(marketingDimentsion, user, marketingData);  // 验证是否为新用户
             if (!verifyUserNewState) {
-                log.info("促销活动: 新用户判断用户问题" + marketingDataStr);
+                log.info("红包派发[新老用户判断不通过]");
                 iterator.remove();
                 continue;
             }
@@ -574,23 +590,22 @@ public class MarketingProcessBizImpl implements MarketingProcessBiz {
                 case MarketingTypeContants.LOGIN:  // 登录
                     boolean loginPlatform = verifyUserPlatform(marketingDimentsion, user);
                     if (!loginPlatform) {
-                        log.info("促销活动: 登录平台");
+                        log.info("红包派发[登录平台判断不通过]");
                         iterator.remove();
                         continue;
                     }
                     break;
                 case MarketingTypeContants.TENDER:  // 投标
-                    log.info("投标平台标的检测");
                     boolean tenderPlatformState = verifyTenderPlatform(marketingDimentsion, user, marketingData);
                     if (!tenderPlatformState) {
-                        log.info("促销活动: 投标平台不符合" + marketingDataStr);
+                        log.info("红包派发[投标平台判断不通过]");
                         iterator.remove();
                         continue;
                     }
-                    log.info("标的类型检测");
+
                     boolean borrowTypeState = verifyBorrowType(marketingDimentsion, marketingData);
                     if (!borrowTypeState) {
-                        log.info("促销活动: 标的类型不符合");
+                        log.info("红包派发[标的类型判断不通过]");
                         iterator.remove();
                         continue;
                     }
@@ -599,7 +614,7 @@ public class MarketingProcessBizImpl implements MarketingProcessBiz {
                     // 处理充值来源
                     boolean rechargeSourceState = verifyRechargeSource(marketingDimentsion, marketingData);
                     if (!rechargeSourceState) {
-                        log.info("促销活动: 充值来源");
+                        log.info("红包派发[充值来源判断不通过]");
                         iterator.remove();
                         continue;
                     }
@@ -611,7 +626,7 @@ public class MarketingProcessBizImpl implements MarketingProcessBiz {
                 case MarketingTypeContants.OPEN_ACCOUNT:
                     boolean openAccountState = verifyOpenAccountSource(marketingDimentsion, marketingData);
                     if (!openAccountState) {
-                        log.info("促销活动: 开户来源");
+                        log.info("红包派发[开户来源判断不通过]");
                         iterator.remove();
                         continue;
                     }
@@ -833,13 +848,13 @@ public class MarketingProcessBizImpl implements MarketingProcessBiz {
                 }
             } catch (NumberFormatException e) {
                 log.error("查询新手用户异常", e);
-                isNovice = false ;
+                isNovice = false;
             }
         } else {
             UserCache userCache = userCacheService.findById(user.getId());
             isNovice = userCache.isNovice();
         }
-        
+
         if (marketingDimentsion.getMemberType().intValue() == 2) {  //老用户
             return !isNovice;
         } else {  //新用户
@@ -859,7 +874,7 @@ public class MarketingProcessBizImpl implements MarketingProcessBiz {
     private boolean verifyUserParent(MarketingDimentsion marketingDimentsion, Users user) {
         if (marketingDimentsion.getParentState().intValue() == 1) {
             if (!ObjectUtils.isEmpty(user.getParentId()) && user.getParentId() > 0) {
-                Users parentUser = userService.findUserByUserId(user.getParentId());
+                Users parentUser = userService.findById(user.getParentId());
                 if (ObjectUtils.isEmpty(parentUser) || parentUser.getIsLock()) {
                     log.info("判断用户是否为被邀请用户: 邀请用户不存在/邀请用户被冻结");
                     return false;
@@ -918,10 +933,12 @@ public class MarketingProcessBizImpl implements MarketingProcessBiz {
             Marketing marketing = iterator.next();
             if (DateHelper.diffInDays(marketing.getEndTime(), DateHelper.stringToDate(marketingData.getTransTime()), false) <= 0) {
                 iterator.remove();
+                log.info("红包派发: [活动已过期]");
                 continue;
             }
 
             if (DateHelper.diffInDays(DateHelper.stringToDate(marketingData.getTransTime()), marketing.getBeginTime(), false) <= 0) {
+                log.info("红包派发: [活动未开始]");
                 iterator.remove();
                 continue;
             }

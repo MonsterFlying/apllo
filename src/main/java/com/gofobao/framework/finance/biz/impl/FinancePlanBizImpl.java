@@ -639,7 +639,8 @@ public class FinancePlanBizImpl implements FinancePlanBiz {
                                                   FinancePlan financePlan,
                                                   Transfer transfer,
                                                   long validMoney) {
-        long alreadyInterest = validMoney / transfer.getTransferMoney() * transfer.getAlreadyInterest();/* 当期应计利息 */
+        double transferFeeRadio = MoneyHelper.divide(validMoney, transfer.getTransferMoney());
+        long alreadyInterest = new Double(MoneyHelper.multiply(transferFeeRadio, transfer.getAlreadyInterest())).longValue();/* 当期应计利息 */
         long principal = validMoney - alreadyInterest;/* 债权份额 */
         /* 债权购买记录 */
         TransferBuyLog transferBuyLog = new TransferBuyLog();
@@ -814,17 +815,17 @@ public class FinancePlanBizImpl implements FinancePlanBiz {
      * @param userId
      * @return
      */
-    @Transactional(rollbackFor =Exception.class)
+    @Transactional(rollbackFor = Exception.class)
     @Override
     public Map<String, Object> flanContract(Long planId, Long userId) {
         FinancePlan financePlan = financePlanService.findById(planId);
         PlanContract planContract = new PlanContract();
-        planContract.setTimeLimit(financePlan.getTimeLimit()+ BorrowContants.MONTH);
-        planContract.setMoney(StringHelper.formatMon(financePlan.getMoney()/100d));
+        planContract.setTimeLimit(financePlan.getTimeLimit() + BorrowContants.MONTH);
+        planContract.setMoney(StringHelper.formatMon(financePlan.getMoney() / 100d));
         planContract.setRepayFashion("按月分期");
         planContract.setPlanName(financePlan.getName());
         Users users = null;
-        if (userId.intValue()>0) {
+        if (userId.intValue() > 0) {
             users = userService.findById(userId);
         }
         if (!ObjectUtils.isEmpty(users)) {
@@ -838,11 +839,11 @@ public class FinancePlanBizImpl implements FinancePlanBiz {
                 FinancePlanBuyer financePlanBuyer = financePlanBuyers.get(0);
                 planContract.setApr(StringHelper.formatMon(financePlan.getBaseApr()));
                 planContract.setCreatedAt(DateHelper.dateToString(financePlanBuyer.getCreatedAt()));
-                planContract.setTenderMoney(StringHelper.formatMon(financePlanBuyer.getValidMoney()/100D));
+                planContract.setTenderMoney(StringHelper.formatMon(financePlanBuyer.getValidMoney() / 100D));
                 planContract.setIdCard(users.getCardId());
             }
         }
-        return GSON.fromJson(GSON.toJson(planContract),  new TypeToken<Map<String, Object>>() {
+        return GSON.fromJson(GSON.toJson(planContract), new TypeToken<Map<String, Object>>() {
         }.getType());
     }
 }

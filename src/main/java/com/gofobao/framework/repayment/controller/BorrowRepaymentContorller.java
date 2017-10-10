@@ -80,7 +80,6 @@ public class BorrowRepaymentContorller {
             return repaymentBiz.newRepay(voRepayReq);
         } catch (Exception e) {
             log.error("还款异常：", e);
-
             if (e.getMessage().indexOf("余额不足") > 0) {
                 return ResponseEntity.badRequest()
                         .body(VoBaseResp.error(VoBaseResp.ERROR, "立即还款失败,请检查余额是否充足!"));

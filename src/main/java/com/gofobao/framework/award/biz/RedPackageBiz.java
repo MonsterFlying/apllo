@@ -49,5 +49,6 @@ public interface RedPackageBiz {
     ResponseEntity<VoBaseResp> publishActivity(VoPublishRedReq voPublishRedReq) throws Exception;
 
 
+    ResponseEntity<VoBaseResp> publishOpenAccountRedpack(VoPublishRedReq voPublishRedReq);
 
 }

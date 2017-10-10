@@ -13,6 +13,7 @@ import com.gofobao.framework.system.service.DictValueService;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.ObjectUtils;
@@ -24,6 +25,7 @@ import java.util.concurrent.TimeUnit;
  * Created by Zeke on 2017/6/1.
  */
 @Component
+@Slf4j
 public class JixinHelper {
 
     @Autowired
@@ -67,14 +69,26 @@ public class JixinHelper {
         return prefix + new Date().getTime() + RandomHelper.generateNumberCode(9);
     }
 
+    private static String oldBatchNo = null;
 
     /**
      * 获取6位批次号
      *
      * @return
      */
-    public String getBatchNo() {
-        return DateHelper.dateToString(new Date(), DateHelper.DATE_FORMAT_HMS_NUM);
+    public static String getBatchNo() {
+        String nowBatchNo = DateHelper.dateToString(new Date(), DateHelper.DATE_FORMAT_HMS_NUM);
+        if (NumberHelper.toLong(oldBatchNo) > NumberHelper.toLong(nowBatchNo)) { //判断新生成的批次号是否小于以前的批次号
+            nowBatchNo = oldBatchNo;
+        }
+        if (!ObjectUtils.isEmpty(oldBatchNo) && oldBatchNo.equals(nowBatchNo)) {
+            nowBatchNo = String.valueOf(NumberHelper.toLong(nowBatchNo) + 1);
+            if (nowBatchNo.length() < 6) { //判断批次号是否是5位数，如果是则补一个0
+                nowBatchNo = "0" + nowBatchNo;
+            }
+        }
+        oldBatchNo = nowBatchNo;
+        return nowBatchNo;
     }
 
     /**
@@ -191,11 +205,6 @@ public class JixinHelper {
         String body = str.substring(index, str.length());
         String prefix = str.substring(0, index);
         return "G" + (char) (NumberHelper.toInt(prefix) + 64) + body;
-    }
-
-    public static void main(String[] args) {
-
-        System.out.println((char) 65);
     }
 
 }

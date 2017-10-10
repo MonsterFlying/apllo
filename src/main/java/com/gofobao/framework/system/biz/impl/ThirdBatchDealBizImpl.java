@@ -191,7 +191,7 @@ public class ThirdBatchDealBizImpl implements ThirdBatchDealBiz {
             }
         });
 
-        Preconditions.checkState(CollectionUtils.isEmpty(otherOrderIds), "批次处理存在F、S,程序暂停运行!");
+        Preconditions.checkState(CollectionUtils.isEmpty(otherOrderIds), String.format("批次处理存在%s状态,程序暂停运行!", GSON.toJson(otherOrderIds)));
 
         //不存在失败批次进行后续操作
         try {
@@ -242,8 +242,8 @@ public class ThirdBatchDealBizImpl implements ThirdBatchDealBiz {
                 default:
             }
         } catch (Exception e) {
-            log.error("批次处理异常:batchNo:" + batchNo + "sourceId:" + sourceId, e);
-            //判断是否有失败的记录，存在失败orderId添加失败日志
+            log.error(String.format("批次处理异常:batchNo:%s,sourceId:%s,thi", batchNo, sourceId,thirdBatchLog.getType()), e);
+            /*//判断是否有失败的记录，存在失败orderId添加失败日志
             ThirdErrorRemark remark = new ThirdErrorRemark();
             remark.setState(0);
             remark.setType(thirdBatchLog.getType());
@@ -254,7 +254,7 @@ public class ThirdBatchDealBizImpl implements ThirdBatchDealBiz {
             remark.setErrorMsg(e.getMessage());
             remark.setCreatedAt(new Date());
             remark.setUpdatedAt(new Date());
-            thirdErrorRemarkService.save(remark);
+            thirdErrorRemarkService.save(remark);*/
 
             throw new Exception(e);
         }

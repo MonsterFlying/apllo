@@ -67,7 +67,8 @@ public class StarFireUserController {
         paramMap.put("address", javaDomain);
         try {
             //TODO 以后该外网地址
-            String loginUrl=pcDomain+"/third/xhzlogin?params="+new Gson().toJson(bindUserModel);
+         //   response.sendRedirect(thymeleafHelper.build(pcDomain + "/starfire/user/login", paramMap));
+            String loginUrl= pcDomain + "/third/xhzlogin?params="+new Gson().toJson(bindUserModel);
             response.sendRedirect(loginUrl);
         } catch (Exception e) {
             return;//thymeleafHelper.build("load_error", null);

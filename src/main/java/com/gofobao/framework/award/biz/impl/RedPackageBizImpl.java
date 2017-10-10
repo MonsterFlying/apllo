@@ -413,20 +413,33 @@ public class RedPackageBizImpl implements RedPackageBiz {
             }
         }
 
-        /*
-        // ===============================
-        // 用户派发红包
-        // ===============================
+        return ResponseEntity.ok(VoBaseResp.ok("派发成功"));
+    }
+
+    @Override
+    public ResponseEntity<VoBaseResp> publishOpenAccountRedpack(VoPublishRedReq voPublishRedReq) {
+        String paramStr = voPublishRedReq.getParamStr();
+
+        Map<String, String> paramMap = new Gson().fromJson(paramStr, TypeTokenContants.MAP_ALL_STRING_TOKEN);
+        Gson gson = new Gson();
+        String beginTime = paramMap.get("beginTime");
+        if (StringUtils.isEmpty(beginTime)) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "派发红包, 签名验证不通过!"));
+        }
+
+        Date beginDate = DateHelper.stringToDate(beginTime);
+
         Specification<Users> usersSpecification = Specifications
                 .<Users>and()
                 .gt("parentId", 0)
-                .between("createdAt", new Range<>(DateHelper.beginOfDate(beginDate), DateHelper.endOfDate(nowDate)))
+                .between("createdAt", new Range<>(DateHelper.beginOfDate(beginDate), DateHelper.endOfDate(beginDate)))
                 .build();
 
-
         Long userCount = userService.count(usersSpecification);
-        pageindex = 0;
-        totalPageIndex = 0;
+        int pageindex = 0, pageSize = 20;
+        int totalPageIndex = 0;
         totalPageIndex = userCount.intValue() / pageSize;
         totalPageIndex = userCount.intValue() % pageSize == 0 ? totalPageIndex : totalPageIndex + 1;
 
@@ -434,6 +447,9 @@ public class RedPackageBizImpl implements RedPackageBiz {
             Pageable pageable = new PageRequest(pageindex, pageSize, new Sort(new Sort.Order(Sort.Direction.DESC, "id")));
             List<Users> userList = userService.findList(usersSpecification, pageable);
             for (Users users : userList) {
+                if (users.getParentId() <= 0) {
+                    continue;
+                }
                 log.info(String.format("触发活动: %s", gson.toJson(users)));
                 MarketingData marketingData = new MarketingData();
                 marketingData.setTransTime(DateHelper.dateToString(users.getCreatedAt()));
@@ -448,13 +464,13 @@ public class RedPackageBizImpl implements RedPackageBiz {
                     mqConfig.setTag(MqTagEnum.MARKETING_OPEN_ACCOUNT);
                     mqConfig.setQueue(MqQueueEnum.RABBITMQ_MARKETING);
                     mqHelper.convertAndSend(mqConfig);
-                    log.info(String.format("开户营销节点触发: %s", new Gson().toJson(marketingData)));
+                    log.info(String.format("用户开户营销节点触发: %s", new Gson().toJson(marketingData)));
                 } catch (Throwable e) {
-                    log.error(String.format("开户营销节点触发异常：%s", new Gson().toJson(marketingData)), e);
+                    log.error(String.format("用户开户营销节点触发异常：%s", new Gson().toJson(marketingData)), e);
                 }
             }
-        }*/
-        return null;
+        }
+        return ResponseEntity.ok(VoBaseResp.ok("派发成功"));
     }
 
 

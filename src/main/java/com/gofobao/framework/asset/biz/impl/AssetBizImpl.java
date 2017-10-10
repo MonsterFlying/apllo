@@ -80,6 +80,7 @@ import org.springframework.data.domain.*;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.ui.Model;
 import org.springframework.util.Base64Utils;
@@ -584,11 +585,11 @@ public class AssetBizImpl implements AssetBiz {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public ResponseEntity<VoUserAssetInfoResp> synOffLineRecharge(Long userId) throws Exception {
-        try {
+       /* try {
             assetSynBiz.doAssetSyn(userId);
         } catch (Exception e) {
             log.error("资金同步异常", e);
-        }
+        }*/
         return userAssetInfo(userId);
     }
 
@@ -1032,12 +1033,12 @@ public class AssetBizImpl implements AssetBiz {
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "当前用户处于被冻结状态，如有问题请联系客服！", VoAvailableAssetInfoResp.class));
         }
-        try {
+      /*  try {
             assetSynBiz.doAssetSyn(userId);
         } catch (Exception e) {
             log.error("用户余额同步错误", e);
         }
-
+*/
         VoAvailableAssetInfoResp resp = VoBaseResp.ok("查询成功", VoAvailableAssetInfoResp.class);
         Long noUserMoney = asset.getNoUseMoney();
         Long userMoney = asset.getUseMoney();
@@ -1280,11 +1281,11 @@ public class AssetBizImpl implements AssetBiz {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public ResponseEntity<VoAssetIndexResp> synHome(Long userId) throws Exception {
-        try {
+        /*try {
             assetSynBiz.doAssetSyn(userId);
         } catch (Exception e) {
             log.error("资金同步异常", e);
-        }
+        }*/
         return asset(userId);
     }
 
@@ -1541,9 +1542,18 @@ public class AssetBizImpl implements AssetBiz {
         return ResponseEntity.ok(VoBaseResp.ok(String.format("撤销红包成功：msg->%s", response.getRetMsg())));
     }
 
+
+    /**
+     * 使用并行事务
+     *
+     * @param request
+     * @param response
+     * @return
+     * @throws Exception
+     */
     @Override
     @Transactional(rollbackFor = ExcelException.class)
-    public ResponseEntity<String> offlineRechargeCallback(HttpServletRequest request, HttpServletResponse response) throws Exception {
+    public ResponseEntity<String>  offlineRechargeCallback(HttpServletRequest request, HttpServletResponse response) throws Exception {
         String bgData = request.getParameter("bgData");
         log.info("==================================");
         log.info(String.format("即信线下充值回调: 数据[%s]", bgData));
@@ -1573,6 +1583,8 @@ public class AssetBizImpl implements AssetBiz {
             UserThirdAccount userThirdAccount = userThirdAccountService.findByAccountId(accountId);
             Preconditions.checkNotNull(userThirdAccount, "线下充值, 当前开户信息为空");
             Long userId = userThirdAccount.getUserId();
+            Users users = userService.findByIdLock(userId);
+            Preconditions.checkNotNull(users) ;
             Date nowDate = new Date();
             Date synDate = DateHelper.stringToDate(orgTxDate, DateHelper.DATE_FORMAT_YMD_NUM);
             // 写入线下充值日志

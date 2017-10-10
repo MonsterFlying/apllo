@@ -33,7 +33,7 @@ public class NewAleveAndEveScheduler {
     /**
      * 自动投标
      */
-    @Scheduled(cron = "0 0 4 * * ?")
+    @Scheduled(cron = "0 0 3 * * ?")
     public void process() {
         String date = jixinTxDateHelper.getSubDateStr(1);
         log.info("=======================================");
@@ -57,7 +57,11 @@ public class NewAleveAndEveScheduler {
 
         // 针对线下充值进行对账
         try {
-          //  boolean offlineRechargeSysState = offlineRechargeSynBiz.process(date) ;
+          boolean offlineRechargeSysState = offlineRechargeSynBiz.process(date) ;
+            if (!offlineRechargeSysState) {
+                exceptionEmailHelper.sendErrorMessage("凌晨3点线下同步失败",
+                        String.format("凌晨3点线下同步失败, 时间: %s", date));
+            }
         } catch (Exception e) {
             log.error("线下充值记录对账");
         }

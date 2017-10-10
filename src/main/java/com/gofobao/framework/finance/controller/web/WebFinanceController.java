@@ -37,7 +37,6 @@ public class WebFinanceController {
      * @param voFinanceRepurchase
      * @return
      * @throws Exception
-     * @// TODO: 2017/9/29 financeBuyer  已完成 需要更改状态
      */
     @ApiOperation("理财计划匹配债权转让")
     @PostMapping("/v2/pub/finance/plan/repurchase")

@@ -21,4 +21,9 @@ public interface NewEveBiz {
      */
     void importEveDataToDatabase(String date, String fileName) throws FileNotFoundException;
 
+    /**
+     * 进行系统审计
+     * @param date
+     */
+    void audit(String date);
 }

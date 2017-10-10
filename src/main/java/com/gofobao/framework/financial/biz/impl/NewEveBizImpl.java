@@ -1,19 +1,28 @@
 package com.gofobao.framework.financial.biz.impl;
 
-import com.github.wenhao.jpa.Specifications;
+import cn.afterturn.easypoi.excel.ExcelExportUtil;
+import cn.afterturn.easypoi.excel.entity.ExportParams;
 import com.gofobao.framework.api.helper.JixinFileManager;
 import com.gofobao.framework.api.helper.JixinTxDateHelper;
+import com.gofobao.framework.asset.service.NewAssetLogService;
+import com.gofobao.framework.financial.biz.JixinAssetBiz;
 import com.gofobao.framework.financial.biz.NewEveBiz;
+import com.gofobao.framework.financial.entity.LocalRecord;
 import com.gofobao.framework.financial.entity.NewEve;
 import com.gofobao.framework.financial.service.NewEveService;
+import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.helper.ExceptionEmailHelper;
 import com.gofobao.framework.helper.MoneyHelper;
 import com.gofobao.framework.migrate.FormatHelper;
 import com.google.common.io.Files;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.poi.ss.usermodel.Workbook;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.data.jpa.domain.Specification;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.util.ObjectUtils;
 
@@ -21,12 +30,16 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.nio.charset.StandardCharsets;
+import java.util.Date;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 
 @Service
 @Slf4j
 public class NewEveBizImpl implements NewEveBiz {
+
+    @Autowired
+    NewAssetLogService newAssetLogService;
 
     @Autowired
     NewEveService newEveService;
@@ -50,6 +63,9 @@ public class NewEveBizImpl implements NewEveBiz {
 
     @Autowired
     ExceptionEmailHelper exceptionEmailHelper;
+
+    @Autowired
+    JixinAssetBiz jixinAssetBiz;
 
     @Override
     public boolean downloadEveFileAndSaveDB(String date) {
@@ -115,15 +131,16 @@ public class NewEveBizImpl implements NewEveBiz {
 
                     // 当order等于空使用其他信息确定他的唯一性
                     // 防止重复录入
-                    NewEve existsNewEve = null ;
-                    if(ObjectUtils.isEmpty(orderno)){
-                        existsNewEve = newEveService.findTopByCendtAndTranno(cendt, tranno) ;
-                    }else{
+                    NewEve existsNewEve = null;
+                    if (ObjectUtils.isEmpty(orderno)) {
+                        existsNewEve = newEveService.findTopByCendtAndTranno(cendt, tranno);
+                    } else {
                         existsNewEve = newEveService.findTopByOrdernoAndQueryTime(orderno, date);
                     }
 
                     if (ObjectUtils.isEmpty(existsNewEve)) {
-                        newEveService.save(newEve);
+                        newEveService.save(newEve); // 保存交易数据
+                        jixinAssetBiz.record(newEve);  // 保存即信金额
                     }
                 } catch (Exception ex) {
                     log.error("eve 保存数据库异常", ex);
@@ -132,5 +149,31 @@ public class NewEveBizImpl implements NewEveBiz {
         });
     }
 
+    @Override
+    public void audit(String date) {
+        // 获取当前用户交易流水
+        Workbook workbook = null;
+        ExportParams params = new ExportParams();
+        params.setTitle(String.format("深圳市广富宝金融信息服务有限公司-%s-平台资金流水", date));
+        params.setSheetName("平台本地资金流水");
+        Date opDate = DateHelper.stringToDate(date, DateHelper.DATE_FORMAT_YMD_NUM);
+        Date beginDate = DateHelper.beginOfDate(opDate);  // 开始时间
+        Date endOfDate = DateHelper.endOfDate(opDate);  // 结束时间
+        int pageIndex = 0, pageSize = 100, pageIndexTotal = 0;
+        Pageable pageable = new PageRequest(pageIndex, pageSize, new Sort(new Sort.Order(Sort.Direction.ASC, "log.id")));  //  分页
+        Page<LocalRecord> localRecordPage = newEveService.findLocalAssetChangeRecord(DateHelper.dateToString(beginDate), DateHelper.dateToString(endOfDate), pageable);
+        pageIndexTotal = localRecordPage.getTotalPages();
+        if (pageIndexTotal <= 0) {
+            log.warn("当前用户交易记录为空");
+            return;
+        }
 
+        do {
+            workbook = ExcelExportUtil.exportBigExcel(params, LocalRecord.class, localRecordPage.getContent());
+            pageIndex++;
+        } while (pageIndex < pageIndexTotal);
+        ExcelExportUtil.closeExportBigExcel();  // 获取即信交易流水
+
+        // 获取两边订单请款
+    }
 }

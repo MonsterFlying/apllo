@@ -43,11 +43,6 @@ public class FindController {
         return findBiz.index();
     }
 
-    @GetMapping("/pub/find/finance/index")
-    public ResponseEntity<VoFindIndexResp> financeIndex() {
-        return findBiz.financeIndex();
-    }
-
     @ApiOperation("发现:公告;百科;报道;发现")
     @GetMapping("/pub/find/article")
     public ResponseEntity<VoViewArticleWarpRes> articleList(VoArticleReq voArticleReq) {

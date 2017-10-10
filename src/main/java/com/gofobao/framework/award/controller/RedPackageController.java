@@ -80,4 +80,17 @@ public class RedPackageController {
 
         return redPackageBiz.publishActivity(voPublishRedReq) ;
     }
+
+    @ApiOperation("重新触发邀请好友红包派发")
+    @PostMapping("pub/publishActivity/red/openAccount")
+    public ResponseEntity<VoBaseResp> publishOpenAccountActivity(@ModelAttribute VoPublishRedReq voPublishRedReq) throws Exception {
+        String paramStr = voPublishRedReq.getParamStr();
+        if (!SecurityHelper.checkSign(voPublishRedReq.getSign(), paramStr)) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "派发红包, 签名验证不通过!"));
+        }
+
+        return redPackageBiz.publishOpenAccountRedpack(voPublishRedReq) ;
+    }
 }

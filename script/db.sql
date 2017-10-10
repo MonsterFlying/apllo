@@ -847,4 +847,13 @@ ALTER TABLE gfb_users ADD starfire_bind_date DATETIME NULL COMMENT '星火用户
 ALTER TABLE gfb_borrow ADD is_starfire tinyint(1)  DEFAULT 0 COMMENT '是否推星火平台';
 
 
+create table jixin_asset(
+  id int primary key auto_increment,
+  account_id varchar(64) null default '' comment '电子账户',
+  user_id int null default 0 comment '用户ID',
+  update_time datetime null comment '修改时间',
+  curr_money bigint null default 0 comment '本地金额'
+) engine=innodb , charset =utf8;
+
+
 
