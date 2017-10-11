@@ -41,6 +41,7 @@ import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 
 /**
@@ -255,9 +256,9 @@ public class CreditProvider {
                     .<Tender>and()
                     .eq("borrowId", borrowId)
                     .eq("status", 1)
-                    .eq("thirdCreditEndFlag", 0)
                     .build();
             List<Tender> tenderList = tenderService.findList(ts);
+            tenderList = tenderList.stream().filter(tender -> BooleanHelper.isFalse(tender.getThirdCreditEndFlag())).collect(Collectors.toList());
             if (CollectionUtils.isEmpty(tenderList)) {
                 log.info("creditProvider buildNotTransferCreditEndList: 借款" + borrowId + " 未找到投递成功债权！");
             }
