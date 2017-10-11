@@ -47,11 +47,20 @@ import com.gofobao.framework.collection.service.BorrowCollectionService;
 import com.gofobao.framework.common.assets.AssetChange;
 import com.gofobao.framework.common.assets.AssetChangeProvider;
 import com.gofobao.framework.common.assets.AssetChangeTypeEnum;
+import com.gofobao.framework.common.integral.IntegralChangeEntity;
+import com.gofobao.framework.common.integral.IntegralChangeEnum;
+import com.gofobao.framework.common.rabbitmq.MqConfig;
 import com.gofobao.framework.common.rabbitmq.MqHelper;
+import com.gofobao.framework.common.rabbitmq.MqQueueEnum;
+import com.gofobao.framework.common.rabbitmq.MqTagEnum;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.helper.*;
+import com.gofobao.framework.helper.project.BatchAssetChangeHelper;
+import com.gofobao.framework.helper.project.IntegralChangeHelper;
+import com.gofobao.framework.member.entity.UserCache;
 import com.gofobao.framework.member.entity.UserThirdAccount;
 import com.gofobao.framework.member.entity.Users;
+import com.gofobao.framework.member.service.UserCacheService;
 import com.gofobao.framework.member.service.UserService;
 import com.gofobao.framework.member.service.UserThirdAccountService;
 import com.gofobao.framework.repayment.entity.BorrowRepayment;
@@ -67,8 +76,11 @@ import com.gofobao.framework.system.service.ThirdBatchLogService;
 import com.gofobao.framework.tender.biz.AutoTenderBiz;
 import com.gofobao.framework.tender.biz.TransferBiz;
 import com.gofobao.framework.tender.entity.Tender;
+import com.gofobao.framework.tender.entity.Transfer;
 import com.gofobao.framework.tender.service.TenderService;
+import com.gofobao.framework.tender.service.TransferService;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -97,6 +109,8 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static com.gofobao.framework.helper.DateHelper.isBetween;
+import static com.gofobao.framework.listener.providers.NoticesMessageProvider.GSON;
+import static java.util.stream.Collectors.groupingBy;
 
 /**
  * Created by Zeke on 2017/6/21.
@@ -352,12 +366,208 @@ public class TestController {
         return repayMoney;
     }
 
+    @Autowired
+    private TransferService transferService;
+
+    @ApiOperation("资产查询")
+    @RequestMapping("/pub/test/send/end/transfer/tender")
+    @Transactional
+    public void sendEndTransferTender(@RequestParam("transferId") Object transferId) {
+
+        Transfer transfer = transferService.findById(NumberHelper.toLong(transferId));
+
+        //推送队列结束债权
+        MqConfig mqConfig = new MqConfig();
+        mqConfig.setQueue(MqQueueEnum.RABBITMQ_CREDIT);
+        mqConfig.setTag(MqTagEnum.END_CREDIT_BY_TRANSFER);
+        mqConfig.setSendTime(DateHelper.addMinutes(new Date(), 1));
+        ImmutableMap<String, String> body = ImmutableMap
+                .of(MqConfig.MSG_BORROW_ID, StringHelper.toString(transfer.getBorrowId()), MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
+        mqConfig.setMsg(body);
+        try {
+            log.info(String.format("thirdBatchProvider financeCreditInvestDeal send mq %s", GSON.toJson(body)));
+            mqHelper.convertAndSend(mqConfig);
+        } catch (Throwable e) {
+            log.error("thirdBatchProvider financeCreditInvestDeal send mq exception", e);
+        }
+    }
 
     @ApiOperation("资产查询")
     @RequestMapping("/pub/test/call")
     @Transactional
     public ResponseEntity<String> repayResponse() {
         return ResponseEntity.ok("success");
+    }
+
+    @ApiOperation("资产查询")
+    @RequestMapping("/pub/test/repay/deal")
+    @Transactional
+    public ResponseEntity<String> repayResponse01(@RequestParam("batchNo") Object batchNo) {
+
+         /* 投资人回款记录 */
+        BorrowCollection borrowCollection = borrowCollectionService.findById(407061);
+
+        Borrow borrow = borrowService.findById(borrowCollection.getBorrowId());
+
+        //2.处理资金还款人、收款人资金变动
+        try {
+            batchAssetChangeHelper.batchAssetChangeAndCollection(borrowCollection.getId(), StringHelper.toString(batchNo), BatchAssetChangeContants.BATCH_REPAY);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        //4.还款成功后变更改还款状态
+        borrowCollection.setStatus(1);
+        borrowCollection.setCollectionAtYes(new Date());
+        borrowCollection.setUpdatedAt(new Date());
+
+        //回款记录集合
+        List<BorrowCollection> borrowCollectionList = new ArrayList<>();
+        borrowCollectionList.add(borrowCollection);
+
+        //6.发放积分
+        giveInterest(borrowCollectionList, borrow);
+
+        //8.更新投资人缓存
+        updateUserCacheByReceivedRepay(borrowCollectionList, borrow);
+
+        return ResponseEntity.ok("success");
+    }
+
+    @Autowired
+    private BatchAssetChangeHelper batchAssetChangeHelper;
+    @Autowired
+    private IntegralChangeHelper integralChangeHelper;
+
+    /**
+     * 给投资人发放积分
+     *
+     * @param borrowCollectionList
+     * @param parentBorrow
+     */
+    private void giveInterest(List<BorrowCollection> borrowCollectionList, Borrow parentBorrow) {
+        Set<Long> tenderIds = borrowCollectionList.stream().map(borrowCollection -> borrowCollection.getTenderId()).collect(Collectors.toSet()); /* 回款用户id */
+        if (CollectionUtils.isEmpty(tenderIds)) {
+            log.error("回款投标记录ID为空");
+            return;
+        }
+
+        Specification<Tender> tenderSpecification = Specifications.
+                <Tender>and()
+                .in("id", tenderIds.toArray())
+                .build();
+        List<Tender> tenderList = tenderService.findList(tenderSpecification);
+        if (CollectionUtils.isEmpty(tenderList)) {
+            log.error("回款投标记录为空");
+            return;
+        }
+        Set<Long> userIds = tenderList.stream().map(tender -> tender.getUserId()).collect(Collectors.toSet()); /* 回款用户id */
+        if (CollectionUtils.isEmpty(userIds)) {
+            log.error("回款用户ID为空");
+            return;
+        }
+
+        Map<Long, Tender> tenderMap = tenderList.stream().collect(Collectors.toMap(Tender::getId, Function.identity()));
+        borrowCollectionList.stream().forEach((BorrowCollection borrowCollection) -> {
+            Tender tender = tenderMap.get(borrowCollection.getTenderId());
+            if (tender.getType().intValue() == 1) { //如果是理财计划投标则不发放积分
+                return;
+            }
+            long actualInterest = borrowCollection.getCollectionMoneyYes() - borrowCollection.getPrincipal();/* 实收利息 */
+            long integral = MoneyHelper.doubleToLong(MoneyHelper.multiply(MoneyHelper.divide(actualInterest, 100), 10));  //投资积分
+            if ((parentBorrow.getType() == 0 || parentBorrow.getType() == 4) && 0 < integral) {
+                Long userId = borrowCollection.getUserId();
+                if (ObjectUtils.isEmpty(userId)) {
+                    userId = tender.getUserId();
+                }
+
+                Users users = userService.findById(userId);
+                if (StringUtils.isEmpty(users.getWindmillId())) {  // 非风车理财派发积分
+                    IntegralChangeEntity integralChangeEntity = new IntegralChangeEntity();
+                    integralChangeEntity.setType(IntegralChangeEnum.TENDER);
+                    integralChangeEntity.setValue(integral);
+                    integralChangeEntity.setUserId(borrowCollection.getUserId());
+                    try {
+                        integralChangeHelper.integralChange(integralChangeEntity);
+                    } catch (Exception e) {
+                        log.error("投资人回款积分发放失败：", e);
+                    }
+                }
+
+            }
+        });
+    }
+
+    @Autowired
+    private UserCacheService userCacheService;
+
+    /**
+     * 更新用户缓存
+     *
+     * @param borrowCollectionList
+     * @param parentBorrow
+     */
+    private void updateUserCacheByReceivedRepay(List<BorrowCollection> borrowCollectionList, Borrow parentBorrow) {
+        Set<Long> tenderIds = borrowCollectionList.stream().map(borrowCollection -> borrowCollection.getTenderId()).collect(Collectors.toSet()); /* 回款用户id */
+        if (CollectionUtils.isEmpty(tenderIds)) {
+            log.error("回款投标记录ID为空");
+            return;
+        }
+
+        Specification<Tender> tenderSpecification = Specifications.
+                <Tender>and()
+                .in("id", tenderIds.toArray())
+                .build();
+        List<Tender> tenderList = tenderService.findList(tenderSpecification);
+        if (CollectionUtils.isEmpty(tenderList)) {
+            log.error("回款投标记录为空");
+            return;
+        }
+        Map<Long, Tender> tenderMap = tenderList.stream().collect(Collectors.toMap(Tender::getId, Function.identity()));
+        Set<Long> userIds = tenderList.stream().map(tender -> tender.getUserId()).collect(Collectors.toSet()); /* 回款用户id */
+        if (CollectionUtils.isEmpty(userIds)) {
+            log.error("回款用户ID为空");
+            return;
+        }
+        Map<Long, List<BorrowCollection>> borrowCollrctionMaps = borrowCollectionList.stream().collect(groupingBy(BorrowCollection::getUserId)); /* 回款记录集合 */
+        Specification<UserCache> ucs = Specifications
+                .<UserCache>and()
+                .in("userId", userIds.toArray())
+                .build();
+        List<UserCache> userCaches = userCacheService.findList(ucs);/* 回款用户缓存记录列表 */
+        Map<Long, UserCache> userCacheMaps = userCaches.stream().collect(Collectors.toMap(UserCache::getUserId, Function.identity()));/* 回款用户缓存记录列表*/
+        userIds.stream().forEach(userId -> {
+            List<BorrowCollection> borrowCollections = borrowCollrctionMaps.get(userId);/* 当前用户的所有回款 */
+            long principal = 0; /* 当前用户的所有回款本金 */
+            long interest = 0;/* 当前用户的所有回款本金 */
+            for (BorrowCollection borrowCollection : borrowCollections) {
+                Tender tender = tenderMap.get(borrowCollection.getTenderId());
+                if (tender.getType().intValue() == 1) { //如果是理财计划投标则不需要加入统计
+                    continue;
+                }
+
+                principal += borrowCollection.getPrincipal();
+                interest += borrowCollection.getInterest();
+            }
+            UserCache userCache = userCacheMaps.get(userId);
+            if (parentBorrow.getType() == 0) {
+                userCache.setTjWaitCollectionPrincipal(userCache.getTjWaitCollectionPrincipal() - principal);
+                userCache.setTjWaitCollectionInterest(userCache.getTjWaitCollectionInterest() - interest);
+            } else if (parentBorrow.getType() == 4) {
+                userCache.setQdWaitCollectionPrincipal(userCache.getQdWaitCollectionPrincipal() - principal);
+                userCache.setQdWaitCollectionInterest(userCache.getQdWaitCollectionInterest() - interest);
+            }
+
+            Long collectionMoney = borrowCollections.stream().mapToLong(p -> p.getCollectionMoney()).sum();
+            Long collectionMoneyYes = borrowCollections.stream().mapToLong(p -> p.getCollectionMoneyYes()).sum();
+            //逾期收入
+            if (collectionMoneyYes >= collectionMoney) {
+                userCache.setIncomeOverdue(collectionMoneyYes - collectionMoney);
+            } else {
+                log.error("当前还款批次异常：打印回款期数信息：", GSON.toJson(borrowCollections));
+                userCache.setIncomeOverdue(0L);
+            }
+            userCacheService.save(userCache);
+        });
     }
 
     @Autowired
