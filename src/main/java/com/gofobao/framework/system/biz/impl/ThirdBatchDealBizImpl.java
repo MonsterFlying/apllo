@@ -943,20 +943,6 @@ public class ThirdBatchDealBizImpl implements ThirdBatchDealBiz {
                 for (TransferBuyLog transferBuyLog : transferBuyLogList) {
                     transferBuyLog.setState(2);
                     transferBuyLog.setUpdatedAt(nowDate);
-
-                    // 解除理财计划冻结资金
-                    /**
-                     * @// TODO: 2017/10/10 对leftmoney做相应的加减
-                     */
-                    /*AssetChange assetChange = new AssetChange();
-                    assetChange.setSourceId(transferBuyLog.getId());
-                    assetChange.setGroupSeqNo(assetChangeProvider.getGroupSeqNo());
-                    assetChange.setMoney(transferBuyLog.getValidMoney());
-                    assetChange.setSeqNo(assetChangeProvider.getSeqNo());
-                    assetChange.setRemark(String.format("存管系统审核债权转让[%s]不通过, 成功解冻资金%s元", transfer.getTitle(), StringHelper.formatDouble(transferBuyLog.getValidMoney() / 100D, true)));
-                    assetChange.setType(AssetChangeTypeEnum.financePlanUnFreeze);
-                    assetChange.setUserId(transferBuyLog.getUserId());
-                    assetChangeProvider.commonAssetChange(assetChange);*/
                 }
 
                 transfer.setTenderCount(transfer.getTenderCount() - transferBuyLogList.size());
