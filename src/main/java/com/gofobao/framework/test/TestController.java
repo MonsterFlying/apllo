@@ -370,7 +370,8 @@ public class TestController {
      * @throws Exception
      */
     @ApiOperation("资产查询")
-    @RequestMapping("/pub/test/call")
+    @RequestMapping("/pub/test/repay/repair")
+    @Transactional
     public ResponseEntity<VoBaseResp> normalRepay() throws Exception {
         Date nowDate = new Date();
         String batchNo = jixinHelper.getBatchNo();    // 批次号
