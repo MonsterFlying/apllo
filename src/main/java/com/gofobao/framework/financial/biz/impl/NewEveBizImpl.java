@@ -7,8 +7,11 @@ import com.gofobao.framework.api.helper.JixinTxDateHelper;
 import com.gofobao.framework.asset.service.NewAssetLogService;
 import com.gofobao.framework.financial.biz.JixinAssetBiz;
 import com.gofobao.framework.financial.biz.NewEveBiz;
+import com.gofobao.framework.financial.entity.LocalAndRemoteAssetInfo;
 import com.gofobao.framework.financial.entity.LocalRecord;
 import com.gofobao.framework.financial.entity.NewEve;
+import com.gofobao.framework.financial.entity.RemoteRecord;
+import com.gofobao.framework.financial.service.JixinAssetService;
 import com.gofobao.framework.financial.service.NewEveService;
 import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.helper.ExceptionEmailHelper;
@@ -19,18 +22,26 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.FileSystemResource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 
+import javax.mail.internet.MimeMessage;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 
@@ -47,6 +58,8 @@ public class NewEveBizImpl implements NewEveBiz {
     @Autowired
     JixinFileManager jixinFileManager;
 
+    @Autowired
+    private JavaMailSender mailSender;
 
     @Autowired
     JixinTxDateHelper jixinTxDateHelper;
@@ -66,6 +79,9 @@ public class NewEveBizImpl implements NewEveBiz {
 
     @Autowired
     JixinAssetBiz jixinAssetBiz;
+
+    @Autowired
+    JixinAssetService jixinAssetService;
 
     @Override
     public boolean downloadEveFileAndSaveDB(String date) {
@@ -149,31 +165,286 @@ public class NewEveBizImpl implements NewEveBiz {
         });
     }
 
-    @Override
-    public void audit(String date) {
-        // 获取当前用户交易流水
-        Workbook workbook = null;
+    /**
+     * 获取文件
+     *
+     * @param date
+     * @param fileName
+     * @param preFileType
+     * @return
+     */
+    private String getXlsxAllFile(String date, String fileName, String preFileType) {
+        String path = String.format("%s/%s/", filePath, date);
+        File file = new File(path);
+        if (!file.exists()) {
+            file.mkdirs();
+        }
+        return String.format("%s/%s/%s%s", filePath, date, fileName, preFileType);
+    }
+
+
+    /**
+     * 获取文件名
+     *
+     * @param date
+     * @param fileName
+     * @param preFileType
+     * @return
+     */
+    private String getXlsxFileName(String date, String fileName, String preFileType) {
+        return String.format("%s%s%s", date, fileName, preFileType);
+    }
+
+
+    /**
+     * 获取本地资金流水
+     *
+     * @param date
+     * @param localFileName
+     * @param preFileType
+     * @return
+     */
+    private boolean printLocalRecord(String date, String localFileName, String preFileType) {
+        Workbook localWorkbook = null;
         ExportParams params = new ExportParams();
-        params.setTitle(String.format("深圳市广富宝金融信息服务有限公司-%s-平台资金流水", date));
+        params.setTitle(localFileName);
         params.setSheetName("平台本地资金流水");
         Date opDate = DateHelper.stringToDate(date, DateHelper.DATE_FORMAT_YMD_NUM);
-        Date beginDate = DateHelper.beginOfDate(opDate);  // 开始时间
-        Date endOfDate = DateHelper.endOfDate(opDate);  // 结束时间
+        Date beginDate = DateHelper.endOfDate(DateHelper.subDays(opDate, 1));  // 开始时间
+        Date endOfDate = DateHelper.beginOfDate(DateHelper.addDays(opDate, 1));  // 结束时间
         int pageIndex = 0, pageSize = 100, pageIndexTotal = 0;
-        Pageable pageable = new PageRequest(pageIndex, pageSize, new Sort(new Sort.Order(Sort.Direction.ASC, "log.id")));  //  分页
-        Page<LocalRecord> localRecordPage = newEveService.findLocalAssetChangeRecord(DateHelper.dateToString(beginDate), DateHelper.dateToString(endOfDate), pageable);
+        Pageable localPageable = new PageRequest(pageIndex, pageSize, new Sort(new Sort.Order(Sort.Direction.ASC, "id")));  //  分页
+        Page<Object[]> localRecordPage = newEveService.findLocalAssetChangeRecord(DateHelper.dateToString(beginDate), DateHelper.dateToString(endOfDate), localPageable);
         pageIndexTotal = localRecordPage.getTotalPages();
         if (pageIndexTotal <= 0) {
-            log.warn("当前用户交易记录为空");
-            return;
+            log.warn("本地交易流水为空");
+            return false;
         }
 
+
         do {
-            workbook = ExcelExportUtil.exportBigExcel(params, LocalRecord.class, localRecordPage.getContent());
+            List<Object[]> content = localRecordPage.getContent();
+            if (CollectionUtils.isEmpty(content)) {
+                break;
+            }
+            List<LocalRecord> localRecords = new ArrayList<>(content.size());
+            LocalRecord temp;
+            for (Object[] item : content) {
+                temp = new LocalRecord();
+                temp.setAccountId(item[8] + "");
+                temp.setCreateDate((Date) item[7]);
+                temp.setOpMoney(MoneyHelper.divide(item[0] + "", "100", 2));  // 金额
+                temp.setPhone(item[6] + "");
+                temp.setSeqNo(item[1] + "");
+                temp.setTranName(item[2] + "");
+                temp.setTranNo(item[4] + "");
+                temp.setUserName(item[5] + "");
+                temp.setTxFlag(item[3] + "");
+                localRecords.add(temp);
+            }
+            localWorkbook = ExcelExportUtil.exportBigExcel(params, LocalRecord.class, localRecords);
             pageIndex++;
         } while (pageIndex < pageIndexTotal);
         ExcelExportUtil.closeExportBigExcel();  // 获取即信交易流水
+        String localXlsxFile = getXlsxAllFile(date, localFileName, preFileType);
+        File localRecordfile = new File(localXlsxFile);
+        try (FileOutputStream fos = new FileOutputStream(localRecordfile)) {
+            localWorkbook.write(fos);
+            fos.close();
+        } catch (Exception e) {
+            log.error("本地流水文件保存失败", e);
+            return false;
+        }
 
-        // 获取两边订单请款
+        return true;
+    }
+
+
+    /**
+     * 获取即信流水资金流水
+     *
+     * @param date
+     * @param remoteFileName
+     * @param preFileType
+     * @return
+     */
+    private boolean printRemoteRecord(String date, String remoteFileName, String preFileType) {
+        ExportParams params = new ExportParams();
+        params.setTitle(remoteFileName);
+        params.setSheetName("即信交易流水");
+        // 发送即信流水
+        int pageIndex = 0, pageSize = 100, pageIndexTotal = 0;
+        Workbook remoteWorkbook = null;
+        Pageable evePageable = new PageRequest(pageIndex, pageSize, new Sort(new Sort.Order(Sort.Direction.ASC, "eve.id")));  //  分页
+        Page<Object[]> remoteRecordPage = newEveService.findRemoteByQueryTime(date, evePageable);
+        pageIndexTotal = remoteRecordPage.getTotalPages();
+        if (pageIndexTotal <= 0) {
+            log.warn("即信流水为空");
+            return false;
+        }
+        do {
+            List<Object[]> content = remoteRecordPage.getContent();
+            if (CollectionUtils.isEmpty(content)) {
+                break;
+            }
+            List<RemoteRecord> remoteRecords = new ArrayList<>(content.size());
+            RemoteRecord temp;
+            for (Object[] item : content) {
+                temp = new RemoteRecord();
+                temp.setAccountId(item[2] + "");
+                temp.setCendt(item[8] + "");
+                temp.setUserName(item[0] + "");
+                temp.setPhone(item[1] + "");
+                temp.setSeqNo(item[3] + "");
+                temp.setTxFlag(item[5] + "");
+                temp.setTranNo(item[6] + "");
+                temp.setErvind(item[7] + "");
+                temp.setOpMoney(item[4] + "");
+                remoteRecords.add(temp);
+            }
+            remoteWorkbook = ExcelExportUtil.exportBigExcel(params, RemoteRecord.class, remoteRecords);
+            pageIndex++;
+        } while (pageIndex < pageIndexTotal);
+        ExcelExportUtil.closeExportBigExcel();
+        String remoteXlsxFile = getXlsxAllFile(date, remoteFileName, preFileType);
+        try (FileOutputStream fos = new FileOutputStream(remoteXlsxFile)) {
+            remoteWorkbook.write(fos);
+            fos.close();
+        } catch (Exception e) {
+            log.error("即信流水文件保存失败", e);
+            return false;
+        }
+        return true;
+    }
+
+    /**
+     * 获取即信流水资金流水
+     *
+     * @param date
+     * @param assetFileName
+     * @param preFileType
+     * @return
+     */
+    private boolean printAssetRecord(String date, String assetFileName, String preFileType) {
+        int pageIndex = 0, pageSize = 100, pageIndexTotal = 0;
+        Pageable pageable = new PageRequest(pageIndex, pageSize, new Sort(new Sort.Order(Sort.Direction.ASC, "user_id")));
+        Page<Object[]> localAndRemoteAssetInfoPage = jixinAssetService.findAllForPrint(pageable);
+        pageIndexTotal = localAndRemoteAssetInfoPage.getTotalPages();
+        if (pageIndexTotal <= 0) {
+            log.error("用户资金交易记录为空");
+            return false;
+        }
+        ExportParams params = new ExportParams();
+        params.setTitle(assetFileName);
+        params.setSheetName("平台与即信资金对比");
+        Workbook assetWorkbook = null;
+        do {
+            List<Object[]> content = localAndRemoteAssetInfoPage.getContent();
+            if (CollectionUtils.isEmpty(content)) {
+                break;
+            }
+            List<LocalAndRemoteAssetInfo> remoteRecords = new ArrayList<>(content.size());
+            LocalAndRemoteAssetInfo temp;
+            for (Object[] item : content) {
+                temp = new LocalAndRemoteAssetInfo();
+                temp.setLocalMoney(MoneyHelper.divide(item[0] + "", "100", 2));
+                temp.setLocalUpdateDatetime((Date) item[1]);
+                String remoteMoney = "0";
+                if (!ObjectUtils.isEmpty(item[2])) {
+                    remoteMoney = MoneyHelper.divide(item[2] + "", "100", 2);
+                }
+                temp.setRemoteMoney(remoteMoney);
+
+                if (!ObjectUtils.isEmpty(item[3])) {
+                    temp.setRemoteUpdateDatetime((Date) item[3]);
+                } else {
+                    temp.setRemoteUpdateDatetime(null);
+                }
+
+                temp.setUsername(item[4] + "");
+                temp.setPhone(item[5] + "");
+                temp.setRealname(item[6] + "");
+                remoteRecords.add(temp);
+            }
+            assetWorkbook = ExcelExportUtil.exportBigExcel(params, LocalAndRemoteAssetInfo.class, remoteRecords);
+            pageIndex++;
+        } while (pageIndex < pageIndexTotal);
+        ExcelExportUtil.closeExportBigExcel();
+        String assetXlsxFile = getXlsxAllFile(date, assetFileName, preFileType);
+        try (FileOutputStream fos = new FileOutputStream(assetXlsxFile)) {
+            assetWorkbook.write(fos);
+            fos.close();
+        } catch (Exception e) {
+            log.error("本地资金流水文件保存失败", e);
+            return false;
+        }
+        return true;
+    }
+
+
+    @Override
+    public void audit(String date) {
+        String localFileName = String.format("%s-平台资金流水", date);  // 本地文件名称
+        String remoteFileName = String.format("%s-即信资金流水", date); // 即信平台流水名称
+        String assetFileName = String.format("%s-双边金额对比", date); // 两边金额对比
+        String preFileType = ".xlsx";  // 文件后缀
+
+
+        // 获取当前用户交易流水
+        if (!printLocalRecord(date, localFileName, preFileType)) {
+            log.error("获取当天本地流水失败");
+            return;
+        }
+
+        // 获取即信交易流水
+        if (!printRemoteRecord(date, remoteFileName, preFileType)) {
+            log.error("获取当天即信流水失败");
+            return;
+        }
+
+        // 获取用户 金额
+        if (!printAssetRecord(date, assetFileName, preFileType)) {
+            log.error("获取当天资金流水失败");
+            return;
+        }
+
+        // ============================
+        // 发送邮件
+        // ============================
+
+        String remoteXlsxFile = getXlsxAllFile(date, remoteFileName, preFileType);
+        String localXlsxFile = getXlsxAllFile(date, localFileName, preFileType);
+        String assetXlsxFile = getXlsxAllFile(date, assetFileName, preFileType);
+        try {
+            MimeMessage mimeMessage = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true);
+            helper.setFrom("service@gofobao.com");
+            helper.setTo("595785682@qq.com");
+            helper.setSubject("对账系统");
+            helper.setText("附件");
+            FileSystemResource localFSR = new FileSystemResource(new File(localXlsxFile));  // 本地文件
+            FileSystemResource remoteFSR = new FileSystemResource(new File(remoteXlsxFile));  // 即信文件
+            FileSystemResource assetFSR = new FileSystemResource(new File(assetXlsxFile));  // 即信文件
+
+            helper.addAttachment("本地流水.xlsx", localFSR);
+            helper.addAttachment("即信流水.xlsx", remoteFSR);
+            helper.addAttachment("资金流水.xlsx", assetFSR);
+            mailSender.send(mimeMessage);
+        } catch (Exception e) {
+            log.error("对账文件", e);
+        }
+
+    }
+
+    @Override
+    public void simpleDownload(String date) {
+        String fileName = String.format("%s-EVE%s-%s", bankNo, productNo, date);
+        log.info("========================");
+        log.info("执行下载文件:" + fileName);
+        log.info("========================");
+        boolean downloadState = jixinFileManager.download(fileName);
+        if (!downloadState) {
+            log.error("EVE文件下载失败");
+        }
     }
 }

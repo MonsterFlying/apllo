@@ -33,4 +33,7 @@
         <appender-ref ref="STDOUT"/>
         <appender-ref ref="FILE_LOG"/>
     </root>
+    <logger name="logging.level.org.hibernate.sql" level="TRACE"  >
+        <appender-ref ref="STDOUT"/>
+    </logger>
 </configuration>
