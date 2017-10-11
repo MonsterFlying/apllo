@@ -755,8 +755,9 @@ public class FinancePlanBizImpl implements FinancePlanBiz {
 
         planDetail.setSpend(MoneyHelper.round((moneyYes / money.doubleValue()) * 100, 1));
         Integer timeLimit = financePlan.getTimeLimit();
+
         //预期收益
-        BorrowCalculatorHelper borrowCalculatorHelper = new BorrowCalculatorHelper(new Double(money), new Double(apr), timeLimit, financePlan.getCreatedAt());
+        BorrowCalculatorHelper borrowCalculatorHelper = new BorrowCalculatorHelper(new Double(100*10000), new Double(apr), timeLimit, financePlan.getCreatedAt());
         Map<String, Object> calculatorMap = borrowCalculatorHelper.simpleCount(2);
         Integer earnings = NumberHelper.toInt(StringHelper.toString(calculatorMap.get("earnings")));
         planDetail.setEarnings(StringHelper.formatMon(earnings / 100D));
@@ -810,7 +811,6 @@ public class FinancePlanBizImpl implements FinancePlanBiz {
 
     /**
      * 计划合同
-     *
      * @param planId
      * @param userId
      * @return

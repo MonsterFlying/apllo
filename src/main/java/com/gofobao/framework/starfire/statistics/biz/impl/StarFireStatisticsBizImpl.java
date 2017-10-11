@@ -1,6 +1,4 @@
 package com.gofobao.framework.starfire.statistics.biz.impl;
-
-import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.helper.StringHelper;
 import com.gofobao.framework.starfire.common.request.BaseRequest;
 import com.gofobao.framework.starfire.common.response.CodeTypeConstant;
@@ -13,6 +11,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
@@ -33,10 +32,10 @@ public class StarFireStatisticsBizImpl implements StarFireStatisticsBiz {
     private BaseRequest baseRequest;
 
     @Value("${starfire.key}")
-    private static String key;
+    private  String key;
 
     @Value("${starfire.initVector}")
-    private static String initVector;
+    private  String initVector;
 
     @PersistenceContext
     private EntityManager entityManager;
@@ -61,7 +60,6 @@ public class StarFireStatisticsBizImpl implements StarFireStatisticsBiz {
             statisticsDataRes.setResult(code);
             return statisticsDataRes;
         }
-        String endAt = DateHelper.dateToString(DateHelper.stringToDate(refDate));
         Query query = entityManager.createNativeQuery("SELECT " +
                 "COUNT(DISTINCT tender.user_id) AS userCount, " +
                 "SUM(tender.valid_money) AS moneySum, " +
@@ -71,7 +69,7 @@ public class StarFireStatisticsBizImpl implements StarFireStatisticsBiz {
                 "WHERE " +
                 "tender.status=1 " +
                 "AND " +
-                "tender.createdAt<'" + endAt + "'");
+                "tender.created_at<'" + refDate + "'");
         List rows = query.getResultList();
         Integer userCount = 0;
         Long moneySum = 0L;
@@ -87,7 +85,20 @@ public class StarFireStatisticsBizImpl implements StarFireStatisticsBiz {
         record.setLendCount(userCount);
         record.setTotalBidMoney(StringHelper.formatDouble(moneySum / 100D, false));
         record.setBorrowCount(borrowTotal);
+        Query repaymentQuery=entityManager.createNativeQuery(
+                "SELECT sum(repayment.repay_money) FROM gfb_borrow_repayment repayment " +
+                " JOIN  gfb_borrow borrow " +
+                " ON " +
+                " repayment.borrow_id=borrow.id " +
+                " WHERE" +
+                " repayment.status=0 " +
+                " AND " +
+                " borrow.recheck_at<'"+refDate+"'");
+        List resultList=repaymentQuery.getResultList();
+        record.setTotalBackMoney(StringHelper.formatDouble(Long.valueOf(resultList.get(0).toString()),100D,false));
+        record.setRefdate(refDate);
         records.add(record);
+        statisticsDataRes.setResult(ResultCodeEnum.getCode(CodeTypeConstant.SUCCESS));
         statisticsDataRes.setRecords(records);
         return statisticsDataRes;
     }
