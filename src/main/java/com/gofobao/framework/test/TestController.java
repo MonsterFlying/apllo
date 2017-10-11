@@ -897,7 +897,7 @@ public class TestController {
         CreditDetailsQueryRequest creditDetailsQueryRequest = new CreditDetailsQueryRequest();
         creditDetailsQueryRequest.setAccountId(String.valueOf(accountId));
         creditDetailsQueryRequest.setStartDate(String.valueOf(startDate));
-        if (ObjectUtils.isEmpty(productId)) {
+        if (!ObjectUtils.isEmpty(productId)) {
             creditDetailsQueryRequest.setProductId(String.valueOf(productId));
         }
         creditDetailsQueryRequest.setEndDate(DateHelper.dateToString(new Date(), DateHelper.DATE_FORMAT_YMD_NUM));

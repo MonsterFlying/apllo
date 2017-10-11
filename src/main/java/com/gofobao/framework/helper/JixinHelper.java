@@ -69,6 +69,7 @@ public class JixinHelper {
         return prefix + new Date().getTime() + RandomHelper.generateNumberCode(9);
     }
 
+    private static String batchDate = null;
     private static String oldBatchNo = null;
 
     /**
@@ -77,6 +78,15 @@ public class JixinHelper {
      * @return
      */
     public static String getBatchNo() {
+        if (!ObjectUtils.isEmpty(batchDate)) {
+            if (DateHelper.stringToDate(batchDate, DateHelper.DATE_FORMAT_YMD).getTime() < DateHelper.beginOfDate(new Date()).getTime()) {
+                oldBatchNo = null;
+                batchDate = DateHelper.dateToString(new Date(), DateHelper.DATE_FORMAT_YMD);
+            }
+        }else {
+            batchDate = DateHelper.dateToString(new Date(), DateHelper.DATE_FORMAT_YMD);
+        }
+
         String nowBatchNo = DateHelper.dateToString(new Date(), DateHelper.DATE_FORMAT_HMS_NUM);
         if (NumberHelper.toLong(oldBatchNo) > NumberHelper.toLong(nowBatchNo)) { //判断新生成的批次号是否小于以前的批次号
             nowBatchNo = oldBatchNo;
