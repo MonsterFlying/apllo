@@ -620,7 +620,7 @@ public class StarFireUserBizImpl implements StarFireUserBiz {
                         .collect(Collectors.toList());
 
             } else {
-                userIds = Arrays.asList(platFormUid.split(";")).stream()
+                userIds = Arrays.asList(platFormUid.split(",")).stream()
                         .map(p -> Long.parseLong(p.trim()))
                         .collect(Collectors.toList());
             }
@@ -671,6 +671,7 @@ public class StarFireUserBizImpl implements StarFireUserBiz {
             });
             userAccountRes.setRecords(records);
             userAccountRes.setTotalCount(size);
+            userAccountRes.setResult(ResultCodeEnum.getCode(CodeTypeConstant.SUCCESS));
             return userAccountRes;
         } catch (Exception e) {
             String code = ResultCodeEnum.getCode(CodeTypeConstant.OTHER_ERROR);

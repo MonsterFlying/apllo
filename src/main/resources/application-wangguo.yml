@@ -61,6 +61,8 @@ starfire: # 星火
   channelCode: gofobao_xhzt   #星火分配渠道简称
   request_url: https://www.xxdai.com/xeenho/ #星火请求地址
   notify_url: https://www.xeenho.com/openapi/user_bind/notify/
+  bind_login: http://gofobao.55555.io/
+
 jixin: #银行存管
   keysPassword: guangfubao_uat@2016 #私钥密码
   url: http://uat.gofobao.com/escrow   #即信服务器路径
@@ -81,7 +83,7 @@ gofobao:
   javaDomain: http://7yhsngp.hk1.mofasuidao.cn/
   h5Domain:  http://ng.hk1.mofasuidao.cn
   imageDomain : https://api.gofobao.com
-  pcDomain: http://dragon.hk1.mofasuidao.cn
+  pcDomain: http://gofobao.55555.io/
   #adminDomain: http://m7ocvas9.gofobao.com  #管理员后台地址
   adminDomain: http://gofobao-admin.dev
   captcha: false # 全站是否开启图形验证码验证

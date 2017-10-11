@@ -13,7 +13,7 @@ public abstract  class BaseResponse {
     private String result;
 
     @ApiModelProperty("流水号")
-    private String serial_num;
+    private String serial_num="";
 
     @ApiModelProperty("错误信息")
     private String err_msg="";

@@ -1125,7 +1125,7 @@ public class TransferBizImpl implements TransferBiz {
 
         //更新债权抓让信息
         transfer.setTenderCount(NumberHelper.toInt(transfer.getTenderCount()) + 1);
-        transfer.setTransferMoneyYes(transfer.getTransferMoneyYes() + validMoney + alreadyInterest);
+        transfer.setTransferMoneyYes(transfer.getTransferMoneyYes() + validMoney);
         transfer.setUpdatedAt(new Date());
         transferService.save(transfer);
         return transferBuyLog;
@@ -1264,7 +1264,6 @@ public class TransferBizImpl implements TransferBiz {
                 .eq("transferFlag", 0)
                 .eq("status", 0)
                 .eq("tenderId", tenderId)
-                .predicate(new GeSpecification("collectionAt", new DataObject(DateHelper.endOfDate(DateHelper.addDays(new Date(), 3)))))
                 .build();
         if (!isAll) { //部分转让
             borrowCollectionIds = Arrays.asList(borrowCollectionIdsStr.split(","));
@@ -1275,7 +1274,6 @@ public class TransferBizImpl implements TransferBiz {
                     .eq("status", 0)
                     .eq("id", borrowCollectionIds.toArray())
                     .eq("tenderId", tenderId)
-                    .predicate(new GeSpecification("collectionAt", new DataObject(DateHelper.endOfDate(DateHelper.addDays(new Date(), 3)))))
                     .build();
         }
 
@@ -1316,9 +1314,9 @@ public class TransferBizImpl implements TransferBiz {
         Date endAt = DateHelper.beginOfDate(new Date());//结束计息时间
 
         /* 当期应计利息 */
-        long alreadyInterest = Math.round(interest *
-                Math.max(DateHelper.diffInDays(endAt, startAtYes, false), 0) /
+        double transferFeeRatio = MoneyHelper.divide(Math.max(DateHelper.diffInDays(endAt, startAtYes, false), 0) ,
                 DateHelper.diffInDays(collectionAt, startAt, false));
+        long alreadyInterest = Math.round(interest * transferFeeRatio);
 
         //新增债权转让记录
         Date nowDate = new Date();
@@ -1351,6 +1349,13 @@ public class TransferBizImpl implements TransferBiz {
         tender.setTransferFlag(1);
         tender.setUpdatedAt(nowDate);
         tenderService.updateById(tender);
+    }
+
+    public static void main(String[] args) {
+        System.out.println(Math.max(DateHelper.diffInDays(new Date(1507478400000l), new Date(1504972800000l), false), 0));
+        System.out.println(DateHelper.diffInDays(new Date(1507564800000l), new Date(1504972800000l), false));
+        System.out.println(MoneyHelper.divide(Math.max(DateHelper.diffInDays(new Date(1507478400000l), new Date(1504972800000l), false), 0) ,
+                DateHelper.diffInDays(new Date(1507564800000l), new Date(1504972800000l), false)));
     }
 
     /**
@@ -1629,10 +1634,19 @@ public class TransferBizImpl implements TransferBiz {
             default:
         }
         long money = borrowCollections.stream().mapToLong(borrowCollectionItem -> borrowCollectionItem.getPrincipal()).sum(); // 待汇款本金
-        // 0.4% + 0.08% * (剩余期限-1)  （费率最高上限为1.28%）
-        double rate = 0.004 + 0.0008 * (borrowCollections.size() - 1);
-        rate = Math.min(rate, 0.0128);
-        Double fee = money * rate;  // 费用
+        //转让费用
+        BorrowCollection firstBorrowCollection = borrowCollections.get(0);
+        long interest = firstBorrowCollection.getInterest();/* 当期理论应计利息 */
+        Date startAt = DateHelper.beginOfDate(ObjectUtils.isEmpty(firstBorrowCollection.getStartAt()) ? firstBorrowCollection.getStartAtYes() : firstBorrowCollection.getStartAt());//理论开始计息时间
+        Date collectionAt = DateHelper.beginOfDate(firstBorrowCollection.getCollectionAt());//理论结束还款时间
+        Date startAtYes = DateHelper.beginOfDate(firstBorrowCollection.getStartAtYes());//实际开始计息时间
+        Date endAt = DateHelper.beginOfDate(new Date());//结束计息时间
+
+        /* 当期应计利息 */
+        double transferFeeRatio = MoneyHelper.divide(Math.max(DateHelper.diffInDays(endAt, startAtYes, false), 0) ,
+                DateHelper.diffInDays(collectionAt, startAt, false));
+        long alreadyInterest = Math.round(interest * transferFeeRatio);
+
         int day = DateHelper.diffInDays(borrowCollection.getCollectionAt(), new Date(), false);
         day = day < 0 ? 0 : day;
         VoGoTenderInfo voGoTenderInfo = VoGoTenderInfo.ok("查询成功!", VoGoTenderInfo.class);
@@ -1644,7 +1658,7 @@ public class TransferBizImpl implements TransferBiz {
         voGoTenderInfo.setRepayFashionStr(repayFashionStr);
         voGoTenderInfo.setTimeLimit(String.valueOf(borrowCollections.size()) + "个月");
         voGoTenderInfo.setMoney(StringHelper.formatDouble(money, 100.0, true));
-        voGoTenderInfo.setFee(StringHelper.formatDouble(fee, 100.0, true));
+        voGoTenderInfo.setFee(StringHelper.formatDouble(alreadyInterest, 100.0, true));
         return ResponseEntity.ok(voGoTenderInfo);
     }
 
@@ -1807,7 +1821,7 @@ public class TransferBizImpl implements TransferBiz {
             item.setMoneyYes(StringHelper.formatMon(transfer.getTransferMoneyYes() / 100D));
             item.setMoney(StringHelper.formatMon(transfer.getTransferMoney() / 100D));
             item.setIsConversion(borrow.getIsConversion());
-            item.setName(borrow.getName());
+            item.setName(transfer.getTitle());
             item.setIsFlow(true);
             item.setIsImpawn(borrow.getIsImpawn());
             item.setIsMortgage(borrow.getIsMortgage());
