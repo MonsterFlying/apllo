@@ -3,6 +3,7 @@ package com.gofobao.framework.member.service.impl;
 import com.gofobao.framework.asset.entity.Asset;
 import com.gofobao.framework.asset.repository.AssetRepository;
 import com.gofobao.framework.core.vo.VoBaseResp;
+import com.gofobao.framework.helper.MoneyHelper;
 import com.gofobao.framework.helper.StringHelper;
 import com.gofobao.framework.member.entity.UserCache;
 import com.gofobao.framework.member.entity.Users;
@@ -161,40 +162,46 @@ public class UserCacheServiceImpl implements UserCacheService {
                 + expenditureManage
                 + expenditureOverdue
                 + expenditureOther;
-
         /**
          * 已实现净收益总额 = 已实现收入总额 - 已支出总额
          * @return array
          */
         Long netIncomeTotal = userCache.getIncomeTotal() - sumExpened;
-        statistic.setNetProceeds(StringHelper.formatMon(netIncomeTotal / 100D));
-
+        if (netIncomeTotal > 0) {
+            statistic.setNetProceeds(StringHelper.formatMon(netIncomeTotal / 100D));
+        } else {
+            statistic.setNetProceeds("-" + StringHelper.formatMon(Math.abs(netIncomeTotal) / 100D));
+        }
         /**
          * 未实现收入总额
          */
         Long waitIncomeTotal = userCache.getWaitCollectionInterest();
-
         /**
          * 待付支出总额
          */
-        Double sumWaitExpend = waitRepayInterest + (tjWaitCollectionInterest + qdWaitCollectionInterest) * 0.1;
-
+        Double sumWaitExpend = new Double(waitRepayPrincipal + waitRepayInterest + waitExpenditureInterestManageFee);
         /**
          * 未实现净收益总额 = 未实现收入总额 - 待付支出总额
          * @return array
          */
         Double noNetProceeds = new Double(waitIncomeTotal) - sumWaitExpend;
-        statistic.setNoNetProceeds(StringHelper.formatMon(noNetProceeds / 100D));
-
+        if (noNetProceeds < 0) {
+            statistic.setNoNetProceeds("-" + StringHelper.formatMon(Math.abs(noNetProceeds) / 100d));
+        } else {
+            statistic.setNoNetProceeds(StringHelper.formatMon(noNetProceeds / 100D));
+        }
         /**
          * 总净收益 = 已实现净收益总额 + 未实现净收益总额
          * @return float
          */
         Double sumJingshou = netIncomeTotal + noNetProceeds;
-        statistic.setSumNetProceeds(StringHelper.formatMon(sumJingshou / 100D));
-
+        if (sumJingshou < 0) {
+            statistic.setSumNetProceeds("-" + StringHelper.formatMon(Math.abs(sumJingshou) / 100D));
+        } else {
+            statistic.setSumNetProceeds(StringHelper.formatDouble(sumJingshou, 100D, true));
+        }
         //净值额度
-        Double netWorthQuota = new Double((asset.getUseMoney() + waitCollectionPrincipal) * 0.8 - payment);//计算净值额度
+        Double netWorthQuota = new Double((asset.getUseMoney() + waitCollectionPrincipal) * 0.8 - payment);
         statistic.setNetWorthLimit(StringHelper.formatMon(netWorthQuota / 100D));
 
         //净资产
@@ -209,7 +216,6 @@ public class UserCacheServiceImpl implements UserCacheService {
         //总收益
         statistic.setSumEarnings(StringHelper.formatMon((userCache.getIncomeTotal()
                 + waitIncomeTotal) / 100D));
-
         return statistic;
     }
 
@@ -248,7 +254,12 @@ public class UserCacheServiceImpl implements UserCacheService {
         incomeEarnedDetail.setIncomeOther(StringHelper.formatMon(incomeOther / 100D));
 
         //已赚收益
-        incomeEarnedDetail.setIncomeEarned(StringHelper.formatMon((incomeInterest + incomeAward + incomeOverdue + incomeIntegralCash + incomeBonus + incomeOther) / 100D));
+        incomeEarnedDetail.setIncomeEarned(StringHelper.formatMon((incomeInterest
+                + incomeAward
+                + incomeOverdue
+                + incomeIntegralCash
+                + incomeBonus
+                + incomeOther) / 100D));
 
         //待收利息
         Long waitCollectionInterest = userCache.getWaitCollectionInterest();

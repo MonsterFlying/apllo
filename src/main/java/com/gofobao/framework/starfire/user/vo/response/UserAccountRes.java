@@ -38,11 +38,11 @@ public class UserAccountRes extends BaseResponse {
 
         private String availableBanlance;
 
-        private String bidAmount;
+        private String bidAmount="0.00";
 
         private String profitAmount;
 
-        private String todayProfitAmount;
+        private String todayProfitAmount="0.00";
 
         private String uncollectedInterest;
 

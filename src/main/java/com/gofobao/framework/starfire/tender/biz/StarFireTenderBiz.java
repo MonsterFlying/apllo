@@ -1,7 +1,9 @@
 package com.gofobao.framework.starfire.tender.biz;
 
 import com.gofobao.framework.starfire.tender.vo.request.BorrowCollectionRecords;
+import com.gofobao.framework.starfire.tender.vo.request.BorrowRepaymentQuery;
 import com.gofobao.framework.starfire.tender.vo.request.UserTenderQuery;
+import com.gofobao.framework.starfire.tender.vo.response.BidRepaymentInfoRes;
 import com.gofobao.framework.starfire.tender.vo.response.UserBorrowCollectionRecordsRes;
 import com.gofobao.framework.starfire.tender.vo.response.UserTenderRes;
 
@@ -25,6 +27,12 @@ public interface StarFireTenderBiz {
      */
     UserBorrowCollectionRecordsRes borrowCollections(BorrowCollectionRecords borrowCollectionRecords);
 
+    /**
+     * 标的回款信息查询接口
+     * @param borrowRepaymentQuery
+     * @return
+     */
+    BidRepaymentInfoRes repaymentList(BorrowRepaymentQuery borrowRepaymentQuery);
 
 
 }
