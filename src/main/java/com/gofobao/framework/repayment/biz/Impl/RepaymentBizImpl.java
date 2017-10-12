@@ -280,7 +280,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
                 .eq("status", 0)
                 .build();
         List<BorrowRepayment> borrowRepaymentList = borrowRepaymentService.findList(brs);
-        Preconditions.checkNotNull(borrowRepaymentList, "还款记录(提前结清)不存在！");
+        Preconditions.checkState(!CollectionUtils.isEmpty(borrowRepaymentList), "还款记录(提前结清)不存在！");
         //2.1/* 还款对应的投标记录  包括债权转让在里面 */
         Specification<Tender> ts = Specifications
                 .<Tender>and()
@@ -288,7 +288,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
                 .eq("borrowId", borrow.getId())
                 .build();
         List<Tender> tenderList = tenderService.findList(ts);/* 还款对应的投标记录  包括债权转让在里面 */
-        Preconditions.checkNotNull(tenderList, "立即还款: 投标记录为空!");
+        Preconditions.checkState(!CollectionUtils.isEmpty(tenderList), "立即还款: 投标记录为空!");
         /* 投标记录id集合 */
         Set<Long> tenderIds = tenderList.stream().map(tender -> tender.getId()).collect(Collectors.toSet());
         Map<Long, Tender> tenderMap = tenderList.stream().collect(Collectors.toMap(Tender::getId, Function.identity()));
@@ -307,7 +307,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
                     .eq("transferFlag", 0)
                     .build();
             List<BorrowCollection> borrowCollectionList = borrowCollectionService.findList(bcs);
-            Preconditions.checkNotNull(borrowCollectionList, "立即还款: 回款记录为空!");
+            Preconditions.checkState(!CollectionUtils.isEmpty(borrowCollectionList), "立即还款: 回款记录为空!");
             //4.还款成功后变更改还款状态
             changeRepaymentAndRepayStatus(borrow, tenderList, borrowRepayment, borrowCollectionList, advance);
             //5.结束第三方债权并更新借款状态（还款最后一期的时候）
@@ -555,7 +555,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
                     .eq("order", borrowRepayment.getOrder())
                     .build();
             List<BorrowCollection> borrowCollectionList = borrowCollectionService.findList(bcs);
-            Preconditions.checkNotNull(borrowCollectionList, "生成即信还款计划: 获取回款计划列表为空!");
+            Preconditions.checkState(!CollectionUtils.isEmpty(borrowCollectionList), "生成即信还款计划: 获取回款计划列表为空!");
             List<RepayAssetChange> repayAssetChangeList = new ArrayList<>();
             int lateDays = getLateDays(borrowRepayment);  // 逾期天数
             // 生成存管投资人还款记录(提前结清)
@@ -973,7 +973,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
                 .build();
         List<Tender> tenderList = tenderService.findList(ts);/* 还款对应的投标记录  包括债权转让在里面 */
         Map<Long/* tenderId */, Tender> tenderMap = tenderList.stream().collect(Collectors.toMap(Tender::getId, Function.identity()));
-        Preconditions.checkNotNull(tenderList, "立即还款: 投标记录为空!");
+        Preconditions.checkState(!CollectionUtils.isEmpty(tenderList), "立即还款: 投标记录为空!");
         /* 投标记录id */
         Set<Long> tenderIds = tenderList.stream().map(tender -> tender.getId()).collect(Collectors.toSet());
         /* 查询未转让的投标记录回款记录 */
@@ -985,7 +985,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
                 .eq("transferFlag", 0)
                 .build();
         List<BorrowCollection> borrowCollectionList = borrowCollectionService.findList(bcs);
-        Preconditions.checkNotNull(borrowCollectionList, "立即还款: 回款记录为空!");
+        Preconditions.checkState(!CollectionUtils.isEmpty(borrowCollectionList), "立即还款: 回款记录为空!");
         /* 是否垫付 */
         boolean advance = !ObjectUtils.isEmpty(borrowRepayment.getAdvanceAtYes());
         //2.处理资金还款人、收款人资金变动
@@ -1067,15 +1067,6 @@ public class RepaymentBizImpl implements RepaymentBiz {
             log.info(" 理财计划债权转让复审 url:" + adminDomain + "/api/open/finance-plan/auto-match");
             log.info(" 理财计划债权转让复审 调用后台返回响应:" + resultStr);
         }
-    }
-
-
-    public static void main(String[] args) {
-        Date releaseAt = DateHelper.max(DateHelper.addHours(DateHelper.beginOfDate(new Date()), 20), DateHelper.stringToDate("2017-09-28 20:30:00"));
-        if (DateHelper.getDate(DateHelper.stringToDate("2017-09-28 20:30:00")) >= 20) {
-            releaseAt = DateHelper.addDays(releaseAt, 1);
-        }
-        System.out.println(DateHelper.dateToString(releaseAt));
     }
 
     /**
@@ -1693,7 +1684,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
                 .eq("order", borrowRepayment.getOrder())
                 .build();
         List<BorrowCollection> borrowCollectionList = borrowCollectionService.findList(bcs);
-        Preconditions.checkNotNull(borrowCollectionList, "生成即信还款计划: 获取回款计划列表为空!");
+        Preconditions.checkState(!CollectionUtils.isEmpty(borrowCollectionList), "生成即信还款计划: 获取回款计划列表为空!");
         /* 资金变动集合 */
         List<RepayAssetChange> repayAssetChanges = new ArrayList<>();
         List<Repay> repays = calculateRepayPlan(borrow,
@@ -1891,7 +1882,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
                 .in("userId", userIds.toArray())
                 .build();
         List<UserThirdAccount> userThirdAccountList = userThirdAccountService.findList(uts);
-        Preconditions.checkNotNull(userThirdAccountList, "生成即信还款计划: 查询用户存管开户记录列表为空!");
+        Preconditions.checkState(!CollectionUtils.isEmpty(userThirdAccountList), "生成即信还款计划: 查询用户存管开户记录列表为空!");
         Map<Long/* 用户ID*/, UserThirdAccount /* 用户存管*/> userThirdAccountMap = userThirdAccountList
                 .stream()
                 .collect(Collectors.toMap(UserThirdAccount::getUserId, Function.identity()));
@@ -2173,7 +2164,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
                     .eq("status", 3)
                     .build();
             List<Borrow> borrowList = borrowService.findList(bs);
-            Preconditions.checkNotNull(borrowList, "批量还款: 查询转让标的为空");
+            Preconditions.checkState(!CollectionUtils.isEmpty(borrowList), "批量还款: 查询转让标的为空");
             Borrow borrow = borrowList.get(0);
             refMap.put(tender.getId(), borrow);
         });
@@ -2198,7 +2189,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
                     .eq("status", 3)
                     .build();
             List<Borrow> borrowList = borrowService.findList(bs);
-            Preconditions.checkNotNull(borrowList, "批量还款: 查询转让标的为空");
+            Preconditions.checkState(!CollectionUtils.isEmpty(borrowList), "批量还款: 查询转让标的为空");
             Borrow borrow = borrowList.get(0);
 
             Specification<Tender> specification = Specifications
@@ -2208,7 +2199,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
                     .build();
 
             List<Tender> tranferedTenderList = tenderService.findList(specification);
-            Preconditions.checkNotNull(tranferedTenderList, "批量还款: 获取投资记录列表为空");
+            Preconditions.checkState(!CollectionUtils.isEmpty(tranferedTenderList), "批量还款: 获取投资记录列表为空");
             refMap.put(tender.getId(), tranferedTenderList);
         });
         return refMap;
@@ -2231,7 +2222,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
                 .build();
 
         List<BorrowCollection> borrowCollectionList = borrowCollectionService.findList(bcs);
-        Preconditions.checkNotNull(borrowCollectionList, "批量还款: 查询还款计划为空");
+        Preconditions.checkState(!CollectionUtils.isEmpty(borrowCollectionList), "批量还款: 查询还款计划为空");
         return borrowCollectionList;
     }
 
@@ -2249,7 +2240,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
                 .build();
 
         List<Tender> tenderList = tenderService.findList(specification);
-        Preconditions.checkNotNull(tenderList, "批量还款: 获取投资记录列表为空");
+        Preconditions.checkState(!CollectionUtils.isEmpty(tenderList), "批量还款: 获取投资记录列表为空");
         return tenderList;
     }
 
@@ -2691,7 +2682,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
                 .eq("borrowId", borrow.getId())
                 .build();
         List<Tender> tenderList = tenderService.findList(specification);
-        Preconditions.checkNotNull(tenderList, "投资人投标信息不存在!");
+        Preconditions.checkState(!CollectionUtils.isEmpty(tenderList), "投资人投标信息不存在!");
         /* 投资记录id集合 */
         List<Long> tenderIds = tenderList.stream().map(tender -> tender.getId()).collect(Collectors.toList());
         /* 查询未转让的回款记录 */
@@ -2703,7 +2694,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
                 .eq("transferFlag", 0)
                 .build();
         List<BorrowCollection> borrowCollectionList = borrowCollectionService.findList(bcs);
-        Preconditions.checkNotNull("投资回款记录不存在!");
+        Preconditions.checkState(!CollectionUtils.isEmpty(borrowCollectionList),"投资回款记录不存在!");
         Map<Long/* tenderId */, BorrowCollection> borrowCollectionMaps = borrowCollectionList.stream().collect(Collectors.toMap(BorrowCollection::getTenderId, Function.identity()));
         Date nowDate = new Date();
         //垫付资产改变集合
@@ -2735,7 +2726,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
         //获取名义借款人垫付记录
         List<CreditInvest> creditInvestList = calculateAdvancePlan(borrow, borrowRepayment, titularBorrowAccount, transferMaps, transferBuyLogMaps, tenderList,
                 borrowCollectionMaps, advanceAssetChangeList, lateDays, lateInterest);
-        Preconditions.checkNotNull(creditInvestList, "存管垫付记录不存在!");
+        Preconditions.checkState(!CollectionUtils.isEmpty(creditInvestList), "存管垫付记录不存在!");
         // 生成债权转让记录
         addTransferTenderByAdvance(borrow, transferList, borrowRepayment, transferBuyLogList, tenderList, borrowCollectionMaps, titularBorrowAccount.getUserId(), lateDays, lateInterest);
         // 生成还款记录
@@ -3073,7 +3064,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
                 .eq("borrowId", parentBorrow.getId())
                 .build();
         List<Tender> tenderList = tenderService.findList(ts);/* 还款对应的投标记录  包括债权转让在里面 */
-        Preconditions.checkNotNull(tenderList, "立即还款: 投标记录为空!");
+        Preconditions.checkState(!CollectionUtils.isEmpty(tenderList), "立即还款: 投标记录为空!");
         Map<Long, Tender> tenderMaps = tenderList.stream().collect(Collectors.toMap(Tender::getId, Function.identity()));
         /* 投标记录id */
         Set<Long> tenderIds = tenderList.stream().map(tender -> tender.getId()).collect(Collectors.toSet());
@@ -3086,7 +3077,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
                 .eq("transferFlag", 0)
                 .build();
         List<BorrowCollection> borrowCollectionList = borrowCollectionService.findList(bcs);
-        Preconditions.checkNotNull(borrowCollectionList, "立即还款: 回款记录为空!");
+        Preconditions.checkState(!CollectionUtils.isEmpty(borrowCollectionList), "立即还款: 回款记录为空!");
         /* 是否垫付 */
         boolean advance = !ObjectUtils.isEmpty(borrowRepayment.getAdvanceAtYes());
         //2.处理资金还款人、收款人资金变动

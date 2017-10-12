@@ -157,7 +157,7 @@ public class ThirdBatchLogBizImpl implements ThirdBatchLogBiz {
         } while (pageSize == realSize);
 
         //筛选失败批次
-        Preconditions.checkNotNull(detailsQueryRespList, "批处理回调: 查询批次详细异常!");
+        Preconditions.checkState(!CollectionUtils.isEmpty(detailsQueryRespList), "批处理回调: 查询批次详细异常!");
         boolean flag = true;
         for (DetailsQueryResp detailsQueryResp : detailsQueryRespList) {
             if ("F".equalsIgnoreCase(detailsQueryResp.getTxState())) {

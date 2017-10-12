@@ -262,7 +262,7 @@ public class TransferBizImpl implements TransferBiz {
                 .eq("transferId", transfer.getId())
                 .build();
         List<TransferBuyLog> transferBuyLogList = transferBuyLogService.findList(tbls);
-        Preconditions.checkNotNull(transferBuyLogList, "购买债权转让记录为空!");
+        Preconditions.checkState(!CollectionUtils.isEmpty(transferBuyLogList), "购买债权转让记录为空!");
         /* 已跟即信通信的债权转让记录条数 */
         long count = transferBuyLogList.stream().filter(transferBuyLog -> BooleanHelper.isTrue(transferBuyLog.getThirdTransferFlag())).count();
         if (count > 0) {
@@ -334,7 +334,7 @@ public class TransferBizImpl implements TransferBiz {
                 .eq("state", 0)
                 .build();
         List<TransferBuyLog> transferBuyLogList = transferBuyLogService.findList(tbls);/* 购买理财计划债权转让记录 */
-        Preconditions.checkNotNull(!CollectionUtils.isEmpty(transferBuyLogList), "购买理财计划债权转让记录不存在!");
+        Preconditions.checkState(!CollectionUtils.isEmpty(transferBuyLogList), "购买理财计划债权转让记录不存在!");
         long failure = transferBuyLogList
                 .stream()
                 .filter(transferBuyLog -> BooleanHelper.isFalse(transferBuyLog.getThirdTransferFlag())).count(); /* 登记即信存管失败条数 */
@@ -442,7 +442,7 @@ public class TransferBizImpl implements TransferBiz {
                     startAt);
             Map<String, Object> rsMap = borrowCalculatorHelper.simpleCount(parentBorrow.getRepayFashion());
             List<Map<String, Object>> repayDetailList = (List<Map<String, Object>>) rsMap.get("repayDetailList");
-            Preconditions.checkNotNull(repayDetailList, "生成用户回款计划开始: 计划生成为空");
+            Preconditions.checkState(!CollectionUtils.isEmpty(repayDetailList), "生成用户回款计划开始: 计划生成为空");
             BorrowCollection borrowCollection;
             int startOrder = borrowCollectionList.get(0).getOrder();/* 获取开始转让期数,期数下标从0开始 */
             long sumCollectionInterest = 0l;/*总回款利息*/
@@ -821,7 +821,7 @@ public class TransferBizImpl implements TransferBiz {
                     startAt);
             Map<String, Object> rsMap = borrowCalculatorHelper.simpleCount(parentBorrow.getRepayFashion());
             List<Map<String, Object>> repayDetailList = (List<Map<String, Object>>) rsMap.get("repayDetailList");
-            Preconditions.checkNotNull(repayDetailList, "生成用户回款计划开始: 计划生成为空");
+            Preconditions.checkState(!CollectionUtils.isEmpty(repayDetailList), "生成用户回款计划开始: 计划生成为空");
             BorrowCollection borrowCollection;
             long collectionMoney = 0;
             long collectionInterest = 0;
@@ -1636,11 +1636,11 @@ public class TransferBizImpl implements TransferBiz {
                 .eq("status", 0)
                 .build();
         List<BorrowCollection> borrowCollections = borrowCollectionService.findList(bcs, new Sort(Sort.Direction.ASC, "id"));
-        Preconditions.checkNotNull(borrowCollections, "获取立即转让详情: 还款计划查询失败!");
+        Preconditions.checkState(!CollectionUtils.isEmpty(borrowCollections), "获取立即转让详情: 还款计划查询失败!");
         borrowCollections = borrowCollections.stream().filter(w -> w.getStatus() == BorrowCollectionContants.STATUS_NO).collect(Collectors.toList());
         BorrowCollection borrowCollection = borrowCollections.get(0);
         Borrow borrow = borrowService.findById(tender.getBorrowId());
-        Preconditions.checkNotNull(borrowCollections, "获取立即转让详情: 获取投资的标的信息失败!");
+        Preconditions.checkState(!CollectionUtils.isEmpty(borrowCollections), "获取立即转让详情: 获取投资的标的信息失败!");
         String repayFashionStr = "";
         switch (borrow.getRepayFashion()) {
             case BorrowContants.REPAY_FASHION_AYFQ_NUM:
@@ -2028,7 +2028,7 @@ public class TransferBizImpl implements TransferBiz {
                 .in("state", 0, 1)
                 .build();
         List<Transfer> list = transferService.findList(ts);
-        Preconditions.checkNotNull(list, "取消债权转让: 查询转让记录为空");
+        Preconditions.checkState(!CollectionUtils.isEmpty(list), "取消债权转让: 查询转让记录为空");
         Transfer transfer = list.get(0);
 
         // 获取投标记录

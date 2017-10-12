@@ -44,6 +44,7 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 
 import javax.servlet.http.HttpServletRequest;
@@ -264,7 +265,7 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
         try {
             List<CreditInvestRun> creditInvestRunList = GSON.fromJson(batchCreditInvestRunCall.getSubPacks(), new TypeToken<List<CreditInvestRun>>() {
             }.getType());
-            Preconditions.checkNotNull(creditInvestRunList, "理财计划批量债权转让回调: 查询批次详情为空");
+            Preconditions.checkState(!CollectionUtils.isEmpty(creditInvestRunList), "理财计划批量债权转让回调: 查询批次详情为空");
             saveThirdTransferAuthCode(creditInvestRunList);
         } catch (JsonSyntaxException e) {
             log.error("理财计划批量债权转让保存第三方债权转让授权码!", e);
@@ -486,7 +487,7 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
         try {
             List<CreditInvestRun> creditInvestRunList = GSON.fromJson(batchCreditInvestRunCall.getSubPacks(), new TypeToken<List<CreditInvestRun>>() {
             }.getType());
-            Preconditions.checkNotNull(creditInvestRunList, "批量债权转让回调: 查询批次详情为空");
+            Preconditions.checkState(!CollectionUtils.isEmpty(creditInvestRunList), "批量债权转让回调: 查询批次详情为空");
             saveThirdTransferAuthCode(creditInvestRunList);
         } catch (JsonSyntaxException e) {
             log.error("保存第三方债权转让授权码!", e);

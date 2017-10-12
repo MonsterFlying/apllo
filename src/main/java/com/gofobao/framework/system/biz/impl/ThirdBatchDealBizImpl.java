@@ -147,7 +147,8 @@ public class ThirdBatchDealBizImpl implements ThirdBatchDealBiz {
         //判断资源状态
         boolean flag = thirdBatchLogBiz.checkLocalSourceState(String.valueOf(thirdBatchLog.getSourceId()), thirdBatchLog.getType());//获取资源状态是否已完成状态
         if (flag) {
-            log.info("资源状态：已发生改变!");
+            log.info("批次处理：本地业务已经处理过了!");
+            return true;
         }
 
         // 批次存在失败批次，处理失败批次
@@ -177,7 +178,7 @@ public class ThirdBatchDealBizImpl implements ThirdBatchDealBiz {
         } while (pageSize == realSize);
 
         //筛选失败批次
-        Preconditions.checkNotNull(detailsQueryRespList, "批处理回调: 查询批次详细异常!");
+        Preconditions.checkState(!CollectionUtils.isEmpty(detailsQueryRespList), "批处理回调: 查询批次详细异常!");
         List<String> failureOrderIds = new ArrayList<>(); // 失败orderId
         List<String> successOrderIds = new ArrayList<>(); // 成功orderId
         List<String> failureErrorMsgList = new ArrayList<>();
@@ -533,7 +534,7 @@ public class ThirdBatchDealBizImpl implements ThirdBatchDealBiz {
                     .in("thirdLendPayOrderId", failureThirdLendPayOrderIds.toArray())
                     .build();
             List<Tender> failureTenderList = tenderService.findList(ts);
-            Preconditions.checkNotNull(failureTenderList, "理财计划正常批次放款回调: 查询失败投标记录为空");
+            Preconditions.checkState(!CollectionUtils.isEmpty(failureTenderList), "理财计划正常批次放款回调: 查询失败投标记录为空");
             Map<Long/** borrowId */, List<Tender> /** borrowId 对应的投标记录*/> borrowIdAndTenderMap = failureTenderList
                     .stream()
                     .collect(Collectors.groupingBy(Tender::getBorrowId));
@@ -659,7 +660,7 @@ public class ThirdBatchDealBizImpl implements ThirdBatchDealBiz {
                     .in("thirdLendPayOrderId", failureThirdLendPayOrderIds.toArray())
                     .build();
             List<Tender> failureTenderList = tenderService.findList(ts);
-            Preconditions.checkNotNull(failureTenderList, "正常批次放款回调: 查询失败投标记录为空");
+            Preconditions.checkState(!CollectionUtils.isEmpty(failureTenderList), "正常批次放款回调: 查询失败投标记录为空");
             Map<Long/** borrowId */, List<Tender> /** borrowId 对应的投标记录*/> borrowIdAndTenderMap = failureTenderList
                     .stream()
                     .collect(Collectors.groupingBy(Tender::getBorrowId));
@@ -891,7 +892,7 @@ public class ThirdBatchDealBizImpl implements ThirdBatchDealBiz {
                     .build();
 
             List<TransferBuyLog> failureTransferBuyLogList = transferBuyLogService.findList(tbls);
-            Preconditions.checkNotNull(failureTransferBuyLogList, "摘取批次处理: 查询失败的投标记录不存在!");
+            Preconditions.checkState(!CollectionUtils.isEmpty(failureTransferBuyLogList), "摘取批次处理: 查询失败的投标记录不存在!");
             Set<Long> transferIdSet = failureTransferBuyLogList.stream().map(transferBuyLog -> transferBuyLog.getTransferId()).collect(Collectors.toSet());
             //3.挑选出失败有失败批次的债权转让
             Specification<Transfer> ts = Specifications
@@ -899,7 +900,7 @@ public class ThirdBatchDealBizImpl implements ThirdBatchDealBiz {
                     .in("id", transferIdSet.toArray())
                     .build();
             List<Transfer> transferList = transferService.findList(ts);
-            Preconditions.checkNotNull(transferList, "理财计划债权批次回调处理: 查询债权转让记录不存在!");
+            Preconditions.checkState(!CollectionUtils.isEmpty(transferList), "理财计划债权批次回调处理: 查询债权转让记录不存在!");
             Map<Long, List<TransferBuyLog>> transferByLogMap = failureTransferBuyLogList.stream().collect(Collectors.groupingBy(TransferBuyLog::getTransferId));
             for (Transfer transfer : transferList) {
                 List<TransferBuyLog> transferBuyLogList = transferByLogMap.get(transfer.getId());
@@ -1002,7 +1003,7 @@ public class ThirdBatchDealBizImpl implements ThirdBatchDealBiz {
                     .build();
 
             List<TransferBuyLog> failureTransferBuyLogList = transferBuyLogService.findList(tbls);
-            Preconditions.checkNotNull(failureTransferBuyLogList, "摘取批次处理: 查询失败的投标记录不存在!");
+            Preconditions.checkState(!CollectionUtils.isEmpty(failureTransferBuyLogList), "摘取批次处理: 查询失败的投标记录不存在!");
             Set<Long> transferIdSet = failureTransferBuyLogList.stream().map(transferBuyLog -> transferBuyLog.getTransferId()).collect(Collectors.toSet());
             //3.挑选出失败有失败批次的债权转让
             Specification<Transfer> ts = Specifications
@@ -1010,7 +1011,7 @@ public class ThirdBatchDealBizImpl implements ThirdBatchDealBiz {
                     .in("id", transferIdSet.toArray())
                     .build();
             List<Transfer> transferList = transferService.findList(ts);
-            Preconditions.checkNotNull(transferList, "债权批次回调处理: 查询债权转让记录不存在!");
+            Preconditions.checkState(!CollectionUtils.isEmpty(transferList), "债权批次回调处理: 查询债权转让记录不存在!");
             Map<Long, List<TransferBuyLog>> transferByLogMap = failureTransferBuyLogList.stream().collect(Collectors.groupingBy(TransferBuyLog::getTransferId));
             for (Transfer transfer : transferList) {
                 List<TransferBuyLog> transferBuyLogList = transferByLogMap.get(transfer.getId());

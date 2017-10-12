@@ -28,7 +28,7 @@ public class AssetChangeRuleParse {
 
         for (String subRule : ruleArr) {
             int area = 0;
-            Preconditions.checkNotNull(!StringUtils.isEmpty(subRule), "AssetChangeRuleParse.parse subRule is empty");
+            Preconditions.checkState(!StringUtils.isEmpty(subRule), "AssetChangeRuleParse.parse subRule is empty");
             temp = subRule.split("@");
             Preconditions.checkArgument(temp.length == 2, "AssetChangeRuleParse.parse temp length not equals 2");
             op = temp[0];

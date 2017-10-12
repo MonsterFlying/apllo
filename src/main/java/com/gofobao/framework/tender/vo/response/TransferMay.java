@@ -24,4 +24,6 @@ public class TransferMay {
     private Long tenderId;
     @ApiModelProperty("标id")
     private Long borrowId;
+    @ApiModelProperty("是否允许转让")
+    private Boolean isTransfer;
 }
