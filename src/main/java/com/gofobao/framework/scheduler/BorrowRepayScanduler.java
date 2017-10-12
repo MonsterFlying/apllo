@@ -1,27 +1,34 @@
 package com.gofobao.framework.scheduler;
 
 import com.github.wenhao.jpa.Specifications;
+import com.gofobao.framework.asset.entity.Asset;
+import com.gofobao.framework.asset.service.AssetService;
 import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.borrow.service.BorrowService;
 import com.gofobao.framework.common.data.DataObject;
 import com.gofobao.framework.common.data.LtSpecification;
 import com.gofobao.framework.helper.DateHelper;
+import com.gofobao.framework.member.entity.UserThirdAccount;
 import com.gofobao.framework.repayment.biz.LoanBiz;
 import com.gofobao.framework.repayment.biz.RepaymentBiz;
 import com.gofobao.framework.repayment.entity.BorrowRepayment;
 import com.gofobao.framework.repayment.service.BorrowRepaymentService;
 import com.gofobao.framework.repayment.vo.request.VoRepayReq;
+import com.google.common.collect.ImmutableSet;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
+
+import java.util.Map;
+
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * Created by Zeke on 2017/7/10.
@@ -42,6 +49,10 @@ public class BorrowRepayScanduler {
     @Autowired
     private LoanBiz loanBiz;
 
+    @Autowired
+    private AssetService assetService;
+
+
     //@Scheduled(cron = "0 50 23 * * ? ")
     public void process() {
         borrowRepay();
@@ -57,53 +68,63 @@ public class BorrowRepayScanduler {
     //@Transactional(rollbackOn = Exception.class)
     private void borrowRepay() {
         log.info("进入批次还款任务调度");
+        long repayUserId = 22002;/*官标由zfh还款*/
+        int pageIndex = 0;
+        int pageSize = 50;
+        List<BorrowRepayment> borrowRepaymentList = null;
+        /* 查询未回款转让 */
         Specification<BorrowRepayment> brs = Specifications
                 .<BorrowRepayment>and()
                 .eq("status", 0)
-                .predicate(new LtSpecification("repayAt",
-                        new DataObject(DateHelper.beginOfDate(DateHelper.addDays(new Date(),
-                                1)))))
+                .predicate(new LtSpecification("repayAt", new DataObject(DateHelper.beginOfDate(DateHelper.addDays(new Date(), 1)))))
                 .build();
-        List<BorrowRepayment> borrowRepaymentList = null;
-        List<Borrow> borrowList = null;
-        List<Long> borrowIds = null;
-        Specification<Borrow> bs = null;
-        Pageable pageable = null;
-        int pageIndex = 0;
-        int pageSize = 50;
         do {
-            borrowIds = new ArrayList<>();
-            pageable = new PageRequest(pageIndex++, pageSize, new Sort(Sort.Direction.ASC, "id"));
-            borrowRepaymentList = borrowRepaymentService.findList(brs, pageable);
-            for (BorrowRepayment borrowRepayment : borrowRepaymentList) {
-                borrowIds.add(borrowRepayment.getBorrowId());
-            }
-
-            bs = Specifications
+            /* 还款记录集合 */
+            borrowRepaymentList = borrowRepaymentService.findList(brs, new PageRequest(pageIndex++, pageSize));
+            /* borrowId集合 */
+            Set<Long> borrowIds = borrowRepaymentList.stream().map(BorrowRepayment::getBorrowId).collect(Collectors.toSet());
+            //查询borrow记录
+            Specification<Borrow> bs = Specifications
                     .<Borrow>and()
                     .in("id", borrowIds.toArray())
                     .build();
-            borrowList = borrowService.findList(bs);
+            /* 借款记录集合 */
+            List<Borrow> borrowList = borrowService.findList(bs);
+            Map<Long/*borrowId*/, Borrow> borrowMap = borrowList.stream().collect(Collectors.toMap(Borrow::getId, Function.identity()));
+            /* 登记还款人id */
+            Set<Long> registerUserIds = borrowRepaymentList.stream().map(BorrowRepayment::getUserId).collect(Collectors.toSet());
+            registerUserIds.add(repayUserId);
+            //查询用户存管记录
+            Specification<Asset> as = Specifications
+                    .<Asset>and()
+                    .in("userId", registerUserIds.toArray())
+                    .build();
+            /* 用户资产记录集合 */
+            List<Asset> assetList = assetService.findList(as);
+            Map<Long/*userId*/, Asset> assetMap = assetList.stream().collect(Collectors.toMap(Asset::getUserId, Function.identity()));
             for (BorrowRepayment borrowRepayment : borrowRepaymentList) {
-                for (Borrow borrow : borrowList) {
-                    if (borrow.getType().intValue() != 1) {
-                        continue;
-                    }
-                    if (String.valueOf(borrowRepayment.getBorrowId()).equals(String.valueOf(borrow.getId()))) {
-                        try {
-                            VoRepayReq voRepayReq = new VoRepayReq();
-                            voRepayReq.setRepaymentId(borrowRepayment.getId());
-                            voRepayReq.setUserId(borrowRepayment.getUserId());
-                            voRepayReq.setInterestPercent(1d);
-                            voRepayReq.setIsUserOpen(false);
-                            repaymentBiz.newRepay(voRepayReq);
-                        } catch (Exception e) {
-                            log.error("borrowRepayScheduler error:", e);
-                        }
+                Borrow borrow = borrowMap.get(borrowRepayment.getBorrowId());
+                Asset asset = null;
+                ImmutableSet<Long> borrowType = ImmutableSet.of(0l, 4l);
+                if (borrowType.contains(borrow)) {//如果是官标由zfh还款
+                    asset = assetMap.get(repayUserId);
+                } else {
+                    asset = assetMap.get(borrowRepayment.getUserId());
+                }
+                //（初步）判断可用金额是否大于还款金额
+                if (asset.getUseMoney() < borrowRepayment.getRepayMoney()) {
+                    try {
+                        VoRepayReq voRepayReq = new VoRepayReq();
+                        voRepayReq.setRepaymentId(borrowRepayment.getId());
+                        voRepayReq.setUserId(asset.getUserId());
+                        voRepayReq.setInterestPercent(1d);
+                        voRepayReq.setIsUserOpen(false);
+                        repaymentBiz.newRepay(voRepayReq);
+                    } catch (Exception e) {
+                        log.error("borrowRepayScheduler error:", e);
                     }
                 }
             }
-
         } while (borrowRepaymentList.size() >= pageSize);
 
     }
