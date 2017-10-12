@@ -548,9 +548,10 @@ public class NewEveBizImpl implements NewEveBiz {
                 helper.addAttachment("资金流水.xlsx", assetFSR);
 
             }
-
-
             mailSender.send(mimeMessage);
+            log.info("==========================================");
+            log.info("发送邮件成功");
+            log.info("==========================================");
         } catch (Exception e) {
             log.error("对账文件", e);
         }
