@@ -124,7 +124,7 @@ public class FinanceFriendsController {
         try {
             InputStream in = FinanceFriendsController.class.getResourceAsStream("/static/images/shareLogo/finance_logo.png");
 
-            QRCodeHelper.createQRCodeTStream(h5Domain + "/#/auth/register?shareRegisterCode=" + inviteCode, in, 100, 100, out);
+            QRCodeHelper.createQRCodeTStream(h5Domain + "/#/auth/register?inviteCode=" + inviteCode, in, 100, 100, out);
             out.flush();
         } catch (Throwable e) {
             log.error(String.format("获取二维码接口：%s", e.getMessage()));

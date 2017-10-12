@@ -8,14 +8,24 @@ import com.gofobao.framework.api.helper.JixinManager;
 import com.gofobao.framework.api.helper.JixinTxCodeEnum;
 import com.gofobao.framework.api.model.account_details_query.AccountDetailsQueryRequest;
 import com.gofobao.framework.api.model.account_details_query.AccountDetailsQueryResponse;
+import com.gofobao.framework.api.model.balance_freeze.BalanceFreezeReq;
+import com.gofobao.framework.api.model.balance_freeze.BalanceFreezeResp;
 import com.gofobao.framework.api.model.balance_query.BalanceQueryRequest;
 import com.gofobao.framework.api.model.balance_query.BalanceQueryResponse;
 import com.gofobao.framework.api.model.balance_un_freeze.BalanceUnfreezeReq;
 import com.gofobao.framework.api.model.balance_un_freeze.BalanceUnfreezeResp;
+import com.gofobao.framework.api.model.batch_cancel.BatchCancelReq;
+import com.gofobao.framework.api.model.batch_cancel.BatchCancelResp;
+import com.gofobao.framework.api.model.batch_credit_invest.BatchCreditInvestReq;
+import com.gofobao.framework.api.model.batch_credit_invest.BatchCreditInvestResp;
+import com.gofobao.framework.api.model.batch_credit_invest.CreditInvest;
 import com.gofobao.framework.api.model.batch_details_query.BatchDetailsQueryReq;
 import com.gofobao.framework.api.model.batch_details_query.BatchDetailsQueryResp;
 import com.gofobao.framework.api.model.batch_query.BatchQueryReq;
 import com.gofobao.framework.api.model.batch_query.BatchQueryResp;
+import com.gofobao.framework.api.model.batch_repay.BatchRepayReq;
+import com.gofobao.framework.api.model.batch_repay.BatchRepayResp;
+import com.gofobao.framework.api.model.batch_repay.Repay;
 import com.gofobao.framework.api.model.bid_apply_query.BidApplyQueryRequest;
 import com.gofobao.framework.api.model.bid_apply_query.BidApplyQueryResponse;
 import com.gofobao.framework.api.model.credit_details_query.CreditDetailsQueryRequest;
@@ -24,8 +34,13 @@ import com.gofobao.framework.api.model.freeze_details_query.FreezeDetailsQueryRe
 import com.gofobao.framework.api.model.freeze_details_query.FreezeDetailsQueryResponse;
 import com.gofobao.framework.api.model.voucher_pay.VoucherPayRequest;
 import com.gofobao.framework.api.model.voucher_pay.VoucherPayResponse;
+import com.gofobao.framework.asset.contants.BatchAssetChangeContants;
+import com.gofobao.framework.asset.entity.Asset;
+import com.gofobao.framework.asset.entity.BatchAssetChange;
 import com.gofobao.framework.asset.entity.BatchAssetChangeItem;
 import com.gofobao.framework.asset.entity.NewAssetLog;
+import com.gofobao.framework.asset.service.BatchAssetChangeItemService;
+import com.gofobao.framework.asset.service.BatchAssetChangeService;
 import com.gofobao.framework.asset.service.NewAssetLogService;
 import com.gofobao.framework.borrow.biz.BorrowBiz;
 import com.gofobao.framework.borrow.entity.Borrow;
@@ -35,16 +50,42 @@ import com.gofobao.framework.collection.service.BorrowCollectionService;
 import com.gofobao.framework.common.assets.AssetChange;
 import com.gofobao.framework.common.assets.AssetChangeProvider;
 import com.gofobao.framework.common.assets.AssetChangeTypeEnum;
+import com.gofobao.framework.common.integral.IntegralChangeEntity;
+import com.gofobao.framework.common.integral.IntegralChangeEnum;
+import com.gofobao.framework.common.rabbitmq.MqConfig;
 import com.gofobao.framework.common.rabbitmq.MqHelper;
+import com.gofobao.framework.common.rabbitmq.MqQueueEnum;
+import com.gofobao.framework.common.rabbitmq.MqTagEnum;
+import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.helper.*;
+import com.gofobao.framework.helper.project.BatchAssetChangeHelper;
+import com.gofobao.framework.helper.project.IntegralChangeHelper;
+import com.gofobao.framework.member.entity.UserCache;
 import com.gofobao.framework.member.entity.UserThirdAccount;
+import com.gofobao.framework.member.entity.Users;
+import com.gofobao.framework.member.service.UserCacheService;
+import com.gofobao.framework.member.service.UserService;
 import com.gofobao.framework.member.service.UserThirdAccountService;
+import com.gofobao.framework.repayment.entity.BorrowRepayment;
+import com.gofobao.framework.repayment.entity.RepayAssetChange;
+import com.gofobao.framework.repayment.service.BorrowRepaymentService;
+import com.gofobao.framework.repayment.vo.request.VoRepayReq;
 import com.gofobao.framework.system.biz.ThirdBatchDealBiz;
+import com.gofobao.framework.system.biz.ThirdBatchDealLogBiz;
+import com.gofobao.framework.system.contants.ThirdBatchDealLogContants;
+import com.gofobao.framework.system.contants.ThirdBatchLogContants;
 import com.gofobao.framework.system.entity.ThirdBatchLog;
 import com.gofobao.framework.system.service.ThirdBatchLogService;
 import com.gofobao.framework.tender.biz.AutoTenderBiz;
+import com.gofobao.framework.tender.biz.TransferBiz;
 import com.gofobao.framework.tender.entity.Tender;
+import com.gofobao.framework.tender.entity.Transfer;
+import com.gofobao.framework.tender.entity.TransferBuyLog;
 import com.gofobao.framework.tender.service.TenderService;
+import com.gofobao.framework.tender.service.TransferBuyLogService;
+import com.gofobao.framework.tender.service.TransferService;
+import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -53,11 +94,14 @@ import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.BooleanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.http.ResponseEntity;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -70,6 +114,8 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static com.gofobao.framework.helper.DateHelper.isBetween;
+import static com.gofobao.framework.listener.providers.NoticesMessageProvider.GSON;
+import static java.util.stream.Collectors.groupingBy;
 
 /**
  * Created by Zeke on 2017/6/21.
@@ -106,14 +152,30 @@ public class TestController {
     private BorrowCollectionService borrowCollectionService;
     @Autowired
     private BorrowService borrowService;
-
-
-    public static void main(String[] args) {
-        Set<Long> ids = new HashSet<>();
-        ids.add(1l);
-        System.out.println(ids.contains(1l));
-
-    }
+    @Autowired
+    private ThirdBatchDealLogBiz thirdBatchDealLogBiz;
+    @Autowired
+    private JixinHelper jixinHelper;
+    @Autowired
+    private TransferBiz transferBiz;
+    @Autowired
+    private UserService userService;
+    @Autowired
+    private BatchAssetChangeService batchAssetChangeService;
+    @Autowired
+    private BatchAssetChangeItemService batchAssetChangeItemService;
+    @Value("${gofobao.javaDomain}")
+    private String javaDomain;
+    @Autowired
+    private TransferService transferService;
+    @Autowired
+    private BatchAssetChangeHelper batchAssetChangeHelper;
+    @Autowired
+    private IntegralChangeHelper integralChangeHelper;
+    @Autowired
+    private UserCacheService userCacheService;
+    @Autowired
+    private BorrowRepaymentService borrowRepaymentService;
 
     @ApiOperation("获取自动投标列表")
     @RequestMapping("/pub/batch/deal")
@@ -128,6 +190,102 @@ public class TestController {
         if (CollectionUtils.isEmpty(thirdBatchLogList)) {
             return;
         }
+    }
+
+    @ApiOperation("获取自动投标列表")
+    @RequestMapping("/pub/test/call")
+    @Transactional
+    public ResponseEntity<String> batchDeal() {
+        return ResponseEntity.ok("success");
+    }
+
+    @Autowired
+    private TransferBuyLogService transferBuyLogService;
+
+    @ApiOperation("获取自动投标列表")
+    @RequestMapping("/pub/test/transfer/tender")
+    @Transactional
+    public void sendTenderTransfer() {
+        UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(22002l);
+
+        TransferBuyLog transferBuyLog = new TransferBuyLog();
+        transferBuyLog.setTransferId(0l);
+        transferBuyLog.setState(0);
+        transferBuyLog.setAlreadyInterest(0l);
+        transferBuyLog.setBuyMoney(145069l);
+        transferBuyLog.setValidMoney(145069l);
+        transferBuyLog.setPrincipal(145069l);
+        transferBuyLog.setUserId(22002l);
+        transferBuyLog.setAuto(false);
+        transferBuyLog.setAutoOrder(0);
+        transferBuyLog.setDel(false);
+        transferBuyLog.setSource(0);
+        transferBuyLog.setType(2);
+        transferBuyLog.setCreatedAt(new Date());
+        transferBuyLog.setUpdatedAt(new Date());
+        transferBuyLog = transferBuyLogService.save(transferBuyLog);
+
+        List<CreditInvest> creditInvestList = new ArrayList<>();
+        /* 购买债权转让orderId */
+        String transferOrderId = JixinHelper.getOrderId(JixinHelper.LEND_REPAY_PREFIX);
+        CreditInvest creditInvest = new CreditInvest();
+        creditInvest.setAccountId("6212462190000131545");
+        creditInvest.setOrderId(transferOrderId);
+        creditInvest.setTxAmount(StringHelper.formatDouble(145069l, 100, false));
+        creditInvest.setTxFee(StringHelper.formatDouble(0, 100, false));
+        creditInvest.setTsfAmount(StringHelper.formatDouble(transferBuyLog.getPrincipal(), 100, false));
+        creditInvest.setForAccountId("6212462190000762844");
+        creditInvest.setOrgOrderId("GFBLR_1507627271008185612238");
+        creditInvest.setOrgTxAmount(StringHelper.formatDouble(145069l, 100, false));
+        creditInvest.setProductId("163041");
+        creditInvest.setContOrderId(userThirdAccount.getAutoTransferBondOrderId());
+        creditInvestList.add(creditInvest);
+        transferBuyLog.setThirdTransferOrderId(transferOrderId);
+
+        //批次号
+        String batchNo = jixinHelper.getBatchNo();
+        //请求保留参数
+        Map<String, Object> acqResMap = new HashMap<>();
+        acqResMap.put("transferId", transferBuyLog.getId());
+        //调用存管批次债权转让接口
+        BatchCreditInvestReq request = new BatchCreditInvestReq();
+        request.setBatchNo(batchNo);
+        request.setTxAmount(StringHelper.formatDouble(145069l, 100, false));
+        request.setTxCounts(StringHelper.toString(creditInvestList.size()));
+        request.setSubPacks(GSON.toJson(creditInvestList));
+        request.setAcqRes(GSON.toJson(acqResMap));
+        request.setChannel(ChannelContant.HTML);
+        request.setNotifyURL(javaDomain + "/pub/test/call");
+        request.setRetNotifyURL(javaDomain + "/pub/test/call");
+        BatchCreditInvestResp response = jixinManager.send(JixinTxCodeEnum.BATCH_CREDIT_INVEST, request, BatchCreditInvestResp.class);
+        if ((ObjectUtils.isEmpty(response)) || (!JixinResultContants.BATCH_SUCCESS.equalsIgnoreCase(response.getReceived()))) {
+            BatchCancelReq batchCancelReq = new BatchCancelReq();
+            batchCancelReq.setBatchNo(batchNo);
+            batchCancelReq.setTxAmount(StringHelper.formatDouble(145069l, 100, false));
+            batchCancelReq.setTxCounts(StringHelper.toString(creditInvestList.size()));
+            batchCancelReq.setChannel(ChannelContant.HTML);
+            BatchCancelResp batchCancelResp = jixinManager.send(JixinTxCodeEnum.BATCH_CANCEL, batchCancelReq, BatchCancelResp.class);
+            if ((ObjectUtils.isEmpty(batchCancelResp)) || (!ObjectUtils.isEmpty(batchCancelResp.getRetCode()))) {
+                log.error("sendTenderTransfer即信批次撤销失败!");
+            }
+
+            log.error(String.format("复审: 批量债权转让申请失败: %s", response));
+            log.error("sendTenderTransfer投资人批次购买债权失败!:" + response.getRetMsg());
+        }
+
+        //记录日志
+        ThirdBatchLog thirdBatchLog = new ThirdBatchLog();
+        thirdBatchLog.setBatchNo(batchNo);
+        thirdBatchLog.setCreateAt(new Date());
+        thirdBatchLog.setTxDate(request.getTxDate());
+        thirdBatchLog.setTxTime(request.getTxTime());
+        thirdBatchLog.setSeqNo(request.getSeqNo());
+        thirdBatchLog.setUpdateAt(new Date());
+        thirdBatchLog.setSourceId(transferBuyLog.getId());
+        thirdBatchLog.setType(ThirdBatchLogContants.BATCH_CREDIT_INVEST);
+        thirdBatchLog.setAcqRes(GSON.toJson(acqResMap));
+        thirdBatchLog.setRemark("投资人批次购买债权(修复理财计划多转让bug)");
+        thirdBatchLogService.save(thirdBatchLog);
     }
 
     @ApiOperation("资产查询")
@@ -198,29 +356,6 @@ public class TestController {
         }
     }
 
-/*
-
-    @ApiOperation("解除冻结")
-    @RequestMapping("/pub/cancelFreeze")
-    @Transactional
-    public void cancelFreeze() {
-        // 取消冻结
-        AssetChange assetChange = new AssetChange();
-        assetChange.setSourceId(279867l);
-        assetChange.setGroupSeqNo(assetChangeProvider.getGroupSeqNo());
-        assetChange.setMoney(5000);
-        assetChange.setSeqNo(assetChangeProvider.getSeqNo());
-        assetChange.setRemark(String.format("存管系统审核投资标的[老猪，12天]资格失败, 解除资金冻结50元"));
-        assetChange.setType(AssetChangeTypeEnum.unfreeze);
-        assetChange.setUserId(129659l);
-        assetChange.setForUserId(129659l);
-        try {
-            assetChangeProvider.commonAssetChange(assetChange);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-*/
 
     @ApiOperation("冻结查询")
     @RequestMapping("/pub/freeze/find")
@@ -249,7 +384,7 @@ public class TestController {
         CreditDetailsQueryRequest creditDetailsQueryRequest = new CreditDetailsQueryRequest();
         creditDetailsQueryRequest.setAccountId(String.valueOf(accountId));
         creditDetailsQueryRequest.setStartDate(String.valueOf(startDate));
-        if (ObjectUtils.isEmpty(productId)) {
+        if (!ObjectUtils.isEmpty(productId)) {
             creditDetailsQueryRequest.setProductId(String.valueOf(productId));
         }
         creditDetailsQueryRequest.setEndDate(DateHelper.dateToString(new Date(), DateHelper.DATE_FORMAT_YMD_NUM));

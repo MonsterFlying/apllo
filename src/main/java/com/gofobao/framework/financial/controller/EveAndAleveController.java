@@ -67,6 +67,25 @@ public class EveAndAleveController {
         return ResponseEntity.ok(VoBaseResp.ok("下载成功"));
     }
 
+
+    /**
+     * 发送每日对账文件
+     *
+     * @param date
+     * @return
+     */
+    @GetMapping(value = "/pub/eveAndAleve/sendEmail/{date}")
+    public ResponseEntity<VoBaseResp> sendEmail(@PathVariable(name = "date") String date) {
+        if (StringUtils.isNullOrEmpty(date)) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "下载时间不能为空"));
+        }
+
+        newEveBiz.audit(date);
+        return ResponseEntity.ok(VoBaseResp.ok("下载成功"));
+    }
+
     /**
      * 下载aleve文件
      *

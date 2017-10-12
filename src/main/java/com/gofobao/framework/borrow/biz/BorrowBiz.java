@@ -84,7 +84,7 @@ public interface BorrowBiz {
      * @return
      * @throws Exception
      */
-    boolean borrowAgainVerify(Borrow borrow, String batchNo, Statistic statistic) throws Exception;
+    boolean borrowAgainVerify(Borrow borrow, String batchNo) throws Exception;
 
     /**
      * 理财计划非转让标复审
@@ -93,7 +93,7 @@ public interface BorrowBiz {
      * @return
      * @throws Exception
      */
-    boolean financeBorrowAgainVerify(Borrow borrow, String batchNo, Statistic statistic) throws Exception;
+    boolean financeBorrowAgainVerify(Borrow borrow, String batchNo) throws Exception;
 
     /**
      * 标信息

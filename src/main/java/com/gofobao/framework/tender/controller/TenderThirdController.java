@@ -33,7 +33,7 @@ public class TenderThirdController {
     public ResponseEntity<String> thirdFinanceBatchCreditInvestRunCall(HttpServletRequest request, HttpServletResponse response) {
         try {
             log.info("理财计划批量债权购买回调触发");
-            return tenderThirdBiz.thirdBatchCreditInvestRunCall(request, response);
+            return tenderThirdBiz.thirdBatchCreditInvestFinanceRunCall(request, response);
         } catch (Exception e) {
             log.error("理财计划批量债权购买回调失败", e);
             return ResponseEntity.ok("error");
@@ -48,7 +48,7 @@ public class TenderThirdController {
     @ApiOperation("理财计划批次购买债权参数验证回调")
     @RequestMapping("/v2/third/batch/finance/creditinvest/check")
     public ResponseEntity<String> thirdFinanceBatchCreditInvestCheckCall(HttpServletRequest request, HttpServletResponse response) {
-        return tenderThirdBiz.thirdBatchCreditInvestCheckCall(request, response);
+        return tenderThirdBiz.thirdBatchCreditInvestFinanceCheckCall(request, response);
     }
 
     /**

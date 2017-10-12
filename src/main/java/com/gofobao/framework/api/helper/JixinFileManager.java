@@ -34,10 +34,10 @@ import static com.google.common.base.Preconditions.checkNotNull;
 @Slf4j
 public class JixinFileManager {
     @Value("${jixin.file-url}")
-    String fileUrl ;
+    String fileUrl;
 
     @Value("${jixin.save-file-path}")
-    String saveFileUrl ;
+    String saveFileUrl;
 
     @Value("${jixin.version}")
     String version;
@@ -52,19 +52,19 @@ public class JixinFileManager {
     CertHelper certHelper;
 
     @Autowired
-    JixinHelper jixinHelper ;
+    JixinHelper jixinHelper;
 
-    public final  static  Gson GSON = new Gson() ;
+    public final static Gson GSON = new Gson();
 
     public boolean download(String fileName) {
         File newFile = new File(saveFileUrl);  //文件在本地的存放地址
         if (!newFile.exists() && !newFile.isDirectory()) {
             newFile.mkdirs();
         }
-        String saveFile = String.format("%s%s%s", saveFileUrl, File.separator, fileName) ;
+        String saveFile = String.format("%s%s%s", saveFileUrl, File.separator, fileName);
         File file = new File(saveFile);
-        if(file.exists()){
-            return true ;
+        if (file.exists()) {
+            return true;
         }
         Map<String, String> params = new HashMap<>();
         params.put("instCode", instCode);
@@ -76,6 +76,7 @@ public class JixinFileManager {
         params.put("SIGN", sign);
         initHttps();
         HttpEntity entity = getHttpEntity(params);
+        log.info("文件下载请求参数", GSON.toJson(params));
         RestTemplate restTemplate = new RestTemplate(new ArrayList<HttpMessageConverter<?>>() {{
             add(new GsonHttpMessageConverter());
         }});
@@ -100,6 +101,7 @@ public class JixinFileManager {
         }
         String returnCode = responseMap.get("returnCode");
         if (!"0000".equals(returnCode)) {
+            log.info("文件响应码: " + returnCode);
             log.error("下载文件: 响应代码错误");
             return false;
         }
@@ -119,7 +121,7 @@ public class JixinFileManager {
             out.write(fileData);
         } catch (Exception e) {
             log.error("即信请求文件, 下载为空!", e);
-            return false ;
+            return false;
         } finally {
             if (!ObjectUtils.isEmpty(out)) {
                 try {
@@ -130,7 +132,7 @@ public class JixinFileManager {
             }
         }
         log.info("下载文件: 成功");
-        return true ;
+        return true;
     }
 
 
@@ -138,7 +140,7 @@ public class JixinFileManager {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.parseMediaType("application/json; charset=utf-8"));
         headers.set("Accept-Charset", "UTF-8");
-        return new HttpEntity( params, headers);
+        return new HttpEntity(params, headers);
     }
 
     private void initHttps() {

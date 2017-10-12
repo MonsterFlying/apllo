@@ -15,7 +15,7 @@ public interface ThirdBatchDealBiz {
      * @return
      * @throws Exception
      */
-    boolean batchDeal(long sourceId, String batchNo, String acqRes, String batchResp) throws Exception;
+    boolean batchDeal(long sourceId, String batchNo,int batchType, String acqRes, String batchResp) throws Exception;
 
 
 }

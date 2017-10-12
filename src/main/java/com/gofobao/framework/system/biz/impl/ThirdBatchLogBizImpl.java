@@ -157,7 +157,7 @@ public class ThirdBatchLogBizImpl implements ThirdBatchLogBiz {
         } while (pageSize == realSize);
 
         //筛选失败批次
-        Preconditions.checkNotNull(detailsQueryRespList, "批处理回调: 查询批次详细异常!");
+        Preconditions.checkState(!CollectionUtils.isEmpty(detailsQueryRespList), "批处理回调: 查询批次详细异常!");
         boolean flag = true;
         for (DetailsQueryResp detailsQueryResp : detailsQueryRespList) {
             if ("F".equalsIgnoreCase(detailsQueryResp.getTxState())) {
@@ -213,33 +213,13 @@ public class ThirdBatchLogBizImpl implements ThirdBatchLogBiz {
 
         try {
             //批次执行问题
-            thirdBatchDealBiz.batchDeal(thirdBatchLog.getSourceId(), thirdBatchLog.getBatchNo(),
+            thirdBatchDealBiz.batchDeal(thirdBatchLog.getSourceId(), thirdBatchLog.getBatchNo(), thirdBatchLog.getType(),
                     thirdBatchLog.getAcqRes(), "");
             return ResponseEntity.ok(VoBaseResp.ok("处理成功!"));
         } catch (Exception e) {
             log.error("批次执行异常:", e);
             return ResponseEntity.ok(VoBaseResp.ok("处理失败!"));
         }
-
-        /*MqConfig mqConfig = new MqConfig();
-        mqConfig.setQueue(MqQueueEnum.RABBITMQ_THIRD_BATCH);
-        mqConfig.setTag(MqTagEnum.BATCH_DEAL);
-        ImmutableMap<String, String> body = ImmutableMap
-                .of(MqConfig.SOURCE_ID, StringHelper.toString(thirdBatchLog.getSourceId()),
-                        MqConfig.BATCH_NO, StringHelper.toString(thirdBatchLog.getBatchNo()),
-                        MqConfig.MSG_TIME, DateHelper.dateToString(new Date()),
-                        MqConfig.ACQ_RES, thirdBatchLog.getAcqRes()
-                );
-
-        mqConfig.setMsg(body);
-        try {
-            log.info(String.format("tenderThirdBizImpl thirdBatchRepayAllRunCall send mq %s", gson.toJson(body)));
-            mqHelper.convertAndSend(mqConfig);
-            return ResponseEntity.ok(VoBaseResp.ok("处理成功!"));
-        } catch (Throwable e) {
-            log.error("tenderThirdBizImpl thirdBatchRepayAllRunCall send mq exception", e);
-            return ResponseEntity.ok(VoBaseResp.ok("处理失败!"));
-        }*/
     }
 
     /**

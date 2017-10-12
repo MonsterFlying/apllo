@@ -268,9 +268,14 @@ public class TransferServiceImpl implements TransferService {
             }
             transferMay.setName(borrow.getName());
             transferMay.setTenderId(p.getId());
+            //回款记录集合
             List<BorrowCollection> borrowCollectionList1 = borrowCollectionMaps.get(p.getId()).stream()
                     .filter(w -> w.getStatus() == BorrowCollectionContants.STATUS_NO)
                     .collect(Collectors.toList());
+            //已回款笔数
+            long collected = borrowCollectionMaps.get(p.getId()).stream()
+                    .filter(w -> w.getStatus() == BorrowCollectionContants.STATUS_YES).count();
+
             long principalSum = borrowCollectionList1.stream().mapToLong(w -> w.getPrincipal()).sum();
             long interestSum = borrowCollectionList1.stream().mapToLong(w -> w.getInterest()).sum();
             transferMay.setInterest(StringHelper.formatMon(interestSum / 100d));
@@ -279,6 +284,7 @@ public class TransferServiceImpl implements TransferService {
             transferMay.setBorrowId(borrow.getId());
             BorrowCollection borrowCollection = borrowCollectionList1.get(0);
             transferMay.setNextCollectionAt(DateHelper.dateToString(borrowCollection.getCollectionAt()));
+            transferMay.setIsTransfer(!borrow.getIsNovice() && collected > 0);
             transferMays.add(transferMay);
         });
         resultMaps.put("transferMayList", transferMays);
@@ -421,18 +427,18 @@ public class TransferServiceImpl implements TransferService {
         //用户投资信息
         Map<String, Object> borrowMap = Maps.newHashMap();
         Users users = userService.findById(transfer.getUserId());
-        borrowMap.put("username",StringUtils.isEmpty(users.getUsername()) ? UserHelper.hideChar(users.getPhone(),UserHelper.PHONE_NUM)  :UserHelper.hideChar(users.getUsername(),UserHelper.USERNAME_NUM));
+        borrowMap.put("username", StringUtils.isEmpty(users.getUsername()) ? UserHelper.hideChar(users.getPhone(), UserHelper.PHONE_NUM) : UserHelper.hideChar(users.getUsername(), UserHelper.USERNAME_NUM));
         borrowMap.put("successAt", StringUtils.isEmpty(transfer.getRecheckAt()) ? null : DateHelper.dateToString(transfer.getRecheckAt()));
-        borrowMap.put("cardId",UserHelper.hideChar(users.getCardId(),UserHelper.CARD_ID_NUM));
+        borrowMap.put("cardId", UserHelper.hideChar(users.getCardId(), UserHelper.CARD_ID_NUM));
         Integer apr = transfer.getApr();
         borrowMap.put("apr", StringHelper.formatMon(apr / 100D));
-        Borrow borrow=borrowRepository.findOne(tender.getBorrowId());
-        Integer repayFashion=borrow.getRepayFashion();
-        borrowMap.put("repayFashion",repayFashion );
-        borrowMap.put("id",transfer.getBorrowId());
+        Borrow borrow = borrowRepository.findOne(tender.getBorrowId());
+        Integer repayFashion = borrow.getRepayFashion();
+        borrowMap.put("repayFashion", repayFashion);
+        borrowMap.put("id", transfer.getBorrowId());
         borrowMap.put("money", StringHelper.formatMon(transfer.getTransferMoney() / 100D));
-        borrowMap.put("monthAsReimbursement", StringUtils.isEmpty(transfer.getRecheckAt()) ? null : "每月" + DateHelper.dateToString(transfer.getRecheckAt(),DateHelper.DATE_FORMAT_YMD));
-        borrowMap.put("borrowExpireAtStr",DateHelper.dateToString(DateHelper.endOfDate(DateHelper.addDays(transfer.getReleaseAt(),1))));
+        borrowMap.put("monthAsReimbursement", StringUtils.isEmpty(transfer.getRecheckAt()) ? null : "每月" + DateHelper.dateToString(transfer.getRecheckAt(), DateHelper.DATE_FORMAT_YMD));
+        borrowMap.put("borrowExpireAtStr", DateHelper.dateToString(DateHelper.endOfDate(DateHelper.addDays(transfer.getReleaseAt(), 1))));
         Integer timeLimit = transfer.getTimeLimit();
         borrowMap.put("timeLimit", timeLimit);
         Long buyUserId = transferBuyLog.getUserId();
@@ -447,18 +453,18 @@ public class TransferServiceImpl implements TransferService {
         tenderMap.put("validMoney", StringHelper.formatMon(buyMoney / 100D));
         BorrowCalculatorHelper borrowCalculatorHelper = new BorrowCalculatorHelper(NumberHelper.toDouble(buyMoney), new Double(apr), timeLimit, null);
         Map<String, Object> calculatorMap = borrowCalculatorHelper.simpleCount(repayFashion);
-        calculatorMap.put("earnings", StringHelper.formatMon(MoneyHelper.divide(Double.parseDouble(calculatorMap.get("earnings").toString()) ,100D)));
-        calculatorMap.put("eachRepay", StringHelper.formatMon(MoneyHelper.divide(Double.parseDouble(calculatorMap.get("eachRepay").toString()) , 100D)));
-        calculatorMap.put("repayTotal", StringHelper.formatMon(MoneyHelper.divide(Double.parseDouble(calculatorMap.get("repayTotal").toString()) ,100D)));
+        calculatorMap.put("earnings", StringHelper.formatMon(MoneyHelper.divide(Double.parseDouble(calculatorMap.get("earnings").toString()), 100D)));
+        calculatorMap.put("eachRepay", StringHelper.formatMon(MoneyHelper.divide(Double.parseDouble(calculatorMap.get("eachRepay").toString()), 100D)));
+        calculatorMap.put("repayTotal", StringHelper.formatMon(MoneyHelper.divide(Double.parseDouble(calculatorMap.get("repayTotal").toString()), 100D)));
         calculatorMap.put("repayDetailList", calculatorMap.get("repayDetailList"));
         tenderMap.put("calculatorMap", calculatorMap);
         tenderMapList.add(tenderMap);
         //返回结果
-        if(repayFashion.intValue()== BorrowContants.REPAY_FASHION_XXHB_NUM){
-            List repayDetailList=(List)calculatorMap.get("repayDetailList");
-            Map<String,String>tempMap=(Map<String, String>) repayDetailList.get(repayDetailList.size()-1);
-            Double tempMoney=Double.valueOf(tempMap.get("repayMoney").toString());
-            borrowMap.put("tempMoney",tempMoney/100);
+        if (repayFashion.intValue() == BorrowContants.REPAY_FASHION_XXHB_NUM) {
+            List repayDetailList = (List) calculatorMap.get("repayDetailList");
+            Map<String, String> tempMap = (Map<String, String>) repayDetailList.get(repayDetailList.size() - 1);
+            Double tempMoney = Double.valueOf(tempMap.get("repayMoney").toString());
+            borrowMap.put("tempMoney", tempMoney / 100);
         }
         resultMap.put("borrowMap", borrowMap);
         resultMap.put("tenderMapList", tenderMapList);

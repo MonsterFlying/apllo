@@ -25,8 +25,7 @@ public class JixinAssetServiceImpl implements JixinAssetService {
     }
 
     @Override
-    public Page<Object[]> findAllForPrint(Pageable pageable) {
-
-        return jixinAssetRepository.findAllForPrint(pageable) ;
+    public Page<Object[]> findAllForPrint(String endDateStr, Pageable pageable) {
+        return jixinAssetRepository.findAllForPrint(endDateStr, pageable) ;
     }
 }

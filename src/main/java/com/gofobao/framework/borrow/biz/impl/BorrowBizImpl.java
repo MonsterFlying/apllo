@@ -219,7 +219,7 @@ public class BorrowBizImpl implements BorrowBiz {
         } else if (flag == ThirdBatchLogContants.SUCCESS) {
             try {
                 //批次执行问题
-                thirdBatchDealBiz.batchDeal(thirdBatchLog.getSourceId(), thirdBatchLog.getBatchNo(), thirdBatchLog.getAcqRes(), "");
+                thirdBatchDealBiz.batchDeal(thirdBatchLog.getSourceId(), thirdBatchLog.getBatchNo(), thirdBatchLog.getType(), thirdBatchLog.getAcqRes(), "");
             } catch (Exception e) {
                 log.error("批次执行异常:", e);
             }
@@ -918,7 +918,7 @@ public class BorrowBizImpl implements BorrowBiz {
      * @throws Exception
      */
     @Transactional(rollbackFor = Throwable.class)
-    public boolean financeBorrowAgainVerify(Borrow borrow, String batchNo, Statistic statistic) throws Exception {
+    public boolean financeBorrowAgainVerify(Borrow borrow, String batchNo) throws Exception {
         if ((ObjectUtils.isEmpty(borrow)) || (borrow.getStatus() != 1)
                 || (!StringHelper.toString(borrow.getMoney()).equals(StringHelper.toString(borrow.getMoneyYes())))) {
             return false;
@@ -933,7 +933,7 @@ public class BorrowBizImpl implements BorrowBiz {
                 .eq("status", 1)
                 .build();
         List<Tender> tenderList = tenderService.findList(ts);
-        Preconditions.checkNotNull(tenderList, "理财计划生成还款记录: 投标记录为空");
+        Preconditions.checkState(!CollectionUtils.isEmpty(tenderList), "理财计划生成还款记录: 投标记录为空");
         String groupSeqNo = assetChangeProvider.getGroupSeqNo();
         // 这里涉及用户投标回款计划生成和平台资金的变动
         generateBorrowCollectionAndAssetChange(borrow, borrowRepaymentList, tenderList, nowDate, groupSeqNo);
@@ -958,7 +958,7 @@ public class BorrowBizImpl implements BorrowBiz {
         // 满标操作
         finishBorrow(borrow);
         //更新总统计
-        fillStatisticByBorrowReview(borrow, borrowRepaymentList, statistic);
+        fillStatisticByBorrowReview(borrow, borrowRepaymentList);
         return true;
     }
 
@@ -970,7 +970,7 @@ public class BorrowBizImpl implements BorrowBiz {
      * @throws Exception
      */
     @Transactional(rollbackFor = Throwable.class)
-    public boolean borrowAgainVerify(Borrow borrow, String batchNo, Statistic statistic) throws Exception {
+    public boolean borrowAgainVerify(Borrow borrow, String batchNo) throws Exception {
         if ((ObjectUtils.isEmpty(borrow)) || (borrow.getStatus() != 1)
                 || (!StringHelper.toString(borrow.getMoney()).equals(StringHelper.toString(borrow.getMoneyYes())))) {
             return false;
@@ -985,7 +985,7 @@ public class BorrowBizImpl implements BorrowBiz {
                 .eq("status", 1)
                 .build();
         List<Tender> tenderList = tenderService.findList(ts);
-        Preconditions.checkNotNull(tenderList, "生成还款记录: 投标记录为空");
+        Preconditions.checkState(!CollectionUtils.isEmpty(tenderList), "生成还款记录: 投标记录为空");
         String groupSeqNo = assetChangeProvider.getGroupSeqNo();
         // 这里涉及用户投标回款计划生成和平台资金的变动
         generateBorrowCollectionAndAssetChange(borrow, borrowRepaymentList, tenderList, nowDate, groupSeqNo);
@@ -1024,7 +1024,7 @@ public class BorrowBizImpl implements BorrowBiz {
         // 用户投标信息和每日统计
         userTenderStatistic(borrow, tenderList, nowDate);
         //更新总统计
-        fillStatisticByBorrowReview(borrow, borrowRepaymentList, statistic);
+        fillStatisticByBorrowReview(borrow, borrowRepaymentList);
         //借款成功发送通知短信
         smsNoticeByBorrowReview(borrow);
         // 发送投资成功站内信
@@ -1209,7 +1209,7 @@ public class BorrowBizImpl implements BorrowBiz {
                     NumberHelper.toDouble(StringHelper.toString(borrow.getApr())), borrow.getTimeLimit(), startAt);
             Map<String, Object> rsMap = borrowCalculatorHelper.simpleCount(borrow.getRepayFashion());
             List<Map<String, Object>> repayDetailList = (List<Map<String, Object>>) rsMap.get("repayDetailList");
-            Preconditions.checkNotNull(repayDetailList, "生成用户回款计划开始: 计划生成为空");
+            Preconditions.checkState(!CollectionUtils.isEmpty(repayDetailList), "生成用户回款计划开始: 计划生成为空");
             long countInterest = 0;
             for (int i = 0; i < repayDetailList.size(); i++) {
                 Map<String, Object> repayDetailMap = repayDetailList.get(i);
@@ -1394,7 +1394,7 @@ public class BorrowBizImpl implements BorrowBiz {
                     NumberHelper.toDouble(StringHelper.toString(borrow.getApr())), borrow.getTimeLimit(), borrowDate);
             Map<String, Object> rsMap = borrowCalculatorHelper.simpleCount(borrow.getRepayFashion());
             List<Map<String, Object>> repayDetailList = (List<Map<String, Object>>) rsMap.get("repayDetailList");
-            Preconditions.checkNotNull(repayDetailList, "生成用户回款计划开始: 计划生成为空");
+            Preconditions.checkState(!CollectionUtils.isEmpty(repayDetailList), "生成用户回款计划开始: 计划生成为空");
             log.info(String.format("回款计划参数: %s", gson.toJson(repayDetailList)));
             BorrowCollection borrowCollection;
             int collectionMoney = 0;
@@ -1478,9 +1478,9 @@ public class BorrowBizImpl implements BorrowBiz {
             //更新投标状态
             tender.setState(2);
             tender.setUpdatedAt(new Date());
+            tenderService.save(tender);
         }
         borrowRepaymentService.save(borrowRepaymentList);
-        tenderService.save(tenderList);
     }
 
     /**
@@ -1746,7 +1746,8 @@ public class BorrowBizImpl implements BorrowBiz {
      *
      * @param borrow
      */
-    private void fillStatisticByBorrowReview(Borrow borrow, List<BorrowRepayment> borrowRepaymentList, Statistic statistic) {
+    private void fillStatisticByBorrowReview(Borrow borrow, List<BorrowRepayment> borrowRepaymentList) {
+        Statistic statistic = new Statistic();
         if (CollectionUtils.isEmpty(borrowRepaymentList)) {//查询当前借款 还款记录
             return;
         }
@@ -1781,6 +1782,12 @@ public class BorrowBizImpl implements BorrowBiz {
             statistic.setQdBorrowTotal(borrowMoney);
             statistic.setQdWaitRepayPrincipalTotal(principal);
             statistic.setQdWaitRepayTotal(repayMoney);
+        }
+        //提前结清批次还款总统计
+        try {
+            statisticBiz.caculate(statistic);
+        } catch (Exception e) {
+            log.error("fillStatisticByBorrowReview 更新网站统计失败!:", e);
         }
     }
 
@@ -1851,7 +1858,7 @@ public class BorrowBizImpl implements BorrowBiz {
 
             if (borrow.getIsNovice()) {  // 新手
                 releaseAt = DateHelper.max(DateHelper.addHours(DateHelper.beginOfDate(nowDate), 20), borrow.getReleaseAt());
-                if (DateHelper.getHour(nowDate) >= 20) {
+                if (DateHelper.getDate(nowDate) >= 20) {
                     releaseAt = DateHelper.addDays(releaseAt, 1);
                 }
             }

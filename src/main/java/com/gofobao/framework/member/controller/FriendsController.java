@@ -125,7 +125,7 @@ public class FriendsController {
         try {
             InputStream in = FriendsController.class.getResourceAsStream("/static/images/shareLogo/logo.png");
 
-            QRCodeHelper.createQRCodeTStream(h5Domain + "/#/auth/register?shareRegisterCode=" + inviteCode, in, 100, 100, out);
+            QRCodeHelper.createQRCodeTStream(h5Domain + "/#/auth/register?inviteCode=" + inviteCode, in, 100, 100, out);
             out.flush();
         } catch (Throwable e) {
             log.error(String.format("获取二维码接口：%s", e.getMessage()));

@@ -71,29 +71,12 @@ public class DealThirdBatchScheduler {
                         && "S".equals(resp.getBatchState())) {
                     try {
                         //批次执行问题
-                        thirdBatchDealBiz.batchDeal(thirdBatchLog.getSourceId(), thirdBatchLog.getBatchNo(),
+                        thirdBatchDealBiz.batchDeal(thirdBatchLog.getSourceId(), thirdBatchLog.getBatchNo(), thirdBatchLog.getType(),
                                 thirdBatchLog.getAcqRes(), "");
                     } catch (Exception e) {
                         log.error("批次执行异常:", e);
                     }
 
-                   /* MqConfig mqConfig = new MqConfig();
-                    mqConfig.setQueue(MqQueueEnum.RABBITMQ_THIRD_BATCH);
-                    mqConfig.setTag(MqTagEnum.BATCH_DEAL);
-                    ImmutableMap<String, String> body = ImmutableMap
-                            .of(MqConfig.SOURCE_ID, StringHelper.toString(thirdBatchLog.getSourceId()),
-                                    MqConfig.BATCH_NO, StringHelper.toString(thirdBatchLog.getBatchNo()),
-                                    MqConfig.MSG_TIME, DateHelper.dateToString(new Date()),
-                                    MqConfig.ACQ_RES, thirdBatchLog.getAcqRes()
-                            );
-
-                    mqConfig.setMsg(body);
-                    try {
-                        log.info(String.format("DealThirdBatchScheduler process send mq %s", GSON.toJson(body)));
-                        mqHelper.convertAndSend(mqConfig);
-                    } catch (Throwable e) {
-                        log.error("DealThirdBatchScheduler process send mq exception", e);
-                    }*/
                 }
             });
         } while (thirdBatchLogList.size() >= pageSize);

@@ -20,10 +20,13 @@ import com.gofobao.framework.borrow.service.BorrowService;
 import com.gofobao.framework.common.assets.AssetChangeProvider;
 import com.gofobao.framework.common.assets.AssetChangeTypeEnum;
 import com.gofobao.framework.common.rabbitmq.MqConfig;
+import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.helper.*;
 import com.gofobao.framework.helper.project.SecurityHelper;
 import com.gofobao.framework.member.entity.UserThirdAccount;
 import com.gofobao.framework.member.service.UserThirdAccountService;
+import com.gofobao.framework.system.biz.ThirdBatchDealBiz;
+import com.gofobao.framework.system.biz.ThirdBatchLogBiz;
 import com.gofobao.framework.system.contants.ThirdBatchLogContants;
 import com.gofobao.framework.system.entity.ThirdBatchLog;
 import com.gofobao.framework.system.service.ThirdBatchLogService;
@@ -42,8 +45,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 
 import java.util.*;
@@ -83,6 +88,10 @@ public class FinancePlanProvider {
     private BatchAssetChangeService batchAssetChangeService;
     @Autowired
     private ThirdBatchLogService thirdBatchLogService;
+    @Autowired
+    private ThirdBatchLogBiz thirdBatchLogBiz;
+    @Autowired
+    private ThirdBatchDealBiz thirdBatchDealBiz;
 
     /**
      * n
@@ -116,6 +125,26 @@ public class FinancePlanProvider {
             return false;
         }
 
+        // 2判断提交还款批次是否多次重复提交
+        ThirdBatchLog thirdBatchLog = thirdBatchLogBiz.getValidLastBatchLog(String.valueOf(transferId), ThirdBatchLogContants.BATCH_FINANCE_CREDIT_INVEST);
+        int flag = thirdBatchLogBiz.checkBatchOftenSubmit(String.valueOf(transferId),
+                ThirdBatchLogContants.BATCH_FINANCE_CREDIT_INVEST);
+        if (flag == ThirdBatchLogContants.AWAIT) {
+            return false;
+        } else if (flag == ThirdBatchLogContants.SUCCESS) {
+            //墊付批次处理
+            //触发处理批次放款处理结果队列
+            try {
+                //批次执行问题
+                thirdBatchDealBiz.batchDeal(thirdBatchLog.getSourceId(), thirdBatchLog.getBatchNo(), thirdBatchLog.getType(),
+                        thirdBatchLog.getAcqRes(), "");
+            } catch (Exception e) {
+                log.error("financePlanProvider againVerifyFinanceTransfer 批次处理执行异常:", e);
+            }
+            log.info("重新触发即信批次回调处理结束");
+            return false;
+        }
+
         Specification<TransferBuyLog> tbls = Specifications
                 .<TransferBuyLog>and()
                 .eq("transferId", transfer.getId())
@@ -123,7 +152,7 @@ public class FinancePlanProvider {
                 .eq("del", 0)
                 .build();
         List<TransferBuyLog> transferBuyLogList = transferBuyLogService.findList(tbls);/* 购买债权转让记录 */
-        Preconditions.checkNotNull(transferBuyLogList, "理财计划批量债权转让：购买债权记录不存在!");
+        Preconditions.checkState(!CollectionUtils.isEmpty(transferBuyLogList), "理财计划批量债权转让：购买债权记录不存在!");
         Tender parentTender = tenderService.findById(transfer.getTenderId());/* 转让投资记录 */
         Preconditions.checkNotNull(parentTender, "理财计划批量债权转让: 债权原始投标信息为空!");
         UserThirdAccount transferUserThirdAccount = userThirdAccountService.findByUserId(transfer.getUserId());/* 债权转让人开户信息 */

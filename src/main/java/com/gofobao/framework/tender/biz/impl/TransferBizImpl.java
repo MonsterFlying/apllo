@@ -104,6 +104,8 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import static com.gofobao.framework.listener.providers.NoticesMessageProvider.GSON;
+
 /**
  * Created by admin on 2017/6/12.
  */
@@ -260,7 +262,7 @@ public class TransferBizImpl implements TransferBiz {
                 .eq("transferId", transfer.getId())
                 .build();
         List<TransferBuyLog> transferBuyLogList = transferBuyLogService.findList(tbls);
-        Preconditions.checkNotNull(transferBuyLogList, "购买债权转让记录为空!");
+        Preconditions.checkState(!CollectionUtils.isEmpty(transferBuyLogList), "购买债权转让记录为空!");
         /* 已跟即信通信的债权转让记录条数 */
         long count = transferBuyLogList.stream().filter(transferBuyLog -> BooleanHelper.isTrue(transferBuyLog.getThirdTransferFlag())).count();
         if (count > 0) {
@@ -332,7 +334,7 @@ public class TransferBizImpl implements TransferBiz {
                 .eq("state", 0)
                 .build();
         List<TransferBuyLog> transferBuyLogList = transferBuyLogService.findList(tbls);/* 购买理财计划债权转让记录 */
-        Preconditions.checkNotNull(!CollectionUtils.isEmpty(transferBuyLogList), "购买理财计划债权转让记录不存在!");
+        Preconditions.checkState(!CollectionUtils.isEmpty(transferBuyLogList), "购买理财计划债权转让记录不存在!");
         long failure = transferBuyLogList
                 .stream()
                 .filter(transferBuyLog -> BooleanHelper.isFalse(transferBuyLog.getThirdTransferFlag())).count(); /* 登记即信存管失败条数 */
@@ -440,7 +442,7 @@ public class TransferBizImpl implements TransferBiz {
                     startAt);
             Map<String, Object> rsMap = borrowCalculatorHelper.simpleCount(parentBorrow.getRepayFashion());
             List<Map<String, Object>> repayDetailList = (List<Map<String, Object>>) rsMap.get("repayDetailList");
-            Preconditions.checkNotNull(repayDetailList, "生成用户回款计划开始: 计划生成为空");
+            Preconditions.checkState(!CollectionUtils.isEmpty(repayDetailList), "生成用户回款计划开始: 计划生成为空");
             BorrowCollection borrowCollection;
             int startOrder = borrowCollectionList.get(0).getOrder();/* 获取开始转让期数,期数下标从0开始 */
             long sumCollectionInterest = 0l;/*总回款利息*/
@@ -819,7 +821,7 @@ public class TransferBizImpl implements TransferBiz {
                     startAt);
             Map<String, Object> rsMap = borrowCalculatorHelper.simpleCount(parentBorrow.getRepayFashion());
             List<Map<String, Object>> repayDetailList = (List<Map<String, Object>>) rsMap.get("repayDetailList");
-            Preconditions.checkNotNull(repayDetailList, "生成用户回款计划开始: 计划生成为空");
+            Preconditions.checkState(!CollectionUtils.isEmpty(repayDetailList), "生成用户回款计划开始: 计划生成为空");
             BorrowCollection borrowCollection;
             long collectionMoney = 0;
             long collectionInterest = 0;
@@ -1314,7 +1316,7 @@ public class TransferBizImpl implements TransferBiz {
         Date endAt = DateHelper.beginOfDate(new Date());//结束计息时间
 
         /* 当期应计利息 */
-        double transferFeeRatio = MoneyHelper.divide(Math.max(DateHelper.diffInDays(endAt, startAtYes, false), 0) ,
+        double transferFeeRatio = MoneyHelper.divide(Math.max(DateHelper.diffInDays(endAt, startAtYes, false), 0),
                 DateHelper.diffInDays(collectionAt, startAt, false));
         long alreadyInterest = Math.round(interest * transferFeeRatio);
 
@@ -1354,7 +1356,7 @@ public class TransferBizImpl implements TransferBiz {
     public static void main(String[] args) {
         System.out.println(Math.max(DateHelper.diffInDays(new Date(1507478400000l), new Date(1504972800000l), false), 0));
         System.out.println(DateHelper.diffInDays(new Date(1507564800000l), new Date(1504972800000l), false));
-        System.out.println(MoneyHelper.divide(Math.max(DateHelper.diffInDays(new Date(1507478400000l), new Date(1504972800000l), false), 0) ,
+        System.out.println(MoneyHelper.divide(Math.max(DateHelper.diffInDays(new Date(1507478400000l), new Date(1504972800000l), false), 0),
                 DateHelper.diffInDays(new Date(1507564800000l), new Date(1504972800000l), false)));
     }
 
@@ -1529,6 +1531,11 @@ public class TransferBizImpl implements TransferBiz {
      * @return
      */
     private ResponseEntity<VoBaseResp> transferConditionCheck(Tender tender, Borrow borrow, long userId) {
+        if (borrow.getIsNovice()) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "新手标暂不支持转让，敬请期待!"));
+        }
         if (userId != tender.getUserId()) {
             return ResponseEntity
                     .badRequest()
@@ -1594,6 +1601,20 @@ public class TransferBizImpl implements TransferBiz {
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "这笔投资回款处理中，暂时无法债权转让操作!"));
         }
 
+        //判断是否已有至少一期回款已回款
+        Specification<BorrowCollection> bcs = Specifications
+                .<BorrowCollection>and()
+                .eq("tenderId", tender.getId())
+                .eq("status", 1)
+                .build();
+        count = borrowCollectionService.count(bcs);
+        if (count < 1) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "债权至少要一期已回款,才能转让!"));
+        }
+
+        //判断用户存管信息
         UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(tender.getUserId());
         return ThirdAccountHelper.allConditionCheck(userThirdAccount);
     }
@@ -1615,11 +1636,11 @@ public class TransferBizImpl implements TransferBiz {
                 .eq("status", 0)
                 .build();
         List<BorrowCollection> borrowCollections = borrowCollectionService.findList(bcs, new Sort(Sort.Direction.ASC, "id"));
-        Preconditions.checkNotNull(borrowCollections, "获取立即转让详情: 还款计划查询失败!");
+        Preconditions.checkState(!CollectionUtils.isEmpty(borrowCollections), "获取立即转让详情: 还款计划查询失败!");
         borrowCollections = borrowCollections.stream().filter(w -> w.getStatus() == BorrowCollectionContants.STATUS_NO).collect(Collectors.toList());
         BorrowCollection borrowCollection = borrowCollections.get(0);
         Borrow borrow = borrowService.findById(tender.getBorrowId());
-        Preconditions.checkNotNull(borrowCollections, "获取立即转让详情: 获取投资的标的信息失败!");
+        Preconditions.checkState(!CollectionUtils.isEmpty(borrowCollections), "获取立即转让详情: 获取投资的标的信息失败!");
         String repayFashionStr = "";
         switch (borrow.getRepayFashion()) {
             case BorrowContants.REPAY_FASHION_AYFQ_NUM:
@@ -1635,17 +1656,10 @@ public class TransferBizImpl implements TransferBiz {
         }
         long money = borrowCollections.stream().mapToLong(borrowCollectionItem -> borrowCollectionItem.getPrincipal()).sum(); // 待汇款本金
         //转让费用
-        BorrowCollection firstBorrowCollection = borrowCollections.get(0);
-        long interest = firstBorrowCollection.getInterest();/* 当期理论应计利息 */
-        Date startAt = DateHelper.beginOfDate(ObjectUtils.isEmpty(firstBorrowCollection.getStartAt()) ? firstBorrowCollection.getStartAtYes() : firstBorrowCollection.getStartAt());//理论开始计息时间
-        Date collectionAt = DateHelper.beginOfDate(firstBorrowCollection.getCollectionAt());//理论结束还款时间
-        Date startAtYes = DateHelper.beginOfDate(firstBorrowCollection.getStartAtYes());//实际开始计息时间
-        Date endAt = DateHelper.beginOfDate(new Date());//结束计息时间
-
-        /* 当期应计利息 */
-        double transferFeeRatio = MoneyHelper.divide(Math.max(DateHelper.diffInDays(endAt, startAtYes, false), 0) ,
-                DateHelper.diffInDays(collectionAt, startAt, false));
-        long alreadyInterest = Math.round(interest * transferFeeRatio);
+        // 0.4% + 0.08% * (剩余期限-1)  （费率最高上限为1.28%）
+        double rate = 0.004 + 0.0008 * (borrowCollections.size() - 1);
+        rate = Math.min(rate, 0.0128);
+        Double fee = money * rate;  // 费用
 
         int day = DateHelper.diffInDays(borrowCollection.getCollectionAt(), new Date(), false);
         day = day < 0 ? 0 : day;
@@ -1658,7 +1672,7 @@ public class TransferBizImpl implements TransferBiz {
         voGoTenderInfo.setRepayFashionStr(repayFashionStr);
         voGoTenderInfo.setTimeLimit(String.valueOf(borrowCollections.size()) + "个月");
         voGoTenderInfo.setMoney(StringHelper.formatDouble(money, 100.0, true));
-        voGoTenderInfo.setFee(StringHelper.formatDouble(alreadyInterest, 100.0, true));
+        voGoTenderInfo.setFee(StringHelper.formatDouble(fee, 100.0, true));
         return ResponseEntity.ok(voGoTenderInfo);
     }
 
@@ -2014,7 +2028,7 @@ public class TransferBizImpl implements TransferBiz {
                 .in("state", 0, 1)
                 .build();
         List<Transfer> list = transferService.findList(ts);
-        Preconditions.checkNotNull(list, "取消债权转让: 查询转让记录为空");
+        Preconditions.checkState(!CollectionUtils.isEmpty(list), "取消债权转让: 查询转让记录为空");
         Transfer transfer = list.get(0);
 
         // 获取投标记录
@@ -2102,6 +2116,42 @@ public class TransferBizImpl implements TransferBiz {
         } catch (Exception e) {
             return null;
         }
+    }
 
+    /**
+     * 结束债权转让第三方转让债权
+     *
+     * @return
+     */
+    public ResponseEntity<VoBaseResp> endPcThirdTransferTender(VoPcEndThirdTransferTender voPcEndThirdTransferTender) {
+        String paramStr = voPcEndThirdTransferTender.getParamStr();
+        if (!SecurityHelper.checkSign(voPcEndThirdTransferTender.getSign(), paramStr)) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "结束债权转让第三方转让债权 签名验证不通过!"));
+        }
+
+        Map<String, String> paramMap = new Gson().fromJson(paramStr, TypeTokenContants.MAP_ALL_STRING_TOKEN);
+        Long transferId = NumberHelper.toLong(paramMap.get("transferId"));
+        /*债权转让记录*/
+        Transfer transfer = transferService.findById(transferId);
+        Preconditions.checkNotNull(transfer, "债权转让记录不存在!");
+        if (transfer.getIsAll() && transfer.getTransferMoneyYes() >= transfer.getTransferMoney() && transfer.getState().intValue() == 2) {
+            //推送队列结束债权转让第三方转让债权
+            MqConfig mqConfig = new MqConfig();
+            mqConfig.setQueue(MqQueueEnum.RABBITMQ_CREDIT);
+            mqConfig.setTag(MqTagEnum.END_CREDIT_BY_TRANSFER);
+            mqConfig.setSendTime(DateHelper.addMinutes(new Date(), 1));
+            ImmutableMap<String, String> body = ImmutableMap
+                    .of(MqConfig.MSG_BORROW_ID, StringHelper.toString(transfer.getBorrowId()), MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
+            mqConfig.setMsg(body);
+            try {
+                log.info(String.format("thirdBatchProvider endPcThirdTransferTender send mq %s", GSON.toJson(body)));
+                mqHelper.convertAndSend(mqConfig);
+            } catch (Throwable e) {
+                log.error("thirdBatchProvider endPcThirdTransferTender send mq exception", e);
+            }
+        }
+        return ResponseEntity.ok(VoBaseResp.ok("结束债权转让存管债权成功!"));
     }
 }

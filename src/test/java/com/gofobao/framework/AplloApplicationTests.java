@@ -129,8 +129,6 @@ public class AplloApplicationTests {
     MqHelper mqHelper;
 
     @Autowired
-    private BorrowBiz borrowBiz;
-    @Autowired
     private BorrowService borrowService;
     @Autowired
     private TransferService transferService;
@@ -688,17 +686,15 @@ public class AplloApplicationTests {
     @Autowired
     private TransferBiz transferBiz;
 
+    @Autowired
+    private BorrowBiz borrowBiz;
+
     @Test
     @Transactional(rollbackFor = Exception.class)
     public void test() {
-
+        Borrow borrow = borrowService.findById(182001l);
         try {
-            VoRepayReq voRepayReq = new VoRepayReq();
-            voRepayReq.setRepaymentId(188277l);
-            voRepayReq.setUserId(13724l);
-            voRepayReq.setIsUserOpen(true);
-            voRepayReq.setInterestPercent(0d);
-            repaymentBiz.newRepay(voRepayReq);
+            borrowBiz.borrowAgainVerify(borrow, "000000");
         } catch (Exception e) {
             e.printStackTrace();
         }

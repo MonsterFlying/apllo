@@ -177,7 +177,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
                 .build();
 
         List<Tender> tenderList = tenderService.findList(ts);
-        Preconditions.checkNotNull(tenderList, "理财计划批次放款调用: 投标记录为空");
+        Preconditions.checkState(!CollectionUtils.isEmpty(tenderList), "理财计划批次放款调用: 投标记录为空");
         Borrow borrow = borrowService.findById(borrowId);
         Preconditions.checkNotNull(borrow, "理财计划批次放款调用: 标的信息为空 ");
         UserThirdAccount takeUserThirdAccount = userThirdAccountService.findByUserId(borrow.getUserId());// 收款人存管账户记录
@@ -421,7 +421,8 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
         //触发处理理财计划批次放款处理结果队列
         try {
             //批次执行问题
-            thirdBatchDealBiz.batchDeal(NumberHelper.toLong(acqResMap.get("borrowId")), lendRepayRunResp.getBatchNo(), lendRepayRunResp.getAcqRes(), GSON.toJson(lendRepayRunResp));
+            thirdBatchDealBiz.batchDeal(NumberHelper.toLong(acqResMap.get("borrowId")), lendRepayRunResp.getBatchNo(),
+                    ThirdBatchLogContants.BATCH_FINANCE_LEND_REPAY, lendRepayRunResp.getAcqRes(), GSON.toJson(lendRepayRunResp));
         } catch (Exception e) {
             log.error("批次执行异常:", e);
         }
@@ -447,7 +448,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
                 .build();
 
         List<Tender> tenderList = tenderService.findList(ts);
-        Preconditions.checkNotNull(tenderList, "批次放款调用: 投标记录为空");
+        Preconditions.checkState(!CollectionUtils.isEmpty(tenderList), "批次放款调用: 投标记录为空");
 
         Borrow borrow = borrowService.findById(borrowId);
         Preconditions.checkNotNull(borrow, "批次放款调用: 标的信息为空 ");
@@ -541,7 +542,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
             batchLendPayReq.setSubPacks(GSON.toJson(lendPayList));
             // BatchLendPayResp batchLendPayResp = jixinManager.send(JixinTxCodeEnum.BATCH_LEND_REPAY, batchLendPayReq, BatchLendPayResp.class);
             BatchLendPayResp batchLendPayResp = safetyLend(batchLendPayReq);  // 安全放款
-            data = gson.toJson(batchLendPayReq) ;
+            data = gson.toJson(batchLendPayReq);
             log.info("==============================");
             log.info(String.format("批次放款请求， 数据[%s]", data));
             log.info("==============================");
@@ -1056,7 +1057,8 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
         //触发处理批次放款处理结果队列
         try {
             //批次执行问题
-            thirdBatchDealBiz.batchDeal(NumberHelper.toLong(acqResMap.get("repaymentId")), StringHelper.toString(repayRunResp.getBatchNo()), repayRunResp.getAcqRes(), GSON.toJson(repayRunResp));
+            thirdBatchDealBiz.batchDeal(NumberHelper.toLong(acqResMap.get("repaymentId")), StringHelper.toString(repayRunResp.getBatchNo()),
+                    ThirdBatchLogContants.BATCH_REPAY, repayRunResp.getAcqRes(), GSON.toJson(repayRunResp));
         } catch (Exception e) {
             log.error("批次执行异常:", e);
         }
@@ -1132,7 +1134,8 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
         //触发处理批次放款处理结果队列
         try {
             //批次执行问题
-            thirdBatchDealBiz.batchDeal(NumberHelper.toLong(acqResMap.get("borrowId")), lendRepayRunResp.getBatchNo(), lendRepayRunResp.getAcqRes(), GSON.toJson(lendRepayRunResp));
+            thirdBatchDealBiz.batchDeal(NumberHelper.toLong(acqResMap.get("borrowId")), lendRepayRunResp.getBatchNo(),
+                    ThirdBatchLogContants.BATCH_LEND_REPAY, lendRepayRunResp.getAcqRes(), GSON.toJson(lendRepayRunResp));
         } catch (Exception e) {
             log.error("批次执行异常:", e);
         }
@@ -1195,7 +1198,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
                 .eq("borrowId", borrowRepayment.getBorrowId())
                 .build();
         List<Tender> tenderList = tenderService.findList(specification);
-        Preconditions.checkNotNull(tenderList, "投资人投标信息不存在!");
+        Preconditions.checkState(!CollectionUtils.isEmpty(tenderList), "投资人投标信息不存在!");
         /* 投资记录id集合 */
         List<Long> tenderIds = tenderList.stream().map(tender -> tender.getId()).collect(Collectors.toList());
         Map<Long, Tender> tenderMaps = tenderList.stream().collect(Collectors.toMap(Tender::getId, Function.identity()));
@@ -1208,7 +1211,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
                 .eq("transferFlag", 0)
                 .build();
         List<BorrowCollection> borrowCollectionList = borrowCollectionService.findList(bcs);
-        Preconditions.checkNotNull("投资回款记录不存在!");
+        Preconditions.checkState(!CollectionUtils.isEmpty(borrowCollectionList), "投资回款记录不存在!");
         //查询债权转让记录
         Specification<Transfer> transferSpecification = Specifications
                 .<Transfer>and()
@@ -1315,26 +1318,11 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
         //触发批次名义借款人垫付业务处理队列
         try {
             //批次执行问题
-            thirdBatchDealBiz.batchDeal(NumberHelper.toLong(acqResMap.get("borrowId")), batchBailRepayRunResp.getBatchNo(), batchBailRepayRunResp.getAcqRes(), GSON.toJson(batchBailRepayRunResp));
+            thirdBatchDealBiz.batchDeal(NumberHelper.toLong(acqResMap.get("borrowId")), batchBailRepayRunResp.getBatchNo(),
+                    ThirdBatchLogContants.BATCH_BAIL_REPAY, batchBailRepayRunResp.getAcqRes(), GSON.toJson(batchBailRepayRunResp));
         } catch (Exception e) {
             log.error("批次执行异常:", e);
         }
-
-        /*// 触发批次名义借款人垫付业务处理队列
-        MqConfig mqConfig = new MqConfig();
-        mqConfig.setQueue(MqQueueEnum.RABBITMQ_THIRD_BATCH);
-        mqConfig.setTag(MqTagEnum.BATCH_DEAL);
-        ImmutableMap<String, String> body = ImmutableMap
-                .of(MqConfig.SOURCE_ID, StringHelper.toString(acqResMap.get("repaymentId")),
-                        MqConfig.BATCH_NO, StringHelper.toString(batchBailRepayRunResp.getBatchNo()),
-                        MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
-        mqConfig.setMsg(body);
-        try {
-            log.info(String.format("borrowRepaymentThirdBizImpl thirdBatchAdvanceRunCall send mq %s", GSON.toJson(body)));
-            mqHelper.convertAndSend(mqConfig);
-        } catch (Throwable e) {
-            log.error("borrowRepaymentThirdBizImpl thirdBatchAdvanceRunCall send mq exception", e);
-        }*/
 
         return ResponseEntity.ok("success");
     }
@@ -1368,67 +1356,6 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
             });
             transferBuyLogService.save(transferBuyLogList);
         } while (transferBuyLogList.size() >= maxPageSize);
-    }
-
-    /**
-     * 批次融资人还名义借款人账户垫款业务处理回调
-     *
-     * @param request
-     * @param response
-     */
-    public ResponseEntity<String> thirdBatchRepayAdvanceRunCall(HttpServletRequest request, HttpServletResponse response) {
-        BatchRepayBailRunResp batchRepayBailRunResp = jixinManager.callback(request, new TypeToken<BatchRepayBailRunResp>() {
-        });
-        Map<String, Object> acqResMap = GSON.fromJson(batchRepayBailRunResp.getAcqRes(), TypeTokenContants.MAP_TOKEN);
-
-        if (ObjectUtils.isEmpty(batchRepayBailRunResp)) {
-            log.error("========================================批次回调============================================");
-            log.error("=============================批次融资人还名义借款人账户垫款业务处理回调===========================");
-            log.error("请求体为空!");
-            log.error("============================================================================================");
-            log.error("============================================================================================");
-        }
-
-        if (!JixinResultContants.SUCCESS.equals(batchRepayBailRunResp.getRetCode())) {
-            log.error("========================================批次回调============================================");
-            log.error("=============================批次融资人还名义借款人账户垫款业务处理回调===========================");
-            log.error("回调失败! msg:" + batchRepayBailRunResp.getRetMsg());
-            log.error("============================================================================================");
-            log.error("============================================================================================");
-        } else {
-            log.error("========================================批次回调============================================");
-            log.error("=============================批次融资人还名义借款人账户垫款业务处理回调===========================");
-            log.info("回调成功!");
-            log.error("============================================================================================");
-            log.error("============================================================================================");
-        }
-
-        //触发处理批次处理结果队列
-        try {
-            //批次执行问题
-            thirdBatchDealBiz.batchDeal(NumberHelper.toLong(acqResMap.get("repaymentId")), batchRepayBailRunResp.getBatchNo(),
-                    batchRepayBailRunResp.getAcqRes(), GSON.toJson(batchRepayBailRunResp));
-        } catch (Exception e) {
-            log.error("批次执行异常:", e);
-        }
-        /*
-        MqConfig mqConfig = new MqConfig();
-        mqConfig.setQueue(MqQueueEnum.RABBITMQ_THIRD_BATCH);
-        mqConfig.setTag(MqTagEnum.BATCH_DEAL);
-        ImmutableMap<String, String> body = ImmutableMap
-                .of(MqConfig.SOURCE_ID, StringHelper.toString(acqResMap.get("repaymentId")),
-                        MqConfig.ACQ_RES, batchRepayBailRunResp.getAcqRes(),
-                        MqConfig.BATCH_NO, StringHelper.toString(batchRepayBailRunResp.getBatchNo()),
-                        MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
-        mqConfig.setMsg(body);
-        try {
-            log.info(String.format("tenderThirdBizImpl thirdBatchRepayAdvanceRunCall send mq %s", GSON.toJson(body)));
-            mqHelper.convertAndSend(mqConfig);
-        } catch (Throwable e) {
-            log.error("tenderThirdBizImpl thirdBatchRepayAdvanceRunCall send mq exception", e);
-        }*/
-
-        return ResponseEntity.ok("success");
     }
 
 }
