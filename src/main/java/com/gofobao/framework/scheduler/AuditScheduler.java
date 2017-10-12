@@ -39,7 +39,7 @@ public class AuditScheduler {
     /**
      * 自动投标
      */
-   // @Scheduled(cron = "0 0 5 * * ?")
+   @Scheduled(cron = "0 0 5 * * ?")
     public void process() {
         String date = jixinTxDateHelper.getSubDateStr(1);
         log.info("=======================================");
