@@ -47,14 +47,16 @@ public class BorrowRepayScanduler {
         borrowRepay();
     }
 
-    //@Scheduled(cron = "0 00 23 * * ? ")
-    public void process01() {
-        borrowRepay();
+    /**
+     * 发送还款短信站内信提醒
+     */
+    public void sendRepayMassage() {
+        //规则：
     }
 
     //@Transactional(rollbackOn = Exception.class)
     private void borrowRepay() {
-        log.info("");
+        log.info("进入批次还款任务调度");
         Specification<BorrowRepayment> brs = Specifications
                 .<BorrowRepayment>and()
                 .eq("status", 0)

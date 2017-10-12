@@ -1584,7 +1584,7 @@ public class AssetBizImpl implements AssetBiz {
             Preconditions.checkNotNull(userThirdAccount, "线下充值, 当前开户信息为空");
             Long userId = userThirdAccount.getUserId();
             Users users = userService.findByIdLock(userId);
-            Preconditions.checkNotNull(users) ;
+            Preconditions.checkNotNull(users,"会员记录不存在!") ;
             Date nowDate = new Date();
             Date synDate = DateHelper.stringToDate(orgTxDate, DateHelper.DATE_FORMAT_YMD_NUM);
             // 写入线下充值日志

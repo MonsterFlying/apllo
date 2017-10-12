@@ -229,12 +229,12 @@ public class TestController {
         /* 购买债权转让orderId */
         String transferOrderId = JixinHelper.getOrderId(JixinHelper.LEND_REPAY_PREFIX);
         CreditInvest creditInvest = new CreditInvest();
-        creditInvest.setAccountId("6212462190000762844");
+        creditInvest.setAccountId("6212462190000131545");
         creditInvest.setOrderId(transferOrderId);
         creditInvest.setTxAmount(StringHelper.formatDouble(145069l, 100, false));
         creditInvest.setTxFee(StringHelper.formatDouble(0, 100, false));
         creditInvest.setTsfAmount(StringHelper.formatDouble(transferBuyLog.getPrincipal(), 100, false));
-        creditInvest.setForAccountId("6212462190000131545");
+        creditInvest.setForAccountId("6212462190000762844");
         creditInvest.setOrgOrderId("GFBLR_1507627271008185612238");
         creditInvest.setOrgTxAmount(StringHelper.formatDouble(145069l, 100, false));
         creditInvest.setProductId("163041");

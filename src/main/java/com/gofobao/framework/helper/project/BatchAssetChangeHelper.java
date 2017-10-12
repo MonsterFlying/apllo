@@ -22,6 +22,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Component;
+import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 
 import java.util.Date;
@@ -80,7 +81,7 @@ public class BatchAssetChangeHelper {
                 .in("state", 0, 1)
                 .build();
         List<BatchAssetChange> batchAssetChangeList = batchAssetChangeService.findList(bacs);
-        Preconditions.checkNotNull(batchAssetChangeList, batchNo + "债权转让资金变动记录不存在!");
+        Preconditions.checkState(!CollectionUtils.isEmpty(batchAssetChangeList), batchNo + "债权转让资金变动记录不存在!");
         BatchAssetChange batchAssetChange = batchAssetChangeList.get(0);/* 债权转让资金变动记录 */
         if (batchAssetChange.getState() == 1) {
             log.error(String.format("资金变动未已完成!请检查资金是否变动：%s", GSON.toJson(batchAssetChange)));
@@ -93,7 +94,7 @@ public class BatchAssetChangeHelper {
                 .eq("state", 0)
                 .build();
         List<BatchAssetChangeItem> batchAssetChangeItemList = batchAssetChangeItemService.findList(bacis);
-        Preconditions.checkNotNull(batchAssetChangeItemList, batchNo + "债权转让资金变动子记录不存在!");
+        Preconditions.checkState(!CollectionUtils.isEmpty(batchAssetChangeItemList), batchNo + "债权转让资金变动子记录不存在!");
 
         // 所有的资金变动
         for (BatchAssetChangeItem item : batchAssetChangeItemList) {

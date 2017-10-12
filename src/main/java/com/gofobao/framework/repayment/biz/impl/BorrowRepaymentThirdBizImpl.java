@@ -177,7 +177,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
                 .build();
 
         List<Tender> tenderList = tenderService.findList(ts);
-        Preconditions.checkNotNull(tenderList, "理财计划批次放款调用: 投标记录为空");
+        Preconditions.checkState(!CollectionUtils.isEmpty(tenderList), "理财计划批次放款调用: 投标记录为空");
         Borrow borrow = borrowService.findById(borrowId);
         Preconditions.checkNotNull(borrow, "理财计划批次放款调用: 标的信息为空 ");
         UserThirdAccount takeUserThirdAccount = userThirdAccountService.findByUserId(borrow.getUserId());// 收款人存管账户记录
@@ -448,7 +448,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
                 .build();
 
         List<Tender> tenderList = tenderService.findList(ts);
-        Preconditions.checkNotNull(tenderList, "批次放款调用: 投标记录为空");
+        Preconditions.checkState(!CollectionUtils.isEmpty(tenderList), "批次放款调用: 投标记录为空");
 
         Borrow borrow = borrowService.findById(borrowId);
         Preconditions.checkNotNull(borrow, "批次放款调用: 标的信息为空 ");
@@ -1198,7 +1198,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
                 .eq("borrowId", borrowRepayment.getBorrowId())
                 .build();
         List<Tender> tenderList = tenderService.findList(specification);
-        Preconditions.checkNotNull(tenderList, "投资人投标信息不存在!");
+        Preconditions.checkState(!CollectionUtils.isEmpty(tenderList), "投资人投标信息不存在!");
         /* 投资记录id集合 */
         List<Long> tenderIds = tenderList.stream().map(tender -> tender.getId()).collect(Collectors.toList());
         Map<Long, Tender> tenderMaps = tenderList.stream().collect(Collectors.toMap(Tender::getId, Function.identity()));
@@ -1211,7 +1211,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
                 .eq("transferFlag", 0)
                 .build();
         List<BorrowCollection> borrowCollectionList = borrowCollectionService.findList(bcs);
-        Preconditions.checkNotNull("投资回款记录不存在!");
+        Preconditions.checkState(!CollectionUtils.isEmpty(borrowCollectionList), "投资回款记录不存在!");
         //查询债权转让记录
         Specification<Transfer> transferSpecification = Specifications
                 .<Transfer>and()

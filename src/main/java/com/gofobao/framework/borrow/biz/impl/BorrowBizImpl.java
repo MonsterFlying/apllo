@@ -933,7 +933,7 @@ public class BorrowBizImpl implements BorrowBiz {
                 .eq("status", 1)
                 .build();
         List<Tender> tenderList = tenderService.findList(ts);
-        Preconditions.checkNotNull(tenderList, "理财计划生成还款记录: 投标记录为空");
+        Preconditions.checkState(!CollectionUtils.isEmpty(tenderList), "理财计划生成还款记录: 投标记录为空");
         String groupSeqNo = assetChangeProvider.getGroupSeqNo();
         // 这里涉及用户投标回款计划生成和平台资金的变动
         generateBorrowCollectionAndAssetChange(borrow, borrowRepaymentList, tenderList, nowDate, groupSeqNo);
@@ -985,7 +985,7 @@ public class BorrowBizImpl implements BorrowBiz {
                 .eq("status", 1)
                 .build();
         List<Tender> tenderList = tenderService.findList(ts);
-        Preconditions.checkNotNull(tenderList, "生成还款记录: 投标记录为空");
+        Preconditions.checkState(!CollectionUtils.isEmpty(tenderList), "生成还款记录: 投标记录为空");
         String groupSeqNo = assetChangeProvider.getGroupSeqNo();
         // 这里涉及用户投标回款计划生成和平台资金的变动
         generateBorrowCollectionAndAssetChange(borrow, borrowRepaymentList, tenderList, nowDate, groupSeqNo);
@@ -1209,7 +1209,7 @@ public class BorrowBizImpl implements BorrowBiz {
                     NumberHelper.toDouble(StringHelper.toString(borrow.getApr())), borrow.getTimeLimit(), startAt);
             Map<String, Object> rsMap = borrowCalculatorHelper.simpleCount(borrow.getRepayFashion());
             List<Map<String, Object>> repayDetailList = (List<Map<String, Object>>) rsMap.get("repayDetailList");
-            Preconditions.checkNotNull(repayDetailList, "生成用户回款计划开始: 计划生成为空");
+            Preconditions.checkState(!CollectionUtils.isEmpty(repayDetailList), "生成用户回款计划开始: 计划生成为空");
             long countInterest = 0;
             for (int i = 0; i < repayDetailList.size(); i++) {
                 Map<String, Object> repayDetailMap = repayDetailList.get(i);
@@ -1394,7 +1394,7 @@ public class BorrowBizImpl implements BorrowBiz {
                     NumberHelper.toDouble(StringHelper.toString(borrow.getApr())), borrow.getTimeLimit(), borrowDate);
             Map<String, Object> rsMap = borrowCalculatorHelper.simpleCount(borrow.getRepayFashion());
             List<Map<String, Object>> repayDetailList = (List<Map<String, Object>>) rsMap.get("repayDetailList");
-            Preconditions.checkNotNull(repayDetailList, "生成用户回款计划开始: 计划生成为空");
+            Preconditions.checkState(!CollectionUtils.isEmpty(repayDetailList), "生成用户回款计划开始: 计划生成为空");
             log.info(String.format("回款计划参数: %s", gson.toJson(repayDetailList)));
             BorrowCollection borrowCollection;
             int collectionMoney = 0;
@@ -1858,7 +1858,7 @@ public class BorrowBizImpl implements BorrowBiz {
 
             if (borrow.getIsNovice()) {  // 新手
                 releaseAt = DateHelper.max(DateHelper.addHours(DateHelper.beginOfDate(nowDate), 20), borrow.getReleaseAt());
-                if (DateHelper.getHour(nowDate) >= 20) {
+                if (DateHelper.getDate(nowDate) >= 20) {
                     releaseAt = DateHelper.addDays(releaseAt, 1);
                 }
             }

@@ -383,7 +383,7 @@ public class MarketingProcessBizImpl implements MarketingProcessBiz {
     private void filterDataByCondition(List<Marketing> marketings, MarketingData marketingData) throws Exception {
         List<Long> marketingidList = marketings.stream().map(marketing -> marketing.getId()).collect(Collectors.toList());
         List<MarketingCondition> marketingConditions = marketingConditionService.findBymarketingIdInAndDel(marketingidList, 0);
-        Preconditions.checkNotNull(marketingConditions, "MarketingProcessBizImpl.filterDataByCondition marketingConditions is null");
+        Preconditions.checkState(!CollectionUtils.isEmpty(marketingConditions), "MarketingProcessBizImpl.filterDataByCondition marketingConditions is null");
         Map<Long, MarketingCondition> conditionMap = marketingConditions
                 .stream()
                 .collect(Collectors.toMap(MarketingCondition::getMarketingId, Function.identity()));
@@ -538,7 +538,7 @@ public class MarketingProcessBizImpl implements MarketingProcessBiz {
         String marketingDataStr = gson.toJson(marketingData);
         List<Long> marketingidList = marketings.stream().map(marketing -> marketing.getId()).collect(Collectors.toList());
         List<MarketingDimentsion> marketingDimentsionList = marketingDimentsionService.findBymarketingIdInAndDel(marketingidList, 0);
-        Preconditions.checkNotNull(marketingDimentsionList, "MarketingProcessBizImpl.filterDataByDimension marketingDimentsionList is null ");
+        Preconditions.checkState(!CollectionUtils.isEmpty(marketingDimentsionList), "MarketingProcessBizImpl.filterDataByDimension marketingDimentsionList is null ");
         Map<Long, MarketingDimentsion> dimentsionMap = marketingDimentsionList
                 .stream()
                 .collect(Collectors.toMap(MarketingDimentsion::getMarketingId, Function.identity()));
