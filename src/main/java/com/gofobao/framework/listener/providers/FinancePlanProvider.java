@@ -135,7 +135,7 @@ public class FinancePlanProvider {
             //触发处理批次放款处理结果队列
             try {
                 //批次执行问题
-                thirdBatchDealBiz.batchDeal(thirdBatchLog.getSourceId(), thirdBatchLog.getBatchNo(),
+                thirdBatchDealBiz.batchDeal(thirdBatchLog.getSourceId(), thirdBatchLog.getBatchNo(), thirdBatchLog.getType(),
                         thirdBatchLog.getAcqRes(), "");
             } catch (Exception e) {
                 log.error("financePlanProvider againVerifyFinanceTransfer 批次处理执行异常:", e);

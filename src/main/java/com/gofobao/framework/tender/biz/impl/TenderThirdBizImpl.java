@@ -274,7 +274,7 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
         try {
             //批次执行问题
             thirdBatchDealBiz.batchDeal(NumberHelper.toLong(acqResMap.get("transferId")), batchCreditInvestRunCall.getBatchNo(),
-                    batchCreditInvestRunCall.getAcqRes(), GSON.toJson(batchCreditInvestRunCall));
+                    ThirdBatchLogContants.BATCH_FINANCE_CREDIT_INVEST, batchCreditInvestRunCall.getAcqRes(), GSON.toJson(batchCreditInvestRunCall));
         } catch (Exception e) {
             log.error("批次执行异常:", e);
         }
@@ -442,13 +442,13 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
         if (!JixinResultContants.SUCCESS.equals(batchCreditInvestCheckCall.getRetCode())) {
             log.error("=============================即信投资人批次购买债权参数验证回调===========================");
             log.error("回调失败! msg:" + batchCreditInvestCheckCall.getRetMsg());
-            thirdBatchLogBiz.updateBatchLogState(batchCreditInvestCheckCall.getBatchNo(), transferId, 2, ThirdBatchLogContants.BATCH_FINANCE_CREDIT_INVEST);
+            thirdBatchLogBiz.updateBatchLogState(batchCreditInvestCheckCall.getBatchNo(), transferId, 2, ThirdBatchLogContants.BATCH_CREDIT_INVEST);
             ResponseEntity.ok("error");
         } else {
             log.error("=============================即信投资人批次购买债权参数验证回调===========================");
             log.error("回调成功!");
             //更新批次状态
-            thirdBatchLogBiz.updateBatchLogState(batchCreditInvestCheckCall.getBatchNo(), transferId, 1, ThirdBatchLogContants.BATCH_FINANCE_CREDIT_INVEST);
+            thirdBatchLogBiz.updateBatchLogState(batchCreditInvestCheckCall.getBatchNo(), transferId, 1, ThirdBatchLogContants.BATCH_CREDIT_INVEST);
         }
 
         return ResponseEntity.ok("success");
@@ -496,7 +496,7 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
         try {
             //批次执行问题
             thirdBatchDealBiz.batchDeal(NumberHelper.toLong(acqResMap.get("transferId")), batchCreditInvestRunCall.getBatchNo(),
-                    batchCreditInvestRunCall.getAcqRes(), GSON.toJson(batchCreditInvestRunCall));
+                    ThirdBatchLogContants.BATCH_CREDIT_INVEST, batchCreditInvestRunCall.getAcqRes(), GSON.toJson(batchCreditInvestRunCall));
         } catch (Exception e) {
             log.error("批次执行异常:", e);
         }
@@ -651,27 +651,10 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
         try {
             //批次执行问题
             thirdBatchDealBiz.batchDeal(NumberHelper.toLong(acqResMap.get("borrowId")), batchCreditInvestRunCall.getBatchNo(),
-                    batchCreditInvestRunCall.getAcqRes(), GSON.toJson(batchCreditInvestRunCall));
+                    ThirdBatchLogContants.BATCH_CREDIT_END, batchCreditInvestRunCall.getAcqRes(), GSON.toJson(batchCreditInvestRunCall));
         } catch (Exception e) {
             log.error("批次执行异常:", e);
         }
-
-/*
-        MqConfig mqConfig = new MqConfig();
-        mqConfig.setQueue(MqQueueEnum.RABBITMQ_THIRD_BATCH);
-        mqConfig.setTag(MqTagEnum.BATCH_DEAL);
-        ImmutableMap<String, String> body = ImmutableMap
-                .of(MqConfig.SOURCE_ID, StringHelper.toString(acqResMap.get("borrowId")),
-                        MqConfig.BATCH_NO, StringHelper.toString(batchCreditInvestRunCall.getBatchNo()),
-                        MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
-        mqConfig.setMsg(body);
-        try {
-            log.info(String.format("tenderThirdBizImpl thirdBatchCreditEndRunCall send mq %s", GSON.toJson(body)));
-            mqHelper.convertAndSend(mqConfig);
-        } catch (Throwable e) {
-            log.error("tenderThirdBizImpl thirdBatchCreditEndRunCall send mq exception", e);
-        }
-*/
 
         return ResponseEntity.ok("success");
     }

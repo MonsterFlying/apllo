@@ -219,7 +219,7 @@ public class BorrowBizImpl implements BorrowBiz {
         } else if (flag == ThirdBatchLogContants.SUCCESS) {
             try {
                 //批次执行问题
-                thirdBatchDealBiz.batchDeal(thirdBatchLog.getSourceId(), thirdBatchLog.getBatchNo(), thirdBatchLog.getAcqRes(), "");
+                thirdBatchDealBiz.batchDeal(thirdBatchLog.getSourceId(), thirdBatchLog.getBatchNo(), thirdBatchLog.getType(), thirdBatchLog.getAcqRes(), "");
             } catch (Exception e) {
                 log.error("批次执行异常:", e);
             }
@@ -918,7 +918,7 @@ public class BorrowBizImpl implements BorrowBiz {
      * @throws Exception
      */
     @Transactional(rollbackFor = Throwable.class)
-    public boolean financeBorrowAgainVerify(Borrow borrow, String batchNo, Statistic statistic) throws Exception {
+    public boolean financeBorrowAgainVerify(Borrow borrow, String batchNo) throws Exception {
         if ((ObjectUtils.isEmpty(borrow)) || (borrow.getStatus() != 1)
                 || (!StringHelper.toString(borrow.getMoney()).equals(StringHelper.toString(borrow.getMoneyYes())))) {
             return false;
@@ -958,7 +958,7 @@ public class BorrowBizImpl implements BorrowBiz {
         // 满标操作
         finishBorrow(borrow);
         //更新总统计
-        fillStatisticByBorrowReview(borrow, borrowRepaymentList, statistic);
+        fillStatisticByBorrowReview(borrow, borrowRepaymentList);
         return true;
     }
 
@@ -970,7 +970,7 @@ public class BorrowBizImpl implements BorrowBiz {
      * @throws Exception
      */
     @Transactional(rollbackFor = Throwable.class)
-    public boolean borrowAgainVerify(Borrow borrow, String batchNo, Statistic statistic) throws Exception {
+    public boolean borrowAgainVerify(Borrow borrow, String batchNo) throws Exception {
         if ((ObjectUtils.isEmpty(borrow)) || (borrow.getStatus() != 1)
                 || (!StringHelper.toString(borrow.getMoney()).equals(StringHelper.toString(borrow.getMoneyYes())))) {
             return false;
@@ -1024,7 +1024,7 @@ public class BorrowBizImpl implements BorrowBiz {
         // 用户投标信息和每日统计
         userTenderStatistic(borrow, tenderList, nowDate);
         //更新总统计
-        fillStatisticByBorrowReview(borrow, borrowRepaymentList, statistic);
+        fillStatisticByBorrowReview(borrow, borrowRepaymentList);
         //借款成功发送通知短信
         smsNoticeByBorrowReview(borrow);
         // 发送投资成功站内信
@@ -1478,9 +1478,9 @@ public class BorrowBizImpl implements BorrowBiz {
             //更新投标状态
             tender.setState(2);
             tender.setUpdatedAt(new Date());
+            tenderService.save(tender);
         }
         borrowRepaymentService.save(borrowRepaymentList);
-        tenderService.save(tenderList);
     }
 
     /**
@@ -1746,7 +1746,8 @@ public class BorrowBizImpl implements BorrowBiz {
      *
      * @param borrow
      */
-    private void fillStatisticByBorrowReview(Borrow borrow, List<BorrowRepayment> borrowRepaymentList, Statistic statistic) {
+    private void fillStatisticByBorrowReview(Borrow borrow, List<BorrowRepayment> borrowRepaymentList) {
+        Statistic statistic = new Statistic();
         if (CollectionUtils.isEmpty(borrowRepaymentList)) {//查询当前借款 还款记录
             return;
         }
@@ -1781,6 +1782,12 @@ public class BorrowBizImpl implements BorrowBiz {
             statistic.setQdBorrowTotal(borrowMoney);
             statistic.setQdWaitRepayPrincipalTotal(principal);
             statistic.setQdWaitRepayTotal(repayMoney);
+        }
+        //提前结清批次还款总统计
+        try {
+            statisticBiz.caculate(statistic);
+        } catch (Exception e) {
+            log.error("fillStatisticByBorrowReview 更新网站统计失败!:", e);
         }
     }
 

@@ -7,8 +7,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.stereotype.Service;
 
+import javax.persistence.LockModeType;
 import java.util.List;
 
 /**
@@ -19,6 +21,11 @@ public class ThirdBatchLogServiceImpl implements ThirdBatchLogService {
 
     @Autowired
     private ThirdBatchLogRepository thirdBatchLogRepository;
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    public ThirdBatchLog findByIdLock(long id){
+        return thirdBatchLogRepository.findOne(id);
+    }
 
     public ThirdBatchLog findById(long id) {
         return thirdBatchLogRepository.findOne(id);

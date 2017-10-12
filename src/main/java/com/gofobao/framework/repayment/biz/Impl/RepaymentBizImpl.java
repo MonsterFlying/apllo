@@ -269,7 +269,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
      *
      * @param borrowId
      */
-    public ResponseEntity<VoBaseResp> repayAllDeal(long borrowId, String batchNo, Statistic statistic) throws Exception {
+    public ResponseEntity<VoBaseResp> repayAllDeal(long borrowId, String batchNo) throws Exception {
         //1.判断借款状态，
         Borrow borrow = borrowService.findByIdLock(borrowId);/* 提前结清操作的借款记录 */
         Preconditions.checkNotNull(borrow, "借款记录不存在!");
@@ -315,7 +315,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
             //6.发放积分
             giveInterest(borrowCollectionList, borrow);
             //7.还款最后新增统计
-            fillRepaymentStatistics(borrow, borrowRepayment, statistic);
+            fillRepaymentStatistics(borrow, borrowRepayment);
             //8.更新投资人缓存
             updateUserCacheByReceivedRepay(borrowCollectionList, borrow);
             //9.变更理财计划参数
@@ -405,7 +405,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
             //结束债权调用处理
             try {
                 //批次执行问题
-                thirdBatchDealBiz.batchDeal(thirdBatchLog.getSourceId(), thirdBatchLog.getBatchNo(),
+                thirdBatchDealBiz.batchDeal(thirdBatchLog.getSourceId(), thirdBatchLog.getBatchNo(), thirdBatchLog.getType(),
                         thirdBatchLog.getAcqRes(), "");
             } catch (Exception e) {
                 log.error("批次执行异常:", e);
@@ -959,7 +959,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
      * @throws Exception
      */
     @Transactional(rollbackFor = Exception.class)
-    public ResponseEntity<VoBaseResp> newRepayDeal(long repaymentId, String batchNo, Statistic statistic) throws Exception {
+    public ResponseEntity<VoBaseResp> newRepayDeal(long repaymentId, String batchNo) throws Exception {
         //1.查询并判断还款记录是否存在!
         BorrowRepayment borrowRepayment = borrowRepaymentService.findByIdLock(repaymentId);/* 当期还款记录 */
         Preconditions.checkNotNull(borrowRepayment, "还款记录不存在!");
@@ -998,7 +998,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
             //6.发放积分
             giveInterest(borrowCollectionList, parentBorrow);
             //7.还款最后新增统计
-            fillRepaymentStatistics(parentBorrow, borrowRepayment, statistic);
+            fillRepaymentStatistics(parentBorrow, borrowRepayment);
             //8.更新投资人缓存
             updateUserCacheByReceivedRepay(borrowCollectionList, parentBorrow);
             //9.变更理财计划参数
@@ -1386,7 +1386,8 @@ public class RepaymentBizImpl implements RepaymentBiz {
      *
      * @param borrowRepayment
      */
-    private void fillRepaymentStatistics(Borrow parentBorrow, BorrowRepayment borrowRepayment, Statistic statistic) {
+    private void fillRepaymentStatistics(Borrow parentBorrow, BorrowRepayment borrowRepayment) {
+        Statistic statistic = new Statistic();
         long repayMoney = borrowRepayment.getRepayMoney();/* 还款金额 */
         long principal = borrowRepayment.getPrincipal();/* 还款本金 */
         statistic.setWaitRepayTotal(-repayMoney);
@@ -1401,6 +1402,12 @@ public class RepaymentBizImpl implements RepaymentBiz {
                 statistic.setQdWaitRepayPrincipalTotal(-principal);
                 statistic.setQdWaitRepayTotal(-repayMoney);
             }
+        }
+        //批次还款总统计
+        try {
+            statisticBiz.caculate(statistic);
+        } catch (Exception e) {
+            log.error("fillStatisticByBorrowReview 更新网站统计失败!:", e);
         }
     }
 
@@ -2284,7 +2291,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
             //触发处理批次放款处理结果队列
             try {
                 //批次执行问题
-                thirdBatchDealBiz.batchDeal(thirdBatchLog.getSourceId(), thirdBatchLog.getBatchNo(),
+                thirdBatchDealBiz.batchDeal(thirdBatchLog.getSourceId(), thirdBatchLog.getBatchNo(), thirdBatchLog.getType(),
                         thirdBatchLog.getAcqRes(), "");
             } catch (Exception e) {
                 log.error("批次执行异常:", e);
@@ -2383,7 +2390,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
             //墊付批次处理
             try {
                 //批次执行问题
-                thirdBatchDealBiz.batchDeal(thirdBatchLog.getSourceId(), thirdBatchLog.getBatchNo(),
+                thirdBatchDealBiz.batchDeal(thirdBatchLog.getSourceId(), thirdBatchLog.getBatchNo(), thirdBatchLog.getType(),
                         thirdBatchLog.getAcqRes(), "");
             } catch (Exception e) {
                 log.error("批次执行异常:", e);
@@ -3053,7 +3060,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
      * @throws Exception
      */
     @Transactional(rollbackFor = Exception.class)
-    public ResponseEntity<VoBaseResp> newAdvanceDeal(long repaymentId, String batchNo, Statistic statistic) throws Exception {
+    public ResponseEntity<VoBaseResp> newAdvanceDeal(long repaymentId, String batchNo) throws Exception {
         //1.查询判断还款记录是否存在
         BorrowRepayment borrowRepayment = borrowRepaymentService.findByIdLock(repaymentId);/* 当期还款记录 */
         Preconditions.checkNotNull(borrowRepayment, "还款记录不存在!");
@@ -3095,7 +3102,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
         //4.发放积分
         giveInterest(borrowCollectionList, parentBorrow);
         //5.还款最后新增统计
-        fillRepaymentStatistics(parentBorrow, borrowRepayment, statistic);
+        fillRepaymentStatistics(parentBorrow, borrowRepayment);
         //6修改垫付原回款状态
         updateCollectionByAdvance(borrowCollectionList);
         //7.更新投资人缓存
