@@ -3,10 +3,7 @@ package com.gofobao.framework.tender.controller.web;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.security.contants.SecurityContants;
 import com.gofobao.framework.tender.biz.TransferBiz;
-import com.gofobao.framework.tender.vo.request.VoEndTransfer;
-import com.gofobao.framework.tender.vo.request.VoPcFirstVerityTransfer;
-import com.gofobao.framework.tender.vo.request.VoTransferReq;
-import com.gofobao.framework.tender.vo.request.VoTransferTenderReq;
+import com.gofobao.framework.tender.vo.request.*;
 import com.gofobao.framework.tender.vo.response.VoGoTenderInfo;
 import com.gofobao.framework.tender.vo.response.VoViewTransferMayWarpRes;
 import com.gofobao.framework.tender.vo.response.VoViewTransferOfWarpRes;
@@ -147,5 +144,14 @@ public class WebTransferController {
         }
     }
 
-
+    /**
+     * 结束债权转让第三方转让债权
+     *
+     * @return
+     */
+    @ApiOperation("结束债权转让第三方转让债权")
+    @PostMapping("/pub/tender/pc/v2/third/end")
+    public ResponseEntity<VoBaseResp> endPcThirdTransferTender(@ModelAttribute VoPcEndThirdTransferTender voPcEndThirdTransferTender){
+        return transferBiz.endPcThirdTransferTender(voPcEndThirdTransferTender);
+    }
 }

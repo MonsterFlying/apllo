@@ -73,12 +73,10 @@ public class WebTenderController {
 
     /**
      * 结束普通第三方债权接口
-     *
-     * @// TODO: 2017/10/11 流转标也开发一下
      */
-    @ApiOperation("借款投标")
+    @ApiOperation("结束普通第三方债权接口")
     @PostMapping("/pub/tender/pc/v2/third/end")
-    public ResponseEntity<VoBaseResp> pcEndThirdTender(VoPcEndThirdTender voPcEndThirdTender) {
+    public ResponseEntity<VoBaseResp> pcEndThirdTender(@ModelAttribute VoPcEndThirdTender voPcEndThirdTender) {
         return tenderBiz.pcEndThirdTender(voPcEndThirdTender);
     }
 }

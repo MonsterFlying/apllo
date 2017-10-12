@@ -648,7 +648,7 @@ public class TenderBizImpl implements TenderBiz {
         if (!SecurityHelper.checkSign(voPcEndThirdTender.getSign(), paramStr)) {
             return ResponseEntity
                     .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, "债权转让初审 签名验证不通过!"));
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "结束普通第三方债权接口 签名验证不通过!"));
         }
 
         Map<String, String> paramMap = new Gson().fromJson(paramStr, TypeTokenContants.MAP_ALL_STRING_TOKEN);
