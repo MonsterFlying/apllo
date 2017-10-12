@@ -56,6 +56,8 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import static java.util.Comparator.comparing;
+
 /**
  * Created by master on 2017/9/28.
  */
@@ -202,7 +204,7 @@ public class StarFireTenderBizImpl implements StarFireTenderBiz {
                                 DateHelper.DATE_FORMAT_YMD));
                     } else {
                         BorrowCollection lastBorrowCollection = borrowCollections.stream()
-                                .max(Comparator.comparing(temp -> temp.getCollectionAt()))
+                                .max(comparing(temp -> temp.getCollectionAt()))
                                 .get();
                         userbidRecords.setExpireDate(DateHelper.dateToString(
                                 lastBorrowCollection.getCollectionAt(),
@@ -396,7 +398,6 @@ public class StarFireTenderBizImpl implements StarFireTenderBiz {
      */
     @Override
     public BidRepaymentInfoRes repaymentList(BorrowRepaymentQuery borrowRepaymentQuery) {
-
         log.info("==============标的回款信息查询接口===============");
         log.info("打印星火请求参数:" + GSON.toJson(borrowRepaymentQuery));
         //封装验签参数
@@ -415,13 +416,18 @@ public class StarFireTenderBizImpl implements StarFireTenderBiz {
         String bidStr = borrowRepaymentQuery.getBid_id();
         List<String> borrowIds = null;
         if (StringUtils.isEmpty(bidStr)) {
-            Query query = entityManager.createQuery("SELECT b FROM  Borrow b WHERE b.recheckAt<'2017-09-01' AND isWindmill=1");
+            Query query = entityManager.createQuery(
+                    "SELECT b FROM  Borrow b " +
+                        "WHERE " +
+                            "b.recheckAt>'2017-09-01'" +
+                        " AND " +
+                            "isWindmill=1");
             List<Borrow> borrows = query.getResultList();
             borrowIds = borrows.stream()
                     .map(p -> p.getId().toString())
                     .collect(Collectors.toList());
         } else {
-            borrowIds = Lists.newArrayList(bidStr.split(","));
+            borrowIds = Lists.newArrayList(AES.decrypt(key,initVector,bidStr).split(","));
         }
         Specification<BorrowRepayment> borrowRepaymentSpecification = Specifications.<BorrowRepayment>and()
                 .in("borrowId", borrowIds.toArray())
@@ -456,6 +462,7 @@ public class StarFireTenderBizImpl implements StarFireTenderBiz {
                 Long accruedRepayInterest = 0L;
 
                 List<BidRepaymentInfoRes.RepayRecords> repayRecords = new ArrayList<>(orderCount);
+                borrowRepaymentList.sort(Comparator.comparing(s->s.getRepayAt()));
                 for (BorrowRepayment borrowRepayment : borrowRepaymentList) {
                     BidRepaymentInfoRes.RepayRecords repayRecord = bidRepaymentInfoRes.new RepayRecords();
                     repayRecord.setRepayPeriods(orderCount);
@@ -475,17 +482,17 @@ public class StarFireTenderBizImpl implements StarFireTenderBiz {
                         accruedRepayCapital += principal;
                     }
                     repayRecord.setLeftRepayCapital(StringHelper.formatDouble(sumLeftRepayCapital, 100, false));
-                    repayRecord.setLeftRepayCapital(StringHelper.formatDouble(sumLeftRepayInterest, 100, false));
+                    repayRecord.setLeftRepayInterest(StringHelper.formatDouble(sumLeftRepayInterest, 100, false));
                     repayRecord.setAccruedRepayInterest(StringHelper.formatDouble(accruedRepayInterest, 100, false));
                     repayRecord.setAccruedRepayCapital(StringHelper.formatDouble(accruedRepayCapital, 100, false));
                     repayRecord.setCurrentRepayInterest(StringHelper.formatDouble(interest, 100, false));
                     repayRecord.setCurrentRepayCapital(StringHelper.formatDouble(principal, 100, false));
-                    repayRecord.setRepayResult(borrowRepayment.getRepayStatus());
+                    repayRecord.setRepayResult(borrowRepayment.getStatus());
                     repayRecord.setRepayType(getRepaymentStuats(borrowRepayment));
                     repayRecords.add(repayRecord);
-                }
-                ;
-                record.setRepayRecords(repayRecords);
+                    record.setRepayRecords(repayRecords);
+                };
+                records.add(record);
             }
             bidRepaymentInfoRes.setRecords(records);
             bidRepaymentInfoRes.setResult(ResultCodeEnum.getCode(CodeTypeConstant.SUCCESS));
@@ -525,7 +532,7 @@ public class StarFireTenderBizImpl implements StarFireTenderBiz {
             return StarFireBorrowConstant.YIZHUANGRANG;
         } else if (tenderState.intValue() == TenderConstans.BACK_MONEY.intValue()) {
             BorrowCollection lastBorrowCollection = borrowCollections.stream()
-                    .max(Comparator.comparing(temp -> temp.getCollectionAt()))
+                    .max(comparing(temp -> temp.getCollectionAt()))
                     .get();
             //如果当前时间大于应还时间
             if (nowDate.getTime() > lastBorrowCollection.getCollectionAt().getTime())
@@ -534,7 +541,7 @@ public class StarFireTenderBizImpl implements StarFireTenderBiz {
                 return StarFireBorrowConstant.HUANKUANZHONG;
         } else {
             BorrowCollection lastBorrowCollection = borrowCollections.stream()
-                    .max(Comparator.comparing(temp -> temp.getCollectionAt()))
+                    .max(comparing(temp -> temp.getCollectionAt()))
                     .get();
             //逾期天数
             if (lastBorrowCollection.getLateDays().intValue() > 0) {

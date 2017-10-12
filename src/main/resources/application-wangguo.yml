@@ -1,9 +1,9 @@
 spring:
   datasource:
     type: com.alibaba.druid.pool.DruidDataSource
-    url: jdbc:mysql://192.168.1.5:3306/gfb0810?useUnicode=true&characterEncoding=utf8&autoReconnect=true&failOverReadOnly=false&&useSSL=true&&zeroDateTimeBehavior=round
-    username: gfb0810
-    password: GOFOBAO@0701.
+    url: jdbc:mysql://192.168.1.5:3306/gfb0918?useUnicode=true&characterEncoding=utf8&autoReconnect=true&failOverReadOnly=false&&useSSL=true&&zeroDateTimeBehavior=round
+    username: root
+    password:
     driver-class-name: com.mysql.jdbc.Driver
   jpa:
     database: mysql
@@ -54,6 +54,7 @@ windmill: #风车理财
   from: wrb #风车理财简称
   local-des-key : 2l0IYbNnRcShWOM9Q5Ej0A3gCGOFOBAO #和风车理财交互时 平台的关键字段加密key值
   notify-address:  http://121.42.52.42/wrb/ws_info_call_back.json  #通知风车理财接口
+  online-date: 2017-10-1
 
 starfire: # 星火
   key: gofobao_hyfbGxll  #asc加密key值
