@@ -150,7 +150,7 @@ public class WebTransferController {
      * @return
      */
     @ApiOperation("结束债权转让第三方转让债权")
-    @PostMapping("/pub/tender/pc/v2/third/end")
+    @PostMapping("/pub/transfer/pc/v2/third/end")
     public ResponseEntity<VoBaseResp> endPcThirdTransferTender(@ModelAttribute VoPcEndThirdTransferTender voPcEndThirdTransferTender){
         return transferBiz.endPcThirdTransferTender(voPcEndThirdTransferTender);
     }

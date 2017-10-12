@@ -1072,7 +1072,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
 
     public static void main(String[] args) {
         Date releaseAt = DateHelper.max(DateHelper.addHours(DateHelper.beginOfDate(new Date()), 20), DateHelper.stringToDate("2017-09-28 20:30:00"));
-        if (DateHelper.getHour(DateHelper.stringToDate("2017-09-28 20:30:00")) >= 20) {
+        if (DateHelper.getDate(DateHelper.stringToDate("2017-09-28 20:30:00")) >= 20) {
             releaseAt = DateHelper.addDays(releaseAt, 1);
         }
         System.out.println(DateHelper.dateToString(releaseAt));
