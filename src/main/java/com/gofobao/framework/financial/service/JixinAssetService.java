@@ -15,5 +15,5 @@ public interface JixinAssetService {
 
     JixinAsset save(JixinAsset jixinAsset);
 
-    Page<Object[]> findAllForPrint(Pageable pageable);
+    Page<Object[]> findAllForPrint(String endDateStr, Pageable pageable);
 }

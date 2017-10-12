@@ -40,17 +40,17 @@ public interface JixinAssetRepository extends JpaRepository<JixinAsset, Long>, J
             nativeQuery = true
     )*/
 
-    @Query(value = "SELECT  " +
+    @Query(value ="SELECT  " +
             "    IFNULL(account.user_id, 0) AS userId, " +
             "    IFNULL(account.name, '') AS userName, " +
             "    IFNULL(account.mobile, '') AS phone, " +
             "    IFNULL(account.account_id, '') AS accountId, " +
             "    IFNULL(o_gna.curr_bal, '0') AS remoteMoney, " +
             "    CONCAT(o_gna.reldate, o_gna.inptime) AS remoteDatetime, " +
-            "    (asset.no_use_money + asset.use_money) AS localMoney, " +
-            "    asset.updated_at AS localDatetime " +
+            "    asset.curr_money AS localMoney, " +
+            "    asset.create_time AS localDatetime " +
             "FROM " +
-            "    (SELECT " +
+            "    (SELECT  " +
             "        c_gna.cardnbr, c_gna.curr_bal, c_gna.reldate, c_gna.inptime " +
             "    FROM " +
             "        (SELECT  " +
@@ -62,11 +62,21 @@ public interface JixinAssetRepository extends JpaRepository<JixinAsset, Long>, J
             "        INNER JOIN " +
             "    gfb_user_third_account AS account ON account.account_id = o_gna.cardnbr " +
             "        INNER JOIN " +
-            "    gfb_yesterday_asset AS asset ON asset.user_id = account.user_id " +
+            "    (SELECT  " +
+            "        i_asset.curr_money, i_asset.user_id, i_asset.create_time " +
+            "    FROM " +
+            "        (SELECT  " +
+            "        curr_money, user_id, create_time " +
+            "    FROM " +
+            "        gfb_new_asset_log " +
+            "    WHERE " +
+            "        create_time < ?1 " +
+            "    ORDER BY id DESC) AS i_asset " +
+            "    GROUP BY i_asset.user_id) AS asset ON asset.user_id = account.user_id " +
             "ORDER BY ?#{#pageable}",
-            countQuery = "SELECT COUNT(o_gna.cardnbr) " +
+            countQuery = "SELECT  COUNT(account.user_id)" +
                     "FROM " +
-                    "    (SELECT " +
+                    "    (SELECT  " +
                     "        c_gna.cardnbr, c_gna.curr_bal, c_gna.reldate, c_gna.inptime " +
                     "    FROM " +
                     "        (SELECT  " +
@@ -78,8 +88,18 @@ public interface JixinAssetRepository extends JpaRepository<JixinAsset, Long>, J
                     "        INNER JOIN " +
                     "    gfb_user_third_account AS account ON account.account_id = o_gna.cardnbr " +
                     "        INNER JOIN " +
-                    "    gfb_yesterday_asset AS asset ON asset.user_id = account.user_id",
+                    "    (SELECT  " +
+                    "        i_asset.curr_money, i_asset.user_id, i_asset.create_time " +
+                    "    FROM " +
+                    "        (SELECT  " +
+                    "        curr_money, user_id, create_time " +
+                    "    FROM " +
+                    "        gfb_new_asset_log " +
+                    "    WHERE " +
+                    "        create_time < ?1 " +
+                    "    ORDER BY id DESC) AS i_asset " +
+                    "    GROUP BY i_asset.user_id) AS asset ON asset.user_id = account.user_id " ,
             nativeQuery = true
     )
-    Page<Object[]> findAllForPrint(Pageable pageable);
+    Page<Object[]> findAllForPrint(String endDateStr, Pageable pageable);
 }
