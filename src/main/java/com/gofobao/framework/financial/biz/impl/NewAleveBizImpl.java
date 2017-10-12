@@ -228,6 +228,18 @@ public class NewAleveBizImpl implements NewAleveBiz {
         }
     }
 
+    @Override
+    public void simpleDownload(String date) {
+        String fileName = String.format("%s-ALEVE%s-%s", bankNo, productNo, date);
+        log.info("========================");
+        log.info("执行下载文件:" + fileName);
+        log.info("========================");
+        boolean downloadState = jixinFileManager.download(fileName);
+        if (!downloadState) {
+            log.error("ALEVE文件下载失败");
+        }
+    }
+
     /**
      * 执行活期派发
      *

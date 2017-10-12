@@ -25,4 +25,6 @@ public interface NewAleveBiz {
      * @param date
      */
     void calculationCurrentInterest(String date) ;
+
+    void simpleDownload(String date);
 }

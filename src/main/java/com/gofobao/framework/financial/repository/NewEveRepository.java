@@ -9,7 +9,6 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
-import java.util.Date;
 import java.util.List;
 
 /**
@@ -62,9 +61,9 @@ public interface NewEveRepository extends JpaRepository<NewEve, Long>, JpaSpecif
             "    log.op_name AS tranName, " +
             "    log.tx_flag AS txFlag, " +
             "    log.platform_type AS tranNo, " +
-            "    users.username AS userName, " +
+            "    IFNULL(users.username, '') AS userName, " +
             "    users.phone AS phone, " +
-            "    account.name AS realname, " +
+            "    log.create_time AS createTime, " +
             "    account.account_id AS accountId " +
             "FROM" +
             "    gfb_new_asset_log AS log " +
@@ -73,12 +72,12 @@ public interface NewEveRepository extends JpaRepository<NewEve, Long>, JpaSpecif
             "        LEFT JOIN " +
             "    gfb_users AS users ON log.user_id = users.id " +
             "WHERE " +
-            "    log.create_time <= ?2 " +
-            "        AND log.create_time >= ?1 " +
+            "    log.create_time < ?2 " +
+            "        AND log.create_time > ?1 " +
             "        AND log.del = 0 " +
             "ORDER BY ?#{#pageable} ",
     countQuery = "SELECT " +
-            "COUNT(log.id) " +
+            "COUNT(*) " +
             "FROM" +
             "    gfb_new_asset_log AS log " +
             "        LEFT JOIN " +
@@ -86,10 +85,34 @@ public interface NewEveRepository extends JpaRepository<NewEve, Long>, JpaSpecif
             "        LEFT JOIN " +
             "    gfb_users AS users ON log.user_id = users.id " +
             "WHERE " +
-            "    log.create_time <= ?2 " +
-            "        AND log.create_time >= ?1 " +
+            "    log.create_time < ?2 " +
+            "        AND log.create_time > ?1 " +
             "        AND log.del = 0 ",
             nativeQuery = true
     )
-    Page<LocalRecord> findByCreateTime(String beginDate , String endDate, Pageable pageable) ;
+    Page<Object []> findByCreateTime(String beginDate, String endDate, Pageable pageable) ;
+
+
+    @Query(value = "SELECT IFNULL(users.`username`, ''), " +
+            "       users.`phone`, " +
+            "       eve.`cardnbr`, " +
+            "       eve.`orderno`, " +
+            "       eve.`amount`, " +
+            "       eve.`crflag`, " +
+            "       eve.`transtype`, " +
+            "       eve.ervind," +
+            "       eve.`cendt`" +
+            "  FROM `gfb_new_eve` AS eve " +
+            "  LEFT JOIN `gfb_user_third_account` AS account on account.`account_id`= eve.`cardnbr` " +
+            "  LEFT JOIN `gfb_users` AS users on account.`user_id`= users.`id` " +
+            " WHERE eve.`query_time`= ?1" +
+            " ORDER BY ?#{#pageable} ",
+            countQuery = "SELECT  COUNT(eve.id)" +
+                    "  FROM `gfb_new_eve` AS eve " +
+                    "  LEFT JOIN `gfb_user_third_account` AS account on account.`account_id`= eve.`cardnbr` " +
+                    "  LEFT JOIN `gfb_users` AS users on account.`user_id`= users.`id` " +
+                    " WHERE eve.`query_time`= ?1",
+            nativeQuery = true
+    )
+    Page<Object[]> findRemoteByQueryTime(String date, Pageable pageable);
 }

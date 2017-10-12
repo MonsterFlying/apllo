@@ -1,6 +1,5 @@
 package com.gofobao.framework.financial.service;
 
-import com.gofobao.framework.financial.entity.LocalRecord;
 import com.gofobao.framework.financial.entity.NewEve;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -61,5 +60,7 @@ public interface NewEveService {
     List<NewEve> findAll(Specification<NewEve> specification);
 
 
-    Page<LocalRecord> findLocalAssetChangeRecord(String beginDate, String endDate, Pageable pageable);
+    Page<Object[]> findLocalAssetChangeRecord(String beginDate, String endDate, Pageable pageable);
+
+    Page<Object[]> findRemoteByQueryTime(String date, Pageable evePageable);
 }

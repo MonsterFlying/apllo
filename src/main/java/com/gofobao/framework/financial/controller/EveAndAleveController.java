@@ -1,5 +1,6 @@
 package com.gofobao.framework.financial.controller;
 
+import com.gofobao.framework.api.helper.JixinFileManager;
 import com.gofobao.framework.common.qiniu.util.StringUtils;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.financial.biz.NewAleveBiz;
@@ -25,6 +26,7 @@ public class EveAndAleveController {
 
     /**
      * 下载eve文件
+     *
      * @param date 下载文件时间
      * @return
      */
@@ -33,21 +35,41 @@ public class EveAndAleveController {
         if (StringUtils.isNullOrEmpty(date)) {
             return ResponseEntity
                     .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, "下载时间不能为空")) ;
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "下载时间不能为空"));
         }
 
         boolean result = newEveBiz.downloadEveFileAndSaveDB(date);
-        if(result){
-            return ResponseEntity.ok(VoBaseResp.ok("下载成功")) ;
-        }else{
+        if (result) {
+            return ResponseEntity.ok(VoBaseResp.ok("下载成功"));
+        } else {
             return ResponseEntity
                     .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, "文件下载失败")) ;
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "文件下载失败"));
         }
     }
 
     /**
-     *  下载aleve文件
+     * 下载文件
+     *
+     * @param date
+     * @return
+     */
+    @GetMapping(value = "/pub/eveAndAleve/download/{date}")
+    public ResponseEntity<VoBaseResp> download(@PathVariable(name = "date") String date) {
+        if (StringUtils.isNullOrEmpty(date)) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "下载时间不能为空"));
+        }
+
+        newEveBiz.simpleDownload(date);
+        newAleveBiz.simpleDownload(date);
+        return ResponseEntity.ok(VoBaseResp.ok("下载成功"));
+    }
+
+    /**
+     * 下载aleve文件
+     *
      * @param date 文件时间
      * @return
      */
@@ -57,16 +79,16 @@ public class EveAndAleveController {
         if (StringUtils.isNullOrEmpty(date)) {
             return ResponseEntity
                     .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, "下载时间不能为空")) ;
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "下载时间不能为空"));
         }
 
         boolean result = newAleveBiz.downloadNewAleveFileAndImportDatabase(date);
-        if(result){
-            return ResponseEntity.ok(VoBaseResp.ok("下载成功")) ;
-        }else{
+        if (result) {
+            return ResponseEntity.ok(VoBaseResp.ok("下载成功"));
+        } else {
             return ResponseEntity
                     .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, "文件下载失败")) ;
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "文件下载失败"));
         }
     }
 }

@@ -1,6 +1,8 @@
 package com.gofobao.framework.financial.service;
 
 import com.gofobao.framework.financial.entity.JixinAsset;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 public interface JixinAssetService {
 
@@ -12,4 +14,6 @@ public interface JixinAssetService {
     JixinAsset findTopByAccountId(String cardnbr);
 
     JixinAsset save(JixinAsset jixinAsset);
+
+    Page<Object[]> findAllForPrint(Pageable pageable);
 }

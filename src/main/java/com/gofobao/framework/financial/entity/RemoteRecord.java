@@ -10,11 +10,11 @@ import java.util.Date;
  * 本地资金记录
  */
 @Data
-public class LocalRecord implements Serializable{
+public class RemoteRecord implements Serializable{
     @Excel(name = "用户昵称", height = 10, width = 30)
     private String userName ;
 
-    @Excel(name = "本地交易流水", height = 10, width = 30)
+    @Excel(name = "交易流水", height = 10, width = 30)
     private String seqNo ;
 
     @Excel(name = "电子账户", height = 10, width = 30)
@@ -35,7 +35,9 @@ public class LocalRecord implements Serializable{
     @Excel(name = "手机号", height = 10, width = 30)
     private String phone ;
 
-    @Excel(name = "创建时间", height = 10, width = 30, format="yyyy-MM-dd HH:mm:ss")
-    private Date createDate ;
+    @Excel(name = "冲正、撤销标志", height = 10, width = 30)
+    private String ervind ;
 
+    @Excel(name = "请求时间", height = 10, width = 30)
+    private String cendt ;
 }
