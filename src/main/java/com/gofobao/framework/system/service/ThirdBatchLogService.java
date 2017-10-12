@@ -14,6 +14,8 @@ public interface ThirdBatchLogService {
 
     ThirdBatchLog findById(long id);
 
+    ThirdBatchLog findByIdLock(long id);
+
     List<ThirdBatchLog> findList(Specification<ThirdBatchLog> specification);
 
     List<ThirdBatchLog> findList(Specification<ThirdBatchLog> specification, Sort sort);

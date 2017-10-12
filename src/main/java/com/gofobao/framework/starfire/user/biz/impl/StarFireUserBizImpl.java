@@ -27,12 +27,16 @@ import com.gofobao.framework.starfire.user.vo.request.*;
 import com.gofobao.framework.starfire.user.vo.response.*;
 import com.gofobao.framework.starfire.util.AES;
 import com.gofobao.framework.starfire.util.SignUtil;
+import com.gofobao.framework.tender.contants.TenderConstans;
+import com.gofobao.framework.tender.entity.Tender;
+import com.gofobao.framework.tender.service.TenderService;
 import com.gofobao.framework.windmill.user.vo.request.BindLoginReq;
 import com.gofobao.framework.windmill.util.PassWordCreate;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.poi.ss.formula.functions.T;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.jpa.domain.Specification;
@@ -40,6 +44,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 
@@ -584,6 +589,10 @@ public class StarFireUserBizImpl implements StarFireUserBiz {
         }
     }
 
+    @Autowired
+    private TenderService tenderService;
+
+
     /**
      * 账户信息查询
      *
@@ -664,9 +673,20 @@ public class StarFireUserBizImpl implements StarFireUserBiz {
                 accountRecord.setUncollectedInterest(StringHelper.formatDouble(collection / 100D, false));
                 //已收收益
                 accountRecord.setProfitAmount(StringHelper.formatDouble(userCache.getIncomeTotal() / 100D, false));
-                //
+                //投资总额
+                Specification<Tender> tenderSpecification=Specifications.<Tender>and()
+                        .eq("userId",userId)
+                        .eq("status", TenderConstans.SUCCESS)
+                        .build();
+                List<Tender> tenders=tenderService.findList(tenderSpecification);
+                if(!CollectionUtils.isEmpty(tenders)){
+                    //投资总额
+                    Long sumValidMoney=tenders.stream().mapToLong(p->p.getValidMoney()).sum();
+                    accountRecord.setBidAmount(StringHelper.formatMon(sumValidMoney/100d));
+                }
                 accountRecord.setDate(DateHelper.dateToString(asset.getUpdatedAt(), DateHelper.DATE_FORMAT_YMD));
                 accountRecords.add(accountRecord);
+                record.setAccountRecords(accountRecords);
                 records.add(record);
             });
             userAccountRes.setRecords(records);

@@ -4,6 +4,7 @@ import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.tender.vo.request.TenderUserReq;
 import com.gofobao.framework.tender.vo.request.VoAdminCancelTender;
 import com.gofobao.framework.tender.vo.request.VoCreateTenderReq;
+import com.gofobao.framework.tender.vo.request.VoPcEndThirdTender;
 import com.gofobao.framework.tender.vo.response.VoBorrowTenderUserWarpListRes;
 import org.springframework.http.ResponseEntity;
 
@@ -13,6 +14,7 @@ import org.springframework.http.ResponseEntity;
 public interface TenderBiz {
     /**
      * 创建投标
+     *
      * @param voCreateTenderReq
      * @return
      * @throws Exception
@@ -21,6 +23,7 @@ public interface TenderBiz {
 
     /**
      * 投标
+     *
      * @param voCreateTenderReq
      * @return
      */
@@ -28,6 +31,7 @@ public interface TenderBiz {
 
     /**
      * 投标用户
+     *
      * @param tenderUserReq
      * @return
      */
@@ -36,8 +40,14 @@ public interface TenderBiz {
 
     /**
      * 取消自动投标
+     *
      * @param voAdminCancelTender
      * @return
      */
     ResponseEntity<VoBaseResp> adminCancelTender(VoAdminCancelTender voAdminCancelTender);
+
+    /**
+     * 结束普通第三方债权接口
+     */
+    ResponseEntity<VoBaseResp> pcEndThirdTender(VoPcEndThirdTender voPcEndThirdTender);
 }

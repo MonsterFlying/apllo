@@ -54,7 +54,7 @@ public class Tender {
     /**
      * 当前投标记录在是否结束存管债权
      */
-    private Boolean thirdCreditEndFlag;
+    private Boolean thirdCreditEndFlag = false;
     /**
      * 购买债权记录id
      */

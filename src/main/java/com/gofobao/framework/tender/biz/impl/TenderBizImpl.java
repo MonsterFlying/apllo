@@ -1,5 +1,6 @@
 package com.gofobao.framework.tender.biz.impl;
 
+import com.github.wenhao.jpa.Specifications;
 import com.gofobao.framework.api.contants.ChannelContant;
 import com.gofobao.framework.api.contants.FrzFlagContant;
 import com.gofobao.framework.api.contants.JixinResultContants;
@@ -39,15 +40,14 @@ import com.gofobao.framework.member.entity.Users;
 import com.gofobao.framework.member.service.UserCacheService;
 import com.gofobao.framework.member.service.UserService;
 import com.gofobao.framework.member.service.UserThirdAccountService;
+import com.gofobao.framework.repayment.entity.BorrowRepayment;
+import com.gofobao.framework.repayment.service.BorrowRepaymentService;
 import com.gofobao.framework.tender.biz.TenderBiz;
 import com.gofobao.framework.tender.biz.TenderThirdBiz;
 import com.gofobao.framework.tender.entity.Tender;
 import com.gofobao.framework.tender.service.TenderService;
 import com.gofobao.framework.tender.vo.VoSaveThirdTender;
-import com.gofobao.framework.tender.vo.request.TenderUserReq;
-import com.gofobao.framework.tender.vo.request.VoAdminCancelTender;
-import com.gofobao.framework.tender.vo.request.VoCreateTenderReq;
-import com.gofobao.framework.tender.vo.request.VoCreateThirdTenderReq;
+import com.gofobao.framework.tender.vo.request.*;
 import com.gofobao.framework.tender.vo.response.VoBorrowTenderUserWarpListRes;
 import com.gofobao.framework.windmill.borrow.biz.WindmillTenderBiz;
 import com.google.common.base.Preconditions;
@@ -58,6 +58,7 @@ import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -103,6 +104,8 @@ public class TenderBizImpl implements TenderBiz {
     private LendService lendService;
     @Autowired
     private JixinTenderRecordHelper jixinTenderRecordHelper;
+    @Autowired
+    private BorrowRepaymentService borrowRepaymentService;
 
 
     /**
@@ -637,4 +640,47 @@ public class TenderBizImpl implements TenderBiz {
     }
 
 
+    /**
+     * 结束普通第三方债权接口
+     */
+    public ResponseEntity<VoBaseResp> pcEndThirdTender(VoPcEndThirdTender voPcEndThirdTender) {
+        String paramStr = voPcEndThirdTender.getParamStr();
+        if (!SecurityHelper.checkSign(voPcEndThirdTender.getSign(), paramStr)) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "结束普通第三方债权接口 签名验证不通过!"));
+        }
+
+        Map<String, String> paramMap = new Gson().fromJson(paramStr, TypeTokenContants.MAP_ALL_STRING_TOKEN);
+        Long borrowId = NumberHelper.toLong(paramMap.get("borrowId"));
+        Borrow borrow = borrowService.findById(borrowId);
+        Preconditions.checkNotNull(borrow, "借款记录不存在!");
+        //判断是否是最后一起还款已还清
+        Specification<BorrowRepayment> brs = Specifications
+                .<BorrowRepayment>and()
+                .eq("borrowId", borrowId)
+                .eq("status", 0)
+                .build();
+        long count = borrowRepaymentService.count(brs);//判断是否有未还还款
+        if (count > 0) {
+            return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "借款未结清不能结束债权!"));
+        }
+
+        //推送队列结束债权
+        MqConfig mqConfig = new MqConfig();
+        mqConfig.setQueue(MqQueueEnum.RABBITMQ_CREDIT);
+        mqConfig.setTag(MqTagEnum.END_CREDIT);
+        mqConfig.setSendTime(DateHelper.addMinutes(new Date(), 1));
+        ImmutableMap<String, String> body = ImmutableMap
+                .of(MqConfig.MSG_BORROW_ID, StringHelper.toString(borrowId),
+                        MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
+        mqConfig.setMsg(body);
+        try {
+            log.info(String.format("repaymentBizImpl endThirdTenderAndChangeBorrowStatus send mq %s", GSON.toJson(body)));
+            mqHelper.convertAndSend(mqConfig);
+        } catch (Throwable e) {
+            log.error("repaymentBizImpl endThirdTenderAndChangeBorrowStatus send mq exception", e);
+        }
+        return ResponseEntity.ok(VoBaseResp.ok("发送结束债权成功!"));
+    }
 }

@@ -7,36 +7,25 @@ import lombok.Data;
 import java.util.List;
 
 /**
- * Created by master on 2017/9/28.
+ * Created by master on 2017/10/11.
  */
 @Data
-public class UserBorrowCollectionRecordsRes extends BaseResponse {
+public class BidRepaymentInfoRes extends BaseResponse {
 
-    private Integer totalCount=0;
+    private Integer totalCount;
 
-    private List<Records> records = Lists.newArrayList();
+    List<Records> records = Lists.newArrayList();
 
     @Data
     public class Records {
 
-        private String platform_uid;
-
-        private Integer bidCount;
-
-        private List<BidRecords> bidRecords = Lists.newArrayList();
-    }
-
-    @Data
-    public class BidRecords {
         private String bid_id;
 
-        private String productBidId;
+        private Integer repayCounts;
 
-        private Integer bidRepayCount;
-
-        private List<RepayRecords> bidRepayRecords = Lists.newArrayList();
-
+        List<RepayRecords> repayRecords = Lists.newArrayList();
     }
+
     @Data
     public class RepayRecords {
 
@@ -46,7 +35,7 @@ public class UserBorrowCollectionRecordsRes extends BaseResponse {
 
         private String repayDate;
 
-        private String actualRepayTime;
+        private String actualRepayTime="";
 
         private String currentRepayCapital;
 
@@ -62,7 +51,8 @@ public class UserBorrowCollectionRecordsRes extends BaseResponse {
 
         private Integer repayResult;
 
-        private String repayType="";
+        private String repayType;
+
 
     }
 

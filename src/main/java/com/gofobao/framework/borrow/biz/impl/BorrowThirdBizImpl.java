@@ -438,7 +438,8 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
         //触发处理批次放款处理结果队列
         try {
             //批次执行问题
-            thirdBatchDealBiz.batchDeal(NumberHelper.toLong(acqResMap.get("borrowId")), StringHelper.toString(repayRunResp.getBatchNo()), repayRunResp.getAcqRes(), GSON.toJson(repayRunResp));
+            thirdBatchDealBiz.batchDeal(NumberHelper.toLong(acqResMap.get("borrowId")), StringHelper.toString(repayRunResp.getBatchNo()),
+                    ThirdBatchLogContants.BATCH_REPAY_ALL, repayRunResp.getAcqRes(), GSON.toJson(repayRunResp));
         } catch (Exception e) {
             log.error("批次执行异常:", e);
         }

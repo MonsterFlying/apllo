@@ -188,4 +188,11 @@ public interface TransferBiz {
      * @return
      */
     Map<String, Object> contract(Long tenderId, Long userId);
+
+    /**
+     * 结束债权转让第三方转让债权
+     *
+     * @return
+     */
+    ResponseEntity<VoBaseResp> endPcThirdTransferTender(VoPcEndThirdTransferTender voPcEndThirdTransferTender);
 }
