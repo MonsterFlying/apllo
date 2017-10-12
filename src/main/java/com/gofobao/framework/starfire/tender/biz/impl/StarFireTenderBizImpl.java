@@ -415,7 +415,7 @@ public class StarFireTenderBizImpl implements StarFireTenderBiz {
         String bidStr = borrowRepaymentQuery.getBid_id();
         List<String> borrowIds = null;
         if (StringUtils.isEmpty(bidStr)) {
-            Query query = entityManager.createNamedQuery("SELECT b.*  FROM  Borrow b WHERE b.recheckAt<'2017-09-01' AND isWindmill=1");
+            Query query = entityManager.createQuery("SELECT b FROM  Borrow b WHERE b.recheckAt<'2017-09-01' AND isWindmill=1");
             List<Borrow> borrows = query.getResultList();
             borrowIds = borrows.stream()
                     .map(p -> p.getId().toString())
