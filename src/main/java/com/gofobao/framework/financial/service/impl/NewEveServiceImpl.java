@@ -1,6 +1,5 @@
 package com.gofobao.framework.financial.service.impl;
 
-import com.gofobao.framework.financial.entity.LocalRecord;
 import com.gofobao.framework.financial.entity.NewEve;
 import com.gofobao.framework.financial.repository.NewEveRepository;
 import com.gofobao.framework.financial.service.NewEveService;
@@ -54,7 +53,12 @@ public class NewEveServiceImpl implements NewEveService {
     }
 
     @Override
-    public Page<LocalRecord> findLocalAssetChangeRecord(String beginDate, String endDate, Pageable pageable) {
+    public Page<Object[]> findLocalAssetChangeRecord(String beginDate, String endDate, Pageable pageable) {
         return newEveRepository.findByCreateTime(beginDate, endDate, pageable);
+    }
+
+    @Override
+    public Page<Object[]> findRemoteByQueryTime(String date, Pageable pageable) {
+        return newEveRepository.findRemoteByQueryTime(date, pageable);
     }
 }

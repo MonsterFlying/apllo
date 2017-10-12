@@ -79,5 +79,9 @@ public class AssetTests {
         newAleveBiz.importDatabase("20170928", "3005-ALEVE0110-20170928");
     }
 
+    @Test
+    public void test05() throws Exception {
+        newEveBiz.audit("20170929");
+    }
 
 }

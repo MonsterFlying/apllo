@@ -26,4 +26,6 @@ public interface NewEveBiz {
      * @param date
      */
     void audit(String date);
+
+    void simpleDownload(String date);
 }

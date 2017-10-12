@@ -931,13 +931,13 @@ public class MarketingProcessBizImpl implements MarketingProcessBiz {
         Iterator<Marketing> iterator = marketings.iterator();
         while (iterator.hasNext()) {
             Marketing marketing = iterator.next();
-            if (DateHelper.diffInDays(marketing.getEndTime(), DateHelper.stringToDate(marketingData.getTransTime()), false) <= 0) {
+            if (DateHelper.diffInDays(marketing.getEndTime(), DateHelper.stringToDate(marketingData.getTransTime()), false) < 0) {
                 iterator.remove();
                 log.info("红包派发: [活动已过期]");
                 continue;
             }
 
-            if (DateHelper.diffInDays(DateHelper.stringToDate(marketingData.getTransTime()), marketing.getBeginTime(), false) <= 0) {
+            if (DateHelper.diffInDays(DateHelper.stringToDate(marketingData.getTransTime()), marketing.getBeginTime(), false) < 0) {
                 log.info("红包派发: [活动未开始]");
                 iterator.remove();
                 continue;
