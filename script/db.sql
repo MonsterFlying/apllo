@@ -876,4 +876,8 @@ ALTER TABLE gfb_new_eve
   ADD INDEX `gfb_new_eve_cardnbr` (`cardnbr` ASC);
 
 
+ALTER TABLE  gfb_user_third_account
+  ADD INDEX `gfb_user_third_account_user_id` (`user_id` ASC),
+  ADD INDEX `gfb_user_third_account_account_id` (`account_id` ASC);
+
 

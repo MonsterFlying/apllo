@@ -18,6 +18,7 @@ import com.gofobao.framework.helper.ExceptionEmailHelper;
 import com.gofobao.framework.helper.MoneyHelper;
 import com.gofobao.framework.helper.project.TranTypeHelper;
 import com.gofobao.framework.migrate.FormatHelper;
+import com.google.common.collect.ImmutableList;
 import com.google.common.io.Files;
 import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;
@@ -331,16 +332,16 @@ public class NewEveBizImpl implements NewEveBiz {
         Date beginDate = DateHelper.endOfDate(DateHelper.subDays(opDate, 1));  // 开始时间
         Date endOfDate = DateHelper.beginOfDate(DateHelper.addDays(opDate, 1));  // 结束时间
         int pageIndex = 0, pageSize = 100, pageIndexTotal = 0;
-        Pageable localPageable = new PageRequest(pageIndex, pageSize, new Sort(new Sort.Order(Sort.Direction.ASC, "id")));  //  分页
-        Page<Object[]> localRecordPage = newEveService.findLocalAssetChangeRecord(DateHelper.dateToString(beginDate), DateHelper.dateToString(endOfDate), localPageable);
-        pageIndexTotal = localRecordPage.getTotalPages();
-        if (pageIndexTotal <= 0) {
-            log.warn("本地交易流水为空");
-            return false;
-        }
-
 
         do {
+            Pageable localPageable = new PageRequest(pageIndex, pageSize, new Sort(new Sort.Order(Sort.Direction.ASC, "id")));  //  分页
+            Page<Object[]> localRecordPage = newEveService.findLocalAssetChangeRecord(DateHelper.dateToString(beginDate), DateHelper.dateToString(endOfDate), localPageable);
+            pageIndexTotal = localRecordPage.getTotalPages();
+            if (pageIndexTotal <= 0) {
+                log.warn("本地交易流水为空");
+                return false;
+            }
+
             List<Object[]> content = localRecordPage.getContent();
             if (CollectionUtils.isEmpty(content)) {
                 break;
@@ -393,14 +394,16 @@ public class NewEveBizImpl implements NewEveBiz {
         // 发送即信流水
         int pageIndex = 0, pageSize = 100, pageIndexTotal = 0;
         Workbook remoteWorkbook = null;
-        Pageable evePageable = new PageRequest(pageIndex, pageSize, new Sort(new Sort.Order(Sort.Direction.ASC, "eve.id")));  //  分页
-        Page<Object[]> remoteRecordPage = newEveService.findRemoteByQueryTime(date, evePageable);
-        pageIndexTotal = remoteRecordPage.getTotalPages();
-        if (pageIndexTotal <= 0) {
-            log.warn("即信流水为空");
-            return false;
-        }
+
         do {
+            Pageable evePageable = new PageRequest(pageIndex, pageSize, new Sort(new Sort.Order(Sort.Direction.ASC, "eve.id")));  //  分页
+            Page<Object[]> remoteRecordPage = newEveService.findRemoteByQueryTime(date, evePageable);
+            pageIndexTotal = remoteRecordPage.getTotalPages();
+            if (pageIndexTotal <= 0) {
+                log.warn("即信流水为空");
+                return false;
+            }
+
             List<Object[]> content = remoteRecordPage.getContent();
             if (CollectionUtils.isEmpty(content)) {
                 break;
@@ -446,18 +449,21 @@ public class NewEveBizImpl implements NewEveBiz {
      */
     private boolean printAssetRecord(String date, String assetFileName, String preFileType) {
         int pageIndex = 0, pageSize = 100, pageIndexTotal = 0;
-        Pageable pageable = new PageRequest(pageIndex, pageSize, new Sort(new Sort.Order(Sort.Direction.ASC, "account.user_id")));
-        Page<Object[]> localAndRemoteAssetInfoPage = jixinAssetService.findAllForPrint(pageable);
-        pageIndexTotal = localAndRemoteAssetInfoPage.getTotalPages();
-        if (pageIndexTotal <= 0) {
-            log.error("用户资金交易记录为空");
-            return false;
-        }
+
         ExportParams params = new ExportParams();
         params.setTitle(assetFileName);
         params.setSheetName("平台与即信资金对比");
         Workbook assetWorkbook = null;
+
         do {
+            Pageable pageable = new PageRequest(pageIndex, pageSize, new Sort(new Sort.Order(Sort.Direction.ASC, "account.user_id")));
+            Page<Object[]> localAndRemoteAssetInfoPage = jixinAssetService.findAllForPrint(pageable);
+            pageIndexTotal = localAndRemoteAssetInfoPage.getTotalPages();
+            if (pageIndexTotal <= 0) {
+                log.error("用户资金交易记录为空");
+                return false;
+            }
+
             List<Object[]> content = localAndRemoteAssetInfoPage.getContent();
             if (CollectionUtils.isEmpty(content)) {
                 break;
@@ -522,7 +528,22 @@ public class NewEveBizImpl implements NewEveBiz {
         // ============================
         // 发送邮件
         // ============================
+        ImmutableList<String> emails = ImmutableList.of("617775122@qq.com", "595785682@qq.com");
+        for (String email : emails) {
+            doSendEmail(date, localFileName, remoteFileName, assetFileName, preFileType, email);
+        }
+    }
 
+    /**
+     * 发送对账文件
+     * @param date
+     * @param localFileName
+     * @param remoteFileName
+     * @param assetFileName
+     * @param preFileType
+     * @param email
+     */
+    private void doSendEmail(String date, String localFileName, String remoteFileName, String assetFileName, String preFileType, String email) {
         String remoteXlsxFile = getXlsxAllFile(date, remoteFileName, preFileType);
         String localXlsxFile = getXlsxAllFile(date, localFileName, preFileType);
         String assetXlsxFile = getXlsxAllFile(date, assetFileName, preFileType);
@@ -530,7 +551,7 @@ public class NewEveBizImpl implements NewEveBiz {
             MimeMessage mimeMessage = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true);
             helper.setFrom("service@gofobao.com");
-            helper.setTo("617775122@qq.com");
+            helper.setTo(email);
             helper.setSubject("对账系统");
             helper.setText(date + "对账附件");
             if (new File(localXlsxFile).exists()) {
@@ -555,7 +576,6 @@ public class NewEveBizImpl implements NewEveBiz {
         } catch (Exception e) {
             log.error("对账文件", e);
         }
-
     }
 
     @Override
