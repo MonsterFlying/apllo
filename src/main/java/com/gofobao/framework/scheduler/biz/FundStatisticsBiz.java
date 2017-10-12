@@ -1,8 +1,5 @@
 package com.gofobao.framework.scheduler.biz;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
 public interface FundStatisticsBiz {
 
     /**
@@ -22,4 +19,7 @@ public interface FundStatisticsBiz {
     boolean doAleve(String date) throws Exception;
 
 
+    boolean importAleveDataToDatabase(String date, String fileName) throws Exception  ;
+
+    boolean importEveDataToDatabase(String date, String fileName) throws Exception ;
 }

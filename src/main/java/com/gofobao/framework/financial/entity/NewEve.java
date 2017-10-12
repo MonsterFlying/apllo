@@ -20,6 +20,12 @@ public class NewEve {
     private Long id ;
 
     /**
+     * 受理方标识码
+     * 已经被废弃
+     */
+    private String acqcode ;
+
+    /**
      * 发送方标识码
      */
     private String forcode;
@@ -60,12 +66,72 @@ public class NewEve {
     private String proccode;
 
     /**
+     *  商户类型
+     *  已废弃
+     */
+    private String mertype ;
+
+    /**
+     * 受卡机终端标识码
+     * 已废弃
+     */
+    private String term ;
+
+    /**
+     * 受卡机终端标识码
+     * 已废弃
+     */
+    private String retseqno ;
+
+    /**
+     * 服务点条件码
+     * 已废弃
+     */
+    private String conmode ;
+
+    /**
+     * 服务点条件码
+     * 已废弃
+     */
+    private String autresp ;
+
+    /**
+     * 发送方标识码
+     * 已废弃
+     */
+    private String clrdate ;
+
+    /**
+     * 发送方标识码
+     * 已废弃
+     */
+    private String oldseqno ;
+
+    /**
+     * 发卡网点号
+     * 已废弃
+     */
+    private String openbrno ;
+
+    /**
+     * 交易网点
+     * 已废弃
+     */
+    private String tranbrno ;
+
+
+    //=========================================
+    // 文件 1.1.4 之后
+    //=========================================
+    /**
      * 订单号
+     *
      */
     private String orderno;
 
     /**
      * 内部交易流水号
+     *
      */
     private String tranno;
 
@@ -73,6 +139,9 @@ public class NewEve {
      * 内部保留域
      */
     private String reserved;
+    //=========================================
+    // 文件 1.1.4 之后
+    //=========================================
 
     /**
      * 冲正、撤销标志

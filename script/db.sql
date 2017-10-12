@@ -855,5 +855,29 @@ create table jixin_asset(
   curr_money bigint null default 0 comment '本地金额'
 ) engine=innodb , charset =utf8;
 
+ALTER TABLE gfb_new_eve ADD mertype VARCHAR(4) DEFAULT '' NULL  COMMENT '商户类型';
+ALTER TABLE gfb_new_eve ADD term VARCHAR(8) DEFAULT '' NULL  COMMENT '受卡机终端标识码';
+ALTER TABLE gfb_new_eve ADD retseqno VARCHAR(12) DEFAULT '' NULL  COMMENT '检索参考号';
+ALTER TABLE gfb_new_eve ADD conmode VARCHAR(2) DEFAULT '' NULL  COMMENT '服务点条件码';
+ALTER TABLE gfb_new_eve ADD autresp VARCHAR(6) DEFAULT '' NULL  COMMENT '授权应答码';
+ALTER TABLE gfb_new_eve ADD clrdate VARCHAR(4) DEFAULT '' NULL  COMMENT '清算日期';
+ALTER TABLE gfb_new_eve ADD oldseqno VARCHAR(6) DEFAULT '' NULL  COMMENT '原始交易的系统跟踪号';
+ALTER TABLE gfb_new_eve ADD openbrno VARCHAR(6) DEFAULT '' NULL  COMMENT '发卡网点号';
+ALTER TABLE gfb_new_eve ADD tranbrno VARCHAR(6) DEFAULT '' NULL  COMMENT '交易网点';
+ALTER TABLE gfb_new_eve ADD acqcode VARCHAR(11) DEFAULT '' NULL  COMMENT '受理方标识码';
+
+ALTER TABLE jixin_asset ADD INDEX `jixin_asset_account_id_index` (`account_id` ASC);
+ALTER TABLE jixin_asset ADD INDEX `jixin_asset_user_id` (`user_id` ASC);
+ALTER TABLE gfb_new_aleve  ADD INDEX `gfb_new_aleve_reldateAndInputtimeAndTranno` (`reldate` ASC, `inptime` ASC, `tranno` ASC);
+ALTER TABLE gfb_new_aleve ADD INDEX `gfb_new_aleve_cardnbr` (`cardnbr` ASC);
+
+ALTER TABLE gfb_new_eve
+  ADD INDEX `gfb_new_eve_orderno` (`orderno` ASC),
+  ADD INDEX `gfb_new_eve_cardnbr` (`cardnbr` ASC);
+
+
+ALTER TABLE  gfb_user_third_account
+  ADD INDEX `gfb_user_third_account_user_id` (`user_id` ASC),
+  ADD INDEX `gfb_user_third_account_account_id` (`account_id` ASC);
 
 

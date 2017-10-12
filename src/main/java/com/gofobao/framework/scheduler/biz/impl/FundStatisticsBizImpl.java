@@ -5,21 +5,21 @@ import com.gofobao.framework.api.helper.JixinManager;
 import com.gofobao.framework.api.helper.JixinTxDateHelper;
 import com.gofobao.framework.asset.service.AssetService;
 import com.gofobao.framework.asset.service.NewAssetLogService;
+import com.gofobao.framework.financial.biz.JixinAssetBiz;
 import com.gofobao.framework.financial.entity.Aleve;
 import com.gofobao.framework.financial.entity.Eve;
 import com.gofobao.framework.financial.service.AleveService;
 import com.gofobao.framework.financial.service.EveService;
+import com.gofobao.framework.helper.MoneyHelper;
 import com.gofobao.framework.member.service.UserService;
 import com.gofobao.framework.member.service.UserThirdAccountService;
 import com.gofobao.framework.migrate.FormatHelper;
 import com.gofobao.framework.scheduler.biz.FundStatisticsBiz;
 import com.google.common.io.Files;
-import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 
 import java.io.BufferedReader;
@@ -68,14 +68,34 @@ public class FundStatisticsBizImpl implements FundStatisticsBiz {
     @Autowired
     JixinManager jixinManager;
 
+    @Autowired
+    JixinAssetBiz jixinAssetBiz ;
+
     @Override
-    @Transactional(rollbackFor = Exception.class)
     public boolean doEve(String date) throws Exception {
         String fileName = String.format("%s-EVE%s-%s", bankNo, productNo, date);
         boolean downloadState = jixinFileManager.download(fileName);
         if (!downloadState) {
             throw new Exception(String.format("EVE: %s 下载失败", fileName));
         }
+
+        boolean b = importEveDataToDatabase(date, fileName);
+        if (!b) {
+            log.error("入库失败");
+        }
+        return true;
+    }
+
+    /**
+     * eve数据入库
+     *
+     * @param date
+     * @param fileName
+     * @return
+     * @throws Exception
+     */
+    @Override
+    public boolean importEveDataToDatabase(String date, String fileName) throws Exception {
         File file = new File(String.format("%s%s%s", filePath, File.separator, fileName));
         BufferedReader bufferedReader = Files.newReader(file, StandardCharsets.UTF_8);
         // 保存进数据库
@@ -108,7 +128,7 @@ public class FundStatisticsBizImpl implements FundStatisticsBiz {
                 eve.setSeqno(seqno);
                 eve.setSendt(sendt);
                 eve.setCardnbr(cardnbr);
-                eve.setAmount(new Double(new Long(amount) / 100D).toString());  //保证元的问题
+                eve.setAmount(MoneyHelper.divide(amount, "100", 2));  //保证元的问题
                 eve.setCrflag(crflag);
                 eve.setMsgtype(msgtype);
                 eve.setProccode(proccode);
@@ -131,16 +151,19 @@ public class FundStatisticsBizImpl implements FundStatisticsBiz {
                     log.error(String.format("EVE重复插入: %s", line));
                     return;
                 }
+                // 对资金录入进行变动
                 eveService.save(eve);
+                jixinAssetBiz.record(eve.getCardnbr(), eve.getCrflag(), eve.getAmount());  // 保存即信金额
             } catch (Exception e) {
                 log.error("保存eve到数据库失败", e);
             }
         });
-        return true;
+
+        return false;
     }
 
+
     @Override
-    @Transactional(rollbackFor = Exception.class)
     public boolean doAleve(String date) throws Exception {
         String fileName = String.format("%s-ALEVE%s-%s", bankNo, productNo, date);
         boolean downloadState = jixinFileManager.download(fileName);
@@ -148,6 +171,12 @@ public class FundStatisticsBizImpl implements FundStatisticsBiz {
             log.error(String.format("ALEVE: %s下载失败", fileName));
             return false;
         }
+
+        return importAleveDataToDatabase(date, fileName);
+    }
+
+    @Override
+    public boolean importAleveDataToDatabase(String date, String fileName) throws Exception {
         File file = new File(String.format("%s%s%s", filePath, File.separator, fileName));
         BufferedReader bufferedReader = Files.newReader(file, StandardCharsets.UTF_8);
         // 保存进数据库
@@ -176,7 +205,7 @@ public class FundStatisticsBizImpl implements FundStatisticsBiz {
                 Aleve aleve = new Aleve();
                 aleve.setBank(bank);
                 aleve.setCardnbr(cardnbr);
-                aleve.setAmount(new Double(new Long(amount) / 100D).toString());  // 保证元的问题
+                aleve.setAmount(MoneyHelper.divide(amount, "100", 2));  // 保证元的问题
                 aleve.setCurNum(curNum);
                 aleve.setCrflag(crflag);
                 aleve.setValdate(valdate);
@@ -188,24 +217,18 @@ public class FundStatisticsBizImpl implements FundStatisticsBiz {
                 aleve.setTranstype(transtype);
                 aleve.setTranstype(transtype);
                 aleve.setDesline(desline);
-                aleve.setCurrBal(currBal); // 保证元的问题
+                aleve.setCurrBal(MoneyHelper.divide(currBal, "100", 2)); // 保证元的问题
                 aleve.setForcardnbr(forcardnbr);
                 aleve.setRevind(revind);
                 aleve.setResv(resv);
                 aleve.setCreateAt(nowDate);
                 aleve.setQueryDate(date);
-                List<Aleve> aleves = aleveService.findByTranno(aleve.getTranno());
-                if (!CollectionUtils.isEmpty(aleves)) {
-                    log.error(String.format("ALEVE 重数据: %s", line));
-                }
+
                 aleveService.save(aleve);
             } catch (Exception e) {
                 log.error("保存eve到数据库失败", e);
             }
         });
-
         return true;
     }
-
-    Gson GSON = new Gson();
 }

@@ -317,6 +317,16 @@ public class DateHelper {
         return get(date, Calendar.DATE);
     }
 
+
+    /**
+     * 根据日期获取小时
+     *
+     * @param date
+     * @return
+     */
+    public static int getHour(final Date date) {
+        return get(date, Calendar.HOUR_OF_DAY);
+    }
     /**
      * 根据日期获取小时
      *

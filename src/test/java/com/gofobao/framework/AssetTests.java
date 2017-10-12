@@ -5,6 +5,10 @@ import com.gofobao.framework.financial.biz.NewAleveBiz;
 import com.gofobao.framework.financial.biz.NewEveBiz;
 import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.helper.ExceptionEmailHelper;
+import com.gofobao.framework.scheduler.biz.FundStatisticsBiz;
+import com.google.common.base.Predicate;
+import com.google.common.collect.FluentIterable;
+import com.google.common.io.Files;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import lombok.extern.slf4j.Slf4j;
@@ -18,6 +22,7 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.RestTemplate;
 
+import java.io.File;
 import java.util.Date;
 import java.util.Map;
 
@@ -36,10 +41,10 @@ public class AssetTests {
     ExceptionEmailHelper exceptionEmailHelper;
 
     @Autowired
-    NewAleveBiz newAleveBiz ;
+    NewAleveBiz newAleveBiz;
 
     @Autowired
-    NewEveBiz newEveBiz ;
+    NewEveBiz newEveBiz;
 
     @Test
     public void test01() throws Exception {
@@ -74,14 +79,42 @@ public class AssetTests {
         }
     }
 
+    @Autowired
+    FundStatisticsBiz fundStatisticsBiz;
+
     @Test
     public void test04() throws Exception {
-        newAleveBiz.importDatabase("20170928", "3005-ALEVE0110-20170928");
+        FluentIterable<File> filter = Files.fileTreeTraverser().breadthFirstTraversal(new File("D:/statistice")).filter(new Predicate<File>() {
+            public boolean apply(File input) {
+                return input.isFile();
+            }
+        });
+
+        int pageSize = filter.size();
+        for (int pageIndex = 0; pageIndex < pageSize; pageIndex++) {
+            File file = filter.get(pageIndex);
+            String fileName = file.getName();
+            log.error("============" + fileName);
+
+            int index = file.getName().lastIndexOf("-");
+            String date = file.getName().substring(index + 1);
+            log.error("============" + date);
+
+            if (file.getName().contains("ALEVE")) {
+                newAleveBiz.importDatabase(date, fileName);
+                newAleveBiz.calculationCurrentInterest(date);
+            } else if (file.getName().contains("EVE")) {
+                newEveBiz.importEveDataToDatabase(date, fileName);
+            } else {
+                log.error("===============ddd======");
+            }
+        }
     }
 
     @Test
     public void test05() throws Exception {
-        newEveBiz.audit("20170929");
+        String date = "20171001";
+        newEveBiz.audit(date);
     }
 
 }
