@@ -363,6 +363,8 @@ public class TestController {
         transferBuyLogService.save(transferBuyLogList);
         //保存生成投标记录
         tenderService.save(childTenderList);
+
+        transfer.setTenderCount(transferBuyLogList.size());
         return childTenderList;
     }
 

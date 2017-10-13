@@ -217,6 +217,7 @@ public class BorrowRepaymentServiceImpl implements BorrowRepaymentService {
             collection.setPrincipal(StringHelper.formatMon(p.getPrincipal() / 100D));
             collection.setInterest(StringHelper.formatMon(p.getInterest() / 100D));
             collection.setVoFindRepayStatusList(thirdBatchDealLogBiz.getVoFindRepayStatusList(null, p.getId()));
+            collection.setLateInterest(StringHelper.formatDouble(repaymentBiz.calculateLateInterest(repaymentBiz.getLateDays(p), p, borrow), 100, true));
             collections.add(collection);
         });
         resultMaps.put("repaymentList", collections);

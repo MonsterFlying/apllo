@@ -1,5 +1,6 @@
 package com.gofobao.framework.repayment.biz;
 
+import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.borrow.vo.request.VoRepayAllReq;
 import com.gofobao.framework.collection.vo.request.VoCollectionListReq;
 import com.gofobao.framework.collection.vo.request.VoCollectionOrderReq;
@@ -21,6 +22,16 @@ import javax.servlet.http.HttpServletResponse;
  * Created by admin on 2017/6/5.
  */
 public interface RepaymentBiz {
+
+    /**
+     * 获取用户逾期费用
+     * 逾期规则: 未还款本金之和 * 0.4$ 的费用, 平台收取 0.2%, 出借人 0.2%
+     *
+     * @param borrowRepayment
+     * @param repaymentBorrow
+     * @return@
+     */
+    long calculateLateInterest(int lateDays, BorrowRepayment borrowRepayment, Borrow repaymentBorrow);
 
     /**
      * pc还款
