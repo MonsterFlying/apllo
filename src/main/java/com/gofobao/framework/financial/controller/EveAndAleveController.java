@@ -100,8 +100,12 @@ public class EveAndAleveController {
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "活期利息派发时间"));
         }
 
-        newAleveBiz.calculationCurrentInterest(date);
-        return ResponseEntity.ok(VoBaseResp.ok("下载成功"));
+        try {
+            newAleveBiz.calculationCurrentInterest(date);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "活期派发失败")) ;
+        }
+        return ResponseEntity.ok(VoBaseResp.ok("成功"));
     }
 
     /**
