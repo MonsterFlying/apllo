@@ -36,17 +36,8 @@ public class StarFireUserController {
     @Autowired
     private StarFireUserBiz starFireUserBiz;
 
-    @Value("${gofobao.h5Domain}")
-    private String h5Domain;
-
-    @Value("${gofobao.pcDomain}")
-    private String pcDomain;
-
     @Autowired
     private ThymeleafHelper thymeleafHelper;
-
-    @Value("${gofobao.javaDomain}")
-    private String javaDomain;
 
     @RequestMapping(value = "registerQuery", method = RequestMethod.POST)
     @ApiOperation("注册绑定查询接口")
