@@ -305,14 +305,14 @@ public class NewAleveBizImpl implements NewAleveBiz {
                     } catch (Exception e) {
                         log.error("活期收益资金变动异常", e);
                         exceptionEmailHelper.sendException("活期收益派发", e);
+                        throw new Exception(e);
                     }
                 }
             }
-
         } catch (Exception e) {
             log.error("派发用户活期收益异常", e);
             exceptionEmailHelper.sendException("派发用户活期收益异常", e);
-            throw new Exception(e) ;
+            throw new Exception(e);
         }
     }
 
@@ -350,14 +350,16 @@ public class NewAleveBizImpl implements NewAleveBiz {
             return;
         }
 
+        // 添加活期收益利息日志
         CurrentIncomeLog currentIncomeLog = new CurrentIncomeLog();
         currentIncomeLog.setCreateAt(nowDate);
         currentIncomeLog.setUserId(userThirdAccount.getUserId());
         currentIncomeLog.setSeqNo(no);
         currentIncomeLog.setState(1);
         currentIncomeLog.setMoney(currMoney);
+        currentIncomeLog = currentIncomeLogService.save(currentIncomeLog);  // 保存活期利息
 
-        currentIncomeLog = currentIncomeLogService.save(currentIncomeLog);
+        // 活期收益资金变动
         AssetChange assetChange = new AssetChange();
         assetChange.setUserId(userThirdAccount.getUserId());
         assetChange.setForUserId(0L);

@@ -36,6 +36,7 @@ import com.gofobao.framework.tender.service.TenderService;
 import com.gofobao.framework.windmill.user.vo.request.BindLoginReq;
 import com.gofobao.framework.windmill.util.PassWordCreate;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Lists;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;
@@ -671,20 +672,22 @@ public class StarFireUserBizImpl implements StarFireUserBiz {
             return userAccountRes;
         }
         try {
-            String platFormUid = AES.decrypt(key, initVector, userAccount.getPlatform_uid());
+
+            String userIdStr = userAccount.getPlatform_uid();
             List<Long> userIds;
-            if (StringUtils.isEmpty(platFormUid)) {
+            if (StringUtils.isEmpty(userIdStr)) {
                 Specification<Users> usersSpecification = Specifications.<Users>and()
                         .ne("starFireUserId", null)
+                        .ne("starFireRegisterToken",null)
                         .eq("isLock", false)
                         .build();
                 List<Users> usersList = userService.findList(usersSpecification);
                 userIds = usersList.stream()
                         .map(p -> p.getId())
                         .collect(Collectors.toList());
-
             } else {
-                userIds = Arrays.asList(platFormUid.split(",")).stream()
+                String platFormUid = AES.decrypt(key, initVector, userIdStr);
+                userIds = Lists.newArrayList(platFormUid.split(",")).stream()
                         .map(p -> Long.parseLong(p.trim()))
                         .collect(Collectors.toList());
             }

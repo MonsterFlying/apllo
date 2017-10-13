@@ -765,7 +765,7 @@ public class UserBizImpl implements UserBiz {
                 .between("repayAt", new Range<>(DateHelper.beginOfDate(nowDate), DateHelper.endOfDate(nowDate)))
                 .build();
         List<BorrowRepayment> borrowRepayments = borrowRepaymentService.findList(repaymentSpecification);
-        if (CollectionUtils.isEmpty(borrowRepayments)) {
+        if (!CollectionUtils.isEmpty(borrowRepayments)) {
             //应还
             Long waitRepayment = borrowRepayments.stream().mapToLong(p -> p.getRepayMoney()).sum();
             if (waitRepayment.intValue() >= 0) {
@@ -780,7 +780,6 @@ public class UserBizImpl implements UserBiz {
                 }
             }
         }
-
         //已收 待收
         Specification<BorrowCollection> collectionSpecification = Specifications.<BorrowCollection>and()
                 .eq("userId", userId)

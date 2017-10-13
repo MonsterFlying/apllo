@@ -135,6 +135,7 @@ public class StarFireTenderBizImpl implements StarFireTenderBiz {
             } else {
                 Specification<Users> usersSpecification = Specifications.<Users>and()
                         .ne("starFireUserId", null)
+                        .ne("starFireRegisterToken",null)
                         .build();
                 List<Users> usersList = userService.findList(usersSpecification);
                 List<Long> userIds = usersList.stream()
@@ -142,9 +143,14 @@ public class StarFireTenderBizImpl implements StarFireTenderBiz {
                         .collect(Collectors.toList());
                 userIdsList = Lists.transform(userIds, Functions.toStringFunction());
             }
+
+            if(CollectionUtils.isEmpty(userIdsList)){
+                userTenderRes.setResult(ResultCodeEnum.getCode(CodeTypeConstant.SUCCESS));
+                return userTenderRes;
+            }
             //查询用户投资
             Specification<Tender> tenderSpecification = Specifications.<Tender>and()
-                    .in(!CollectionUtils.isEmpty(userIdsList), "userId", userIdsList.toArray())
+                    .in("userId", userIdsList.toArray())
                     .eq("status", TenderConstans.SUCCESS)
                     .between(!StringUtils.isEmpty(startAt) && !StringUtils.isEmpty(endAt),
                             "createdAt",
@@ -154,19 +160,20 @@ public class StarFireTenderBizImpl implements StarFireTenderBiz {
                     new Sort(Sort.Direction.DESC,
                             "createdAt"));
 
-            Set<Long> borrowIds = tenders.stream()
-                    .map(p -> p.getBorrowId())
-                    .collect(Collectors.toSet());
-
-            List<Borrow> borrows = borrowService.findByBorrowIds(new ArrayList<>(borrowIds));
-            Map<Long, Borrow> borrowMap = borrows.stream()
-                    .collect(Collectors.toMap(Borrow::getId,
-                            Function.identity()));
             //用户投资记录为空直接返回
             if (CollectionUtils.isEmpty(tenders)) {
                 userTenderRes.setResult(ResultCodeEnum.getCode(CodeTypeConstant.SUCCESS));
                 return userTenderRes;
             }
+
+            Set<Long> borrowIds = tenders.stream()
+                    .map(p -> p.getBorrowId())
+                    .collect(Collectors.toSet());
+            List<Borrow> borrows = borrowService.findByBorrowIds(new ArrayList<>(borrowIds));
+            Map<Long, Borrow> borrowMap = borrows.stream()
+                    .collect(Collectors.toMap(Borrow::getId,
+                            Function.identity()));
+
             //装配数据
             Map<Long, List<Tender>> userTenderMaps = tenders.stream()
                     .collect(Collectors.groupingBy(Tender::getUserId));
@@ -279,6 +286,7 @@ public class StarFireTenderBizImpl implements StarFireTenderBiz {
             if (StringUtils.isEmpty(platformUid)) {
                 Specification<Users> usersSpecification = Specifications.<Users>and()
                         .ne("starFireUserId", null)
+                        .ne("starFireRegisterToken",null)
                         .build();
                 List<Users> usersList = userService.findList(usersSpecification);
                 List<Long> userIdArray = usersList.stream()
@@ -288,14 +296,23 @@ public class StarFireTenderBizImpl implements StarFireTenderBiz {
             } else {
                 userIds = Lists.newArrayList(AES.decrypt(key, initVector, platformUid).split(","));
             }
+
+            if(CollectionUtils.isEmpty(userIds)){
+                recordsRes.setResult(ResultCodeEnum.getCode(CodeTypeConstant.SUCCESS));
+                return recordsRes;
+            }
             Specification<Tender> tenderSpecification = Specifications.<Tender>and()
                     .in("userId", userIds.toArray())
                     .eq("status", TenderConstans.SUCCESS)
                     .build();
-
             List<Tender> tenders = tenderService.findList(tenderSpecification,
                     new Sort(Sort.Direction.DESC,
                             "createdAt"));
+            //用户投资记录为空直接返回
+            if (CollectionUtils.isEmpty(tenders)) {
+                recordsRes.setResult(ResultCodeEnum.getCode(CodeTypeConstant.SUCCESS));
+                return recordsRes;
+            }
             //根据用户分组tender
             Map<Long, List<Tender>> usersTenderMaps = tenders.stream()
                     .collect(Collectors.groupingBy(Tender::getUserId));
