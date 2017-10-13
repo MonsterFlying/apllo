@@ -9,11 +9,8 @@ import com.gofobao.framework.starfire.user.vo.response.RegisterQueryRes;
 import com.gofobao.framework.starfire.user.vo.response.RegisterRes;
 import com.gofobao.framework.starfire.user.vo.response.UserAccountRes;
 import com.gofobao.framework.windmill.user.vo.request.BindLoginReq;
-import com.google.common.collect.Maps;
-import com.google.gson.Gson;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -23,7 +20,6 @@ import org.springframework.web.bind.annotation.RestController;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.util.Map;
 
 /**
  * Created by master on 2017/9/26.
