@@ -344,6 +344,7 @@ public class TestController {
             childTender.setAutoOrder(transferBuyLog.getAutoOrder());
             childTender.setMoney(transferBuyLog.getBuyMoney());
             childTender.setValidMoney(transferBuyLog.getPrincipal());
+            childTender.setFinanceBuyId(transferBuyLog.getFinanceBuyId());
             childTender.setTransferFlag(0);
             childTender.setTUserId(buyUserThirdAccount.getUserId());
             childTender.setParentId(parentTender.getId());
