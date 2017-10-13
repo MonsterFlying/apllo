@@ -3,6 +3,9 @@ package com.gofobao.framework.starfire.user.biz.impl;
 import com.github.wenhao.jpa.Specifications;
 import com.gofobao.framework.asset.entity.Asset;
 import com.gofobao.framework.asset.service.AssetService;
+import com.gofobao.framework.collection.contants.BorrowCollectionContants;
+import com.gofobao.framework.collection.entity.BorrowCollection;
+import com.gofobao.framework.collection.service.BorrowCollectionService;
 import com.gofobao.framework.common.rabbitmq.MqConfig;
 import com.gofobao.framework.common.rabbitmq.MqHelper;
 import com.gofobao.framework.common.rabbitmq.MqQueueEnum;
@@ -38,6 +41,7 @@ import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Range;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -231,7 +235,7 @@ public class StarFireUserBizImpl implements StarFireUserBiz {
                 return resultMsg;
             }
             //解密名字 星火用户id
-            String trueName = AES.decrypt(key, initVector, registerModel.getUser_id());
+            String trueName = AES.decrypt(key, initVector, registerModel.getUser_name());
             String starFireUserId = AES.decrypt(key, initVector, registerModel.getUser_id());
             // 插入数据
             Users starFireUser = new Users();
@@ -323,10 +327,10 @@ public class StarFireUserBizImpl implements StarFireUserBiz {
         }
         String params = new Gson().toJson(bindUserModel);
         if (bindUserModel.getSource().equals("1")) {
-            return pcDomain + "/third/xhzlogin?params=" + params;
+            return pcDomain + "third/xhzlogin?params=" + params;
         } else {
             //TODO 暂默认是pc登录地址
-            return h5Domain + "/third/xhzlogin?params=" + params;
+            return h5Domain + "third/xhzlogin?params=" + params;
         }
     }
 
@@ -393,10 +397,11 @@ public class StarFireUserBizImpl implements StarFireUserBiz {
                 user.setPhone(StringUtils.isEmpty(user.getPhone())
                         ? bindUserModel.getMobile()
                         : user.getPhone());
-                user.setStarFireUserId(bindUserModel.getUser_id());
+                user.setStarFireUserId(AES.decrypt(key, initVector, bindUserModel.getUser_id()));
                 PassWordCreate pwc = new PassWordCreate();
                 String registerToken = pwc.createPassWord(30);
                 user.setStarFireRegisterToken(registerToken);
+                user.setStarFireBindAt(new Date());
                 userService.save(user);
                 try {
                     log.info("登录成功进入生成token");
@@ -414,18 +419,30 @@ public class StarFireUserBizImpl implements StarFireUserBiz {
                         ImmutableMap<String, String> body = ImmutableMap.of(MqConfig.MSG_USER_ID, user.getId().toString());
                         mqConfig.setMsg(body);
                         mqHelper.convertAndSend(mqConfig);
-                        //跳转target_url
-                        String bidUrl = bindUserModel.getBid_url();
-                        //if (voLoginReq.getSource().equals("1")) {  //pc端
-                        targetUrl = StringUtils.isEmpty(bidUrl) ? pcDomain : pcDomain + "/" + bidUrl;
-                        // } else {
-                        //  targetUrl = StringUtils.isEmpty(bidUrl) ? h5Domain : h5Domain + "/" + bidUrl;
-                        //}
-
                     }
+                    //跳转target_url
+                    String bidUrl = bindUserModel.getBid_url();
+                    //if (voLoginReq.getSource().equals("1")) {  //pc端
+                    targetUrl += StringUtils.isEmpty(bidUrl) ? pcDomain : pcDomain + bidUrl;
+                    // } else {
+                    //  targetUrl = StringUtils.isEmpty(bidUrl) ? h5Domain : h5Domain + "/" + bidUrl;
+                    //}
                     voBasicUserInfoResp.setTarget_url(targetUrl + "?token=" + tokenStr);
-                    userLoginBind.setPlatform_uid(bindUserModel.getPlatform_uid());
+                    userLoginBind.setRealNameAuthenticResult("true");
+                    userLoginBind.setIsXeenhoChanne(StringUtils.isEmpty(user.getWindmillId()) ? "false" : "true");
+                    UserCache userCache = userCacheService.findById(user.getId());
+                    if (!StringUtils.isEmpty(userCache.getTenderQudao())
+                            || !StringUtils.isEmpty(userCache.getTenderJingzhi())
+                            || !StringUtils.isEmpty(userCache.getTenderMiao())
+                            || StringUtils.isEmpty(userCache.getTenderTuijian())) {
+                        userLoginBind.setIsInvested("true");
+                    } else {
+                        userLoginBind.setIsInvested("false");
+                    }
+                    userLoginBind.setPlatform_uid(AES.encrypt(key, initVector, user.getId().toString()));
                     userLoginBind.setResult(ResultCodeEnum.getCode(CodeTypeConstant.SUCCESS));
+                    userLoginBind.setRegister_token(AES.encrypt(key, initVector, user.getStarFireRegisterToken()));
+                    bindNotify(userLoginBind); //通知火星
                     return ResponseEntity.ok(voBasicUserInfoResp);
                 } catch (Exception e) {
                     log.error("系统异常", e);
@@ -499,9 +516,10 @@ public class StarFireUserBizImpl implements StarFireUserBiz {
             Users users = userService.findById(Long.valueOf(userId));
             //验证用户是否绑定
             if (ObjectUtils.isEmpty(users)
-                    || ObjectUtils.isEmpty(users) || !users.getStarFireUserId().equals(starFireUserId)
-                    || StringUtils.isEmpty(users.getStarFireRegisterToken())
+                    || ObjectUtils.isEmpty(users)
                     || StringUtils.isEmpty(users.getStarFireUserId())
+                    || StringUtils.isEmpty(users.getStarFireRegisterToken())
+                    || !users.getStarFireUserId().equals(starFireUserId)
                     || !users.getStarFireRegisterToken().equals(registerToken)) {
                 String code = ResultCodeEnum.getCode(CodeTypeConstant.REGISTER_SUCCESS_BIND_FIRE_FAIL);
                 log.info("当前用户未绑定星火,打印用户信息:" + GSON.toJson(users));
@@ -616,13 +634,19 @@ public class StarFireUserBizImpl implements StarFireUserBiz {
         try {
             log.info("===========进入用户绑定通知星火=============");
             log.info("打印用户登录结果通知星火请求参数:", GSON.toJson(userLoginBind));
-            String resultStr = OKHttpHelper.postJson(notifyUrl, GSON.toJson(userLoginBind), null);
+            Map<String, String> paramMap = GSON.fromJson(GSON.toJson(userLoginBind),
+                    new TypeToken<Map<String, String>>() {
+                    }.getType());
+            String resultStr = OKHttpHelper.postForm(notifyUrl, paramMap, null);
             log.info("打印通知火星返回结果:" + resultStr);
         } catch (Exception e) {
             log.info("用户登录结果通知星火失败", e);
         }
     }
 
+
+    @Autowired
+    private BorrowCollectionService borrowCollectionService;
 
     /**
      * 账户信息查询
@@ -679,6 +703,7 @@ public class StarFireUserBizImpl implements StarFireUserBiz {
             List<Asset> assets = assetService.findByUserIds(userIds);
             Integer size = assets.size();
             List<UserAccountRes.Records> records = new ArrayList<>(size);
+            Date nowDate = new Date();
             assets.forEach(asset -> {
                 UserAccountRes.Records record = userAccountRes.new Records();
                 Long userId = asset.getUserId();
@@ -704,6 +729,21 @@ public class StarFireUserBizImpl implements StarFireUserBiz {
                 accountRecord.setUncollectedInterest(StringHelper.formatDouble(collection / 100D, false));
                 //已收收益
                 accountRecord.setProfitAmount(StringHelper.formatDouble(userCache.getIncomeTotal() / 100D, false));
+                //今日收益
+                Specification<BorrowCollection> specification = Specifications.<BorrowCollection>and()
+                        .eq("userId", userId)
+                        .eq("status", BorrowCollectionContants.STATUS_YES)
+                        .between("collectionAtYes",
+                                new Range<>(DateHelper.beginOfDate(nowDate),
+                                        DateHelper.endOfDate(nowDate)))
+                        .build();
+                List<BorrowCollection> borrowCollections = borrowCollectionService.findList(specification);
+                if (!CollectionUtils.isEmpty(borrowCollections)) {
+                    long sum = borrowCollections.stream()
+                            .mapToLong(b -> b.getCollectionMoneyYes())
+                            .sum();
+                    accountRecord.setTodayProfitAmount(StringHelper.formatDouble(sum, 100, false));
+                }
                 //投资总额
                 Specification<Tender> tenderSpecification = Specifications.<Tender>and()
                         .eq("userId", userId)

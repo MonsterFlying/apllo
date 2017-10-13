@@ -37,8 +37,9 @@ public class UserLoginBind extends BaseResponse {
     @ApiModelProperty("签名")
     private String sign;
 
-    @ApiModelProperty("错误信息，当校验不通过，或绑定不成功时，返回错误信息")
-    private String err_msg;
+
+    @ApiModelProperty
+    private String RealNameAuthenticResult;
 
 
 }

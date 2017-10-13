@@ -6,7 +6,7 @@ spring:
     # password: GOFOBAO@0701.
     url: jdbc:mysql://127.0.0.1:3306/gfb02?useUnicode=true&characterEncoding=utf8&autoReconnect=true&failOverReadOnly=false&&useSSL=true
     username: root
-    password:
+    password: 123
     driver-class-name: com.mysql.jdbc.Driver
   jpa:
     database: mysql
@@ -110,5 +110,5 @@ starfire: # 星火
   key: gofobao_hyfbGxll  #asc加密key值
   initVector: gofobao_hyfbGxll  #
   channelCode: gofobao_xhzt   #星火分配渠道简称
-  request_url: https://www.xxdai.com/xeenho/ #星火请求地址
   notify_url: https://www.xeenho.com/openapi/user_bind/notify/
+

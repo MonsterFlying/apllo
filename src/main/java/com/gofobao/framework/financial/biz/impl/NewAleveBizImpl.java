@@ -189,8 +189,9 @@ public class NewAleveBizImpl implements NewAleveBiz {
     }
 
     /**
-     *  文件传输版本在1.1.4 之后
-     *  传输文件时间导入大于2017年9月20号以后启用
+     * 文件传输版本在1.1.4 之后
+     * 传输文件时间导入大于2017年9月20号以后启用
+     *
      * @param date
      * @param bufferedReader
      */
@@ -262,7 +263,7 @@ public class NewAleveBizImpl implements NewAleveBiz {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void calculationCurrentInterest(String date) {
+    public void calculationCurrentInterest(String date) throws Exception {
         try {
             Specification<NewAleve> specification = Specifications
                     .<NewAleve>and()
@@ -271,8 +272,8 @@ public class NewAleveBizImpl implements NewAleveBiz {
                     .build();
             Long count = newAleveService.count(specification);
             if (count <= 0) {
-                log.info("当前无活期利息");
-                return ;
+                log.warn(String.format("[当前活期收益]"));
+                return;
             }
             int pageSize = 20, pageIndex = 0, pageIndexTotal = 0;
             pageIndexTotal = count.intValue() / pageSize;
@@ -282,6 +283,10 @@ public class NewAleveBizImpl implements NewAleveBiz {
                 Pageable pageable = new PageRequest(pageIndex, pageSize, new Sort(new Sort.Order(Sort.Direction.DESC, "id")));
                 Page<NewAleve> newAleves = newAleveService.findAll(specification, pageable);
                 List<NewAleve> data = newAleves.getContent();
+                if (ObjectUtils.isEmpty(data)) {
+                    log.warn("当期活期收益数据为空");
+                    break;
+                }
 
                 for (NewAleve item : data) {
                     String cardnbr = item.getCardnbr();  // 账户
@@ -291,6 +296,7 @@ public class NewAleveBizImpl implements NewAleveBiz {
                     UserThirdAccount userThirdAccount = userThirdAccountService.findByAccountId(accountId);
                     if (ObjectUtils.isEmpty(userThirdAccount)) {
                         log.error(String.format("活期收益派发, 开户信息为空: %s", accountId));
+                        exceptionEmailHelper.sendErrorMessage("活期收益派发", String.format("查询当前开户账户为空, 数据[ 账户:%s, 时间:%s ]", accountId, date));  // 对于特殊用户进行特殊处理
                         continue;
                     }
 
@@ -298,6 +304,7 @@ public class NewAleveBizImpl implements NewAleveBiz {
                         doAssetChangeByCurrentInterest(item, userThirdAccount, money);
                     } catch (Exception e) {
                         log.error("活期收益资金变动异常", e);
+                        exceptionEmailHelper.sendException("活期收益派发", e);
                     }
                 }
             }
@@ -305,6 +312,7 @@ public class NewAleveBizImpl implements NewAleveBiz {
         } catch (Exception e) {
             log.error("派发用户活期收益异常", e);
             exceptionEmailHelper.sendException("派发用户活期收益异常", e);
+            throw new Exception(e) ;
         }
     }
 
