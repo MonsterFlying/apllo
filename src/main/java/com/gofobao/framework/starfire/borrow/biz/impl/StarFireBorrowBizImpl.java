@@ -87,7 +87,6 @@ public class StarFireBorrowBizImpl implements StarFireBorrowBiz {
             if (!StringUtils.isEmpty(bidIds)) {
                 borrowIds = Lists.newArrayList(AES.decrypt(key, initVector,bidIds).split(","));
             }
-
             Specification<Borrow> borrowSpecification;
             if (!CollectionUtils.isEmpty(borrowIds)) {
                 borrowSpecification = Specifications.<Borrow>and()
