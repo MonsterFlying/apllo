@@ -59,6 +59,7 @@ import com.gofobao.framework.common.rabbitmq.MqTagEnum;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.helper.*;
 import com.gofobao.framework.helper.project.BatchAssetChangeHelper;
+import com.gofobao.framework.helper.project.BorrowCalculatorHelper;
 import com.gofobao.framework.helper.project.IntegralChangeHelper;
 import com.gofobao.framework.member.entity.UserCache;
 import com.gofobao.framework.member.entity.UserThirdAccount;
@@ -203,89 +204,166 @@ public class TestController {
     private TransferBuyLogService transferBuyLogService;
 
     @ApiOperation("获取自动投标列表")
-    @RequestMapping("/pub/test/transfer/tender")
+    @RequestMapping("/pub/test/transfer/repair")
     @Transactional
-    public void sendTenderTransfer() {
-        UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(22002l);
+    public void repairTransfer(@RequestParam("transferId") Object transferId) {
+        /* 债权转让记录 */
+        Transfer transfer = transferService.findById(NumberHelper.toLong(transferId));
+        Tender patentTender = tenderService.findById(transfer.getTenderId());
+        Borrow parentBorrow = borrowService.findById(transfer.getBorrowId());
+        Specification<TransferBuyLog> tbls = Specifications
+                .<TransferBuyLog>and()
+                .eq("transferId", transfer.getId())
+                .eq("state", 1)
+                .build();
+        List<TransferBuyLog> transferBuyLogList = transferBuyLogService.findList(tbls);
+        List<Tender> childTenderList = addFinanceChildTender(transfer.getRecheckAt(), transfer, patentTender, transferBuyLogList);
+        try {
+            addFinanceChildTenderCollection(transfer.getRecheckAt(), transfer, parentBorrow, childTenderList);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
 
-        TransferBuyLog transferBuyLog = new TransferBuyLog();
-        transferBuyLog.setTransferId(0l);
-        transferBuyLog.setState(0);
-        transferBuyLog.setAlreadyInterest(0l);
-        transferBuyLog.setBuyMoney(145069l);
-        transferBuyLog.setValidMoney(145069l);
-        transferBuyLog.setPrincipal(145069l);
-        transferBuyLog.setUserId(22002l);
-        transferBuyLog.setAuto(false);
-        transferBuyLog.setAutoOrder(0);
-        transferBuyLog.setDel(false);
-        transferBuyLog.setSource(0);
-        transferBuyLog.setType(2);
-        transferBuyLog.setCreatedAt(new Date());
-        transferBuyLog.setUpdatedAt(new Date());
-        transferBuyLog = transferBuyLogService.save(transferBuyLog);
-
-        List<CreditInvest> creditInvestList = new ArrayList<>();
-        /* 购买债权转让orderId */
-        String transferOrderId = JixinHelper.getOrderId(JixinHelper.LEND_REPAY_PREFIX);
-        CreditInvest creditInvest = new CreditInvest();
-        creditInvest.setAccountId("6212462190000131545");
-        creditInvest.setOrderId(transferOrderId);
-        creditInvest.setTxAmount(StringHelper.formatDouble(145069l, 100, false));
-        creditInvest.setTxFee(StringHelper.formatDouble(0, 100, false));
-        creditInvest.setTsfAmount(StringHelper.formatDouble(transferBuyLog.getPrincipal(), 100, false));
-        creditInvest.setForAccountId("6212462190000762844");
-        creditInvest.setOrgOrderId("GFBLR_1507627271008185612238");
-        creditInvest.setOrgTxAmount(StringHelper.formatDouble(145069l, 100, false));
-        creditInvest.setProductId("163041");
-        creditInvest.setContOrderId(userThirdAccount.getAutoTransferBondOrderId());
-        creditInvestList.add(creditInvest);
-        transferBuyLog.setThirdTransferOrderId(transferOrderId);
-
-        //批次号
-        String batchNo = jixinHelper.getBatchNo();
-        //请求保留参数
-        Map<String, Object> acqResMap = new HashMap<>();
-        acqResMap.put("transferId", transferBuyLog.getId());
-        //调用存管批次债权转让接口
-        BatchCreditInvestReq request = new BatchCreditInvestReq();
-        request.setBatchNo(batchNo);
-        request.setTxAmount(StringHelper.formatDouble(145069l, 100, false));
-        request.setTxCounts(StringHelper.toString(creditInvestList.size()));
-        request.setSubPacks(GSON.toJson(creditInvestList));
-        request.setAcqRes(GSON.toJson(acqResMap));
-        request.setChannel(ChannelContant.HTML);
-        request.setNotifyURL(javaDomain + "/pub/test/call");
-        request.setRetNotifyURL(javaDomain + "/pub/test/call");
-        BatchCreditInvestResp response = jixinManager.send(JixinTxCodeEnum.BATCH_CREDIT_INVEST, request, BatchCreditInvestResp.class);
-        if ((ObjectUtils.isEmpty(response)) || (!JixinResultContants.BATCH_SUCCESS.equalsIgnoreCase(response.getReceived()))) {
-            BatchCancelReq batchCancelReq = new BatchCancelReq();
-            batchCancelReq.setBatchNo(batchNo);
-            batchCancelReq.setTxAmount(StringHelper.formatDouble(145069l, 100, false));
-            batchCancelReq.setTxCounts(StringHelper.toString(creditInvestList.size()));
-            batchCancelReq.setChannel(ChannelContant.HTML);
-            BatchCancelResp batchCancelResp = jixinManager.send(JixinTxCodeEnum.BATCH_CANCEL, batchCancelReq, BatchCancelResp.class);
-            if ((ObjectUtils.isEmpty(batchCancelResp)) || (!ObjectUtils.isEmpty(batchCancelResp.getRetCode()))) {
-                log.error("sendTenderTransfer即信批次撤销失败!");
-            }
-
-            log.error(String.format("复审: 批量债权转让申请失败: %s", response));
-            log.error("sendTenderTransfer投资人批次购买债权失败!:" + response.getRetMsg());
+    /**
+     * 生成子级债权回款记录，标注老债权回款已经转出
+     *
+     * @param nowDate
+     * @param transfer
+     * @param parentBorrow
+     * @param childTenderList
+     */
+    public List<BorrowCollection> addFinanceChildTenderCollection(Date nowDate, Transfer transfer, Borrow parentBorrow, List<Tender> childTenderList) throws Exception {
+        List<BorrowCollection> childTenderCollectionList = new ArrayList<>();/* 债权子记录回款记录 */
+        String borrowCollectionIds = transfer.getBorrowCollectionIds();
+        //生成子级债权回款记录，标注老债权回款已经转出
+        Specification<BorrowCollection> bcs = null;
+        if (transfer.getIsAll()) {
+            bcs = Specifications
+                    .<BorrowCollection>and()
+                    .eq("tenderId", transfer.getTenderId())
+                    .eq("status", 0)
+                    .build();
+        } else {
+            bcs = Specifications
+                    .<BorrowCollection>and()
+                    .eq("tenderId", transfer.getTenderId())
+                    .eq("id", borrowCollectionIds.split(","))
+                    .eq("status", 0)
+                    .build();
+        }
+        List<BorrowCollection> borrowCollectionList = borrowCollectionService.findList(bcs);/* 债权转让原投资回款记录 */
+        long transferInterest = borrowCollectionList.stream().mapToLong(BorrowCollection::getInterest).sum();/* 债权转让总利息 */
+        Date repayAt = transfer.getRepayAt();/* 原借款下一期还款日期 */
+        Date startAt = null;/* 计息开始时间 */
+        if (parentBorrow.getRepayFashion() == 1) {
+            startAt = DateHelper.subDays(repayAt, parentBorrow.getTimeLimit());
+        } else if (parentBorrow.getRepayFashion() == 0 || parentBorrow.getRepayFashion() == 2) {
+            startAt = DateHelper.subMonths(repayAt, 1);
         }
 
-        //记录日志
-        ThirdBatchLog thirdBatchLog = new ThirdBatchLog();
-        thirdBatchLog.setBatchNo(batchNo);
-        thirdBatchLog.setCreateAt(new Date());
-        thirdBatchLog.setTxDate(request.getTxDate());
-        thirdBatchLog.setTxTime(request.getTxTime());
-        thirdBatchLog.setSeqNo(request.getSeqNo());
-        thirdBatchLog.setUpdateAt(new Date());
-        thirdBatchLog.setSourceId(transferBuyLog.getId());
-        thirdBatchLog.setType(ThirdBatchLogContants.BATCH_CREDIT_INVEST);
-        thirdBatchLog.setAcqRes(GSON.toJson(acqResMap));
-        thirdBatchLog.setRemark("投资人批次购买债权(修复理财计划多转让bug)");
-        thirdBatchLogService.save(thirdBatchLog);
+        for (int j = 0; j < childTenderList.size(); j++) {
+            Tender childTender = childTenderList.get(j);/* 购买债权转让子投资记录 */
+            //生成购买债权转让新的回款记录
+            BorrowCalculatorHelper borrowCalculatorHelper = new BorrowCalculatorHelper(
+                    childTender.getValidMoney().doubleValue(),
+                    transfer.getApr().doubleValue(),
+                    transfer.getTimeLimit(),
+                    startAt);
+            Map<String, Object> rsMap = borrowCalculatorHelper.simpleCount(parentBorrow.getRepayFashion());
+            List<Map<String, Object>> repayDetailList = (List<Map<String, Object>>) rsMap.get("repayDetailList");
+            Preconditions.checkState(!CollectionUtils.isEmpty(repayDetailList), "生成用户回款计划开始: 计划生成为空");
+            BorrowCollection borrowCollection;
+            int startOrder = borrowCollectionList.get(0).getOrder();/* 获取开始转让期数,期数下标从0开始 */
+            long sumCollectionInterest = 0l;/*总回款利息*/
+            for (int i = 0; i < repayDetailList.size(); i++) {
+                borrowCollection = new BorrowCollection();
+                Map<String, Object> repayDetailMap = repayDetailList.get(i);
+                long principal = NumberHelper.toLong(repayDetailMap.get("principal"));
+                long interest = NumberHelper.toLong(repayDetailMap.get("interest"));
+                Date collectionAt = DateHelper.stringToDate(StringHelper.toString(repayDetailMap.get("repayAt")));
+                sumCollectionInterest += interest;
+                //最后一个购买债权转让的最后一期回款，需要把还款溢出的利息补给新的回款记录
+                if ((j == childTenderList.size() - 1) && (i == repayDetailList.size() - 1)) {
+                    interest += transferInterest - sumCollectionInterest;/* 新的回款利息添加溢出的利息 */
+                }
+
+                //如果是理财计划借款不需要生成利息
+                if (childTender.getType().intValue() == 1) {
+                    interest = 0;
+                }
+
+                borrowCollection.setTenderId(childTender.getId());
+                borrowCollection.setStatus(0);
+                borrowCollection.setOrder(startOrder++);
+                borrowCollection.setUserId(childTender.getUserId());
+                borrowCollection.setStartAt(i > 0 ? DateHelper.stringToDate(StringHelper.toString(repayDetailList.get(i - 1).get("repayAt"))) : startAt);
+                borrowCollection.setStartAtYes(i > 0 ? DateHelper.stringToDate(StringHelper.toString(repayDetailList.get(i - 1).get("repayAt"))) : nowDate);
+                borrowCollection.setCollectionAt(collectionAt);
+                borrowCollection.setCollectionAtYes(collectionAt);
+                borrowCollection.setCollectionMoney(principal);
+                borrowCollection.setPrincipal(principal);
+                borrowCollection.setInterest(interest);
+                borrowCollection.setCreatedAt(nowDate);
+                borrowCollection.setUpdatedAt(nowDate);
+                borrowCollection.setCollectionMoneyYes(0l);
+                borrowCollection.setLateDays(0);
+                borrowCollection.setLateInterest(0l);
+                borrowCollection.setBorrowId(parentBorrow.getId());
+                childTenderCollectionList.add(borrowCollection);
+
+            }
+            borrowCollectionService.save(childTenderCollectionList);
+        }
+
+        return childTenderCollectionList;
+    }
+
+    /**
+     * 新增理财计划子级标的
+     *
+     * @param nowDate
+     * @param transfer
+     * @param parentTender
+     * @param transferBuyLogList
+     * @return
+     */
+    public List<Tender> addFinanceChildTender(Date nowDate, Transfer transfer, Tender parentTender, List<TransferBuyLog> transferBuyLogList) {
+        //生成债权记录与回款记录
+        List<Tender> childTenderList = new ArrayList<>();
+        transferBuyLogList.stream().forEach(transferBuyLog -> {
+            Tender childTender = new Tender();
+            UserThirdAccount buyUserThirdAccount = userThirdAccountService.findByUserId(transferBuyLog.getUserId());
+
+            childTender.setUserId(transferBuyLog.getUserId());
+            childTender.setStatus(1);
+            childTender.setType(transferBuyLog.getType());
+            childTender.setBorrowId(transfer.getBorrowId());
+            childTender.setSource(transferBuyLog.getSource());
+            childTender.setIsAuto(transferBuyLog.getAuto());
+            childTender.setAutoOrder(transferBuyLog.getAutoOrder());
+            childTender.setMoney(transferBuyLog.getBuyMoney());
+            childTender.setValidMoney(transferBuyLog.getPrincipal());
+            childTender.setTransferFlag(0);
+            childTender.setTUserId(buyUserThirdAccount.getUserId());
+            childTender.setParentId(parentTender.getId());
+            childTender.setState(2);
+            childTender.setTransferBuyId(transferBuyLog.getId());
+            childTender.setAlreadyInterest(transferBuyLog.getAlreadyInterest());
+            childTender.setThirdTenderOrderId(transferBuyLog.getThirdTransferOrderId());
+            childTender.setAuthCode(transferBuyLog.getTransferAuthCode());
+            childTender.setCreatedAt(nowDate);
+            childTender.setUpdatedAt(nowDate);
+            childTenderList.add(childTender);
+
+            //更新购买净值标状态为成功购买
+            transferBuyLog.setState(1);
+            transferBuyLog.setUpdatedAt(new Date());
+        });
+        transferBuyLogService.save(transferBuyLogList);
+        //保存生成投标记录
+        tenderService.save(childTenderList);
+        return childTenderList;
     }
 
     @ApiOperation("资产查询")

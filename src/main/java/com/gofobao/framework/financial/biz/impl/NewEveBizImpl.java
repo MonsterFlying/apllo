@@ -336,7 +336,7 @@ public class NewEveBizImpl implements NewEveBiz {
         do {
             Pageable localPageable = new PageRequest(pageIndex, pageSize, new Sort(new Sort.Order(Sort.Direction.ASC, "id")));  //  分页
             Page<Object[]> localRecordPage = newEveService.findLocalAssetChangeRecord(DateHelper.dateToString(beginDate), DateHelper.dateToString(endOfDate), localPageable);
-            if(pageIndexTotal == 0){
+            if (pageIndexTotal == 0) {
                 pageIndexTotal = localRecordPage.getTotalPages();
             }
             if (pageIndexTotal <= 0) {
@@ -400,7 +400,7 @@ public class NewEveBizImpl implements NewEveBiz {
         do {
             Pageable evePageable = new PageRequest(pageIndex, pageSize, new Sort(new Sort.Order(Sort.Direction.ASC, "eve.id")));  //  分页
             Page<Object[]> remoteRecordPage = newEveService.findRemoteByQueryTime(date, evePageable);
-            if(pageIndexTotal == 0){
+            if (pageIndexTotal == 0) {
                 pageIndexTotal = remoteRecordPage.getTotalPages();
             }
 
@@ -462,11 +462,11 @@ public class NewEveBizImpl implements NewEveBiz {
 
         do {
             Pageable pageable = new PageRequest(pageIndex, pageSize, new Sort(new Sort.Order(Sort.Direction.ASC, "account.user_id")));
-            Date opDate = DateHelper.stringToDate(date, DateHelper.DATE_FORMAT_YMD_NUM) ;
+            Date opDate = DateHelper.stringToDate(date, DateHelper.DATE_FORMAT_YMD_NUM);
             Date endDate = DateHelper.beginOfDate(DateHelper.addDays(opDate, 1));
             String endDateStr = DateHelper.dateToString(endDate);
             Page<Object[]> localAndRemoteAssetInfoPage = jixinAssetService.findAllForPrint(endDateStr, pageable);
-            if(pageIndexTotal == 0){
+            if (pageIndexTotal == 0) {
                 pageIndexTotal = localAndRemoteAssetInfoPage.getTotalPages();
             }
             if (pageIndexTotal <= 0) {
@@ -546,6 +546,7 @@ public class NewEveBizImpl implements NewEveBiz {
 
     /**
      * 发送对账文件
+     *
      * @param date
      * @param localFileName
      * @param remoteFileName
