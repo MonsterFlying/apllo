@@ -25,7 +25,7 @@ public class NewAleveAndEveScheduler {
     NewEveBiz newEveBiz;
 
     @Autowired
-    ExceptionEmailHelper exceptionEmailHelper ;
+    ExceptionEmailHelper exceptionEmailHelper;
 
     @Autowired
     OfflineRechargeSynBiz offlineRechargeSynBiz;
@@ -47,7 +47,11 @@ public class NewAleveAndEveScheduler {
         }
 
         // 计算活期收益
-        newAleveBiz.calculationCurrentInterest(date);
+        try {
+            newAleveBiz.calculationCurrentInterest(date);
+        } catch (Exception e) {
+            log.error("活期处理异常", e);
+        }
 
         boolean eveDownloadState = newEveBiz.downloadEveFileAndSaveDB(date);  // 下载EVE文件并且入库
         if (!eveDownloadState) {
@@ -57,7 +61,7 @@ public class NewAleveAndEveScheduler {
 
         // 针对线下充值进行对账
         try {
-          boolean offlineRechargeSysState = offlineRechargeSynBiz.process(date) ;
+            boolean offlineRechargeSysState = offlineRechargeSynBiz.process(date);
             if (!offlineRechargeSysState) {
                 exceptionEmailHelper.sendErrorMessage("凌晨3点线下同步失败",
                         String.format("凌晨3点线下同步失败, 时间: %s", date));
