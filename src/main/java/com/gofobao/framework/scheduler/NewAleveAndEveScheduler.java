@@ -13,10 +13,8 @@ import org.springframework.stereotype.Component;
 @Component
 @Slf4j
 public class NewAleveAndEveScheduler {
-
     @Autowired
     JixinTxDateHelper jixinTxDateHelper;
-
 
     @Autowired
     NewAleveBiz newAleveBiz;
