@@ -24,7 +24,7 @@ public interface NewAleveBiz {
      * 计算活期利息
      * @param date
      */
-    void calculationCurrentInterest(String date) ;
+    void calculationCurrentInterest(String date) throws Exception;
 
     void simpleDownload(String date);
 }

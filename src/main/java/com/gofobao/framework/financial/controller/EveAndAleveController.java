@@ -86,6 +86,24 @@ public class EveAndAleveController {
         return ResponseEntity.ok(VoBaseResp.ok("下载成功"));
     }
 
+
+    /**
+     * 派发活期利息
+     * @param date
+     * @return
+     */
+    @GetMapping(value = "/pub/eveAndAleve/currentInterest/{date}")
+    public ResponseEntity<VoBaseResp> publishCurrentInterest(String date){
+        if(StringUtils.isNullOrEmpty(date)){
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "活期利息派发时间"));
+        }
+
+        newAleveBiz.calculationCurrentInterest(date);
+        return ResponseEntity.ok(VoBaseResp.ok("下载成功"));
+    }
+
     /**
      * 下载aleve文件
      *
