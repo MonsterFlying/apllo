@@ -36,7 +36,6 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.poi.ss.formula.functions.T;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.jpa.domain.Specification;
@@ -92,6 +91,9 @@ public class StarFireUserBizImpl implements StarFireUserBiz {
     @Value("${gofobao.h5Domain}")
     private String h5Domain;
 
+    @Value("${gofobao.pcDomain}")
+    private String pcDomain;
+
     @Autowired
     private MqHelper mqHelper;
 
@@ -100,6 +102,12 @@ public class StarFireUserBizImpl implements StarFireUserBiz {
 
     @Autowired
     private UserCacheService userCacheService;
+
+    @Autowired
+    private TenderService tenderService;
+
+    @Autowired
+    private RedisHelper redisHelper;
 
 
     /**
@@ -135,7 +143,7 @@ public class StarFireUserBizImpl implements StarFireUserBiz {
                     log.info("未通过安全校验");
                     break;
                 }
-                String mobile = AES.encrypt(key, initVector, registerQuery.getMobile());
+                String mobile = AES.decrypt(key, initVector, registerQuery.getMobile());
                 Users user = userService.findByAccount(mobile);
                 if (ObjectUtils.isEmpty(user)) {
                     //用户未注册
@@ -304,6 +312,24 @@ public class StarFireUserBizImpl implements StarFireUserBiz {
         }
     }
 
+    public String bindHtml(BindUserModel bindUserModel) {
+        //封装验证参数
+        baseRequest.setSign(bindUserModel.getSign());
+        baseRequest.setC_code(bindUserModel.getC_code());
+        baseRequest.setSerial_num(bindUserModel.getSerial_num());
+        baseRequest.setT_code(bindUserModel.getT_code());
+        if (!SignUtil.checkSign(baseRequest, key, initVector) || StringUtils.isEmpty(bindUserModel.getSource())) {
+            return null;
+        }
+        String params = new Gson().toJson(bindUserModel);
+        if (bindUserModel.getSource().equals("1")) {
+            return pcDomain + "/third/xhzlogin?params=" + params;
+        } else {
+            //TODO 暂默认是pc登录地址
+            return h5Domain + "/third/xhzlogin?params=" + params;
+        }
+    }
+
     /**
      * 用户登录绑定
      *
@@ -374,26 +400,31 @@ public class StarFireUserBizImpl implements StarFireUserBiz {
                 userService.save(user);
                 try {
                     log.info("登录成功进入生成token");
-                    final String token = jwtTokenHelper.generateToken(user, 3);
-                    response.addHeader(tokenHeader, String.format("%s %s", prefix, token));
-                    // 触发登录队列
-                    MqConfig mqConfig = new MqConfig();
-                    mqConfig.setTag(MqTagEnum.LOGIN);
-                    mqConfig.setQueue(MqQueueEnum.RABBITMQ_USER_ACTIVE);
-                    mqConfig.setSendTime(DateHelper.addSeconds(new Date(), 10));
-                    ImmutableMap<String, String> body = ImmutableMap.of(MqConfig.MSG_USER_ID, user.getId().toString());
-                    mqConfig.setMsg(body);
-                    mqHelper.convertAndSend(mqConfig);
                     VoBasicUserInfoResp voBasicUserInfoResp = VoBaseResp.ok("操作成功", VoBasicUserInfoResp.class);
-                    //跳转target_url
-                    // TODO pc页面没出来 默认跳转h5
-                /*    if (StringUtils.isEmpty(bindUserModel.getBid_url())) {
-                        voBasicUserInfoResp.setTarget_url(h5Domain + "?token=" + token);
-                    } else {
-                        voBasicUserInfoResp.setTarget_url(bindUserModel.getBid_url() + "?token=" + token);
-                    }*/
-                    voBasicUserInfoResp.setTarget_url(h5Domain + "?token=" + token);
-                    userLoginBind.setPlatform_uid(AES.decrypt(key, initVector, String.valueOf(user.getId())));
+                    String targetUrl = "";
+                    String tokenStr = redisHelper.get("JWT_TOKEN_" + user.getId(), null);
+                    if (StringUtils.isEmpty(tokenStr)) {
+                        tokenStr = jwtTokenHelper.generateToken(user, Integer.valueOf(bindUserModel.getSource()));
+                        response.addHeader(tokenHeader, String.format("%s %s", prefix, tokenStr));
+                        // 触发登录队列
+                        MqConfig mqConfig = new MqConfig();
+                        mqConfig.setTag(MqTagEnum.LOGIN);
+                        mqConfig.setQueue(MqQueueEnum.RABBITMQ_USER_ACTIVE);
+                        mqConfig.setSendTime(DateHelper.addSeconds(new Date(), 10));
+                        ImmutableMap<String, String> body = ImmutableMap.of(MqConfig.MSG_USER_ID, user.getId().toString());
+                        mqConfig.setMsg(body);
+                        mqHelper.convertAndSend(mqConfig);
+                        //跳转target_url
+                        String bidUrl = bindUserModel.getBid_url();
+                        //if (voLoginReq.getSource().equals("1")) {  //pc端
+                        targetUrl = StringUtils.isEmpty(bidUrl) ? pcDomain : pcDomain + "/" + bidUrl;
+                        // } else {
+                        //  targetUrl = StringUtils.isEmpty(bidUrl) ? h5Domain : h5Domain + "/" + bidUrl;
+                        //}
+
+                    }
+                    voBasicUserInfoResp.setTarget_url(targetUrl + "?token=" + tokenStr);
+                    userLoginBind.setPlatform_uid(bindUserModel.getPlatform_uid());
                     userLoginBind.setResult(ResultCodeEnum.getCode(CodeTypeConstant.SUCCESS));
                     return ResponseEntity.ok(voBasicUserInfoResp);
                 } catch (Exception e) {
@@ -468,7 +499,7 @@ public class StarFireUserBizImpl implements StarFireUserBiz {
             Users users = userService.findById(Long.valueOf(userId));
             //验证用户是否绑定
             if (ObjectUtils.isEmpty(users)
-                    || !users.getStarFireUserId().equals(starFireUserId)
+                    || ObjectUtils.isEmpty(users) || !users.getStarFireUserId().equals(starFireUserId)
                     || StringUtils.isEmpty(users.getStarFireRegisterToken())
                     || StringUtils.isEmpty(users.getStarFireUserId())
                     || !users.getStarFireRegisterToken().equals(registerToken)) {
@@ -547,25 +578,28 @@ public class StarFireUserBizImpl implements StarFireUserBiz {
         //验证成功
         if (flag) {
             try {
-                String token = jwtTokenHelper.generateToken(users, Integer.valueOf(source));
-                response.addHeader(tokenHeader, String.format("%s %s", prefix, token));
-                users.setPlatform(3);
-                if (StringUtils.isEmpty(users.getPushId())) {   // 产生一次永久保存
-                    users.setPushId(UUID.randomUUID().toString().replace("-", ""));  // 设置唯一标识
+                String redisTokenStr = redisHelper.get("JWT_TOKEN_" + users.getId(), null);
+                String bidUrl = loginModel.getBid_url();
+                if (StringUtils.isEmpty(redisTokenStr)) {
+                    redisTokenStr = jwtTokenHelper.generateToken(users, Integer.valueOf(source));
+                    response.addHeader(tokenHeader, String.format("%s %s", prefix, redisTokenStr));
+                    users.setPlatform(3);
+                    if (StringUtils.isEmpty(users.getPushId())) {   // 产生一次永久保存
+                        users.setPushId(UUID.randomUUID().toString().replace("-", ""));  // 设置唯一标识
+                    }
+                    users.setIp(IpHelper.getIpAddress(request)); // 设置ip
+                    userService.save(users);   // 记录登录信息
+                    // 触发登录队列
+                    MqConfig mqConfig = new MqConfig();
+                    mqConfig.setTag(MqTagEnum.LOGIN);
+                    mqConfig.setQueue(MqQueueEnum.RABBITMQ_USER_ACTIVE);
+                    mqConfig.setSendTime(DateHelper.addSeconds(new Date(), 10));
+                    ImmutableMap<String, String> body = ImmutableMap.of(MqConfig.MSG_USER_ID, users.getId().toString());
+                    mqConfig.setMsg(body);
+                    mqHelper.convertAndSend(mqConfig);
                 }
-                users.setIp(IpHelper.getIpAddress(request)); // 设置ip
-                userService.save(users);   // 记录登录信息
-                // 触发登录队列
-                MqConfig mqConfig = new MqConfig();
-                mqConfig.setTag(MqTagEnum.LOGIN);
-                mqConfig.setQueue(MqQueueEnum.RABBITMQ_USER_ACTIVE);
-                mqConfig.setSendTime(DateHelper.addSeconds(new Date(), 10));
-                ImmutableMap<String, String> body = ImmutableMap.of(MqConfig.MSG_USER_ID, users.getId().toString());
-                mqConfig.setMsg(body);
-                mqHelper.convertAndSend(mqConfig);
-                if (source.equals("1")) {
-                    targetUrl += "?token=" + token;
-                }
+                String address = source.equals("1") ? pcDomain : h5Domain;
+                targetUrl = address + bidUrl + "?token=" + redisTokenStr;
             } catch (Exception e) {
                 log.info("授权登录 获取token失败", e);
             }
@@ -588,9 +622,6 @@ public class StarFireUserBizImpl implements StarFireUserBiz {
             log.info("用户登录结果通知星火失败", e);
         }
     }
-
-    @Autowired
-    private TenderService tenderService;
 
 
     /**
@@ -674,15 +705,15 @@ public class StarFireUserBizImpl implements StarFireUserBiz {
                 //已收收益
                 accountRecord.setProfitAmount(StringHelper.formatDouble(userCache.getIncomeTotal() / 100D, false));
                 //投资总额
-                Specification<Tender> tenderSpecification=Specifications.<Tender>and()
-                        .eq("userId",userId)
+                Specification<Tender> tenderSpecification = Specifications.<Tender>and()
+                        .eq("userId", userId)
                         .eq("status", TenderConstans.SUCCESS)
                         .build();
-                List<Tender> tenders=tenderService.findList(tenderSpecification);
-                if(!CollectionUtils.isEmpty(tenders)){
+                List<Tender> tenders = tenderService.findList(tenderSpecification);
+                if (!CollectionUtils.isEmpty(tenders)) {
                     //投资总额
-                    Long sumValidMoney=tenders.stream().mapToLong(p->p.getValidMoney()).sum();
-                    accountRecord.setBidAmount(StringHelper.formatMon(sumValidMoney/100d));
+                    Long sumValidMoney = tenders.stream().mapToLong(p -> p.getValidMoney()).sum();
+                    accountRecord.setBidAmount(StringHelper.formatMon(sumValidMoney / 100d));
                 }
                 accountRecord.setDate(DateHelper.dateToString(asset.getUpdatedAt(), DateHelper.DATE_FORMAT_YMD));
                 accountRecords.add(accountRecord);

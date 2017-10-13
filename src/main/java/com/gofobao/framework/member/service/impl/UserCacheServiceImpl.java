@@ -179,7 +179,7 @@ public class UserCacheServiceImpl implements UserCacheService {
         /**
          * 待付支出总额
          */
-        Double sumWaitExpend = new Double(waitRepayPrincipal + waitRepayInterest + waitExpenditureInterestManageFee);
+        Double sumWaitExpend = new Double( waitRepayInterest + waitExpenditureInterestManageFee);
         /**
          * 未实现净收益总额 = 未实现收入总额 - 待付支出总额
          * @return array
@@ -209,7 +209,6 @@ public class UserCacheServiceImpl implements UserCacheService {
                 + asset.getNoUseMoney()
                 + asset.getCollection()
                 - asset.getPayment()) / 100D, true));
-
         //总支出
         statistic.setSumExpend(StringHelper.formatMon(sumExpend / 100D));
 

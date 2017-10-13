@@ -48,11 +48,6 @@ public class StarFireBorrowBizImpl implements StarFireBorrowBiz {
     @Autowired
     private BorrowService borrowService;
 
-    @Value("${gofobao.h5Domain}")
-    private String h5Domain;
-
-    @Value("${gofobao.pcDomain}")
-    private String pcDomain;
 
     private static Gson GSON = new Gson();
 
@@ -141,10 +136,8 @@ public class StarFireBorrowBizImpl implements StarFireBorrowBiz {
                         : borrow.getTimeLimit().toString());
                 record.setBid_status(getBorrowStatus(borrow));
                 record.setBond_code(borrowId.toString());
-                // TODO pc页面没出来 默认跳转h5
-            /*    record.setBid_url(pcDomain + "/borrow/" + borrowId);*/
-                record.setWap_bid_url(pcDomain + "/borrow/" + borrowId);
-                record.setBid_url(pcDomain + "/borrow/" + borrowId);
+                record.setWap_bid_url("/borrow/" + borrowId);
+                record.setBid_url("/#/borrow/" + borrowId);
                 record.setIsPromotion(false);
                 record.setIsRecommend(false);
                 record.setIsNovice(borrow.getIsNovice());

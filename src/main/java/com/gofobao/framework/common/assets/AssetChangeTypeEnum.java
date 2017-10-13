@@ -137,7 +137,7 @@ public enum AssetChangeTypeEnum {
     /**
      * 垫付还款滞纳金
      */
-    compensatoryRepaymentOverdueFee("垫付还款滞纳金", "compensatoryRepaymentOverdueFee", "2788", "sub@noUseMoney", "", "C"),
+    compensatoryRepaymentOverdueFee("垫付还款滞纳金", "compensatoryRepaymentOverdueFee", "2788", "sub@noUseMoney", "add@expenditureFee", "C"),
 
     /**
      * 出借人投标
@@ -243,7 +243,7 @@ public enum AssetChangeTypeEnum {
     /**
      * 费用账户收取融资管理费
      */
-    platformFinancingManagementFee("收取融资管理费", "platformFinancingManagementFee", "7722", "add@useMoney", "", "D"),
+    platformFinancingManagementFee("收取融资管理费", "platformFinancingManagementFee", "7722", "add@useMoney", "add@incomeOther", "D"),
 
     /**
      * 融资管理费
@@ -253,7 +253,7 @@ public enum AssetChangeTypeEnum {
     /**
      * 费用账户收取利息管理费
      */
-    platformInterestManagementFee("收取利息管理费", "platformInterestManagementFee", "7722", "add@useMoney", "", "D"),
+    platformInterestManagementFee("收取利息管理费", "platformInterestManagementFee", "7722", "add@useMoney", "add@incomeOther", "D"),
 
     /**
      * 利息管理费
@@ -264,12 +264,12 @@ public enum AssetChangeTypeEnum {
     /**
      * 平台收取小额提现手续费
      */
-    platformSmallCashFee("平台收取小额提现手续费", "platformSmallCashFee", "7722", "add@useMoney", "", "D"),
+    platformSmallCashFee("平台收取小额提现手续费", "platformSmallCashFee", "7722", "add@useMoney", "add@incomeOther", "D"),
 
     /**
      * 平台收取大额提现手续费
      */
-    platformBigCashFee("平台收取大额提现手续费", "platformBigCashFee", "7722", "add@useMoney", "", "D"),
+    platformBigCashFee("平台收取大额提现手续费", "platformBigCashFee", "7722", "add@useMoney", "add@incomeOther", "D"),
 
     /**
      * 平台返还大额提现手续费
@@ -289,7 +289,7 @@ public enum AssetChangeTypeEnum {
     /**
      * 取消大额提现手续费
      */
-    cancelBigCashFee("冲正大额提现手续费", "cancelBigCashFee", "4820", "add@useMoney", "sub@expenditureFee", "D"),
+    cancelBigCashFee("冲正大额提现手续费", "cancelBigCashFee", "4820", "add@useMoney", "", "D"),
 
     /**
      * 小额提现
@@ -319,12 +319,12 @@ public enum AssetChangeTypeEnum {
     /**
      * 出售债权手续费
      */
-    batchSellBondsFee("出售债权手续费", "batchSellBondsFee", "9831", "sub@useMoney", "", "C"),
+    batchSellBondsFee("出售债权手续费", "batchSellBondsFee", "9831", "sub@useMoney", "add@expenditureFee", "C"),
 
     /**
      * 平台收到债权转让手续费
      */
-    platformBatchSellBondsFee("平台债权手续费入账", "platformBatchSellBondsFee", "7835", "add@useMoney", "", "D"),
+    platformBatchSellBondsFee("平台债权手续费入账", "platformBatchSellBondsFee", "7835", "add@useMoney", "add@incomeOther", "D"),
 
     /**
      * 活期收益

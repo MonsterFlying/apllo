@@ -34,6 +34,13 @@ public interface StarFireUserBiz {
     RegisterRes register(RegisterModel registerModel, HttpServletRequest request);
 
     /**
+     *
+     * @param bindUserModel
+     * @return
+     */
+    String bindHtml(BindUserModel bindUserModel);
+
+    /**
      * 用户登陆绑定
      *
      * @return
