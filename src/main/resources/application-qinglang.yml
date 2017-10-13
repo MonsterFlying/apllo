@@ -60,8 +60,8 @@ starfire: # 星火
   key: gofobao_hyfbGxll  #asc加密key值
   initVector: gofobao_hyfbGxll  #
   channelCode: gofobao_xhzt   #星火分配渠道简称
-  request_url: https://www.xxdai.com/xeenho/ #星火请求地址
   notify_url: https://www.xeenho.com/openapi/user_bind/notify/
+
 jixin: #银行存管
   keysPassword: guangfubao_uat@2016 #私钥密码
   url: http://uat.gofobao.com/escrow  #即信服务器路径

@@ -1,6 +1,7 @@
 package com.gofobao.framework.starfire.tender.biz.impl;
 
 import com.github.wenhao.jpa.Specifications;
+import com.gofobao.framework.borrow.contants.BorrowContants;
 import com.gofobao.framework.borrow.contants.RepaymentContants;
 import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.borrow.service.BorrowService;
@@ -15,13 +16,13 @@ import com.gofobao.framework.member.service.UserCacheService;
 import com.gofobao.framework.member.service.UserService;
 import com.gofobao.framework.repayment.entity.BorrowRepayment;
 import com.gofobao.framework.repayment.service.BorrowRepaymentService;
+import com.gofobao.framework.starfire.common.request.BaseRequest;
 import com.gofobao.framework.starfire.common.response.CodeTypeConstant;
 import com.gofobao.framework.starfire.common.response.ResultCodeEnum;
 import com.gofobao.framework.starfire.common.response.ResultCodeMsgEnum;
-import com.gofobao.framework.starfire.common.request.BaseRequest;
+import com.gofobao.framework.starfire.tender.biz.StarFireTenderBiz;
 import com.gofobao.framework.starfire.tender.constants.StarFireBorrowCollectionConstant;
 import com.gofobao.framework.starfire.tender.constants.StarFireBorrowConstant;
-import com.gofobao.framework.starfire.tender.biz.StarFireTenderBiz;
 import com.gofobao.framework.starfire.tender.constants.StarFireBorrowRepaymentConstant;
 import com.gofobao.framework.starfire.tender.vo.request.BorrowCollectionRecords;
 import com.gofobao.framework.starfire.tender.vo.request.BorrowRepaymentQuery;
@@ -31,7 +32,6 @@ import com.gofobao.framework.starfire.tender.vo.response.UserBorrowCollectionRec
 import com.gofobao.framework.starfire.tender.vo.response.UserTenderRes;
 import com.gofobao.framework.starfire.util.AES;
 import com.gofobao.framework.starfire.util.SignUtil;
-import com.gofobao.framework.borrow.contants.BorrowContants;
 import com.gofobao.framework.tender.contants.TenderConstans;
 import com.gofobao.framework.tender.entity.Tender;
 import com.gofobao.framework.tender.service.TenderService;
@@ -135,6 +135,7 @@ public class StarFireTenderBizImpl implements StarFireTenderBiz {
             } else {
                 Specification<Users> usersSpecification = Specifications.<Users>and()
                         .ne("starFireUserId", null)
+                        .ne("starFireRegisterToken",null)
                         .build();
                 List<Users> usersList = userService.findList(usersSpecification);
                 List<Long> userIds = usersList.stream()
@@ -154,19 +155,20 @@ public class StarFireTenderBizImpl implements StarFireTenderBiz {
                     new Sort(Sort.Direction.DESC,
                             "createdAt"));
 
-            Set<Long> borrowIds = tenders.stream()
-                    .map(p -> p.getBorrowId())
-                    .collect(Collectors.toSet());
-
-            List<Borrow> borrows = borrowService.findByBorrowIds(new ArrayList<>(borrowIds));
-            Map<Long, Borrow> borrowMap = borrows.stream()
-                    .collect(Collectors.toMap(Borrow::getId,
-                            Function.identity()));
             //用户投资记录为空直接返回
             if (CollectionUtils.isEmpty(tenders)) {
                 userTenderRes.setResult(ResultCodeEnum.getCode(CodeTypeConstant.SUCCESS));
                 return userTenderRes;
             }
+
+            Set<Long> borrowIds = tenders.stream()
+                    .map(p -> p.getBorrowId())
+                    .collect(Collectors.toSet());
+            List<Borrow> borrows = borrowService.findByBorrowIds(new ArrayList<>(borrowIds));
+            Map<Long, Borrow> borrowMap = borrows.stream()
+                    .collect(Collectors.toMap(Borrow::getId,
+                            Function.identity()));
+
             //装配数据
             Map<Long, List<Tender>> userTenderMaps = tenders.stream()
                     .collect(Collectors.groupingBy(Tender::getUserId));
@@ -279,6 +281,7 @@ public class StarFireTenderBizImpl implements StarFireTenderBiz {
             if (StringUtils.isEmpty(platformUid)) {
                 Specification<Users> usersSpecification = Specifications.<Users>and()
                         .ne("starFireUserId", null)
+                        .ne("starFireRegisterToken",null)
                         .build();
                 List<Users> usersList = userService.findList(usersSpecification);
                 List<Long> userIdArray = usersList.stream()
@@ -296,6 +299,11 @@ public class StarFireTenderBizImpl implements StarFireTenderBiz {
             List<Tender> tenders = tenderService.findList(tenderSpecification,
                     new Sort(Sort.Direction.DESC,
                             "createdAt"));
+            //用户投资记录为空直接返回
+            if (CollectionUtils.isEmpty(tenders)) {
+                recordsRes.setResult(ResultCodeEnum.getCode(CodeTypeConstant.SUCCESS));
+                return recordsRes;
+            }
             //根据用户分组tender
             Map<Long, List<Tender>> usersTenderMaps = tenders.stream()
                     .collect(Collectors.groupingBy(Tender::getUserId));

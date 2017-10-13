@@ -1,4 +1,5 @@
 package com.gofobao.framework.starfire.statistics.biz.impl;
+
 import com.gofobao.framework.helper.StringHelper;
 import com.gofobao.framework.starfire.common.request.BaseRequest;
 import com.gofobao.framework.starfire.common.response.CodeTypeConstant;
@@ -10,8 +11,6 @@ import com.gofobao.framework.starfire.util.SignUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-
-import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
