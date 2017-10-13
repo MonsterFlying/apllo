@@ -350,6 +350,7 @@ public class NewAleveBizImpl implements NewAleveBiz {
             return;
         }
 
+        // 添加活期收益利息日志
         CurrentIncomeLog currentIncomeLog = new CurrentIncomeLog();
         currentIncomeLog.setCreateAt(nowDate);
         currentIncomeLog.setUserId(userThirdAccount.getUserId());
@@ -358,7 +359,7 @@ public class NewAleveBizImpl implements NewAleveBiz {
         currentIncomeLog.setMoney(currMoney);
         currentIncomeLog = currentIncomeLogService.save(currentIncomeLog);  // 保存活期利息
 
-        // 活期利息计算
+        // 活期收益资金变动
         AssetChange assetChange = new AssetChange();
         assetChange.setUserId(userThirdAccount.getUserId());
         assetChange.setForUserId(0L);
