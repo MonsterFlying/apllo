@@ -143,9 +143,14 @@ public class StarFireTenderBizImpl implements StarFireTenderBiz {
                         .collect(Collectors.toList());
                 userIdsList = Lists.transform(userIds, Functions.toStringFunction());
             }
+
+            if(CollectionUtils.isEmpty(userIdsList)){
+                userTenderRes.setResult(ResultCodeEnum.getCode(CodeTypeConstant.SUCCESS));
+                return userTenderRes;
+            }
             //查询用户投资
             Specification<Tender> tenderSpecification = Specifications.<Tender>and()
-                    .in(!CollectionUtils.isEmpty(userIdsList), "userId", userIdsList.toArray())
+                    .in("userId", userIdsList.toArray())
                     .eq("status", TenderConstans.SUCCESS)
                     .between(!StringUtils.isEmpty(startAt) && !StringUtils.isEmpty(endAt),
                             "createdAt",
@@ -291,11 +296,15 @@ public class StarFireTenderBizImpl implements StarFireTenderBiz {
             } else {
                 userIds = Lists.newArrayList(AES.decrypt(key, initVector, platformUid).split(","));
             }
+
+            if(CollectionUtils.isEmpty(userIds)){
+                recordsRes.setResult(ResultCodeEnum.getCode(CodeTypeConstant.SUCCESS));
+                return recordsRes;
+            }
             Specification<Tender> tenderSpecification = Specifications.<Tender>and()
                     .in("userId", userIds.toArray())
                     .eq("status", TenderConstans.SUCCESS)
                     .build();
-
             List<Tender> tenders = tenderService.findList(tenderSpecification,
                     new Sort(Sort.Direction.DESC,
                             "createdAt"));
