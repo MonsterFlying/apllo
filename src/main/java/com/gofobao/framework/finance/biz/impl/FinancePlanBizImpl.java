@@ -496,7 +496,7 @@ public class FinancePlanBizImpl implements FinancePlanBiz {
             if (realMiniTenderMoney > voTenderFinancePlan.getMoney()) { //是否小于最小投标金额
                 errerMessage.add("对不起！不能小于投标金额");
                 return false;
-            } else if (money % financePlan.getAppendMultipleAmount() != 0) {  //投标金额不为倍数
+            } else if ((financePlan.getAppendMultipleAmount() > 0) && (money % financePlan.getAppendMultipleAmount() != 0)) {  //投标金额不为倍数
                 errerMessage.add("对不起！购买金额"
                         + StringHelper.formatDouble(financePlan.getAppendMultipleAmount(), 100, false)
                         + "的整倍数");
