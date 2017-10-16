@@ -704,7 +704,7 @@ public class TransferBizImpl implements TransferBiz {
             //增加债权转让购买人待收
             AssetChange assetChange = new AssetChange();
             assetChange.setType(AssetChangeTypeEnum.collectionAdd);  //  增加债权转让购买人待收
-            assetChange.setUserId(transfer.getUserId());
+            assetChange.setUserId(tender.getUserId());
             assetChange.setMoney(countCollectionMoney);
             assetChange.setInterest(countInterest);
             assetChange.setRemark(String.format("购买债权转让[%s]借款,扣除待收", transfer.getTitle()));
