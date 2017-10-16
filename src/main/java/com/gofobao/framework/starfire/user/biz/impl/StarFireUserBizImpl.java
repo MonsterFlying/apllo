@@ -255,11 +255,11 @@ public class StarFireUserBizImpl implements StarFireUserBiz {
             starFireUser.setInviteCode(GenerateInviteCodeHelper.getRandomCode()); // 生成用户邀请码
             starFireUser.setParentId(0L);
             starFireUser.setParentAward(0);
-            starFireUser.setStarFireBindAt(new Date());
+            Date nowDate = new Date();
             //
             String registerToken = pwc.createPassWord(30);
             starFireUser.setStarFireRegisterToken(registerToken);
-            Date nowDate = new Date();
+            starFireUser.setStarFireBindAt(nowDate);
             starFireUser.setCreatedAt(nowDate);
             starFireUser.setUpdatedAt(nowDate);
             starFireUser = userService.save(starFireUser);
