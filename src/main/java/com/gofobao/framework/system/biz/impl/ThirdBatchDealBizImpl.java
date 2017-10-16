@@ -180,7 +180,7 @@ public class ThirdBatchDealBizImpl implements ThirdBatchDealBiz {
         } while (pageSize == realSize);
 
         //筛选失败批次
-        Preconditions.checkState(!CollectionUtils.isEmpty(detailsQueryRespList), "批处理回调: 查询批次详细异常!");
+        Preconditions.checkState(!CollectionUtils.isEmpty(detailsQueryRespList), String.format("批处理回调: 查询批次详细异常!batchNo:%s", batchNo));
         List<String> failureOrderIds = new ArrayList<>(); // 失败orderId
         List<String> successOrderIds = new ArrayList<>(); // 成功orderId
         List<String> failureErrorMsgList = new ArrayList<>();

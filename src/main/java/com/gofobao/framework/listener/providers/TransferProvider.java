@@ -344,22 +344,6 @@ public class TransferProvider {
         batchAssetChangeItemService.save(batchAssetChangeItem);
         Long feeAccountId = assetChangeProvider.getFeeAccountId();  // 平台ID
 
-    /*    //扣除债权出售人待收
-        batchAssetChangeItem = new BatchAssetChangeItem();
-        batchAssetChangeItem.setBatchAssetChangeId(batchAssetChangeId);
-        batchAssetChangeItem.setState(0);
-        batchAssetChangeItem.setType(AssetChangeTypeEnum.collectionSub.getLocalType());  //  扣除投资人待收
-        batchAssetChangeItem.setUserId(advanceAssetChange.getUserId());
-        batchAssetChangeItem.setMoney(advanceAssetChange.getInterest() + advanceAssetChange.getPrincipal());
-        batchAssetChangeItem.setInterest(advanceAssetChange.getInterest());
-        batchAssetChangeItem.setRemark(String.format("收到客户对[%s]借款的还款,扣除待收", borrow.getName()));
-        batchAssetChangeItem.setCreatedAt(nowDate);
-        batchAssetChangeItem.setUpdatedAt(nowDate);
-        batchAssetChangeItem.setSourceId(borrowRepayment.getId());
-        batchAssetChangeItem.setSeqNo(seqNo);
-        batchAssetChangeItem.setGroupSeqNo(groupSeqNo);
-        batchAssetChangeItemService.save(batchAssetChangeItem);*/
-
         // 扣除原始债权转让人转让费
         batchAssetChangeItem = new BatchAssetChangeItem();
         batchAssetChangeItem.setBatchAssetChangeId(batchAssetChangeId);
