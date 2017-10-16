@@ -84,8 +84,8 @@ public class BatchAssetChangeHelper {
         Preconditions.checkState(!CollectionUtils.isEmpty(batchAssetChangeList), batchNo + "债权转让资金变动记录不存在!");
         BatchAssetChange batchAssetChange = batchAssetChangeList.get(0);/* 债权转让资金变动记录 */
         if (batchAssetChange.getState() == 1) {
-            log.error(String.format("资金变动未已完成!请检查资金是否变动：%s", GSON.toJson(batchAssetChange)));
-            return;
+            log.error(String.format("资金变动已完成!请检查资金是否变动：%s", GSON.toJson(batchAssetChange)));
+            throw new Exception(String.format("资金变动已完成!请检查资金是否变动：%s , %s", batchAssetChange.getId(), GSON.toJson(batchAssetChange)));
         }
 
         Specification<BatchAssetChangeItem> bacis = Specifications

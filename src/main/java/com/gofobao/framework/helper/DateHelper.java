@@ -118,6 +118,7 @@ public class DateHelper {
 
     /**
      * 减一年
+     *
      * @param date
      * @param amount
      * @return
@@ -319,22 +320,23 @@ public class DateHelper {
 
 
     /**
-     * 根据日期获取小时
+     * 根据日期获取小时 12小时制
      *
      * @param date
      * @return
      */
-    public static int getHour(final Date date) {
-        return get(date, Calendar.HOUR_OF_DAY);
+    public static int getDateFor12(final Date date) {
+        return get(date, Calendar.HOUR);
     }
+
     /**
-     * 根据日期获取小时
+     * 根据日期获取小时  24小时制
      *
      * @param date
      * @return
      */
-    public static int getDate(final Date date) {
-        return get(date, Calendar.DATE);
+    public static int getDateFor24(final Date date) {
+        return get(date, Calendar.HOUR_OF_DAY);
     }
 
     /**
@@ -643,7 +645,7 @@ public class DateHelper {
      *
      * @return
      */
-    public static String getDate() {
+    public static String getDateFor24() {
         Date nowDate = new Date();
         dateFormat = new SimpleDateFormat(DATE_FORMAT_YMD_NUM);
         try {
