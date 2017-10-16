@@ -758,8 +758,8 @@ public class FinancePlanBizImpl implements FinancePlanBiz {
         //名称
         planDetail.setName(financePlan.getName());
         //起投金额
-        planDetail.setLowMoney(StringHelper.formatMon(financePlan.getLowest() / 100D));
-        planDetail.setHideLowMoney(financePlan.getLowestShow() / 100D);
+        planDetail.setLowMoney(StringHelper.formatMon(financePlan.getLowestShow() / 100D));
+        planDetail.setHideLowMoney(financePlan.getLowest() / 100D);
         //已投金额
         Long moneyYes = financePlan.getMoneyYes();
         //剩余金额

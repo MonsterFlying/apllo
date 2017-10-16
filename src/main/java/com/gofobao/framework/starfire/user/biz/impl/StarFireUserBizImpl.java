@@ -114,6 +114,8 @@ public class StarFireUserBizImpl implements StarFireUserBiz {
     @Autowired
     private RedisHelper redisHelper;
 
+    @Autowired
+    private BorrowCollectionService borrowCollectionService;
 
     /**
      * 1.注册绑定查询
@@ -646,9 +648,6 @@ public class StarFireUserBizImpl implements StarFireUserBiz {
         }
     }
 
-
-    @Autowired
-    private BorrowCollectionService borrowCollectionService;
 
     /**
      * 账户信息查询

@@ -1,11 +1,7 @@
 package com.gofobao.framework.finance.controller;
 
-import com.gofobao.framework.collection.biz.PaymentBiz;
 import com.gofobao.framework.collection.vo.request.VoCollectionOrderReq;
-import com.gofobao.framework.collection.vo.request.VoOrderDetailReq;
 import com.gofobao.framework.collection.vo.response.VoViewCollectionDaysWarpRes;
-import com.gofobao.framework.collection.vo.response.VoViewCollectionOrderListWarpResp;
-import com.gofobao.framework.collection.vo.response.VoViewOrderDetailResp;
 import com.gofobao.framework.finance.biz.FinanceCollectionBiz;
 import com.gofobao.framework.finance.vo.request.VoFinanceCollectionDetailReq;
 import com.gofobao.framework.finance.vo.response.VoViewFinanceCollectionDetailResp;
