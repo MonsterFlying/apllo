@@ -296,10 +296,11 @@ public class FinancePlanBizImpl implements FinancePlanBiz {
         /* 购买理财计划有效金额 */
         long validateMoney = NumberHelper.toLong(iterator.next());
         //验证理财计划
+        errerMessage = HashMultiset.create();
         flag = verifyFinancePlan(errerMessage, financePlanId, userId, financePlan);
         errorSet = errerMessage.elementSet();
         iterator = errorSet.iterator();
-        if (flag) {
+        if (!flag) {
             return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, iterator.next(), VoBaseResp.class));
         }
         //生成理财计划购买记录
@@ -437,7 +438,12 @@ public class FinancePlanBizImpl implements FinancePlanBiz {
     private boolean verifyFinancePlan(Multiset<String> errerMessage, long financePlanId, long userId, FinancePlan financePlan) {
         //验证理财计划
         int status = financePlan.getStatus();/* 理财计划状态 */
-        if (status != 1 || financePlan.getMoneyYes() == financePlan.getMoney()) {
+        //判断是否满额
+        if (financePlan.getMoneyYes() >= financePlan.getMoney()) {
+            errerMessage.add("理财计划已满额，暂无可投金额！");
+            return false;
+        }
+        if (status != 1) {
             errerMessage.add("理财计划不可购买!");
             return true;
         }
