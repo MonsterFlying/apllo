@@ -1389,6 +1389,9 @@ public class BorrowBizImpl implements BorrowBiz {
         Map<Integer/* ORDER */, BorrowRepayment> borrowRepaymentMaps = borrowRepaymentList.stream().collect(Collectors.toMap(BorrowRepayment::getOrder, Function.identity()));
         for (int i = 0; i < tenderList.size(); i++) {
             Tender tender = tenderList.get(i);
+            if (tender.getState() == 2) { //如果投标状态是2则不生成回款记录
+                continue;
+            }
             BorrowCalculatorHelper borrowCalculatorHelper = new BorrowCalculatorHelper(
                     NumberHelper.toDouble(StringHelper.toString(tender.getValidMoney())),
                     NumberHelper.toDouble(StringHelper.toString(borrow.getApr())), borrow.getTimeLimit(), borrowDate);

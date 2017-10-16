@@ -731,7 +731,7 @@ public class ThirdBatchDealBizImpl implements ThirdBatchDealBiz {
         if (CollectionUtils.isEmpty(failureThirdLendPayOrderIds)) {
 
             Borrow borrow = borrowService.findById(borrowId);
-            log.info(String.format("正常标的放款回调: %s", gson.toJson(borrow)));
+            log.info(String.format("正常标的放款回调:borrowId: %s , %s", borrowId, gson.toJson(borrow)));
             boolean flag = borrowBiz.borrowAgainVerify(borrow, batchNo);
             if (!flag) {
                 log.error("标的放款失败！标的id：" + borrowId);

@@ -328,10 +328,10 @@ public class StarFireUserBizImpl implements StarFireUserBiz {
         }
         String params = new Gson().toJson(bindUserModel);
         if (bindUserModel.getSource().equals("1")) {
-            return pcDomain + "third/xhzlogin?params=" + params;
+            return pcDomain + "/third/xhzlogin?params=" + params;
         } else {
             //TODO 暂默认是pc登录地址
-            return h5Domain + "third/xhzlogin?params=" + params;
+            return h5Domain + "/third/xhzlogin?params=" + params;
         }
     }
 
