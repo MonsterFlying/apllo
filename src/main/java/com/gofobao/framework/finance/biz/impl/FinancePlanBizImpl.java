@@ -483,13 +483,22 @@ public class FinancePlanBizImpl implements FinancePlanBiz {
         }
         // 判断最小投标金额
         long realTenderMoney = financePlan.getMoney() - financePlan.getMoneyYes();  // 剩余金额
-        long minLimitTenderMoney = ObjectUtils.isEmpty(financePlan.getLowest()) ? 50 * 100 : financePlan.getLowest();  // 最小投标金额
-        long realMiniTenderMoney = Math.min(realTenderMoney, minLimitTenderMoney);  // 获取最小投标金额
-        if (realMiniTenderMoney > voTenderFinancePlan.getMoney()) {
-            errerMessage.add("小于标的最小投标金额!");
-            return false;
+        double money = voTenderFinancePlan.getMoney().longValue();
+        if (money < realTenderMoney) { //如果不能满标
+            long minLimitTenderMoney = ObjectUtils.isEmpty(financePlan.getLowest()) ? 50 * 100 : financePlan.getLowest();  // 最小投标金额
+            long realMiniTenderMoney = Math.min(realTenderMoney, minLimitTenderMoney);  // 获取最小投标金额
+            if (realMiniTenderMoney > voTenderFinancePlan.getMoney()) { //是否小于最小投标金额
+                errerMessage.add("对不起！不能小于投标金额");
+                return false;
+            } else {
+                if (money % financePlan.getAppendMultipleAmount() != 0) {  //投标金额不为倍数
+                    errerMessage.add("对不起！购买金额"
+                            + StringHelper.formatDouble(financePlan.getAppendMultipleAmount(), 100, false)
+                            + "的整倍数");
+                    return false;
+                }
+            }
         }
-
         // 真实有效投标金额
         long invaildataMoney = Math.min(realTenderMoney, voTenderFinancePlan.getMoney().intValue());
         if (invaildataMoney > asset.getUseMoney()) {
@@ -746,7 +755,7 @@ public class FinancePlanBizImpl implements FinancePlanBiz {
         planDetail.setName(financePlan.getName());
         //起投金额
         planDetail.setLowMoney(StringHelper.formatMon(financePlan.getLowest() / 100D));
-        planDetail.setHideLowMoney(financePlan.getLowest() / 100D);
+        planDetail.setHideLowMoney(financePlan.getLowestShow() / 100D);
         //已投金额
         Long moneyYes = financePlan.getMoneyYes();
         //剩余金额
@@ -757,7 +766,7 @@ public class FinancePlanBizImpl implements FinancePlanBiz {
         Integer timeLimit = financePlan.getTimeLimit();
 
         //预期收益
-        BorrowCalculatorHelper borrowCalculatorHelper = new BorrowCalculatorHelper(new Double(100*10000), new Double(apr), timeLimit, financePlan.getCreatedAt());
+        BorrowCalculatorHelper borrowCalculatorHelper = new BorrowCalculatorHelper(new Double(100 * 10000), new Double(apr), timeLimit, financePlan.getCreatedAt());
         Map<String, Object> calculatorMap = borrowCalculatorHelper.simpleCount(2);
         Integer earnings = NumberHelper.toInt(StringHelper.toString(calculatorMap.get("earnings")));
         planDetail.setEarnings(StringHelper.formatMon(earnings / 100D));
@@ -811,6 +820,7 @@ public class FinancePlanBizImpl implements FinancePlanBiz {
 
     /**
      * 计划合同
+     *
      * @param planId
      * @param userId
      * @return
