@@ -483,7 +483,7 @@ public class FinancePlanBizImpl implements FinancePlanBiz {
         }
         // 判断最小投标金额
         long realTenderMoney = financePlan.getMoney() - financePlan.getMoneyYes();  // 剩余金额
-        double money = voTenderFinancePlan.getMoney().longValue();
+        Long money = voTenderFinancePlan.getMoney().longValue();
         if (money < realTenderMoney) { //如果不能满标
             long minLimitTenderMoney = ObjectUtils.isEmpty(financePlan.getLowest()) ? 50 * 100 : financePlan.getLowest();  // 最小投标金额
             long realMiniTenderMoney = Math.min(realTenderMoney, minLimitTenderMoney);  // 获取最小投标金额
