@@ -10,6 +10,7 @@ import com.gofobao.framework.collection.entity.BorrowCollection;
 import com.gofobao.framework.collection.service.BorrowCollectionService;
 import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.helper.StringHelper;
+import com.gofobao.framework.helper.project.UserHelper;
 import com.gofobao.framework.member.entity.UserCache;
 import com.gofobao.framework.member.entity.Users;
 import com.gofobao.framework.member.service.UserCacheService;
@@ -185,8 +186,9 @@ public class StarFireTenderBizImpl implements StarFireTenderBiz {
                 List<Tender> tendersList = userTenderMaps.get(tenderUserId);
                 userRecords.setBidtotalCount(String.valueOf(tendersList.size()));
                 userRecords.setPlatform_uid(users.getId().toString());
-                userRecords.setMobile(users.getPhone());
-
+                userRecords.setMobile(StringUtils.isEmpty(users.getStarFireUserId())
+                        ? UserHelper.hideChar( users.getPhone(),UserHelper.PHONE_NUM)
+                        :users.getPhone());
                 List<UserTenderRes.UserbidRecords> userbidRecordsList = Lists.newArrayList();
                 //封装用户投资记录
                 tendersList.forEach(p -> {
