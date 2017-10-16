@@ -659,19 +659,12 @@ public class TransferBizImpl implements TransferBiz {
             List<BorrowCollection> borrowCollectionList = childBorrowCollectionMaps.get(tender.getId());
             UserCache userCache = userCacheService.findById(tender.getUserId());
             long countInterest = borrowCollectionList.stream().mapToLong(BorrowCollection::getInterest).sum();/* 购买转让标 每期还款利息 */
-            boolean flag = false;
             if (parentBorrow.getType() == 0) {
                 userCache.setTjWaitCollectionInterest(userCache.getTjWaitCollectionInterest() + countInterest);
                 userCache.setTjWaitCollectionPrincipal(userCache.getTjWaitCollectionPrincipal() + tender.getValidMoney());
-                flag = true;
             } else if (parentBorrow.getType() == 4) {
                 userCache.setQdWaitCollectionPrincipal(userCache.getQdWaitCollectionPrincipal() + tender.getValidMoney());
                 userCache.setQdWaitCollectionInterest(userCache.getQdWaitCollectionInterest() + countInterest);
-                flag = true;
-            }
-            if (flag) {
-                userCache.setWaitCollectionPrincipal(userCache.getWaitCollectionPrincipal() + tender.getValidMoney());
-                userCache.setWaitCollectionInterest(userCache.getWaitCollectionInterest() + countInterest);
             }
             userCacheService.save(userCache);
         });
@@ -752,19 +745,12 @@ public class TransferBizImpl implements TransferBiz {
     private void updateUserCacheByTransfer(Borrow parentBorrow, Transfer transfer) throws Exception {
         UserCache userCache = userCacheService.findById(transfer.getUserId());
         userCache.setUserId(userCache.getUserId());
-        boolean flag = false;
         if (parentBorrow.getType() == 0) {
             userCache.setTjWaitCollectionPrincipal(userCache.getTjWaitCollectionPrincipal() - transfer.getPrincipal());
             userCache.setTjWaitCollectionInterest(userCache.getTjWaitCollectionInterest() - transfer.getAlreadyInterest());
-            flag = true;
         } else if (parentBorrow.getType() == 4) {
             userCache.setQdWaitCollectionPrincipal(userCache.getQdWaitCollectionPrincipal() - transfer.getPrincipal());
             userCache.setQdWaitCollectionInterest(userCache.getQdWaitCollectionInterest() - transfer.getAlreadyInterest());
-            flag = true;
-        }
-        if (flag) {
-            userCache.setWaitCollectionPrincipal(userCache.getWaitCollectionPrincipal() - transfer.getPrincipal());
-            userCache.setWaitCollectionInterest(userCache.getWaitCollectionInterest() - transfer.getAlreadyInterest());
         }
         userCacheService.save(userCache);
     }
