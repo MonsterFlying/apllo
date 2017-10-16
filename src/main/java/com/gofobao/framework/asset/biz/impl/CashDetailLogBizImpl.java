@@ -63,7 +63,6 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import lombok.extern.slf4j.Slf4j;
-import org.hibernate.type.descriptor.java.DataHelper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.PageRequest;
@@ -362,7 +361,7 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
         WithDrawRequest withDrawRequest = new WithDrawRequest();
         withDrawRequest.setSeqNo(RandomHelper.generateNumberCode(6));
         withDrawRequest.setTxTime(DateHelper.getTime());
-        withDrawRequest.setTxDate(DateHelper.getDate());
+        withDrawRequest.setTxDate(DateHelper.getDateFor24());
         withDrawRequest.setIdType(IdTypeContant.getIdTypeContant(userThirdAccount));
         withDrawRequest.setIdNo(userThirdAccount.getIdNo());
         withDrawRequest.setName(StringUtils.trimAllWhitespace(userThirdAccount.getName()));

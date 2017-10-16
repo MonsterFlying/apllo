@@ -80,7 +80,6 @@ import org.springframework.data.domain.*;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.ui.Model;
 import org.springframework.util.Base64Utils;
@@ -468,7 +467,7 @@ public class AssetBizImpl implements AssetBiz {
             DirectRechargeOnlineRequest directRechargeOnlineRequest = new DirectRechargeOnlineRequest();
             directRechargeOnlineRequest.setSeqNo(RandomHelper.generateNumberCode(6));
             directRechargeOnlineRequest.setTxTime(DateHelper.getTime());
-            directRechargeOnlineRequest.setTxDate(DateHelper.getDate());
+            directRechargeOnlineRequest.setTxDate(DateHelper.getDateFor24());
             directRechargeOnlineRequest.setAccountId(userThirdAccount.getAccountId());
             directRechargeOnlineRequest.setIdType(IdTypeContant.getIdTypeContant(userThirdAccount));
             directRechargeOnlineRequest.setIdNo(userThirdAccount.getIdNo());
@@ -673,7 +672,7 @@ public class AssetBizImpl implements AssetBiz {
         DirectRechargePlusRequest directRechargePlusRequest = new DirectRechargePlusRequest();
         directRechargePlusRequest.setSeqNo(RandomHelper.generateNumberCode(6));
         directRechargePlusRequest.setTxTime(DateHelper.getTime());
-        directRechargePlusRequest.setTxDate(DateHelper.getDate());
+        directRechargePlusRequest.setTxDate(DateHelper.getDateFor24());
         directRechargePlusRequest.setAccountId(userThirdAccount.getAccountId());
         directRechargePlusRequest.setIdType(IdTypeContant.getIdTypeContant(userThirdAccount));
         directRechargePlusRequest.setIdNo(userThirdAccount.getIdNo());
