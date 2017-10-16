@@ -150,8 +150,7 @@ public class AplloApplicationTests {
     private TenderService tenderService;
     @Autowired
     private JdbcTemplate jdbcTemplate;
-    @Autowired
-    private ThirdBatchDealLogBiz thirdBatchDealLogBiz;
+
 
     @PersistenceContext
     private EntityManager entityManager;
@@ -569,120 +568,10 @@ public class AplloApplicationTests {
     private ThirdBatchLogService thirdBatchLogService;
     @Autowired
     private BorrowRepaymentService borrowRepaymentService;
-
-    /**
-     * 项目回款短信通知
-     *
-     * @param borrowCollectionList
-     * @param parentBorrow
-     * @param borrowRepayment
-     */
-    private void smsNoticeByReceivedRepay(List<BorrowCollection> borrowCollectionList, Borrow parentBorrow, BorrowRepayment borrowRepayment) {
-        try {
-            Set<Long> tenderIds = borrowCollectionList.stream().map(borrowCollection -> borrowCollection.getTenderId()).collect(Collectors.toSet()); /* 回款用户id */
-            if (CollectionUtils.isEmpty(tenderIds)) {
-                log.error("回款投标记录ID为空");
-                return;
-            }
-
-            Specification<Tender> tenderSpecification = Specifications.
-                    <Tender>and()
-                    .in("id", tenderIds.toArray())
-                    .build();
-            List<Tender> tenderList = tenderService.findList(tenderSpecification);
-            if (CollectionUtils.isEmpty(tenderList)) {
-                log.error("回款投标记录为空");
-                return;
-            }
-            Set<Long> userIds = tenderList.stream().map(tender -> tender.getUserId()).collect(Collectors.toSet()); /* 回款用户id */
-            if (CollectionUtils.isEmpty(userIds)) {
-                log.error("回款用户ID为空");
-                return;
-            }
-
-
-            Map<Long /* 投资会员id */, List<BorrowCollection>> borrowCollrctionMaps = borrowCollectionList.stream().collect(groupingBy(BorrowCollection::getUserId)); /* 回款记录集合 */
-            Specification<Users> us = Specifications
-                    .<Users>and()
-                    .in("id", userIds.toArray())
-                    .build();
-
-            List<Users> usersList = userService.findList(us);/* 回款用户缓存记录列表 */
-            Map<Long /* 投资会员id */, Users> userMaps = usersList.stream().collect(Collectors.toMap(Users::getId, Function.identity()));/* 回款用户记录列表*/
-            userIds.stream().forEach(userId -> {
-                List<BorrowCollection> borrowCollections = borrowCollrctionMaps.get(userId);/* 当前用户的所有回款 */
-                Users users = userMaps.get(userId);//投资人会员记录
-                long principal = borrowCollections.stream().mapToLong(BorrowCollection::getPrincipal).sum(); /* 当前用户的所有回款本金 */
-                long collectionMoneyYes = borrowCollections.stream().mapToLong(BorrowCollection::getCollectionMoneyYes).sum();/* 当前用户的所有回款本金 */
-                long interest = collectionMoneyYes - principal;/* 当前用户的所有回款本金 */
-                String phone = users.getPhone();/* 投资人手机号 */
-                String name = "";
-                if (!ObjectUtils.isEmpty(phone)) {
-                    MqConfig config = new MqConfig();
-                    config.setQueue(MqQueueEnum.RABBITMQ_SMS);
-                    config.setTag(MqTagEnum.SMS_RECEIVED_REPAY);
-                    switch (parentBorrow.getType()) {
-                        case BorrowContants.CE_DAI:
-                            name = "车贷标";
-                            break;
-                        case BorrowContants.JING_ZHI:
-                            name = "净值标";
-                            break;
-                        case BorrowContants.QU_DAO:
-                            name = "渠道标";
-                            break;
-                        default:
-                            name = "投标还款";
-                    }
-                    Map<String, String> body = new HashMap<>();
-                    body.put(MqConfig.PHONE, phone);
-                    body.put(MqConfig.IP, "127.0.0.1");
-                    body.put(MqConfig.MSG_ID, StringHelper.toString(parentBorrow.getId()));
-                    body.put(MqConfig.MSG_NAME, name);
-                    body.put(MqConfig.MSG_ORDER, StringHelper.toString(borrowRepayment.getOrder() + 1));
-                    body.put(MqConfig.MSG_MONEY, StringHelper.formatDouble(principal, 100, true));
-                    body.put(MqConfig.MSG_INTEREST, StringHelper.formatDouble(interest, 100, true));
-                    config.setMsg(body);
-
-                    boolean state = mqHelper.convertAndSend(config);
-                    if (!state) {
-                        log.error(String.format("发送投资人收到还款短信失败:%s", config));
-                    }
-                }
-            });
-        } catch (Exception e) {
-            log.error("回款发送短信失败", e);
-        }
-
-    }
-
     @Autowired
     private DailyAssetBackupScheduler dailyAssetBackupScheduler;
     @Autowired
     private NewAssetLogService newAssetLogService;
-
-    @Transactional
-    private void ddddd() {
-        Borrow borrow = borrowService.findById(179937l);
-        System.out.println(GSON.toJson(borrow));
-        Borrow borrow1 = borrowService.findByIdLock(179937l);
-        System.out.println(GSON.toJson(borrow1));
-    }
-
-    @Test
-    public void mqTest() {
-        Map<String, String> bodyMap = ImmutableMap.of("planId", "4");
-        MqConfig mqConfig = new MqConfig();
-        mqConfig.setSendTime(new Date());
-        mqConfig.setQueue(MqQueueEnum.RABBITMQ_FINANCE_PLAN);
-        mqConfig.setTag(MqTagEnum.FINANCE_PLAN_FULL_NOTIFY);
-        mqConfig.setMsg(bodyMap);
-        mqHelper.convertAndSend(mqConfig);
-
-
-    }
-
-
     @Autowired
     TransferProvider transferProvider;
 
@@ -693,153 +582,12 @@ public class AplloApplicationTests {
     @Autowired
     private BorrowBiz borrowBiz;
 
-    /**
-     * 新增理财计划子级标的
-     *
-     * @param nowDate
-     * @param transferBuyLogList
-     * @return
-     */
-    public List<Tender> addFinanceChildTender(Date nowDate, List<TransferBuyLog> transferBuyLogList) {
-        //生成债权记录与回款记录
-        List<Tender> childTenderList = new ArrayList<>();
-        transferBuyLogList.stream().forEach(transferBuyLog -> {
-            Tender childTender = new Tender();
 
-            childTender.setUserId(transferBuyLog.getUserId());
-            childTender.setStatus(1);
-            childTender.setType(transferBuyLog.getType());
-            childTender.setBorrowId(163041l);
-            childTender.setSource(transferBuyLog.getSource());
-            childTender.setIsAuto(transferBuyLog.getAuto());
-            childTender.setAutoOrder(transferBuyLog.getAutoOrder());
-            childTender.setMoney(transferBuyLog.getBuyMoney());
-            childTender.setValidMoney(transferBuyLog.getPrincipal());
-            childTender.setTransferFlag(0);
-            childTender.setTUserId(transferBuyLog.getUserId());
-            childTender.setParentId(250025l);
-            childTender.setState(2);
-            childTender.setTransferBuyId(transferBuyLog.getId());
-            childTender.setAlreadyInterest(transferBuyLog.getAlreadyInterest());
-            childTender.setThirdTenderOrderId(transferBuyLog.getThirdTransferOrderId());
-            childTender.setAuthCode(transferBuyLog.getTransferAuthCode());
-            childTender.setCreatedAt(nowDate);
-            childTender.setUpdatedAt(nowDate);
-            childTenderList.add(childTender);
-
-            //更新购买净值标状态为成功购买
-            transferBuyLog.setState(1);
-            transferBuyLog.setUpdatedAt(new Date());
-        });
-        transferBuyLogService.save(transferBuyLogList);
-
-        //保存生成投标记录
-        tenderService.save(childTenderList);
-        return childTenderList;
-    }
-
-    /**
-     * 生成子级债权回款记录，标注老债权回款已经转出
-     *
-     * @param nowDate
-     * @param parentBorrow
-     * @param childTenderList
-     */
-    public List<BorrowCollection> addFinanceChildTenderCollection(Date nowDate,Borrow parentBorrow, List<Tender> childTenderList) throws Exception {
-        List<BorrowCollection> childTenderCollectionList = new ArrayList<>();/* 债权子记录回款记录 */
-        //生成子级债权回款记录，标注老债权回款已经转出
-        Specification<BorrowCollection> bcs = null;
-            bcs = Specifications
-                    .<BorrowCollection>and()
-                    .eq("tenderId", 257)
-                    .eq("status", 0)
-                    .build();
-
-        List<BorrowCollection> borrowCollectionList = borrowCollectionService.findList(bcs);/* 债权转让原投资回款记录 */
-        long transferInterest = borrowCollectionList.stream().mapToLong(BorrowCollection::getInterest).sum();/* 债权转让总利息 */
-        Date repayAt = DateHelper.stringToDate("2017-11-10 20:05:23");/* 原借款下一期还款日期 */
-        Date startAt = null;/* 计息开始时间 */
-        if (parentBorrow.getRepayFashion() == 1) {
-            startAt = DateHelper.subDays(repayAt, parentBorrow.getTimeLimit());
-        } else if (parentBorrow.getRepayFashion() == 0 || parentBorrow.getRepayFashion() == 2) {
-            startAt = DateHelper.subMonths(repayAt, 1);
-        }
-
-        for (int j = 0; j < childTenderList.size(); j++) {
-            Tender childTender = childTenderList.get(j);/* 购买债权转让子投资记录 */
-            //生成购买债权转让新的回款记录
-            BorrowCalculatorHelper borrowCalculatorHelper = new BorrowCalculatorHelper(
-                    childTender.getValidMoney().doubleValue(),
-                    1600d,
-                    19,
-                    startAt);
-            Map<String, Object> rsMap = borrowCalculatorHelper.simpleCount(parentBorrow.getRepayFashion());
-            List<Map<String, Object>> repayDetailList = (List<Map<String, Object>>) rsMap.get("repayDetailList");
-            Preconditions.checkState(!CollectionUtils.isEmpty(repayDetailList), "生成用户回款计划开始: 计划生成为空");
-            BorrowCollection borrowCollection;
-            int startOrder = 5;/* 获取开始转让期数,期数下标从0开始 */
-            long sumCollectionInterest = 0l;/*总回款利息*/
-            for (int i = 0; i < repayDetailList.size(); i++) {
-                borrowCollection = new BorrowCollection();
-                Map<String, Object> repayDetailMap = repayDetailList.get(i);
-                long principal = NumberHelper.toLong(repayDetailMap.get("principal"));
-                long interest = NumberHelper.toLong(repayDetailMap.get("interest"));
-                Date collectionAt = DateHelper.stringToDate(StringHelper.toString(repayDetailMap.get("repayAt")));
-                sumCollectionInterest += interest;
-
-
-                //如果是理财计划借款不需要生成利息
-                if (childTender.getType().intValue() == 1) {
-                    interest = 0;
-                }
-
-                borrowCollection.setTenderId(childTender.getId());
-                borrowCollection.setStatus(0);
-                borrowCollection.setOrder(startOrder++);
-                borrowCollection.setUserId(childTender.getUserId());
-                borrowCollection.setStartAt(i > 0 ? DateHelper.stringToDate(StringHelper.toString(repayDetailList.get(i - 1).get("repayAt"))) : startAt);
-                borrowCollection.setStartAtYes(i > 0 ? DateHelper.stringToDate(StringHelper.toString(repayDetailList.get(i - 1).get("repayAt"))) : nowDate);
-                borrowCollection.setCollectionAt(collectionAt);
-                borrowCollection.setCollectionAtYes(collectionAt);
-                borrowCollection.setCollectionMoney(principal);
-                borrowCollection.setPrincipal(principal);
-                borrowCollection.setInterest(interest);
-                borrowCollection.setCreatedAt(nowDate);
-                borrowCollection.setUpdatedAt(nowDate);
-                borrowCollection.setCollectionMoneyYes(0l);
-                borrowCollection.setLateDays(0);
-                borrowCollection.setLateInterest(0l);
-                borrowCollection.setBorrowId(parentBorrow.getId());
-                childTenderCollectionList.add(borrowCollection);
-
-            }
-            borrowCollectionService.save(childTenderCollectionList);
-        }
-
-
-        return childTenderCollectionList;
-    }
+    @Autowired
+    private ThirdBatchDealLogBiz thirdBatchDealLogBiz;
 
     @Test
     public void test() {
-        Date nowDate = DateHelper.stringToDate("2017-10-10 20:05:17");
-        log.info("理财计划债权匹配购买生成子tender开始！");
-        Specification<Tender> tbls = Specifications
-                .<Tender>and()
-                .in("id", 284861, 284860)
-                .build();
-        //理财计划债权匹配购买生成子tender
-        List<Tender> childTenderList = tenderService.findList(tbls);
-        log.info("理财计划债权匹配购买生成子tender结束！");
-        log.info("赎回理财计划债权转让，生成子级债权回款记录开始！");
-        Borrow parentBorrow = borrowService.findById(163041l);
-        // 理财计划债权转让，生成子级债权回款记录，标注老债权回款已经转出
-        try {
-            addFinanceChildTenderCollection(nowDate, parentBorrow, childTenderList);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
 
        /* //批次处理
        batchDeal();
