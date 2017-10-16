@@ -1282,17 +1282,17 @@ public class RepaymentBizImpl implements RepaymentBiz {
                 }
 
                 Users users = userService.findById(userId);
-                if (StringUtils.isEmpty(users.getWindmillId())) {  // 非风车理财派发积分
-                    IntegralChangeEntity integralChangeEntity = new IntegralChangeEntity();
-                    integralChangeEntity.setType(IntegralChangeEnum.TENDER);
-                    integralChangeEntity.setValue(integral);
-                    integralChangeEntity.setUserId(borrowCollection.getUserId());
-                    try {
-                        integralChangeHelper.integralChange(integralChangeEntity);
-                    } catch (Exception e) {
-                        log.error("投资人回款积分发放失败：", e);
-                    }
+                /*if (StringUtils.isEmpty(users.getWindmillId())) {  // 非风车理财派发积分*/
+                IntegralChangeEntity integralChangeEntity = new IntegralChangeEntity();
+                integralChangeEntity.setType(IntegralChangeEnum.TENDER);
+                integralChangeEntity.setValue(integral);
+                integralChangeEntity.setUserId(borrowCollection.getUserId());
+                try {
+                    integralChangeHelper.integralChange(integralChangeEntity);
+                } catch (Exception e) {
+                    log.error("投资人回款积分发放失败：", e);
                 }
+/*                }*/
 
             }
         });
@@ -1936,15 +1936,15 @@ public class RepaymentBizImpl implements RepaymentBiz {
                 if ((stockholder.contains(tender.getUserId())) && (between)) {
                     inFee += 0;
                 } else {
-                    Long userId = tender.getUserId();
+                    /*Long userId = tender.getUserId();
                     Users user = userService.findById(userId);
                     if (!StringUtils.isEmpty(user.getWindmillId())) { // 风车理财用户不收管理费
                         log.info(String.format("风车理财：%s", user));
                         inFee += 0;
-                    } else {
-                        // 利息管理费
-                        inFee += MoneyHelper.doubleToint(MoneyHelper.multiply(inIn, 0.1D, 0));  // 利息问题
-                    }
+                    } else {*/
+                    // 利息管理费
+                    inFee += MoneyHelper.doubleToint(MoneyHelper.multiply(inIn, 0.1D, 0));  // 利息问题
+/*                    }*/
                 }
             }
 
@@ -2109,7 +2109,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
      * @return@
      */
 
-    public long calculateLateInterest(int lateDays, BorrowRepayment borrowRepayment, Borrow repaymentBorrow) {
+    private long calculateLateInterest(int lateDays, BorrowRepayment borrowRepayment, Borrow repaymentBorrow) {
         if (0 >= lateDays) {
             return 0;
         }
@@ -2694,7 +2694,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
                 .eq("transferFlag", 0)
                 .build();
         List<BorrowCollection> borrowCollectionList = borrowCollectionService.findList(bcs);
-        Preconditions.checkState(!CollectionUtils.isEmpty(borrowCollectionList),"投资回款记录不存在!");
+        Preconditions.checkState(!CollectionUtils.isEmpty(borrowCollectionList), "投资回款记录不存在!");
         Map<Long/* tenderId */, BorrowCollection> borrowCollectionMaps = borrowCollectionList.stream().collect(Collectors.toMap(BorrowCollection::getTenderId, Function.identity()));
         Date nowDate = new Date();
         //垫付资产改变集合
