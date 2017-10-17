@@ -134,7 +134,7 @@ public class ThirdBatchDealBizImpl implements ThirdBatchDealBiz {
      * @throws Exception
      */
     @Transactional(rollbackFor = Exception.class)
-    public synchronized boolean batchDeal(long sourceId, String batchNo, int batchType, String acqRes, String batchResp) throws Exception {
+    public boolean batchDeal(long sourceId, String batchNo, int batchType, String acqRes, String batchResp) throws Exception {
         Specification<ThirdBatchLog> tbls = Specifications
                 .<ThirdBatchLog>and()
                 .eq("sourceId", sourceId)
