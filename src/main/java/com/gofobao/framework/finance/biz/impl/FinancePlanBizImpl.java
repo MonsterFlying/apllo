@@ -442,20 +442,20 @@ public class FinancePlanBizImpl implements FinancePlanBiz {
         }
         if (status != 1) {
             errerMessage.add("理财计划不可购买!");
-            return true;
+            return false;
         }
         //判断理财计划是否结束
         if (financePlan.getFinishedState()) {
             errerMessage.add("理财计划已结束!");
-            return true;
+            return false;
         }
         //判断是否频繁购买
         boolean bool = financePlanBuyerService.checkFinancePlanBuyNimiety(financePlanId, userId);
         if (bool) {
             errerMessage.add("理财计划购买频繁!");
-            return true;
+            return false;
         }
-        return false;
+        return true;
     }
 
     /**
