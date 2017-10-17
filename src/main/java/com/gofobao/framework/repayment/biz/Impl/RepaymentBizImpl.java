@@ -943,6 +943,19 @@ public class RepaymentBizImpl implements RepaymentBiz {
         }
     }
 
+    @Transactional
+    public void test01() {
+        for (int i = 0; i < 5; i++) {
+            Asset asset = assetService.findByUserIdLock(44888l);
+            log.info("" + i + Thread.currentThread().getName()+GSON.toJson(asset));
+            try {
+                Thread.sleep(2000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
     /**
      * 新还款处理
      * 1.查询并判断还款记录是否存在!

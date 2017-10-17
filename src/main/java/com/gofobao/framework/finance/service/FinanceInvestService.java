@@ -4,6 +4,7 @@ import com.gofobao.framework.system.vo.request.VoFinanceDetailReq;
 import com.gofobao.framework.system.vo.response.VoViewFinanceReturnedMoney;
 import com.gofobao.framework.system.vo.response.VoViewFinanceTenderDetail;
 import com.gofobao.framework.tender.vo.request.VoDetailReq;
+import com.gofobao.framework.tender.vo.request.VoFinanceInvestListReq;
 import com.gofobao.framework.tender.vo.request.VoInvestListReq;
 import com.gofobao.framework.tender.vo.response.VoViewReturnedMoney;
 import com.gofobao.framework.tender.vo.response.VoViewTenderDetail;
@@ -20,21 +21,21 @@ public interface FinanceInvestService {
      * @param voInvestListReq
      * @return
      */
-    Map<String, Object> backMoneyList(VoInvestListReq voInvestListReq);
+    Map<String, Object> backMoneyList(VoFinanceInvestListReq voInvestListReq);
 
     /**
      * 投标中列表
      * @param voInvestListReq
      * @return
      */
-    Map<String, Object> biddingList(VoInvestListReq voInvestListReq);
+    Map<String, Object> biddingList(VoFinanceInvestListReq voInvestListReq);
 
     /**
      * 已结清
      * @param voInvestListReq
      * @return
      */
-    Map<String, Object> settleList(VoInvestListReq voInvestListReq);
+    Map<String, Object> settleList(VoFinanceInvestListReq voInvestListReq);
 
 
     /**

@@ -245,4 +245,11 @@ public interface UserThirdBiz {
      */
     ResponseEntity<UserAccountThirdTxRes> queryAccountTx(VoPcDoFirstVerity voPcDoFirstVerity );
 
+
+    /**
+     * 获取企业账户信息
+     * @param paramStr
+     * @return
+     */
+    ResponseEntity<VoBaseResp> companyAccountInfo(String paramStr);
 }

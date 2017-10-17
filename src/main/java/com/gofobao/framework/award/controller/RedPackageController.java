@@ -93,4 +93,19 @@ public class RedPackageController {
 
         return redPackageBiz.publishOpenAccountRedpack(voPublishRedReq) ;
     }
+
+
+
+    @ApiOperation("根据投标记录触发")
+    @PostMapping("pub/publishActivity/red/tender")
+    public ResponseEntity<VoBaseResp> publishRedpack4TenderRecord(@ModelAttribute VoPublishRedReq voPublishRedReq) throws Exception {
+        String paramStr = voPublishRedReq.getParamStr();
+        if (!SecurityHelper.checkSign(voPublishRedReq.getSign(), paramStr)) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "派发红包, 签名验证不通过!"));
+        }
+
+        return redPackageBiz.publishRedpack4TenderRecord(voPublishRedReq) ;
+    }
 }

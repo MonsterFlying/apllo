@@ -29,6 +29,8 @@ import com.gofobao.framework.api.model.card_bind_details_query.CardBindDetailsQu
 import com.gofobao.framework.api.model.card_bind_details_query.CardBindItem;
 import com.gofobao.framework.api.model.card_unbind.CardUnbindRequest;
 import com.gofobao.framework.api.model.card_unbind.CardUnbindResponse;
+import com.gofobao.framework.api.model.corpration_query.CorprationQueryRequest;
+import com.gofobao.framework.api.model.corpration_query.CorprationQueryResponse;
 import com.gofobao.framework.api.model.credit_auth_query.CreditAuthQueryRequest;
 import com.gofobao.framework.api.model.credit_auth_query.CreditAuthQueryResponse;
 import com.gofobao.framework.api.model.credit_details_query.CreditDetailsQueryItem;
@@ -1669,7 +1671,7 @@ public class UserThirdBizImpl implements UserThirdBiz {
 
         UserThirdAccount entity = userThirdAccountService.findByDelUseid(user.getId());
         Date nowDate = new Date();
-        if(ObjectUtils.isEmpty(entity)){
+        if (ObjectUtils.isEmpty(entity)) {
             entity = new UserThirdAccount();
             entity.setCreateAt(nowDate);
             // 新用户只能主动查询用户银行卡
@@ -1921,5 +1923,31 @@ public class UserThirdBizImpl implements UserThirdBiz {
         thridTxRes.setTotalCount(Integer.valueOf(accountDetailsQueryResponse.getTotalItems()));
         thridTxRes.setDetailsQueryItems(detailsQueryItems);
         return ResponseEntity.ok(thridTxRes);
+    }
+
+    @Override
+    public ResponseEntity<VoBaseResp> companyAccountInfo(String paramStr) {
+        Gson gson = new Gson();
+        Map<String, String> data = gson.fromJson(paramStr, TypeTokenContants.MAP_ALL_STRING_TOKEN);
+        String id = data.get("id");
+        UserThirdAccount userThirdAccount = userThirdAccountService.findByAccountId(id);
+        Preconditions.checkNotNull(userThirdAccount, "当前账户为空");
+        CorprationQueryRequest corprationQueryRequest = new CorprationQueryRequest();
+        corprationQueryRequest.setAccountId(userThirdAccount.getAccountId());
+        CorprationQueryResponse corprationQueryResponse = jixinManager.send(JixinTxCodeEnum.CORPRATION_QUERY, corprationQueryRequest, CorprationQueryResponse.class);
+        log.info("================================");
+        log.info("查询结果:" + gson.toJson(corprationQueryResponse));
+        log.info("================================");
+
+
+        CardBindDetailsQueryRequest cardBindDetailsQueryRequest = new CardBindDetailsQueryRequest() ;
+        cardBindDetailsQueryRequest.setAccountId(userThirdAccount.getAccountId());
+        cardBindDetailsQueryRequest.setState("0");
+        CardBindDetailsQueryResponse cardBindDetailsQueryResponse = jixinManager.send(JixinTxCodeEnum.CARD_BIND_DETAILS_QUERY, cardBindDetailsQueryRequest, CardBindDetailsQueryResponse.class);
+        log.info("================================");
+        log.info("查询结果:" + gson.toJson(cardBindDetailsQueryResponse));
+        log.info("================================");
+        VoBaseResp voBaseResp = VoBaseResp.ok("查询成功");
+        return ResponseEntity.ok(voBaseResp);
     }
 }

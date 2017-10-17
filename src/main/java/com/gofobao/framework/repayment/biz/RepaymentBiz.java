@@ -23,6 +23,7 @@ import javax.servlet.http.HttpServletResponse;
  */
 public interface RepaymentBiz {
 
+    public void test01();
     /**
      * 获取用户逾期费用
      * 逾期规则: 未还款本金之和 * 0.4$ 的费用, 平台收取 0.2%, 出借人 0.2%
