@@ -143,5 +143,6 @@ public class FinanceUserController {
         vip.setStatus(1);
         return userBiz.saveVip(vip);
     }
+
 }
 
