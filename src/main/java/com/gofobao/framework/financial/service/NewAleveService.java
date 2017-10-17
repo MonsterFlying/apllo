@@ -5,6 +5,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 
+import java.util.List;
+
 public interface NewAleveService {
 
     NewAleve findTopByQueryTimeAndTranno(String date, String tranno);
@@ -16,4 +18,7 @@ public interface NewAleveService {
     Page<NewAleve> findAll(Specification<NewAleve> specification, Pageable pageable);
 
     NewAleve findTopByReldateAndInptimeAndTranno(String reldate, String inptime, String tranno);
+
+    List<NewAleve> findAll(Specification<NewAleve> specification);
+
 }
