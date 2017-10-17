@@ -372,16 +372,15 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
         String routeCode = " ";
         if (bigCashState) {
             routeCode = "2";
+            withDrawRequest.setCardBankCnaps(voCashReq.getBankAps()); // 联行卡号
         } else {
             if (userThirdAccount.getIdType() > 1) {
+                // 313421080308  江西银行联行号
                 routeCode = "2";
+                withDrawRequest.setCardBankCnaps("313421080308"); // 这里正对于江西银行企业账号, 直接写死
             }
         }
-
         withDrawRequest.setRouteCode(routeCode);
-        if (bigCashState) {
-            withDrawRequest.setCardBankCnaps(voCashReq.getBankAps()); // 联行卡号
-        }
 
         withDrawRequest.setTxFee(StringHelper.formatDouble(new Double(MoneyHelper.divide(fee, 100D)), false));
         withDrawRequest.setForgotPwdUrl(thirdAccountPasswordHelper.getThirdAcccountResetPasswordUrl(httpServletRequest, userId));
