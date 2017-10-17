@@ -34,10 +34,7 @@ import com.gofobao.framework.finance.entity.FinancePlanBuyer;
 import com.gofobao.framework.finance.service.FinancePlanBuyerService;
 import com.gofobao.framework.finance.service.FinancePlanService;
 import com.gofobao.framework.finance.vo.request.*;
-import com.gofobao.framework.finance.vo.response.PlanContract;
-import com.gofobao.framework.finance.vo.response.PlanDetail;
-import com.gofobao.framework.finance.vo.response.PlanList;
-import com.gofobao.framework.finance.vo.response.PlanListWarpRes;
+import com.gofobao.framework.finance.vo.response.*;
 import com.gofobao.framework.helper.*;
 import com.gofobao.framework.helper.project.BorrowCalculatorHelper;
 import com.gofobao.framework.helper.project.SecurityHelper;
@@ -710,7 +707,7 @@ public class FinancePlanBizImpl implements FinancePlanBiz {
         if (CollectionUtils.isEmpty(financePlans)) {
             return ResponseEntity.ok(warpRes);
         }
-        List<PlanList> planLists = Lists.newArrayList();
+        List<PlanList> planLists = new ArrayList<>();
         //装配结果集
         financePlans.stream().forEach(p -> {
             PlanList plan = new PlanList();
@@ -726,6 +723,44 @@ public class FinancePlanBizImpl implements FinancePlanBiz {
         warpRes.setPlanLists(planLists);
         return ResponseEntity.ok(warpRes);
     }
+
+    /**
+     * 理财列表
+     *
+     * @param page
+     * @return
+     */
+    @Override
+    public ResponseEntity<VoViewFinanceServerPlanResp> financeServerlist(Page page) {
+
+        VoViewFinanceServerPlanResp warpRes = VoBaseResp.ok("查询成功", VoViewFinanceServerPlanResp.class);
+
+        Specification<FinancePlan> specification = Specifications.<FinancePlan>and()
+                .notIn("status", statusArray.toArray())
+                .eq("type", 1)
+                .build();
+        List<FinancePlan> financePlans = financePlanService.findList(specification, new Sort(Sort.Direction.DESC, "id"));
+
+        if (CollectionUtils.isEmpty(financePlans)) {
+            return ResponseEntity.ok(warpRes);
+        }
+        List<FinanceServerPlan> planLists = new ArrayList<>();
+        //装配结果集
+        financePlans.stream().forEach(p -> {
+            FinanceServerPlan financeServerPlan = new FinanceServerPlan();
+            financeServerPlan.setApr(StringHelper.formatMon(p.getBaseApr() / 100D));
+            financeServerPlan.setId(p.getId());
+            financeServerPlan.setMoney(StringHelper.formatMon(p.getMoney() / 100D));
+            financeServerPlan.setSpend(MoneyHelper.round((p.getMoneyYes() / p.getMoney().doubleValue()) * 100, 2));
+            financeServerPlan.setTimeLimit(p.getTimeLimit());
+            financeServerPlan.setStatus(handleStatus(p));
+            financeServerPlan.setPlanName(p.getName());
+            planLists.add(financeServerPlan);
+        });
+        warpRes.setFinanceServerPlanList(planLists);
+        return ResponseEntity.ok(warpRes);
+    }
+
 
     /**
      * 理财详情

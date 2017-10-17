@@ -6,6 +6,7 @@ import com.gofobao.framework.security.contants.SecurityContants;
 import com.gofobao.framework.system.vo.request.VoFinanceDetailReq;
 import com.gofobao.framework.system.vo.response.VoViewFinanceReturnMoneyWarpRes;
 import com.gofobao.framework.tender.vo.request.VoDetailReq;
+import com.gofobao.framework.tender.vo.request.VoFinanceInvestListReq;
 import com.gofobao.framework.tender.vo.request.VoInvestListReq;
 import com.gofobao.framework.tender.vo.response.*;
 import io.swagger.annotations.Api;
@@ -35,7 +36,11 @@ public class FinanceInvestController {
     public ResponseEntity<VoViewBackMoneyListWarpRes> pcBackMoneyList(@RequestAttribute(SecurityContants.USERID_KEY) Long userId,
                                                                     @PathVariable Integer pageIndex,
                                                                     @PathVariable Integer pageSize) {
-       return pcBackMoneyCommonResult( pageIndex, pageSize, userId);
+        VoFinanceInvestListReq voFinanceInvestListReq = new VoFinanceInvestListReq();
+        voFinanceInvestListReq.setUserId(userId);
+        voFinanceInvestListReq.setPageIndex(pageIndex);
+        voFinanceInvestListReq.setPageSize(pageSize);
+        return financeInvestBiz.backMoneyList(voFinanceInvestListReq);
     }
 
 
@@ -45,7 +50,11 @@ public class FinanceInvestController {
     public ResponseEntity<VoViewBiddingListWrapRes> pcBiddingList(@RequestAttribute(SecurityContants.USERID_KEY) Long userId,
                                                                 @PathVariable Integer pageIndex,
                                                                 @PathVariable Integer pageSize) {
-       return pcBuildCommonResult( pageIndex, pageSize, userId);
+        VoFinanceInvestListReq voFinanceInvestListReq = new VoFinanceInvestListReq();
+        voFinanceInvestListReq.setUserId(userId);
+        voFinanceInvestListReq.setPageIndex(pageIndex);
+        voFinanceInvestListReq.setPageSize(pageSize);
+        return financeInvestBiz.biddingList(voFinanceInvestListReq);
     }
 
     @ApiOperation("pc:已结清列表")
@@ -53,7 +62,11 @@ public class FinanceInvestController {
     public ResponseEntity<VoViewSettleWarpRes> pcSettleList(@RequestAttribute(SecurityContants.USERID_KEY) Long userId,
                                                           @PathVariable Integer pageIndex,
                                                           @PathVariable Integer pageSize) {
-        return pcSettleCommonResult( pageIndex, pageSize, userId);
+        VoFinanceInvestListReq voFinanceInvestListReq = new VoFinanceInvestListReq();
+        voFinanceInvestListReq.setUserId(userId);
+        voFinanceInvestListReq.setPageIndex(pageIndex);
+        voFinanceInvestListReq.setPageSize(pageSize);
+        return financeInvestBiz.settleList(voFinanceInvestListReq);
     }
 
 
@@ -76,25 +89,4 @@ public class FinanceInvestController {
         return financeInvestBiz.infoList(voDetailReq);
     }
 
-    private ResponseEntity<VoViewSettleWarpRes> pcSettleCommonResult(Integer pageIndex, Integer pageSize, Long userId){
-        VoInvestListReq voInvestListReq = new VoInvestListReq();
-        voInvestListReq.setUserId(userId);
-        voInvestListReq.setPageIndex(pageIndex);
-        voInvestListReq.setPageSize(pageSize);
-        return financeInvestBiz.settleList(voInvestListReq);
-    }
-    private ResponseEntity<VoViewBackMoneyListWarpRes> pcBackMoneyCommonResult(Integer pageIndex, Integer pageSize, Long userId){
-        VoInvestListReq voInvestListReq = new VoInvestListReq();
-        voInvestListReq.setUserId(userId);
-        voInvestListReq.setPageIndex(pageIndex);
-        voInvestListReq.setPageSize(pageSize);
-        return financeInvestBiz.backMoneyList(voInvestListReq);
-    }
-    private ResponseEntity<VoViewBiddingListWrapRes> pcBuildCommonResult(Integer pageIndex, Integer pageSize, Long userId){
-        VoInvestListReq voInvestListReq = new VoInvestListReq();
-        voInvestListReq.setUserId(userId);
-        voInvestListReq.setPageIndex(pageIndex);
-        voInvestListReq.setPageSize(pageSize);
-        return financeInvestBiz.biddingList(voInvestListReq);
-    }
 }

@@ -29,6 +29,7 @@ import com.gofobao.framework.tender.repository.InvestRepository;
 import com.gofobao.framework.finance.service.FinanceInvestService;
 import com.gofobao.framework.tender.vo.request.ReturnedMoney;
 import com.gofobao.framework.tender.vo.request.VoDetailReq;
+import com.gofobao.framework.tender.vo.request.VoFinanceInvestListReq;
 import com.gofobao.framework.tender.vo.request.VoInvestListReq;
 import com.gofobao.framework.tender.vo.response.*;
 import com.google.common.collect.Maps;
@@ -87,7 +88,7 @@ public class FinanceInvestServiceImpl implements FinanceInvestService {
      * @return
      */
     @Override
-    public Map<String, Object> backMoneyList(VoInvestListReq voInvestListReq) {
+    public Map<String, Object> backMoneyList(VoFinanceInvestListReq voInvestListReq) {
         Map<String, Object> resultMaps = commonQuery(voInvestListReq);
         //理财计划购买记录
         List<FinancePlanBuyer> financePlanBuyerList = (List<FinancePlanBuyer>) resultMaps.get("financePlanBuyerList");
@@ -160,7 +161,7 @@ public class FinanceInvestServiceImpl implements FinanceInvestService {
      * @return
      */
     @Override
-    public Map<String, Object> biddingList(VoInvestListReq voInvestListReq) {
+    public Map<String, Object> biddingList(VoFinanceInvestListReq voInvestListReq) {
         Map<String, Object> resultMaps = commonQuery(voInvestListReq);
         //理财计划购买记录
         List<FinancePlanBuyer> financePlanBuyerList = (List<FinancePlanBuyer>) resultMaps.get("financePlanBuyerList");
@@ -219,7 +220,7 @@ public class FinanceInvestServiceImpl implements FinanceInvestService {
      * @return
      */
     @Override
-    public Map<String, Object> settleList(VoInvestListReq voInvestListReq) {
+    public Map<String, Object> settleList(VoFinanceInvestListReq voInvestListReq) {
         Map<String, Object> resultMaps = commonQuery(voInvestListReq);
         //理财计划购买记录
         List<FinancePlanBuyer> financePlanBuyerList = (List<FinancePlanBuyer>) resultMaps.get("financePlanBuyerList");
@@ -286,7 +287,7 @@ public class FinanceInvestServiceImpl implements FinanceInvestService {
      * @param voInvestListReq
      * @return
      */
-    private Map<String, Object> commonQuery(VoInvestListReq voInvestListReq) {
+    private Map<String, Object> commonQuery(VoFinanceInvestListReq voInvestListReq) {
         Specification<FinancePlanBuyer> specification = Specifications.<FinancePlanBuyer>and()
                 .eq("userId", voInvestListReq.getUserId())
                 .eq("state", voInvestListReq.getType())
