@@ -22,6 +22,8 @@ import com.gofobao.framework.common.rabbitmq.MqHelper;
 import com.gofobao.framework.common.rabbitmq.MqQueueEnum;
 import com.gofobao.framework.common.rabbitmq.MqTagEnum;
 import com.gofobao.framework.core.vo.VoBaseResp;
+import com.gofobao.framework.finance.entity.FinancePlanBuyer;
+import com.gofobao.framework.finance.service.FinancePlanBuyerService;
 import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.helper.StringHelper;
 import com.gofobao.framework.member.entity.UserCache;
@@ -119,7 +121,7 @@ public class ThirdBatchDealBizImpl implements ThirdBatchDealBiz {
     @Autowired
     private UserCacheService userCacheService;
     @Autowired
-    private StatisticBiz statisticBiz;
+    private FinancePlanBuyerService financePlanBuyerService;
 
     /**
      * 批次处理
@@ -178,7 +180,7 @@ public class ThirdBatchDealBizImpl implements ThirdBatchDealBiz {
         } while (pageSize == realSize);
 
         //筛选失败批次
-        Preconditions.checkState(!CollectionUtils.isEmpty(detailsQueryRespList), "批处理回调: 查询批次详细异常!");
+        Preconditions.checkState(!CollectionUtils.isEmpty(detailsQueryRespList), String.format("批处理回调: 查询批次详细异常!batchNo:%s", batchNo));
         List<String> failureOrderIds = new ArrayList<>(); // 失败orderId
         List<String> successOrderIds = new ArrayList<>(); // 成功orderId
         List<String> failureErrorMsgList = new ArrayList<>();
@@ -729,7 +731,7 @@ public class ThirdBatchDealBizImpl implements ThirdBatchDealBiz {
         if (CollectionUtils.isEmpty(failureThirdLendPayOrderIds)) {
 
             Borrow borrow = borrowService.findById(borrowId);
-            log.info(String.format("正常标的放款回调: %s", gson.toJson(borrow)));
+            log.info(String.format("正常标的放款回调:borrowId: %s , %s", borrowId, gson.toJson(borrow)));
             boolean flag = borrowBiz.borrowAgainVerify(borrow, batchNo);
             if (!flag) {
                 log.error("标的放款失败！标的id：" + borrowId);
@@ -904,11 +906,26 @@ public class ThirdBatchDealBizImpl implements ThirdBatchDealBiz {
             Map<Long, List<TransferBuyLog>> transferByLogMap = failureTransferBuyLogList.stream().collect(Collectors.groupingBy(TransferBuyLog::getTransferId));
             for (Transfer transfer : transferList) {
                 List<TransferBuyLog> transferBuyLogList = transferByLogMap.get(transfer.getId());
+                //查询理财计划购买记录
+                Set<Long> userIds = transferBuyLogList.stream().map(TransferBuyLog::getUserId).collect(Collectors.toSet());
+                Specification<FinancePlanBuyer> fpbs = Specifications
+                        .<FinancePlanBuyer>and()
+                        .in("userId", userIds.toArray())
+                        .build();
+                List<FinancePlanBuyer> financePlanBuyerList = financePlanBuyerService.findList(fpbs);
+                Map<Long/*userId*/, FinancePlanBuyer> financePlanBuyerMap = financePlanBuyerList.stream().collect(Collectors.toMap(FinancePlanBuyer::getUserId, Function.identity()));
                 for (TransferBuyLog transferBuyLog : transferBuyLogList) {
+                    //修改理财计划购买记录
+                    FinancePlanBuyer financePlanBuyer = financePlanBuyerMap.get(transferBuyLog.getUserId());
+                    financePlanBuyer.setRightMoney(financePlanBuyer.getRightMoney() - transferBuyLog.getPrincipal());
+                    financePlanBuyer.setRightMoney(transferBuyLog.getPrincipal());
+
+                    //修改债权购买记录
                     transferBuyLog.setState(2);
                     transferBuyLog.setUpdatedAt(nowDate);
                 }
 
+                //修改债权记录
                 transfer.setTenderCount(transfer.getTenderCount() - transferBuyLogList.size());
                 long sum = transferBuyLogList.stream().mapToLong(transferBuyLog -> transferBuyLog.getValidMoney()).sum();  // 取消的总总债权
                 transfer.setTransferMoneyYes(transfer.getTransferMoneyYes() - sum);

@@ -99,7 +99,7 @@ public class JixinManager {
         }
 
         if (StringUtils.isEmpty(req.getTxDate())) {
-            req.setTxDate(DateHelper.getDate());
+            req.setTxDate(DateHelper.getDateFor24());
         }
 
         if (StringUtils.isEmpty(req.getChannel())) {
@@ -143,7 +143,7 @@ public class JixinManager {
         }
 
         if (StringUtils.isEmpty(req.getTxDate())) {
-            req.setTxDate(DateHelper.getDate());
+            req.setTxDate(DateHelper.getDateFor24());
         }
 
         if (StringUtils.isEmpty(req.getChannel())) {
@@ -280,7 +280,7 @@ public class JixinManager {
         }
 
         if (StringUtils.isEmpty(req.getTxDate())) {
-            req.setTxDate(DateHelper.getDate());
+            req.setTxDate(DateHelper.getDateFor24());
         }
 
         if (StringUtils.isEmpty(req.getChannel())) {

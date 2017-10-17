@@ -12,6 +12,7 @@ import com.gofobao.framework.security.contants.SecurityContants;
 import com.gofobao.framework.security.helper.JwtTokenHelper;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
@@ -29,6 +30,7 @@ import java.util.Map;
 @RestController
 @Api(description = "理财")
 @RequestMapping("")
+@Slf4j
 public class FinanceController {
 
     @Autowired
@@ -84,7 +86,7 @@ public class FinanceController {
 
     @ApiOperation(value = "标合同")
     @GetMapping(value = "/pub/finance/plan/flanContract/{planId}")
-    public ResponseEntity<String> flanContract(@PathVariable Long planId, HttpServletRequest request)throws Exception {
+    public ResponseEntity<String> flanContract(@PathVariable Long planId, HttpServletRequest request) throws Exception {
         Long userId = 0L;
         String authToken = request.getHeader(this.tokenHeader);
         if (!StringUtils.isEmpty(authToken) && (authToken.contains(prefix))) {
@@ -95,8 +97,8 @@ public class FinanceController {
             userId = jwtTokenHelper.getUserIdFromToken(authToken);
         }
 
-        Map<String,Object> paramMaps=financePlanBiz.flanContract(planId,userId);
-        String content="";
+        Map<String, Object> paramMaps = financePlanBiz.flanContract(planId, userId);
+        String content = "";
         try {
             content = thymeleafHelper.build("licai/contract", paramMaps);
         } catch (Exception e) {
@@ -113,11 +115,12 @@ public class FinanceController {
      */
     @ApiOperation("购买理财计划")
     @PostMapping("/finance/v2/tender/finance/plan")
-    public ResponseEntity<VoBaseResp> tenderFinancePlan(@Valid @ModelAttribute VoTenderFinancePlan voTenderFinancePlan,@ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
+    public ResponseEntity<VoBaseResp> tenderFinancePlan(@Valid @ModelAttribute VoTenderFinancePlan voTenderFinancePlan, @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
         try {
             voTenderFinancePlan.setUserId(userId);
             return financePlanBiz.tenderFinancePlan(voTenderFinancePlan);
         } catch (Exception e) {
+            log.error("购买理财计划异常:%s", e);
             return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "系统开小差了，请稍后再试!", VoViewFinancePlanTender.class));
         }
     }

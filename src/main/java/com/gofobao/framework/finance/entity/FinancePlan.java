@@ -32,6 +32,7 @@ public class FinancePlan {
     private Integer timeLimit;
     private Integer lockPeriod;
     private Long lowest;
+    private Long lowestShow;
     private Integer appendMultipleAmount;
     private Long most;
     private Date successAt;

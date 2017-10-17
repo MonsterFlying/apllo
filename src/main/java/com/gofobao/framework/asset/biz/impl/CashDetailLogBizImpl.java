@@ -63,7 +63,6 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import lombok.extern.slf4j.Slf4j;
-import org.hibernate.type.descriptor.java.DataHelper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.PageRequest;
@@ -335,7 +334,7 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "对不起, 当天提现次数大于10次!", VoHtmlResp.class));
         }
         Date nowDate = new Date();
-        double cashMoney = voCashReq.getCashMoney() * 100;  // 提现金额
+        double cashMoney = MoneyHelper.round(MoneyHelper.multiply(voCashReq.getCashMoney(), 100), 0);  // 提现金额
         // 免费体现次数
         int freeTime = queryFreeTime(userId);
 
@@ -362,20 +361,20 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
         WithDrawRequest withDrawRequest = new WithDrawRequest();
         withDrawRequest.setSeqNo(RandomHelper.generateNumberCode(6));
         withDrawRequest.setTxTime(DateHelper.getTime());
-        withDrawRequest.setTxDate(DateHelper.getDate());
+        withDrawRequest.setTxDate(DateHelper.getDateFor24());
         withDrawRequest.setIdType(IdTypeContant.getIdTypeContant(userThirdAccount));
         withDrawRequest.setIdNo(userThirdAccount.getIdNo());
         withDrawRequest.setName(StringUtils.trimAllWhitespace(userThirdAccount.getName()));
         withDrawRequest.setMobile(userThirdAccount.getMobile());
         withDrawRequest.setCardNo(userThirdAccount.getCardNo());
         withDrawRequest.setAccountId(userThirdAccount.getAccountId());
-        withDrawRequest.setTxAmount(StringHelper.formatDouble(new Double((cashMoney - fee) / 100D), false)); //  交易金额
+        withDrawRequest.setTxAmount(StringHelper.formatDouble(new Double(MoneyHelper.divide((cashMoney - fee), 100D)), false)); //  交易金额
         withDrawRequest.setRouteCode(bigCashState ? "2" : " ");
         if (bigCashState) {
             withDrawRequest.setCardBankCnaps(voCashReq.getBankAps()); // 联行卡号
         }
 
-        withDrawRequest.setTxFee(StringHelper.formatDouble(new Double(fee / 100D), false));
+        withDrawRequest.setTxFee(StringHelper.formatDouble(new Double(MoneyHelper.divide(fee, 100D)), false));
         withDrawRequest.setForgotPwdUrl(thirdAccountPasswordHelper.getThirdAcccountResetPasswordUrl(httpServletRequest, userId));
 
         String requestSourceStr = httpServletRequest.getHeader("requestSource");
@@ -528,12 +527,12 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
             userAssetCash(users, seqNo, cashDetailLog, nowDate);  // 用户提现资金扣减
             titel = "提现成功";
             content = String.format("敬爱的用户您好! 你在[%s]提交%s元的提现请求, 处理成功! 如有疑问请致电客服.", DateHelper.dateToString(cashDetailLog.getCreateTime()),
-                    StringHelper.formatDouble(cashDetailLog.getMoney() / 100D, true));
+                    StringHelper.formatDouble(MoneyHelper.divide(cashDetailLog.getMoney(), 100D), true));
         } else if (JixinResultContants.toBeConfirm(response)) {
             userAssetCash(users, seqNo, cashDetailLog, nowDate);  // 用户提现资金扣减
             titel = "存管已接收提现受理";
             content = String.format("敬爱的用户您好! 你在[%s]提交%s元的提现请求, 已被银行受理, 你可以2小时后查看结果. 如有疑问, 请联系平台客服!.", DateHelper.dateToString(cashDetailLog.getCreateTime()),
-                    StringHelper.formatDouble(cashDetailLog.getMoney() / 100D, true));
+                    StringHelper.formatDouble(MoneyHelper.divide(cashDetailLog.getMoney(), 100D), true));
 
             // 发送资金确认
             rechargeAndCashAndRedpackQueryHelper.save(RechargeAndCashAndRedpackQueryHelper.QueryType.QUERY_CASH, userId, cashDetailLog.getId(), true);

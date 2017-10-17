@@ -373,7 +373,7 @@ public class ThirdBatchDealLogBizImpl implements ThirdBatchDealLogBiz {
         borrowStatus.add(6);
         voFindLendRepayStatus = new VoFindLendRepayStatus();
         voFindLendRepayStatus.setName(ThirdBatchLogContants.BORROW_SECOND_STEP);
-        if (!flag || borrow.getMoneyYes() == borrow.getMoney()) { // 0待处理
+        if (!flag || borrow.getMoneyYes() < borrow.getMoney()) { // 0待处理
             voFindLendRepayStatus.setDateStr("- -");
             voFindLendRepayStatus.setState(0);
             flag = false;

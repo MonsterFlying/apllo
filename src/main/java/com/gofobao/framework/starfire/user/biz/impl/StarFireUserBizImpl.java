@@ -114,6 +114,8 @@ public class StarFireUserBizImpl implements StarFireUserBiz {
     @Autowired
     private RedisHelper redisHelper;
 
+    @Autowired
+    private BorrowCollectionService borrowCollectionService;
 
     /**
      * 1.注册绑定查询
@@ -240,7 +242,7 @@ public class StarFireUserBizImpl implements StarFireUserBiz {
             String starFireUserId = AES.decrypt(key, initVector, registerModel.getUser_id());
             // 插入数据
             Users starFireUser = new Users();
-            starFireUser.setStarFireUserId(starFireUserId);
+
             starFireUser.setEmail(null);
             starFireUser.setPhone(mobile);
             starFireUser.setCardId(identity);
@@ -255,11 +257,12 @@ public class StarFireUserBizImpl implements StarFireUserBiz {
             starFireUser.setInviteCode(GenerateInviteCodeHelper.getRandomCode()); // 生成用户邀请码
             starFireUser.setParentId(0L);
             starFireUser.setParentAward(0);
-            starFireUser.setStarFireBindAt(new Date());
+            Date nowDate = new Date();
             //
             String registerToken = pwc.createPassWord(30);
             starFireUser.setStarFireRegisterToken(registerToken);
-            Date nowDate = new Date();
+            starFireUser.setStarFireBindAt(nowDate);
+            starFireUser.setStarFireUserId(starFireUserId);
             starFireUser.setCreatedAt(nowDate);
             starFireUser.setUpdatedAt(nowDate);
             starFireUser = userService.save(starFireUser);
@@ -328,10 +331,10 @@ public class StarFireUserBizImpl implements StarFireUserBiz {
         }
         String params = new Gson().toJson(bindUserModel);
         if (bindUserModel.getSource().equals("1")) {
-            return pcDomain + "third/xhzlogin?params=" + params;
+            return pcDomain + "/third/xhzlogin?params=" + params;
         } else {
             //TODO 暂默认是pc登录地址
-            return h5Domain + "third/xhzlogin?params=" + params;
+            return h5Domain + "/third/xhzlogin?params=" + params;
         }
     }
 
@@ -645,9 +648,6 @@ public class StarFireUserBizImpl implements StarFireUserBiz {
         }
     }
 
-
-    @Autowired
-    private BorrowCollectionService borrowCollectionService;
 
     /**
      * 账户信息查询

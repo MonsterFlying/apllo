@@ -40,4 +40,7 @@ public class VoCollection {
 
     @ApiModelProperty("还款状态")
     private List<VoFindRepayStatus> voFindRepayStatusList;
+
+    @ApiModelProperty("还款滞纳金")
+    private String lateInterest;
 }

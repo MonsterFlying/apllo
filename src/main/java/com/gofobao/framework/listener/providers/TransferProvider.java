@@ -295,7 +295,7 @@ public class TransferProvider {
         /* 转让管理费 */
         long transferFee = NumberHelper.toLong(iterator.next());
         //增加批次资金变动记录
-        addBatchAssetChange(transferId, transfer, transferBuyLogList, transferFee, batchNo);
+        addBatchAssetChangeByTransfer(transferId, transfer, transferBuyLogList, transferFee, batchNo);
         //增加successAt时间
         transfer.setSuccessAt(new Date());
         transferService.save(transfer);
@@ -313,7 +313,7 @@ public class TransferProvider {
      * @param transferFee
      * @param batchNo
      */
-    private void addBatchAssetChange(long transferId, Transfer transfer, List<TransferBuyLog> transferBuyLogList, long transferFee, String batchNo) throws ExecutionException {
+    private void addBatchAssetChangeByTransfer(long transferId, Transfer transfer, List<TransferBuyLog> transferBuyLogList, long transferFee, String batchNo) throws ExecutionException {
         String groupSeqNo = assetChangeProvider.getGroupSeqNo();
         Date nowDate = new Date();
         // 扣除债权购买人冻结资金
@@ -343,6 +343,7 @@ public class TransferProvider {
         batchAssetChangeItem.setGroupSeqNo(groupSeqNo);
         batchAssetChangeItemService.save(batchAssetChangeItem);
         Long feeAccountId = assetChangeProvider.getFeeAccountId();  // 平台ID
+
         // 扣除原始债权转让人转让费
         batchAssetChangeItem = new BatchAssetChangeItem();
         batchAssetChangeItem.setBatchAssetChangeId(batchAssetChangeId);

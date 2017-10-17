@@ -1,4 +1,4 @@
-package com.gofobao.framework.repayment.biz.Impl;
+package com.gofobao.framework.repayment.biz.impl;
 
 import com.gofobao.framework.borrow.contants.BorrowContants;
 import com.gofobao.framework.borrow.entity.Borrow;
