@@ -121,13 +121,13 @@ public class ThirdBatchLogBizImpl implements ThirdBatchLogBiz {
          */
         String batchState = resp.getBatchState();
         if ("A".equals(batchState)) {
-            return ResponseEntity.ok(VoBaseResp.ok("等待即信处理!"));
+            return ResponseEntity.ok(VoBaseResp.ok("批次等待即信处理!"));
         } else if ("D".equals(batchState)) {
-            return ResponseEntity.ok(VoBaseResp.ok("即信处理中!"));
+            return ResponseEntity.ok(VoBaseResp.ok("批次即信处理中!"));
         } else if ("C".equals(batchState)) {
-            return ResponseEntity.ok(VoBaseResp.ok("即信处理失败!"));
+            return ResponseEntity.ok(VoBaseResp.ok("批次存在已撤销明细!"));
         } else if ("F".equals(batchState)) {
-            return ResponseEntity.ok(VoBaseResp.ok("处理失败!"));
+            return ResponseEntity.ok(VoBaseResp.ok("批次存在处理失败明细!"));
         }
 
         // 批次存在失败批次，处理失败批次

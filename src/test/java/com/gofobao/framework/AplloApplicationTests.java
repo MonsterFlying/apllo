@@ -36,6 +36,7 @@ import com.gofobao.framework.api.model.trustee_pay_query.TrusteePayQueryReq;
 import com.gofobao.framework.api.model.trustee_pay_query.TrusteePayQueryResp;
 import com.gofobao.framework.api.model.voucher_pay.VoucherPayRequest;
 import com.gofobao.framework.api.model.voucher_pay.VoucherPayResponse;
+import com.gofobao.framework.asset.entity.Asset;
 import com.gofobao.framework.asset.entity.BatchAssetChangeItem;
 import com.gofobao.framework.asset.entity.NewAssetLog;
 import com.gofobao.framework.asset.service.AssetService;
@@ -586,9 +587,11 @@ public class AplloApplicationTests {
     @Autowired
     private ThirdBatchDealLogBiz thirdBatchDealLogBiz;
 
+
+
     @Test
     public void test() {
-
+        repaymentBiz.test01();
        /* //批次处理
        batchDeal();
         //unfrozee();
@@ -720,20 +723,6 @@ public class AplloApplicationTests {
 
     @Autowired
     private BrokerBounsBiz brokerBounsBiz;
-
-    @Test
-    public void monthPushMoney() {
-
-        aaaaa();
-    }
-
-    @Transactional(rollbackFor = Exception.class)
-    public void aaaaa() {
-        Borrow borrow1 = borrowService.findByIdLock(179937l);
-        borrow1.setMoneyYes(10l);
-        borrowService.save(borrow1);
-        System.out.println(GSON.toJson(borrow1));
-    }
 
 
 }

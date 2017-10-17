@@ -71,6 +71,15 @@ public class FinanceController {
         return financePlanBiz.list(page);
     }
 
+    @ApiOperation("金服理财理财列表")
+    @GetMapping("/pub/finance/server/plan/list/{pageIndex}/{pageSize}")
+    public ResponseEntity<VoViewFinanceServerPlanResp> financeServerPlanList(@PathVariable Integer pageIndex, @PathVariable Integer pageSize) {
+        Page page = new Page();
+        page.setPageIndex(pageIndex);
+        page.setPageSize(pageSize);
+        return financePlanBiz.financeServerlist(page);
+    }
+
     @ApiOperation("理财标详情")
     @GetMapping("/pub/finance/plan/info/{id}")
     public ResponseEntity<PlanDetail> info(@PathVariable Long id) {
@@ -120,7 +129,7 @@ public class FinanceController {
             voTenderFinancePlan.setUserId(userId);
             return financePlanBiz.tenderFinancePlan(voTenderFinancePlan);
         } catch (Exception e) {
-            log.error("购买理财计划异常:%s", e);
+            log.error("购买理财计划异常：", e);
             return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "系统开小差了，请稍后再试!", VoViewFinancePlanTender.class));
         }
     }

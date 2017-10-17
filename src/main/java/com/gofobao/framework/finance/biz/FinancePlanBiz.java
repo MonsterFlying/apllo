@@ -5,6 +5,7 @@ import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.finance.vo.request.*;
 import com.gofobao.framework.finance.vo.response.PlanDetail;
 import com.gofobao.framework.finance.vo.response.PlanListWarpRes;
+import com.gofobao.framework.finance.vo.response.VoViewFinanceServerPlanResp;
 import org.springframework.http.ResponseEntity;
 
 import java.util.Map;
@@ -13,6 +14,14 @@ import java.util.Map;
  * Created by Zeke on 2017/8/10.
  */
 public interface FinancePlanBiz {
+
+    /**
+     * 理财列表
+     *
+     * @param page
+     * @return
+     */
+    ResponseEntity<VoViewFinanceServerPlanResp> financeServerlist(Page page);
 
     /**
      * 理财计划复审

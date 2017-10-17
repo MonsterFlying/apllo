@@ -10,6 +10,7 @@ import com.gofobao.framework.system.vo.response.VoViewFinanceReturnedMoney;
 import com.gofobao.framework.system.vo.response.VoViewFinanceTenderDetail;
 import com.gofobao.framework.tender.contants.TenderConstans;
 import com.gofobao.framework.tender.vo.request.VoDetailReq;
+import com.gofobao.framework.tender.vo.request.VoFinanceInvestListReq;
 import com.gofobao.framework.tender.vo.request.VoInvestListReq;
 import com.gofobao.framework.tender.vo.response.*;
 import groovy.util.logging.Slf4j;
@@ -32,7 +33,7 @@ public class MyFinanceInvestBizImpl implements MyFinanceInvestBiz {
 
 
     @Override
-    public ResponseEntity<VoViewBackMoneyListWarpRes> backMoneyList(VoInvestListReq voInvestListReq) {
+    public ResponseEntity<VoViewBackMoneyListWarpRes> backMoneyList(VoFinanceInvestListReq voInvestListReq) {
         voInvestListReq.setType(TenderConstans.BACK_MONEY);
         try {
             Map<String, Object> resultMaps = financeInvestService.backMoneyList(voInvestListReq);
@@ -52,7 +53,7 @@ public class MyFinanceInvestBizImpl implements MyFinanceInvestBiz {
     }
 
     @Override
-    public ResponseEntity<VoViewBiddingListWrapRes> biddingList(VoInvestListReq voInvestListReq) {
+    public ResponseEntity<VoViewBiddingListWrapRes> biddingList(VoFinanceInvestListReq voInvestListReq) {
         voInvestListReq.setType(TenderConstans.BIDDING);
         try {
             Map<String, Object> resultMaps = financeInvestService.biddingList(voInvestListReq);
@@ -70,7 +71,7 @@ public class MyFinanceInvestBizImpl implements MyFinanceInvestBiz {
     }
 
     @Override
-    public ResponseEntity<VoViewSettleWarpRes> settleList(VoInvestListReq voInvestListReq) {
+    public ResponseEntity<VoViewSettleWarpRes> settleList(VoFinanceInvestListReq voInvestListReq) {
         voInvestListReq.setType(TenderConstans.SETTLE);
         try {
             Map<String, Object> resultMaps = financeInvestService.settleList(voInvestListReq);

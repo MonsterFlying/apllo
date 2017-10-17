@@ -5,6 +5,7 @@ import com.gofobao.framework.borrow.contants.BorrowContants;
 import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.borrow.service.BorrowService;
 import com.gofobao.framework.helper.DateHelper;
+import com.gofobao.framework.helper.NumberHelper;
 import com.gofobao.framework.helper.StringHelper;
 import com.gofobao.framework.starfire.borrow.biz.StarFireBorrowBiz;
 import com.gofobao.framework.starfire.common.request.BaseRequest;
@@ -104,10 +105,9 @@ public class StarFireBorrowBizImpl implements StarFireBorrowBiz {
                         .between("releaseAt", new Range<>(DateHelper.subDays(nowDate, 10),
                                 DateHelper.endOfDate(nowDate)))
                         .build();
-                pageSize = 100; //默认为100条
+                pageSize = 100;
             }
             List<Borrow> borrows = borrowService.findList(borrowSpecification,
-
                     new PageRequest(0,
                             pageSize,
                             new Sort(Sort.Direction.DESC,
@@ -143,18 +143,19 @@ public class StarFireBorrowBizImpl implements StarFireBorrowBiz {
                         : borrow.getTimeLimit().toString());
                 record.setBid_status(getBorrowStatus(borrow));
                 record.setBond_code(borrowId.toString());
-                record.setWap_bid_url("/#/borrow/" + borrowId);
-                record.setBid_url("/borrow/" + borrowId);
+                record.setWap_bid_url("/borrow/" + borrowId);
+                record.setBid_url("/#/borrow/" + borrowId);
                 record.setIsPromotion(false);
                 record.setIsRecommend(false);
                 record.setIsNovice(borrow.getIsNovice());
                 record.setIsExclusive(false);
                 record.setIsAssignment(false);
                 record.setCanAssign(true);
-                Double progress = Double.valueOf(StringHelper.formatDouble(
-                        moneyYes / borrow.getMoney().doubleValue(),
-                        false)) * 100;
-                record.setBid_progress_percent(progress.toString());
+                String progress = StringHelper.formatMon(
+                        NumberHelper.floorDouble(borrow.getMoneyYes() / borrow.getMoney().doubleValue(),
+                                2)
+                                * 100);
+                record.setBid_progress_percent(progress);
                 record.setIntroduction(borrow.getDescription());
                 if (borrow.getRepayFashion() == BorrowContants.REPAY_FASHION_ONCE) {
                     record.setIsDurationMonths(false);

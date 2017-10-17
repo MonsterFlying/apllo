@@ -4,6 +4,7 @@ import com.gofobao.framework.finance.vo.response.VoViewFinanceTenderDetailWarpRe
 import com.gofobao.framework.system.vo.request.VoFinanceDetailReq;
 import com.gofobao.framework.system.vo.response.VoViewFinanceReturnMoneyWarpRes;
 import com.gofobao.framework.tender.vo.request.VoDetailReq;
+import com.gofobao.framework.tender.vo.request.VoFinanceInvestListReq;
 import com.gofobao.framework.tender.vo.request.VoInvestListReq;
 import com.gofobao.framework.tender.vo.response.*;
 import org.springframework.http.ResponseEntity;
@@ -19,21 +20,21 @@ public interface MyFinanceInvestBiz {
      * @param voInvestListReq
      * @return
      */
-    ResponseEntity<VoViewBackMoneyListWarpRes> backMoneyList(VoInvestListReq voInvestListReq);
+    ResponseEntity<VoViewBackMoneyListWarpRes> backMoneyList(VoFinanceInvestListReq voInvestListReq);
 
     /**
      * 投标中列表
      * @param voInvestListReq
      * @return
      */
-    ResponseEntity<VoViewBiddingListWrapRes> biddingList(VoInvestListReq voInvestListReq);
+    ResponseEntity<VoViewBiddingListWrapRes> biddingList(VoFinanceInvestListReq voInvestListReq);
 
     /**
      * 已结清
      * @param voInvestListReq
      * @return
      */
-    ResponseEntity<VoViewSettleWarpRes> settleList(VoInvestListReq voInvestListReq);
+    ResponseEntity<VoViewSettleWarpRes> settleList(VoFinanceInvestListReq voInvestListReq);
 
 
     /**
