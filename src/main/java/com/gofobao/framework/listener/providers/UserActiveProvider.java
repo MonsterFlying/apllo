@@ -440,7 +440,7 @@ public class UserActiveProvider {
         entity.setSeqNo(seqNo);
         entity.setUserId(userId);
         entity.setRemark(String.format("你在 %s 成功返还提现%s元", DateHelper.dateToString(nowDate), StringHelper.formatDouble(realCashMoney / 100D, true)));
-        entity.setType(AssetChangeTypeEnum.cancelBigCash);
+        entity.setType(AssetChangeTypeEnum.cancelCash);
         assetChangeProvider.commonAssetChange(entity);
         if (cashDetailLog.getFee() > 0) {   // 扣除用户提现手续费
             Long feeAccountId = assetChangeProvider.getFeeAccountId();
@@ -451,7 +451,7 @@ public class UserActiveProvider {
             entity.setUserId(userId);
             entity.setForUserId(feeAccountId);
             entity.setRemark(String.format("你在 %s 成功返还提现手续费%s元", DateHelper.dateToString(nowDate), StringHelper.formatDouble(cashDetailLog.getFee() / 100D, true)));
-            entity.setType(AssetChangeTypeEnum.cancelBigCashFee);
+            entity.setType(AssetChangeTypeEnum.cancelCashFee);
             assetChangeProvider.commonAssetChange(entity);
 
             // 平台收取提现手续费
@@ -462,7 +462,7 @@ public class UserActiveProvider {
             entity.setUserId(feeAccountId);
             entity.setForUserId(userId);
             entity.setRemark(String.format("你在 %s 成功返还提现手续费%s元", DateHelper.dateToString(nowDate), StringHelper.formatDouble(cashDetailLog.getFee() / 100D, true)));
-            entity.setType(AssetChangeTypeEnum.cancelPlatformBigCashFee);
+            entity.setType(AssetChangeTypeEnum.cancelPlatformCashFee);
             assetChangeProvider.commonAssetChange(entity);
         }
     }

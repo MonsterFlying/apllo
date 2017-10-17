@@ -261,15 +261,6 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
         return 10 - cashCount <= 0 ? 0 : 10 - cashCount;
     }
 
-    public static void main(String[] args) {
-        Date nowDate = new Date();
-        Date beginDate = DateHelper.endOfDate(DateHelper.endOfMonth(DateHelper.subMonths(nowDate, 1)));
-        Date endDate = DateHelper.beginOfDate(DateHelper.beginOfMonth(DateHelper.addMonths(nowDate, 1)));
-        log.info(DateHelper.dateToString(beginDate));
-        log.info(DateHelper.dateToString(endDate));
-
-
-    }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -411,7 +402,7 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
             cashDetailLog.setThirdAccountId(userThirdAccount.getAccountId());
             cashDetailLog.setBankName(userThirdAccount.getBankName());
             cashDetailLog.setCardNo(userThirdAccount.getCardNo());
-            cashDetailLog.setCashType(bigCashState ? 1 : 1); // 现在提现都走了超网渠道, 所有类型都2820
+            cashDetailLog.setCashType(bigCashState ? 1 : 0); // 现在提现都走了超网渠道, 所有类型都2820
             if (bigCashState) {
                 cashDetailLog.setCompanyBankNo(voCashReq.getBankAps()); // 联行卡号
             }
@@ -601,7 +592,12 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
         entity.setSeqNo(seqNo);
         entity.setUserId(users.getId());
         entity.setRemark(String.format("你在 %s 成功提现%s元", DateHelper.dateToString(nowDate), StringHelper.formatDouble(realCashMoney / 100D, true)));
-        entity.setType(AssetChangeTypeEnum.smallCash);
+        if (cashDetailLog.getCashType() == 0) { // 小额提现
+            entity.setType(AssetChangeTypeEnum.smallCash);
+        } else {
+            entity.setType(AssetChangeTypeEnum.bigCash);
+        }
+
         assetChangeProvider.commonAssetChange(entity);
         if (cashDetailLog.getFee() > 0) {
             // 扣除用户提现手续费
@@ -613,7 +609,11 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
             entity.setUserId(users.getId());
             entity.setForUserId(feeAccountId);
             entity.setRemark(String.format("你在 %s 成功扣除提现手续费%s元", DateHelper.dateToString(nowDate), StringHelper.formatDouble(cashDetailLog.getFee() / 100D, true)));
-            entity.setType(AssetChangeTypeEnum.smallCashFee);
+            if (cashDetailLog.getCashType() == 0) { // 小额提现
+                entity.setType(AssetChangeTypeEnum.smallCashFee);
+            } else {
+                entity.setType(AssetChangeTypeEnum.bigCashFee);
+            }
             assetChangeProvider.commonAssetChange(entity);
 
             // 平台收取提现手续费
@@ -624,7 +624,11 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
             entity.setUserId(feeAccountId);
             entity.setForUserId(users.getId());
             entity.setRemark(String.format("你在 %s 成功收取提现手续费%s元", DateHelper.dateToString(nowDate), StringHelper.formatDouble(cashDetailLog.getFee() / 100D, true)));
-            entity.setType(AssetChangeTypeEnum.platformSmallCashFee);
+            if (cashDetailLog.getCashType() == 0) {
+                entity.setType(AssetChangeTypeEnum.platformSmallCashFee);
+            } else {
+                entity.setType(AssetChangeTypeEnum.platformBigCashFee);
+            }
             assetChangeProvider.commonAssetChange(entity);
         }
     }
@@ -824,7 +828,7 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
          entity.setSeqNo(seqNo);
          entity.setUserId(userId);
          entity.setRemark(String.format("你在 %s 成功返还提现%s元", DateHelper.dateToString(nowDate), StringHelper.formatDouble(realCashMoney / 100D, true)));
-         entity.setType(AssetChangeTypeEnum.cancelBigCash);
+         entity.setType(AssetChangeTypeEnum.cancelCash);
          assetChangeProvider.commonAssetChange(entity);
          if (cashDetailLog.getFee() > 0) {   // 扣除用户提现手续费
              Long feeAccountId = assetChangeProvider.getFeeAccountId();
@@ -835,7 +839,7 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
              entity.setUserId(userId);
              entity.setForUserId(feeAccountId);
              entity.setRemark(String.format("你在 %s 成功返还提现手续费%s元", DateHelper.dateToString(nowDate), StringHelper.formatDouble(cashDetailLog.getFee() / 100D, true)));
-             entity.setType(AssetChangeTypeEnum.cancelBigCashFee);
+             entity.setType(AssetChangeTypeEnum.cancelCashFee);
              assetChangeProvider.commonAssetChange(entity);
 
              // 平台收取提现手续费
@@ -846,7 +850,7 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
              entity.setUserId(feeAccountId);
              entity.setForUserId(userId);
              entity.setRemark(String.format("你在 %s 成功返还提现手续费%s元", DateHelper.dateToString(nowDate), StringHelper.formatDouble(cashDetailLog.getFee() / 100D, true)));
-             entity.setType(AssetChangeTypeEnum.cancelPlatformBigCashFee);
+             entity.setType(AssetChangeTypeEnum.cancelPlatformCashFee);
              assetChangeProvider.commonAssetChange(entity);
          }
 
