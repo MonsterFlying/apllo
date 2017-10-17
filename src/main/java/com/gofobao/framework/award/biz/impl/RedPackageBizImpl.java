@@ -34,6 +34,7 @@ import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.helper.ExceptionEmailHelper;
 import com.gofobao.framework.helper.MoneyHelper;
 import com.gofobao.framework.helper.StringHelper;
+import com.gofobao.framework.marketing.biz.MarketingProcessBiz;
 import com.gofobao.framework.marketing.constans.MarketingTypeContants;
 import com.gofobao.framework.marketing.entity.MarketingData;
 import com.gofobao.framework.marketing.entity.MarketingRedpackRecord;
@@ -76,6 +77,9 @@ import static com.gofobao.framework.listener.providers.NoticesMessageProvider.GS
 public class RedPackageBizImpl implements RedPackageBiz {
     @Autowired
     MqHelper mqHelper;
+
+    @Autowired
+    MarketingProcessBiz marketingProcessBiz ;
 
     @Autowired
     UserThirdAccountService userThirdAccountService;
@@ -471,6 +475,23 @@ public class RedPackageBizImpl implements RedPackageBiz {
             }
         }
         return ResponseEntity.ok(VoBaseResp.ok("派发成功"));
+    }
+
+    @Override
+    public ResponseEntity<VoBaseResp> publishRedpack4TenderRecord(VoPublishRedReq voPublishRedReq) {
+        // 查询投标记录
+        String paramStr = voPublishRedReq.getParamStr();
+        Preconditions.checkNotNull(paramStr, "根据投标记录派发红包");
+        Map<String, String> data = GSON.fromJson(paramStr, TypeTokenContants.MAP_ALL_STRING_TOKEN);
+        String idStr = data.get("id");
+        Tender tender = tenderService.findById(Long.parseLong(idStr));
+        Preconditions.checkNotNull(tender, "根据投标记录补发红包, 无效投标记录");
+        try {
+            marketingProcessBiz.process("" ) ;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 
 
