@@ -374,6 +374,11 @@ public enum JixinTxCodeEnum {
             "/p2p/online",
             "线下充值回调"
     ),
+    CORPRATION_QUERY(
+            "corprationQuery",
+            "/p2p/online",
+            "企业账户查询"
+    ),
 
     FUND_TRANS_QUERY(
             "fundTransQuery",

@@ -51,4 +51,11 @@ public interface RedPackageBiz {
 
     ResponseEntity<VoBaseResp> publishOpenAccountRedpack(VoPublishRedReq voPublishRedReq);
 
+
+    /**
+     * 根据投标记录
+     * @param voPublishRedReq
+     * @return
+     */
+    ResponseEntity<VoBaseResp> publishRedpack4TenderRecord(VoPublishRedReq voPublishRedReq);
 }

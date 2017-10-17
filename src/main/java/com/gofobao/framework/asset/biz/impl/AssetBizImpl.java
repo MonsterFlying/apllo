@@ -493,7 +493,7 @@ public class AssetBizImpl implements AssetBiz {
             boolean toBeConform = false;  // 是否待查询
 
             log.info("===================================");
-            log.info(String.format("联机充值: 数据", gson.toJson(directRechargeOnlineRequest)));
+            log.info(String.format("联机充值: 数据[%s]", gson.toJson(directRechargeOnlineRequest)));
             log.info("===================================");
 
             if (directRechargeOnlineResponse.getRetCode().equals(JixinResultContants.SUCCESS)) {  // 充值成功

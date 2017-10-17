@@ -274,7 +274,7 @@ public enum AssetChangeTypeEnum {
     /**
      * 平台返还大额提现手续费
      */
-    cancelPlatformBigCashFee("平台返还大额提现手续费", "cancelPlatformBigCashFee", "7722", "sub@useMoney", "", "D"),
+    cancelPlatformCashFee("平台返还大额提现手续费", "cancelPlatformCashFee", "7722", "sub@useMoney", "", "D"),
 
     /**
      * 小额提现手续费
@@ -289,7 +289,7 @@ public enum AssetChangeTypeEnum {
     /**
      * 取消大额提现手续费
      */
-    cancelBigCashFee("冲正大额提现手续费", "cancelBigCashFee", "4820", "add@useMoney", "", "D"),
+    cancelCashFee("冲正提现手续费", "cancelCashFee", "4820", "add@useMoney", "", "D"),
 
     /**
      * 小额提现
@@ -304,7 +304,7 @@ public enum AssetChangeTypeEnum {
     /**
      * 撤回大额提现
      */
-    cancelBigCash("拨正提现", "cancelCash", "2820", "add@useMoney", "sub@cashTotal", "D"),
+    cancelCash("拨正提现", "cancelCash", "2820", "add@useMoney", "sub@cashTotal", "D"),
 
     /**
      * 用户购买债权
