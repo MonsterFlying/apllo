@@ -369,14 +369,22 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
         withDrawRequest.setCardNo(userThirdAccount.getCardNo());
         withDrawRequest.setAccountId(userThirdAccount.getAccountId());
         withDrawRequest.setTxAmount(StringHelper.formatDouble(new Double(MoneyHelper.divide((cashMoney - fee), 100D)), false)); //  交易金额
-        withDrawRequest.setRouteCode(bigCashState ? "2" : " ");
+        String routeCode = " ";
+        if (bigCashState) {
+            routeCode = "2";
+        } else {
+            if (userThirdAccount.getIdType() > 1) {
+                routeCode = "2";
+            }
+        }
+
+        withDrawRequest.setRouteCode(routeCode);
         if (bigCashState) {
             withDrawRequest.setCardBankCnaps(voCashReq.getBankAps()); // 联行卡号
         }
 
         withDrawRequest.setTxFee(StringHelper.formatDouble(new Double(MoneyHelper.divide(fee, 100D)), false));
         withDrawRequest.setForgotPwdUrl(thirdAccountPasswordHelper.getThirdAcccountResetPasswordUrl(httpServletRequest, userId));
-
         String requestSourceStr = httpServletRequest.getHeader("requestSource");
         if (StringUtils.isEmpty(requestSourceStr)) {
             requestSourceStr = "-1";
