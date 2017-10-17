@@ -42,6 +42,7 @@ import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Range;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
@@ -136,7 +137,7 @@ public class StarFireTenderBizImpl implements StarFireTenderBiz {
             } else {
                 Specification<Users> usersSpecification = Specifications.<Users>and()
                         .ne("starFireUserId", null)
-                        .ne("starFireRegisterToken",null)
+                        .ne("starFireRegisterToken", null)
                         .build();
                 List<Users> usersList = userService.findList(usersSpecification);
                 List<Long> userIds = usersList.stream()
@@ -145,7 +146,7 @@ public class StarFireTenderBizImpl implements StarFireTenderBiz {
                 userIdsList = Lists.transform(userIds, Functions.toStringFunction());
             }
 
-            if(CollectionUtils.isEmpty(userIdsList)){
+            if (CollectionUtils.isEmpty(userIdsList)) {
                 userTenderRes.setResult(ResultCodeEnum.getCode(CodeTypeConstant.SUCCESS));
                 return userTenderRes;
             }
@@ -187,8 +188,8 @@ public class StarFireTenderBizImpl implements StarFireTenderBiz {
                 userRecords.setBidtotalCount(String.valueOf(tendersList.size()));
                 userRecords.setPlatform_uid(users.getId().toString());
                 userRecords.setMobile(StringUtils.isEmpty(users.getStarFireUserId())
-                        ? UserHelper.hideChar( users.getPhone(),UserHelper.PHONE_NUM)
-                        :users.getPhone());
+                        ? UserHelper.hideChar(users.getPhone(), UserHelper.PHONE_NUM)
+                        : users.getPhone());
                 List<UserTenderRes.UserbidRecords> userbidRecordsList = Lists.newArrayList();
                 //封装用户投资记录
                 tendersList.forEach(p -> {
@@ -285,21 +286,24 @@ public class StarFireTenderBizImpl implements StarFireTenderBiz {
         }
         try {
             List<String> userIds;
+            Integer pageSize = 0;
             if (StringUtils.isEmpty(platformUid)) {
                 Specification<Users> usersSpecification = Specifications.<Users>and()
                         .ne("starFireUserId", null)
-                        .ne("starFireRegisterToken",null)
+                        .ne("starFireRegisterToken", null)
                         .build();
                 List<Users> usersList = userService.findList(usersSpecification);
                 List<Long> userIdArray = usersList.stream()
                         .map(p -> p.getId())
                         .collect(Collectors.toList());
                 userIds = Lists.transform(userIdArray, Functions.toStringFunction());
+                pageSize = 50;
             } else {
                 userIds = Lists.newArrayList(AES.decrypt(key, initVector, platformUid).split(","));
-            }
+                pageSize = userIds.size();
 
-            if(CollectionUtils.isEmpty(userIds)){
+            }
+            if (CollectionUtils.isEmpty(userIds)) {
                 recordsRes.setResult(ResultCodeEnum.getCode(CodeTypeConstant.SUCCESS));
                 return recordsRes;
             }
@@ -308,8 +312,10 @@ public class StarFireTenderBizImpl implements StarFireTenderBiz {
                     .eq("status", TenderConstans.SUCCESS)
                     .build();
             List<Tender> tenders = tenderService.findList(tenderSpecification,
-                    new Sort(Sort.Direction.DESC,
-                            "createdAt"));
+                    new PageRequest(0,
+                            pageSize,
+                            new Sort(Sort.Direction.DESC,
+                                    "createdAt")));
             //用户投资记录为空直接返回
             if (CollectionUtils.isEmpty(tenders)) {
                 recordsRes.setResult(ResultCodeEnum.getCode(CodeTypeConstant.SUCCESS));
@@ -434,27 +440,32 @@ public class StarFireTenderBizImpl implements StarFireTenderBiz {
         }
         String bidStr = borrowRepaymentQuery.getBid_id();
         List<String> borrowIds = null;
+        Integer pageSize = 0;
         if (StringUtils.isEmpty(bidStr)) {
             Query query = entityManager.createQuery(
                     "SELECT b FROM  Borrow b " +
-                        "WHERE " +
-                            "b.recheckAt>'2017-09-01'" +
-                        " AND " +
+                            "WHERE " +
+                            "b.recheckAt>'2017-10-17'" +
+                            " AND " +
                             "isWindmill=1");
             List<Borrow> borrows = query.getResultList();
             borrowIds = borrows.stream()
                     .map(p -> p.getId().toString())
                     .collect(Collectors.toList());
+            pageSize = 50;
         } else {
-            borrowIds = Lists.newArrayList(AES.decrypt(key,initVector,bidStr).split(","));
+            borrowIds = Lists.newArrayList(AES.decrypt(key, initVector, bidStr).split(","));
+            pageSize = borrowIds.size();
         }
         Specification<BorrowRepayment> borrowRepaymentSpecification = Specifications.<BorrowRepayment>and()
                 .in("borrowId", borrowIds.toArray())
                 .build();
         List<BorrowRepayment> borrowRepayments = borrowRepaymentService.findList(borrowRepaymentSpecification,
-                new Sort(Sort.Direction.DESC,
-                        "id"));
-
+                new PageRequest(0,
+                        pageSize,
+                        new Sort(Sort.Direction.DESC,
+                                "id"))
+        );
         if (CollectionUtils.isEmpty(borrowRepayments)) {
             String code = ResultCodeEnum.getCode(CodeTypeConstant.SUCCESS);
             bidRepaymentInfoRes.setErr_msg(ResultCodeMsgEnum.getResultMsg(code));
@@ -481,7 +492,7 @@ public class StarFireTenderBizImpl implements StarFireTenderBiz {
                 Long accruedRepayInterest = 0L;
 
                 List<BidRepaymentInfoRes.RepayRecords> repayRecords = new ArrayList<>(orderCount);
-                borrowRepaymentList.sort(Comparator.comparing(s->s.getRepayAt()));
+                borrowRepaymentList.sort(Comparator.comparing(s -> s.getRepayAt()));
                 for (BorrowRepayment borrowRepayment : borrowRepaymentList) {
                     BidRepaymentInfoRes.RepayRecords repayRecord = bidRepaymentInfoRes.new RepayRecords();
                     repayRecord.setRepayPeriods(orderCount);
@@ -510,7 +521,8 @@ public class StarFireTenderBizImpl implements StarFireTenderBiz {
                     repayRecord.setRepayType(getRepaymentStuats(borrowRepayment));
                     repayRecords.add(repayRecord);
                     record.setRepayRecords(repayRecords);
-                };
+                }
+                ;
                 records.add(record);
             }
             bidRepaymentInfoRes.setRecords(records);
