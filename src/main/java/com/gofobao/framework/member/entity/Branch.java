@@ -15,7 +15,7 @@ import java.util.Date;
 @Table(name = "gfb_branch")
 public class Branch {
     @Id
-    private Long id;
+    private Integer id;
 
     private Integer type;
 

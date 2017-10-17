@@ -1,12 +1,13 @@
 package com.gofobao.framework.member.controller.finance;
 
+import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.member.biz.BranchBiz;
+import com.gofobao.framework.member.entity.Branch;
 import com.gofobao.framework.member.vo.response.BranchWarpRes;
+import com.gofobao.framework.security.contants.SecurityContants;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 /**
  * Created by master on 2017/10/17.
@@ -19,9 +20,18 @@ public class BranchController {
     private BranchBiz branchBiz;
 
 
-    @RequestMapping(path = "/branch/list", method = RequestMethod.POST)
+    @RequestMapping(path = "pub/branch/list", method = RequestMethod.GET)
     public ResponseEntity<BranchWarpRes> list() {
         return branchBiz.list();
     }
+
+    @RequestMapping(path = "/branch/save", method = RequestMethod.POST)
+    public ResponseEntity<VoBaseResp> save(@RequestAttribute(SecurityContants.USERID_KEY) Long userId,
+                                           @RequestParam("branchId") Integer branchId) {
+        Branch branch = new Branch();
+        branch.setId(branchId);
+        return branchBiz.save(userId, branch);
+    }
+
 
 }
