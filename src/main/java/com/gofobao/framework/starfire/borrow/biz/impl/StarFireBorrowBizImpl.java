@@ -21,6 +21,7 @@ import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Range;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
@@ -81,30 +82,37 @@ public class StarFireBorrowBizImpl implements StarFireBorrowBiz {
             return borrowsResult;
         }
         try {
-            Date nowDate=new Date();
+            Date nowDate = new Date();
             String bidIds = borrowsQuery.getBid_id();
             List<String> borrowIds = null;
             if (!StringUtils.isEmpty(bidIds)) {
-                borrowIds = Lists.newArrayList(AES.decrypt(key, initVector,bidIds).split(","));
+                borrowIds = Lists.newArrayList(AES.decrypt(key, initVector, bidIds).split(","));
             }
             Specification<Borrow> borrowSpecification;
+            Integer pageSize = 0;
             if (!CollectionUtils.isEmpty(borrowIds)) {
                 borrowSpecification = Specifications.<Borrow>and()
                         .in("id", borrowIds.toArray())
                         .eq("isWindmill", true)
                         .build();
+                pageSize = borrowIds.size();
             } else {
                 borrowSpecification = Specifications.<Borrow>and()
                         .eq("isWindmill", true)
                         .eq("status", BorrowContants.BIDDING)
                         .eq("successAt", null)
-                        .between("releaseAt",new Range<>(DateHelper.subDays(nowDate,10),
+                        .between("releaseAt", new Range<>(DateHelper.subDays(nowDate, 10),
                                 DateHelper.endOfDate(nowDate)))
                         .build();
+                pageSize = 100; //默认为100条
             }
             List<Borrow> borrows = borrowService.findList(borrowSpecification,
-                    new Sort(Sort.Direction.DESC,
-                            "releaseAt"));
+
+                    new PageRequest(0,
+                            pageSize,
+                            new Sort(Sort.Direction.DESC,
+                                    "releaseAt")
+                    ));
             if (CollectionUtils.isEmpty(borrows)) {
                 String code = ResultCodeEnum.getCode(CodeTypeConstant.SUCCESS);
                 borrowsResult.setResult(code);
@@ -135,8 +143,8 @@ public class StarFireBorrowBizImpl implements StarFireBorrowBiz {
                         : borrow.getTimeLimit().toString());
                 record.setBid_status(getBorrowStatus(borrow));
                 record.setBond_code(borrowId.toString());
-                record.setWap_bid_url("/borrow/" + borrowId);
-                record.setBid_url("/#/borrow/" + borrowId);
+                record.setWap_bid_url("/#/borrow/" + borrowId);
+                record.setBid_url("/borrow/" + borrowId);
                 record.setIsPromotion(false);
                 record.setIsRecommend(false);
                 record.setIsNovice(borrow.getIsNovice());
