@@ -27,9 +27,10 @@ public class WebThirdBatchLogController {
      * 查询批次状态
      *
      * @return
+     * @// TODO: 2017/10/17 后台未接接口
      */
     @PostMapping(value = "/pub/third/batch/deal/find")
-    @ApiOperation("发送即信批次处理")
+    @ApiOperation("查询批次状态")
     public ResponseEntity<VoBaseResp> findThirdThirdBatch(VoFindThirdBatch voFindThirdBatch) {
         return thirdBatchLogBiz.findThirdThirdBatch(voFindThirdBatch);
     }

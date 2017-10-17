@@ -36,6 +36,7 @@ import com.gofobao.framework.api.model.trustee_pay_query.TrusteePayQueryReq;
 import com.gofobao.framework.api.model.trustee_pay_query.TrusteePayQueryResp;
 import com.gofobao.framework.api.model.voucher_pay.VoucherPayRequest;
 import com.gofobao.framework.api.model.voucher_pay.VoucherPayResponse;
+import com.gofobao.framework.asset.entity.Asset;
 import com.gofobao.framework.asset.entity.BatchAssetChangeItem;
 import com.gofobao.framework.asset.entity.NewAssetLog;
 import com.gofobao.framework.asset.service.AssetService;
@@ -586,8 +587,35 @@ public class AplloApplicationTests {
     @Autowired
     private ThirdBatchDealLogBiz thirdBatchDealLogBiz;
 
+    class Thread1 extends Thread {
+        public void run() {
+            for (int i = 0; i < 10; i++) {
+                Asset asset = assetService.findByUserIdLock(22002l);
+                log.info("" + i + Thread.currentThread().getName());
+                try {
+                    Thread.sleep(2000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                Preconditions.checkNotNull(asset, "资产记录不存在!");
+            }
+        }
+    }
+
+    @Transactional
+    public void tests(){
+        Thread thread = new Thread1();
+        Thread thread2 = new Thread1();
+        thread.start();
+        thread2.start();
+    }
+
     @Test
+
     public void test() {
+        tests();
+
+
 
        /* //批次处理
        batchDeal();
@@ -721,19 +749,7 @@ public class AplloApplicationTests {
     @Autowired
     private BrokerBounsBiz brokerBounsBiz;
 
-    @Test
-    public void monthPushMoney() {
 
-        aaaaa();
-    }
-
-    @Transactional(rollbackFor = Exception.class)
-    public void aaaaa() {
-        Borrow borrow1 = borrowService.findByIdLock(179937l);
-        borrow1.setMoneyYes(10l);
-        borrowService.save(borrow1);
-        System.out.println(GSON.toJson(borrow1));
-    }
 
 
 }

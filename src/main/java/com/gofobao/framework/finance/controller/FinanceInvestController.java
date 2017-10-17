@@ -88,5 +88,4 @@ public class FinanceInvestController {
         voDetailReq.setBuyerId(buyerId);
         return financeInvestBiz.infoList(voDetailReq);
     }
-
 }
