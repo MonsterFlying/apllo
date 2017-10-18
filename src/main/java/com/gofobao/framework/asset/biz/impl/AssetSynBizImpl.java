@@ -26,7 +26,9 @@ import com.gofobao.framework.common.rabbitmq.MqQueueEnum;
 import com.gofobao.framework.common.rabbitmq.MqTagEnum;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.financial.entity.Aleve;
+import com.gofobao.framework.financial.entity.NewAleve;
 import com.gofobao.framework.financial.service.AleveService;
+import com.gofobao.framework.financial.service.NewAleveService;
 import com.gofobao.framework.helper.*;
 import com.gofobao.framework.member.entity.UserThirdAccount;
 import com.gofobao.framework.member.entity.Users;
@@ -246,6 +248,9 @@ public class AssetSynBizImpl implements AssetSynBiz {
     }
 
 
+    @Autowired
+    private NewAleveService newAleveService;
+
     @Override
     @Transactional(rollbackFor = Exception.class)
     public boolean doOffLineRechargeByAleve(String date) throws Exception {
@@ -313,16 +318,16 @@ public class AssetSynBizImpl implements AssetSynBiz {
         List<AccountDetailsQueryItem> accountDetailsQueryItemList = new ArrayList<>();
         if (DateHelper.diffInDays(nowDate, DateHelper.beginOfDate(synDate), false) != 0) {  // 同步大于一天查询数据库
             log.info("进入数据库查询数据同步");
-            Specification<Aleve> specification = Specifications
-                    .<Aleve>and()
+            Specification<NewAleve> specification = Specifications
+                    .<NewAleve>and()
                     .eq("cardnbr", userThirdAccount.getAccountId()) // 电子账户
                     .eq("transtype", transtype) // 线下转账类型
-                    .eq("queryDate", DateHelper.dateToString(synDate, DateHelper.DATE_FORMAT_YMD_NUM))  // 某一天
+                    .eq("queryTime", DateHelper.dateToString(synDate, DateHelper.DATE_FORMAT_YMD_NUM))  // 某一天
                     .ne("revind", 1)  // 不能为拨正数据
                     .build();
-            List<Aleve> aleveLists = aleveService.findAll(specification);
+            List<NewAleve> aleveLists = newAleveService.findAll(specification);
             if (!ObjectUtils.isEmpty(aleveLists)) {
-                for (Aleve aleve : aleveLists) {
+                for (NewAleve aleve : aleveLists) {
                     AccountDetailsQueryItem item = new AccountDetailsQueryItem();
                     item.setInpDate(aleve.getInpdate());
                     item.setInpTime(aleve.getInptime());
@@ -364,8 +369,8 @@ public class AssetSynBizImpl implements AssetSynBiz {
                 // 排除拨正数据
                 accountDetailsQueryItems = accountDetailsQueryItems
                         .stream()
-                        .filter(accountDetailsQueryItem ->  !"R".equalsIgnoreCase(accountDetailsQueryItem.getOrFlag()))
-                        .collect(Collectors.toList()) ;
+                        .filter(accountDetailsQueryItem -> !"R".equalsIgnoreCase(accountDetailsQueryItem.getOrFlag()))
+                        .collect(Collectors.toList());
                 realSize = accountDetailsQueryItems.size();
                 accountDetailsQueryItemList.addAll(accountDetailsQueryItems);
             } while (realSize == pageSize);
@@ -501,12 +506,11 @@ public class AssetSynBizImpl implements AssetSynBiz {
             // 排除拨正数据
             accountDetailsQueryItems = accountDetailsQueryItems
                     .stream()
-                    .filter(accountDetailsQueryItem ->  !"R".equalsIgnoreCase(accountDetailsQueryItem.getOrFlag()))
-                    .collect(Collectors.toList()) ;
+                    .filter(accountDetailsQueryItem -> !"R".equalsIgnoreCase(accountDetailsQueryItem.getOrFlag()))
+                    .collect(Collectors.toList());
             realSize = accountDetailsQueryItems.size();
             accountDetailsQueryItemList.addAll(accountDetailsQueryItems);
         } while (realSize == pageSize);
-
 
 
         // 同步开始
