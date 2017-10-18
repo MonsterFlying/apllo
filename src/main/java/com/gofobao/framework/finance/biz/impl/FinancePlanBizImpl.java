@@ -403,7 +403,7 @@ public class FinancePlanBizImpl implements FinancePlanBiz {
         assetChange.setForUserId(financePlanBuyer.getUserId());
         assetChange.setUserId(financePlanBuyer.getUserId());
         assetChange.setType(AssetChangeTypeEnum.financePlanFreeze);
-        assetChange.setRemark(String.format("成功购买理财计划[%s]冻结资金%s元", financePlan.getName(), StringHelper.formatDouble(validateMoney / 100D, true)));
+        assetChange.setRemark(String.format("成功购买理财计划[%s]%s元", financePlan.getName(), StringHelper.formatDouble(validateMoney / 100D, true)));
         assetChange.setSeqNo(assetChangeProvider.getSeqNo());
         assetChange.setMoney(validateMoney);
         assetChange.setGroupSeqNo(assetChangeProvider.getGroupSeqNo());
