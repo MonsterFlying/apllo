@@ -248,7 +248,7 @@ public class StarFireUserBizImpl implements StarFireUserBiz {
             starFireUser.setPhone(mobile);
             starFireUser.setCardId(identity);
             PassWordCreate pwc = new PassWordCreate();
-            String password =  RandomHelper.generateNumberCode(8);
+            String password =  RandomHelper.generateNumberCode(6);
             starFireUser.setPassword(PasswordHelper.encodingPassword(password)); // 设置密码
             starFireUser.setPayPassword("");
             starFireUser.setRealname(trueName);
