@@ -92,6 +92,9 @@ public class VoBasicUserInfoResp extends VoBaseResp{
     private String adminUrl="";
 
     @ApiModelProperty("是否设置过分公司")
-    private Boolean isBranch;
+    private Boolean isBranch = false;
+
+    @ApiModelProperty("是否进入员工登陆系统")
+    private Boolean adminState = false ;
 
 }

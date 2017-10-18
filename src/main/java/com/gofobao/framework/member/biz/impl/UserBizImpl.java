@@ -64,6 +64,8 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static com.gofobao.framework.helper.RegexHelper.ONLY_IS_NUM;
+
 /**
  * Created by Zeke on 2017/5/19.
  */
@@ -152,8 +154,8 @@ public class UserBizImpl implements UserBiz {
     @Transactional(rollbackFor = Exception.class)
     public ResponseEntity<VoBaseResp> register(HttpServletRequest request, VoRegisterReq voRegisterReq) throws Exception {
         // 判断当前用户名为手机类型就返回错误
-        if(!ObjectUtils.isEmpty(voRegisterReq.getUserName())){
-            if( RegexHelper.matches(RegexHelper.REGEX_MOBILE_EXACT, voRegisterReq.getUserName()) ){
+        if (!ObjectUtils.isEmpty(voRegisterReq.getUserName())) {
+            if (RegexHelper.matches(RegexHelper.REGEX_MOBILE_EXACT, voRegisterReq.getUserName())) {
                 return ResponseEntity
                         .badRequest()
                         .body(VoBaseResp.error(VoBaseResp.ERROR, "用户名不能为手机号码"));
@@ -332,7 +334,7 @@ public class UserBizImpl implements UserBiz {
         voBasicUserInfoResp.setRealnameState(!StringUtils.isEmpty(user.getRealname()));
         voBasicUserInfoResp.setIdNo(StringUtils.isEmpty(user.getCardId()) ? " " : user.getCardId());
         voBasicUserInfoResp.setRegisterAt(DateHelper.dateToString(user.getCreatedAt()));
-        voBasicUserInfoResp.setIsBranch(user.getBranch().intValue()>0?true:false);
+        voBasicUserInfoResp.setIsBranch(user.getBranch().intValue() > 0 ? true : false);
         Integral integral = integralService.findByUserId(user.getId());
         voBasicUserInfoResp.setTenderIntegral(new Long(integral.getUseIntegral() + integral.getNoUseIntegral()));
         voBasicUserInfoResp.setIdNoState(!StringUtils.isEmpty(user.getCardId()));
@@ -368,7 +370,25 @@ public class UserBizImpl implements UserBiz {
     @Override
     public ResponseEntity<VoBasicUserInfoResp> login(HttpServletRequest httpServletRequest, HttpServletResponse response, VoLoginReq voLoginReq, boolean financeState) {
         // 登录验证
-        Users user = userService.findByAccount(voLoginReq.getAccount());
+        Users user = null;
+        String account = voLoginReq.getAccount();
+
+        boolean adminState = false;
+        if (RegexHelper.matches(ONLY_IS_NUM, account)  //如果为数字并且不是手机号
+                && !RegexHelper.matches(RegexHelper.REGEX_MOBILE_SIMPLE, account)) {
+            log.info("员工登陆");
+            user = userService.findById(Long.valueOf(account));
+            //判断该用户是否是理财用户
+            if (!StringUtils.isEmpty(user.getType()) && user.getType().equals("financer")) {
+                return ResponseEntity
+                        .badRequest()
+                        .body(VoBaseResp.error(VoBaseResp.ERROR, "非法登陆", VoBasicUserInfoResp.class));
+            }
+
+            adminState = true;
+        } else {
+            user = userService.findByAccount(account);
+        }
         if (ObjectUtils.isEmpty(user)) {
             return ResponseEntity
                     .badRequest()
@@ -394,17 +414,20 @@ public class UserBizImpl implements UserBiz {
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "账户已被系统冻结，如有问题请联系客服！", VoBasicUserInfoResp.class));
         }
-        if (financeState) {
-            if (!user.getType().equals("finance")) {  // 理财用户
-                return ResponseEntity
-                        .badRequest()
-                        .body(VoBaseResp.error(VoBaseResp.ERROR, "系统拒绝了你的访问请求", VoBasicUserInfoResp.class));
-            }
-        } else {
-            if (user.getType().equals("finance")) {  // 金服用户
-                return ResponseEntity
-                        .badRequest()
-                        .body(VoBaseResp.error(VoBaseResp.ERROR, "系统拒绝了你的访问请求", VoBasicUserInfoResp.class));
+
+        if (!adminState) { // 非员工登陆
+            if (financeState) {
+                if (!user.getType().equals("finance")) {  // 理财用户
+                    return ResponseEntity
+                            .badRequest()
+                            .body(VoBaseResp.error(VoBaseResp.ERROR, "系统拒绝了你的访问请求", VoBasicUserInfoResp.class));
+                }
+            } else {
+                if (user.getType().equals("finance")) {  // 金服用户
+                    return ResponseEntity
+                            .badRequest()
+                            .body(VoBaseResp.error(VoBaseResp.ERROR, "系统拒绝了你的访问请求", VoBasicUserInfoResp.class));
+                }
             }
         }
 
@@ -442,7 +465,12 @@ public class UserBizImpl implements UserBiz {
             log.error("触发登录队列异常", e);
         }
 
-        return getUserInfoResp(user);
+        ResponseEntity<VoBasicUserInfoResp> userInfoResp = getUserInfoResp(user);
+        VoBasicUserInfoResp body = userInfoResp.getBody();
+        if (!ObjectUtils.isEmpty(body) && adminState) {
+            body.setAdminState(true); // 进入新员工登陆
+        }
+        return userInfoResp;
     }
 
     /**
