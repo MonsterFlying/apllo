@@ -880,4 +880,6 @@ ALTER TABLE  gfb_user_third_account
   ADD INDEX `gfb_user_third_account_user_id` (`user_id` ASC),
   ADD INDEX `gfb_user_third_account_account_id` (`account_id` ASC);
 
+ALTER TABLE gfb_new_asset_log ADD `type` int(11) DEFAULT '0' COMMENT '资金变动类型：0基本 1.理财计划 默认为0';
 
+ALTER TABLE gfb_batch_asset_change_item ADD `asset_type` int(11) DEFAULT '0' COMMENT '资金变动类型：0基本 1.金服理财计划 2.理财计划，默认为0';
