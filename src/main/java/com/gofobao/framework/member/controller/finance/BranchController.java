@@ -20,9 +20,9 @@ public class BranchController {
     private BranchBiz branchBiz;
 
 
-    @RequestMapping(path = "pub/branch/list", method = RequestMethod.GET)
-    public ResponseEntity<BranchWarpRes> list() {
-        return branchBiz.list();
+    @RequestMapping(path = "finance/branch/list", method = RequestMethod.GET)
+    public ResponseEntity<BranchWarpRes> list(@RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
+        return branchBiz.list(userId);
     }
 
     @RequestMapping(path = "finance/branch/save", method = RequestMethod.POST)

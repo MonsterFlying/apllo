@@ -193,7 +193,7 @@ public class StarFireBorrowBizImpl implements StarFireBorrowBiz {
                 return StarFireBorrowConstant.WEIMIANBIAO;
             }
         } else if (borrow.getStatus() == BorrowContants.PASS) {
-            if (StringUtils.isEmpty(borrow.getCloseAt())) {
+            if (!StringUtils.isEmpty(borrow.getCloseAt())) {
                 return StarFireBorrowConstant.YIJIEQING;
             } else {
                 return StarFireBorrowConstant.HUANKUANZHONG;
