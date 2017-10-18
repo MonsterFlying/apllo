@@ -6,6 +6,15 @@ package com.gofobao.framework.asset.contants;
  */
 public class AssetTypeContants {
     /**
+     * 理财计划类型
+     */
+    public static final int finance = 1;
+    /**
+     * 普通资金类型
+     */
+    public static final int common = 0;
+
+    /**
      * 充值
      */
     public static final String RECHARGE = "recharge";
@@ -89,7 +98,7 @@ public class AssetTypeContants {
     /**
      * 红包
      */
-    public static final String  REDPACKAGE ="red_package";
+    public static final String REDPACKAGE = "red_package";
     /**
      * 其他支出
      */
@@ -115,6 +124,6 @@ public class AssetTypeContants {
      * 获取交易记录接口需要展示的类型
      */
     public static final String[] getAssetLogType = new String[]{RECHARGE, AWARD, BORROW, INCOME_REPAYMENT, INCOME_OVERDUE, INTEGRAL_CASH, BONUS,
-             INCOME_OTHER, CASH, TENDER, MANAGER, FEE, REPAYMENT, OVERDUE, INTEREST_MANAGER, EXPENDITURE_OTHER,
-             FROZEN, UNFROZEN, CORRECT ,REDPACKAGE};
+            INCOME_OTHER, CASH, TENDER, MANAGER, FEE, REPAYMENT, OVERDUE, INTEREST_MANAGER, EXPENDITURE_OTHER,
+            FROZEN, UNFROZEN, CORRECT, REDPACKAGE};
 }

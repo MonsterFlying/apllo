@@ -11,6 +11,7 @@ import com.gofobao.framework.common.rabbitmq.MqHelper;
 import com.gofobao.framework.common.rabbitmq.MqQueueEnum;
 import com.gofobao.framework.common.rabbitmq.MqTagEnum;
 import com.gofobao.framework.core.helper.PasswordHelper;
+import com.gofobao.framework.core.helper.RandomHelper;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.helper.*;
 import com.gofobao.framework.member.biz.UserBiz;
@@ -247,7 +248,7 @@ public class StarFireUserBizImpl implements StarFireUserBiz {
             starFireUser.setPhone(mobile);
             starFireUser.setCardId(identity);
             PassWordCreate pwc = new PassWordCreate();
-            String password = pwc.createPassWord(8);
+            String password =  RandomHelper.generateNumberCode(6);
             starFireUser.setPassword(PasswordHelper.encodingPassword(password)); // 设置密码
             starFireUser.setPayPassword("");
             starFireUser.setRealname(trueName);
@@ -427,7 +428,7 @@ public class StarFireUserBizImpl implements StarFireUserBiz {
                     //跳转target_url
                     String bidUrl = bindUserModel.getBid_url();
                     //if (voLoginReq.getSource().equals("1")) {  //pc端
-                    targetUrl += StringUtils.isEmpty(bidUrl) ? pcDomain : pcDomain + bidUrl;
+                    targetUrl += StringUtils.isEmpty(bidUrl) ? pcDomain : bidUrl;
                     // } else {
                     //  targetUrl = StringUtils.isEmpty(bidUrl) ? h5Domain : h5Domain + "/" + bidUrl;
                     //}
@@ -519,17 +520,18 @@ public class StarFireUserBizImpl implements StarFireUserBiz {
             String registerToken = AES.decrypt(key, initVector, fetchLoginToken.getRegister_token());
             Users users = userService.findById(Long.valueOf(userId));
             //验证用户是否绑定
-            if (ObjectUtils.isEmpty(users)
-                    || ObjectUtils.isEmpty(users)
-                    || StringUtils.isEmpty(users.getStarFireUserId())
-                    || StringUtils.isEmpty(users.getStarFireRegisterToken())
-                    || !users.getStarFireUserId().equals(starFireUserId)
-                    || !users.getStarFireRegisterToken().equals(registerToken)) {
+            if (ObjectUtils.isEmpty(users)) {
                 String code = ResultCodeEnum.getCode(CodeTypeConstant.REGISTER_SUCCESS_BIND_FIRE_FAIL);
                 log.info("当前用户未绑定星火,打印用户信息:" + GSON.toJson(users));
                 loginTokenRes.setResult(code);
                 loginTokenRes.setErr_msg(ResultCodeMsgEnum.getResultMsg(code));
                 return loginTokenRes;
+            }else if(StringUtils.isEmpty(users.getStarFireUserId())
+                    ||StringUtils.isEmpty(users.getStarFireRegisterToken())){
+                users.setStarFireUserId(starFireUserId);
+                users.setStarFireRegisterToken(registerToken);
+                users.setStarFireBindAt(new Date());
+                userService.save(users);
             }
             log.info("打印用户信息:" + GSON.toJson(users));
             try {

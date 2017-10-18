@@ -16,7 +16,7 @@ public class BranchWarpRes extends VoBaseResp {
 
     @Data
     public class VoBranch {
-        private Long id;
+        private Integer id;
 
         private String branchName;
 

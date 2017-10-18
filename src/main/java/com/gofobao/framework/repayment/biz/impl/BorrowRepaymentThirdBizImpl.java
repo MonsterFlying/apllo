@@ -20,6 +20,7 @@ import com.gofobao.framework.api.model.batch_repay.BatchRepayRunResp;
 import com.gofobao.framework.api.model.batch_repay_bail.BatchRepayBailRunResp;
 import com.gofobao.framework.api.model.trustee_pay_query.TrusteePayQueryReq;
 import com.gofobao.framework.api.model.trustee_pay_query.TrusteePayQueryResp;
+import com.gofobao.framework.asset.contants.AssetTypeContants;
 import com.gofobao.framework.asset.contants.BatchAssetChangeContants;
 import com.gofobao.framework.asset.entity.BatchAssetChange;
 import com.gofobao.framework.asset.entity.BatchAssetChangeItem;
@@ -345,6 +346,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
         batchAssetChangeItem.setGroupSeqNo(groupSeqNo);
         batchAssetChangeItem.setMoney(borrow.getMoney());
         batchAssetChangeItem.setSeqNo(assetChangeProvider.getSeqNo());
+        batchAssetChangeItem.setAssetType(AssetTypeContants.finance);
         batchAssetChangeItem.setRemark(String.format("理财计划标的[%s]融资成功. 放款%s元", borrow.getName(), StringHelper.formatDouble(borrow.getMoney() / 100D, true)));
         batchAssetChangeItem.setType(AssetChangeTypeEnum.financeBorrow.getLocalType());
         batchAssetChangeItem.setUserId(takeUserId);

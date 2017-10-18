@@ -143,8 +143,8 @@ public class StarFireBorrowBizImpl implements StarFireBorrowBiz {
                         : borrow.getTimeLimit().toString());
                 record.setBid_status(getBorrowStatus(borrow));
                 record.setBond_code(borrowId.toString());
-                record.setWap_bid_url("/borrow/" + borrowId);
-                record.setBid_url("/#/borrow/" + borrowId);
+                record.setWap_bid_url("/#/borrow/" + borrowId);
+                record.setBid_url("/borrow/" + borrowId);
                 record.setIsPromotion(false);
                 record.setIsRecommend(false);
                 record.setIsNovice(borrow.getIsNovice());
@@ -193,7 +193,7 @@ public class StarFireBorrowBizImpl implements StarFireBorrowBiz {
                 return StarFireBorrowConstant.WEIMIANBIAO;
             }
         } else if (borrow.getStatus() == BorrowContants.PASS) {
-            if (StringUtils.isEmpty(borrow.getCloseAt())) {
+            if (!StringUtils.isEmpty(borrow.getCloseAt())) {
                 return StarFireBorrowConstant.YIJIEQING;
             } else {
                 return StarFireBorrowConstant.HUANKUANZHONG;

@@ -46,6 +46,11 @@ public class AssetChange {
     private AssetChangeTypeEnum type;
 
     /**
+     * 资金类型
+     */
+    private int assetType;
+
+    /**
      * 资金变动触发类型
      */
     private Long sourceId ;

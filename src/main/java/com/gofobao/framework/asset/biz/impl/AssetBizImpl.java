@@ -87,6 +87,8 @@ import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 
+import javax.persistence.Entity;
+import javax.persistence.EntityManager;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.util.*;
@@ -182,6 +184,8 @@ public class AssetBizImpl implements AssetBiz {
 
     @Autowired
     NewAssetLogService newAssetLogService;
+    @Autowired
+    EntityManager entityManager;
 
     /**
      * 撤回即信红包
@@ -1231,9 +1235,18 @@ public class AssetBizImpl implements AssetBiz {
         List<String> types = Arrays.asList(AssetChangeTypeEnum.collectionAdd.getLocalType(),
                 AssetChangeTypeEnum.collectionSub.getLocalType(),
                 AssetChangeTypeEnum.paymentSub.getLocalType(),
-                AssetChangeTypeEnum.paymentAdd.getLocalType());
+                AssetChangeTypeEnum.paymentAdd.getLocalType(),
+                AssetChangeTypeEnum.InvestorsFinanceBatchBuyClaims.getLocalType(),
+                AssetChangeTypeEnum.InvestorsFinanceBatchSellBonds.getLocalType(),
+                AssetChangeTypeEnum.financePlanUnFreeze.getLocalType());
         Date startTime = DateHelper.beginOfDate(DateHelper.stringToDate(voAssetLogReq.getStartTime(), DateHelper.DATE_FORMAT_YMD));
         Date endTime = DateHelper.endOfDate(DateHelper.stringToDate(voAssetLogReq.getEndTime(), DateHelper.DATE_FORMAT_YMD));
+        //gfb_new_asset_log 的 receivedPayments compensatoryReceivedPayments
+        Specification<NewAssetLog> nals1 = Specifications.<NewAssetLog>or()
+                .in("localType", AssetChangeTypeEnum.compensatoryReceivedPayments.getLocalType(), AssetChangeTypeEnum.receivedPayments.getLocalType())
+                .notIn("type", 1)
+                .build();
+
         Specification<NewAssetLog> specification = Specifications.<NewAssetLog>and()
                 .between("createTime",
                         new Range<>(
@@ -1242,6 +1255,7 @@ public class AssetBizImpl implements AssetBiz {
                 .eq("userId", voAssetLogReq.getUserId())
                 .eq("del", 0)
                 .notIn("localType", types.toArray())
+                .predicate(nals1)
                 .build();
         Page<NewAssetLog> assetLogPage = newAssetLogService.findAll(specification, pageable);
         voViewAssetLogWarpRes.setTotalCount(assetLogPage.getTotalElements());
@@ -1552,7 +1566,7 @@ public class AssetBizImpl implements AssetBiz {
      */
     @Override
     @Transactional(rollbackFor = ExcelException.class)
-    public ResponseEntity<String>  offlineRechargeCallback(HttpServletRequest request, HttpServletResponse response) throws Exception {
+    public ResponseEntity<String> offlineRechargeCallback(HttpServletRequest request, HttpServletResponse response) throws Exception {
         String bgData = request.getParameter("bgData");
         log.info("==================================");
         log.info(String.format("即信线下充值回调: 数据[%s]", bgData));
@@ -1583,7 +1597,7 @@ public class AssetBizImpl implements AssetBiz {
             Preconditions.checkNotNull(userThirdAccount, "线下充值, 当前开户信息为空");
             Long userId = userThirdAccount.getUserId();
             Users users = userService.findByIdLock(userId);
-            Preconditions.checkNotNull(users,"会员记录不存在!") ;
+            Preconditions.checkNotNull(users, "会员记录不存在!");
             Date nowDate = new Date();
             Date synDate = DateHelper.stringToDate(orgTxDate, DateHelper.DATE_FORMAT_YMD_NUM);
             // 写入线下充值日志
