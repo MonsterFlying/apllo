@@ -375,7 +375,7 @@ public class UserBizImpl implements UserBiz {
 
         boolean adminState = false;
         if (RegexHelper.matches(ONLY_IS_NUM, account)  //如果为数字并且不是手机号
-                && !RegexHelper.matches(RegexHelper.REGEX_MOBILE_SIMPLE, account)) {
+                && !RegexHelper.matches(RegexHelper.REGEX_MOBILE_EXACT, account)) {
             log.info("员工登陆");
             user = userService.findById(Long.valueOf(account));
             //判断该用户是否是理财用户
@@ -468,7 +468,7 @@ public class UserBizImpl implements UserBiz {
         ResponseEntity<VoBasicUserInfoResp> userInfoResp = getUserInfoResp(user);
         VoBasicUserInfoResp body = userInfoResp.getBody();
         if (!ObjectUtils.isEmpty(body) && adminState) {
-            body.setAdminState(true); // 进入新员工登陆
+            body.setAdminState(true); // 进入员工登陆
         }
         return userInfoResp;
     }
