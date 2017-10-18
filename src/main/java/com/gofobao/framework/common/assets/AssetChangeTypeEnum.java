@@ -57,7 +57,7 @@ public enum AssetChangeTypeEnum {
     /**
      * 理财计划冻结
      */
-    financePlanFreeze("理财计划资金冻结", "finance_plan_freeze", "", "sub@useMoney,add@financePlanMoney", "", "B"),
+    financePlanFreeze("理财计划资金购买", "finance_plan_freeze", "", "sub@useMoney,add@financePlanMoney", "", "B"),
 
     /**
      * 用户购买理财计划债权
