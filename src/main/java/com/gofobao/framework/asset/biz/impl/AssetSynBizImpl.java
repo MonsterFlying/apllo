@@ -322,7 +322,7 @@ public class AssetSynBizImpl implements AssetSynBiz {
                     .<NewAleve>and()
                     .eq("cardnbr", userThirdAccount.getAccountId()) // 电子账户
                     .eq("transtype", transtype) // 线下转账类型
-                    .eq("queryDate", DateHelper.dateToString(synDate, DateHelper.DATE_FORMAT_YMD_NUM))  // 某一天
+                    .eq("queryTime", DateHelper.dateToString(synDate, DateHelper.DATE_FORMAT_YMD_NUM))  // 某一天
                     .ne("revind", 1)  // 不能为拨正数据
                     .build();
             List<NewAleve> aleveLists = newAleveService.findAll(specification);
