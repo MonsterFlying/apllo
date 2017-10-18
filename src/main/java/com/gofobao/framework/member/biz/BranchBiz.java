@@ -10,7 +10,7 @@ import org.springframework.http.ResponseEntity;
  */
 public interface BranchBiz {
 
-    ResponseEntity<BranchWarpRes> list();
+    ResponseEntity<BranchWarpRes> list(Long userId);
 
 
     ResponseEntity<VoBaseResp>save(Long userId, Branch branch);

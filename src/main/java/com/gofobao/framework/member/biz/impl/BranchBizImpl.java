@@ -8,11 +8,14 @@ import com.gofobao.framework.member.service.BranchService;
 import com.gofobao.framework.member.service.UserService;
 import com.gofobao.framework.member.vo.response.BranchWarpRes;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 
+import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.Predicate;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -31,12 +34,15 @@ public class BranchBizImpl implements BranchBiz {
     private UserService userService;
 
     @Override
-    public ResponseEntity<BranchWarpRes> list() {
+    public ResponseEntity<BranchWarpRes> list(Long userId) {
+        Users users = userService.findById(userId);
         Branch branch = new Branch();
+        if (users.getBranch() > 0) {
+            branch.setId(users.getBranch());
+        }
         branch.setType(3);
         List<Branch> branches = branchService.list(branch);
         BranchWarpRes branchWarpRes = VoBaseResp.ok("查询成功", BranchWarpRes.class);
-
         if (CollectionUtils.isEmpty(branches)) {
             return ResponseEntity.ok(branchWarpRes);
         }
@@ -53,6 +59,8 @@ public class BranchBizImpl implements BranchBiz {
 
     @Override
     public ResponseEntity<VoBaseResp> save(Long userId, Branch branch) {
+
+
         Users users = userService.findById(userId);
         if (!ObjectUtils.isEmpty(users) && users.getBranch() > 0) {
             return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "您已设置了分公司"));
@@ -68,5 +76,7 @@ public class BranchBizImpl implements BranchBiz {
             return ResponseEntity.ok(VoBaseResp.ok("设置成功"));
         else
             return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "设置失败"));
+
     }
+
 }
