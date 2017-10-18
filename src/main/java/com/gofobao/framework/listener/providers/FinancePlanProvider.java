@@ -10,6 +10,7 @@ import com.gofobao.framework.api.model.batch_cancel.BatchCancelResp;
 import com.gofobao.framework.api.model.batch_credit_invest.BatchCreditInvestReq;
 import com.gofobao.framework.api.model.batch_credit_invest.BatchCreditInvestResp;
 import com.gofobao.framework.api.model.batch_credit_invest.CreditInvest;
+import com.gofobao.framework.asset.contants.AssetTypeContants;
 import com.gofobao.framework.asset.contants.BatchAssetChangeContants;
 import com.gofobao.framework.asset.entity.BatchAssetChange;
 import com.gofobao.framework.asset.entity.BatchAssetChangeItem;
@@ -207,6 +208,7 @@ public class FinancePlanProvider {
         //理财计划债权转让是否是赎回债权
         if (repurchaseFlag) {
             batchAssetChangeItem.setType(AssetChangeTypeEnum.InvestorsFinanceBatchSellBonds.getLocalType());  // 理财计划购买人出售债权
+            batchAssetChangeItem.setAssetType(AssetTypeContants.finance);
         } else {
             batchAssetChangeItem.setType(AssetChangeTypeEnum.platformFinanceBatchSellBonds.getLocalType());  // 平台出售债权
         }
@@ -230,6 +232,7 @@ public class FinancePlanProvider {
                 batchAssetChangeItem.setType(AssetChangeTypeEnum.platformFinanceBatchBuyClaims.getLocalType());
             } else {
                 batchAssetChangeItem.setType(AssetChangeTypeEnum.InvestorsFinanceBatchBuyClaims.getLocalType());
+                batchAssetChangeItem.setAssetType(AssetTypeContants.finance);
             }
             batchAssetChangeItem.setUserId(transferBuyLog.getUserId());
             batchAssetChangeItem.setForUserId(transfer.getUserId());

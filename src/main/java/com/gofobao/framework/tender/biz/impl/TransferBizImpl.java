@@ -573,7 +573,8 @@ public class TransferBizImpl implements TransferBiz {
             childTender.setAutoOrder(0);
             childTender.setParentId(parentTender.getId());
             childTender.setAlreadyInterest(0l);//无当期应计利息
-            childTender.setThirdTenderOrderId(parentTender.getThirdTransferOrderId());
+            childTender.setThirdTenderOrderId(parentTender.getThirdTenderOrderId());
+            childTender.setThirdTransferOrderId(parentTender.getThirdTransferOrderId());
             childTender.setAuthCode(parentTender.getAuthCode());
             childTender.setCreatedAt(nowDate);
             childTender.setUpdatedAt(nowDate);

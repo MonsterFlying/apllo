@@ -19,6 +19,7 @@ public class NewAssetLog {
     @Id
     @GeneratedValue
     private long id;
+    private int type;
     private String opName;
     private long opMoney;
     private long useMoney;

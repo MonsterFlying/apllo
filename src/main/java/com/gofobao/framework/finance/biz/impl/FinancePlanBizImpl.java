@@ -56,6 +56,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.BooleanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.ResponseEntity;
@@ -702,7 +703,7 @@ public class FinancePlanBizImpl implements FinancePlanBiz {
                 .notIn("status", statusArray.toArray())
                 .eq("type", 0)
                 .build();
-        List<FinancePlan> financePlans = financePlanService.findList(specification, new Sort(Sort.Direction.DESC, "id"));
+        List<FinancePlan> financePlans = financePlanService.findList(specification, new PageRequest(page.getPageIndex(), page.getPageSize(), new Sort(Sort.Direction.DESC, "id")));
 
         if (CollectionUtils.isEmpty(financePlans)) {
             return ResponseEntity.ok(warpRes);
@@ -739,7 +740,7 @@ public class FinancePlanBizImpl implements FinancePlanBiz {
                 .notIn("status", statusArray.toArray())
                 .eq("type", 1)
                 .build();
-        List<FinancePlan> financePlans = financePlanService.findList(specification, new Sort(Sort.Direction.DESC, "id"));
+        List<FinancePlan> financePlans = financePlanService.findList(specification, new PageRequest(page.getPageIndex(), page.getPageSize(), new Sort(Sort.Direction.DESC, "id")));
 
         if (CollectionUtils.isEmpty(financePlans)) {
             return ResponseEntity.ok(warpRes);
