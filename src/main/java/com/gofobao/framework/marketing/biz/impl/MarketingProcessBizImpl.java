@@ -375,7 +375,7 @@ public class MarketingProcessBizImpl implements MarketingProcessBiz {
     }
 
     /**
-     * s筛选条件
+     * 筛选条件
      *
      * @param marketings
      * @param marketingData

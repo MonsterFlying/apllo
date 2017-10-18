@@ -9,6 +9,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 public class NewAleveServiceImpl implements NewAleveService {
     @Autowired
@@ -37,6 +39,11 @@ public class NewAleveServiceImpl implements NewAleveService {
 
     @Override
     public NewAleve findTopByReldateAndInptimeAndTranno(String reldate, String inptime, String tranno) {
-        return  newAleveRepository.findTopByReldateAndInptimeAndTranno(reldate, inptime, tranno) ;
+        return newAleveRepository.findTopByReldateAndInptimeAndTranno(reldate, inptime, tranno);
+    }
+
+    @Override
+    public List<NewAleve> findAll(Specification<NewAleve> specification) {
+        return newAleveRepository.findAll(specification);
     }
 }
