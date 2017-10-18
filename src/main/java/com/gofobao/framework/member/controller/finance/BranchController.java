@@ -25,7 +25,7 @@ public class BranchController {
         return branchBiz.list();
     }
 
-    @RequestMapping(path = "/branch/save", method = RequestMethod.POST)
+    @RequestMapping(path = "finance/branch/save", method = RequestMethod.POST)
     public ResponseEntity<VoBaseResp> save(@RequestAttribute(SecurityContants.USERID_KEY) Long userId,
                                            @RequestParam("branchId") Integer branchId) {
         Branch branch = new Branch();
