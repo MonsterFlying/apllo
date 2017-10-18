@@ -66,7 +66,7 @@ public class WindmillUserBizImpl implements WindmillUserBiz {
 
     //加密key
     @Value("${windmill.des-key}")
-    private  String desKey;
+    private String desKey;
 
     //风车理财请求地址
     @Value("${windmill.request-address}")
@@ -89,7 +89,8 @@ public class WindmillUserBizImpl implements WindmillUserBiz {
     @Autowired
     private JwtTokenHelper jwtTokenHelper;
 
-
+    @Autowired
+    private RedisHelper redisHelper;
 
 
     @Transactional
@@ -102,9 +103,9 @@ public class WindmillUserBizImpl implements WindmillUserBiz {
         log.info("===============风车理财用户注册===============");
         log.info("============================================");
 
-        Map<String,Object>decryptMap=Maps.newHashMap();
+        Map<String, Object> decryptMap = Maps.newHashMap();
         try {
-            decryptMap = StrToJsonStrUtil.commonUrlParamToMap(param,desKey);
+            decryptMap = StrToJsonStrUtil.commonUrlParamToMap(param, desKey);
             log.info("解密参数成功param:" + GSON.toJson(decryptMap));
         } catch (Exception e) {
             log.info("=====解密参数失败:param:" + param);
@@ -162,7 +163,7 @@ public class WindmillUserBizImpl implements WindmillUserBiz {
             }
             try {
                 // 处理注册来源
-             //   Integer channel = RegisterSourceEnum.getIndex("windmill");
+                //   Integer channel = RegisterSourceEnum.getIndex("windmill");
                 Date now = new Date();
                 // 插入数据
                 Users users = new Users();
@@ -242,6 +243,7 @@ public class WindmillUserBizImpl implements WindmillUserBiz {
 
     /**
      * 风车理财登录绑定
+     *
      * @param request
      * @param response
      * @param bindLoginReq
@@ -258,7 +260,7 @@ public class WindmillUserBizImpl implements WindmillUserBiz {
         VoLoginReq voLoginReq = new VoLoginReq();
         voLoginReq.setAccount(bindLoginReq.getUserName());
         voLoginReq.setPassword(bindLoginReq.getPassword());
-        ResponseEntity entity = userBiz.login(request, response, voLoginReq,false);
+        ResponseEntity entity = userBiz.login(request, response, voLoginReq, false);
         //登陸成功
         if (entity.getStatusCode() == HttpStatus.OK) {
 
@@ -267,7 +269,7 @@ public class WindmillUserBizImpl implements WindmillUserBiz {
             try {
 
                 Users user = userService.findByAccount(bindLoginReq.getUserName());
-                Map<String,Object> desDecryptMap = StrToJsonStrUtil.commonUrlParamToMap(bindLoginReq.getParams(),desKey);
+                Map<String, Object> desDecryptMap = StrToJsonStrUtil.commonUrlParamToMap(bindLoginReq.getParams(), desKey);
                 log.info("解密后的参数：param:" + GSON.toJson(desDecryptMap));
                 UserRegisterReq userRegisterReq = GSON.fromJson(GSON.toJson(desDecryptMap), new TypeToken<UserRegisterReq>() {
                 }.getType());
@@ -286,7 +288,7 @@ public class WindmillUserBizImpl implements WindmillUserBiz {
                 String userName = StringUtils.isEmpty(user.getUsername()) ? user.getPhone() : user.getUsername();
                 //拼接参数
                 String requestParam = "wrb_user_id=" + userRegisterReq.getWrb_user_id() +
-                        "&pf_user_id=" +user.getId() +
+                        "&pf_user_id=" + user.getId() +
                         "&pf_user_name=" + userName +
                         "&reg_time=" + DateHelper.dateToString(user.getCreatedAt());
                 //加密参数
@@ -358,7 +360,7 @@ public class WindmillUserBizImpl implements WindmillUserBiz {
         String getParamStr = request.getParameter("param");
         try {
             log.info("=============风车理财用户登录请求=============");
-            Map<String,Object> resultMaps= StrToJsonStrUtil.commonUrlParamToMap(getParamStr,desKey);
+            Map<String, Object> resultMaps = StrToJsonStrUtil.commonUrlParamToMap(getParamStr, desKey);
             String ticket = resultMaps.get("ticket").toString();
             //用户要访问的链接
             String targetUrl = resultMaps.get("target_url").toString();
@@ -388,44 +390,44 @@ public class WindmillUserBizImpl implements WindmillUserBiz {
             Long userId = Long.valueOf(checkResultMap.get("pf_user_id").toString());
             //风车理财用户id
             String wrbUserId = checkResultMap.get("wrb_user_id").toString();
-            Specification<Users> specification = Specifications.<Users>and()
-                    .eq("id", userId)
-                    .eq("windmillId", wrbUserId)
-                    .build();
-            List<Users> users = userService.findList(specification);
-            if (CollectionUtils.isEmpty(users)) {
+            Users tempUser = userService.findById(userId);
+            if (ObjectUtils.isEmpty(tempUser)) {
                 log.info("本地数据中没有找到风车理财返回的用户");
                 return "/load_error";
+            } else if (StringUtils.isEmpty(tempUser.getWindmillId())) {
+                tempUser.setWindmillId(wrbUserId);
+                userService.save(tempUser);
             }
-            Users tempUser = users.get(0);
-            final String token = jwtTokenHelper.generateToken(tempUser, 3);
-            response.addHeader(tokenHeader, String.format("%s %s", prefix, token));
-            tempUser.setPlatform(3);
-            if (StringUtils.isEmpty(tempUser.getPushId())) {   // 产生一次永久保存
-                tempUser.setPushId(UUID.randomUUID().toString().replace("-", ""));  // 设置唯一标识
+            String redisTokenStr = redisHelper.get("JWT_TOKEN_" + tempUser.getId(), null);
+            if (StringUtils.isEmpty(redisTokenStr)) {
+                redisTokenStr = jwtTokenHelper.generateToken(tempUser, 3);
+                response.addHeader(tokenHeader, String.format("%s %s", prefix, redisTokenStr));
+                tempUser.setPlatform(3);
+                if (StringUtils.isEmpty(tempUser.getPushId())) {   // 产生一次永久保存
+                    tempUser.setPushId(UUID.randomUUID().toString().replace("-", ""));  // 设置唯一标识
+                }
+                tempUser.setIp(IpHelper.getIpAddress(request)); // 设置ip
+                userService.save(tempUser);   // 记录登录信息
+                // 触发登录队列
+                MqConfig mqConfig = new MqConfig();
+                mqConfig.setTag(MqTagEnum.LOGIN);
+                mqConfig.setQueue(MqQueueEnum.RABBITMQ_USER_ACTIVE);
+                mqConfig.setSendTime(DateHelper.addSeconds(new Date(), 10));
+                ImmutableMap<String, String> body = ImmutableMap.of(MqConfig.MSG_USER_ID, tempUser.getId().toString());
+                mqConfig.setMsg(body);
+                mqHelper.convertAndSend(mqConfig);
             }
-            tempUser.setIp(IpHelper.getIpAddress(request)); // 设置ip
-            userService.save(tempUser);   // 记录登录信息
 
-            // 触发登录队列
-            MqConfig mqConfig = new MqConfig();
-            mqConfig.setTag(MqTagEnum.LOGIN);
-            mqConfig.setQueue(MqQueueEnum.RABBITMQ_USER_ACTIVE);
-            mqConfig.setSendTime(DateHelper.addSeconds(new Date(), 10));
-            ImmutableMap<String, String> body = ImmutableMap.of(MqConfig.MSG_USER_ID, tempUser.getId().toString());
-            mqConfig.setMsg(body);
-            mqHelper.convertAndSend(mqConfig);
-
-            log.info("token : " + token);
+            log.info("token : " + redisTokenStr);
             if (StringUtils.isEmpty(targetUrl)) {
                 targetUrl = h5Domain;
             } else {
                 targetUrl = decode(targetUrl, "utf-8");
             }
             if (targetUrl.contains("?")) {
-                return targetUrl + "&token=" + token;
+                return targetUrl + "&token=" + redisTokenStr;
             } else {
-                return targetUrl + "?token=" + token;
+                return targetUrl + "?token=" + redisTokenStr;
             }
 
         } catch (Exception e) {

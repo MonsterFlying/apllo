@@ -332,6 +332,7 @@ public class UserBizImpl implements UserBiz {
         voBasicUserInfoResp.setRealnameState(!StringUtils.isEmpty(user.getRealname()));
         voBasicUserInfoResp.setIdNo(StringUtils.isEmpty(user.getCardId()) ? " " : user.getCardId());
         voBasicUserInfoResp.setRegisterAt(DateHelper.dateToString(user.getCreatedAt()));
+        voBasicUserInfoResp.setIsBranch(user.getBranch().intValue()>0?true:false);
         Integral integral = integralService.findByUserId(user.getId());
         voBasicUserInfoResp.setTenderIntegral(new Long(integral.getUseIntegral() + integral.getNoUseIntegral()));
         voBasicUserInfoResp.setIdNoState(!StringUtils.isEmpty(user.getCardId()));
