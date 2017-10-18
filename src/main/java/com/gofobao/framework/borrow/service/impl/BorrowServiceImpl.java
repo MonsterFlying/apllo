@@ -604,6 +604,7 @@ public class BorrowServiceImpl implements BorrowService {
 
         Specification<Transfer> specification = Specifications.<Transfer>and()
                 .eq("state", TransferContants.TRANSFERIND)
+                .eq("type",TransferContants.GENERAL)
                 .build();
         Integer liuZhuanCount = transferService.findList(specification).size();
         borrowStatistics.setJingZhi(jingZhi);
