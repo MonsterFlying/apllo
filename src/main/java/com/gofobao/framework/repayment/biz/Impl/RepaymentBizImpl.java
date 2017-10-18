@@ -19,6 +19,7 @@ import com.gofobao.framework.api.model.batch_credit_invest.CreditInvest;
 import com.gofobao.framework.api.model.batch_repay.BatchRepayReq;
 import com.gofobao.framework.api.model.batch_repay.BatchRepayResp;
 import com.gofobao.framework.api.model.batch_repay.Repay;
+import com.gofobao.framework.asset.contants.AssetTypeContants;
 import com.gofobao.framework.asset.contants.BatchAssetChangeContants;
 import com.gofobao.framework.asset.entity.AdvanceLog;
 import com.gofobao.framework.asset.entity.Asset;
@@ -540,6 +541,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
                 .build();
         List<Tender> tenderList = tenderService.findList(specification);
         Preconditions.checkState(!CollectionUtils.isEmpty(tenderList), "投资记录不存在!");
+        Map<Long/*tenderId*/, Tender> tenderMap = tenderList.stream().collect(Collectors.toMap(Tender::getId, Function.identity()));
         /* 投资id集合 */
         List<Long> tenderIds = tenderList.stream().map(p -> p.getId()).collect(Collectors.toList());
         /* 生成存管还款记录(提前结清) */
@@ -570,7 +572,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
             );
             repays.addAll(tempRepays);
             // 生成回款记录 返回值  实际本金和利息
-            long repayMoney = doGenerateAssetChangeRecodeByRepay(borrow, borrowRepayment, borrowRepayment.getUserId(), repayAssetChangeList, groupSeqNo, batchAssetChange, false);
+            long repayMoney = doGenerateAssetChangeRecodeByRepay(borrow, tenderMap, borrowRepayment, borrowRepayment.getUserId(), repayAssetChangeList, groupSeqNo, batchAssetChange, false);
             //真实的逾期费用
             /*平台实际收取的逾期费用*/
             double realPlatformOverdueFee = 0;
@@ -947,7 +949,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
     public void test01() {
         for (int i = 0; i < 5; i++) {
             Asset asset = assetService.findByUserIdLock(44888l);
-            log.info("" + i + Thread.currentThread().getName()+GSON.toJson(asset));
+            log.info("" + i + Thread.currentThread().getName() + GSON.toJson(asset));
             try {
                 Thread.sleep(2000);
             } catch (InterruptedException e) {
@@ -1686,6 +1688,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
                 .build();
         List<Tender> tenderList = tenderService.findList(specification);
         Preconditions.checkState(!CollectionUtils.isEmpty(tenderList), "投资记录不存在!");
+        Map<Long/*tenderId*/, Tender> tenderMap = tenderList.stream().collect(Collectors.toMap(Tender::getId, Function.identity()));
         /* 投资id集合 */
         List<Long> tenderIds = tenderList.stream().map(p -> p.getId()).collect(Collectors.toList());
         /* 投资人回款记录 */
@@ -1725,7 +1728,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
         // 生成投资人还款资金变动记录
         BatchAssetChange batchAssetChange = addBatchAssetChange(batchNo, borrowRepayment.getId(), advance);
         // 生成回款人资金变动记录  返回值实际还款本金和利息  不包括手续费
-        long repayMoney = doGenerateAssetChangeRecodeByRepay(borrow, borrowRepayment, borrowRepayment.getUserId(), repayAssetChanges, groupSeqNo, batchAssetChange, advance);
+        long repayMoney = doGenerateAssetChangeRecodeByRepay(borrow, tenderMap, borrowRepayment, borrowRepayment.getUserId(), repayAssetChanges, groupSeqNo, batchAssetChange, advance);
         //真实的逾期费用
         /*平台实际收取的逾期费用*/
         double realPlatformOverdueFee = 0;
@@ -2011,7 +2014,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
      * @param repayAssetChanges
      * @param batchAssetChange
      */
-    private long doGenerateAssetChangeRecodeByRepay(Borrow borrow, BorrowRepayment borrowRepayment, long repayUserId, List<RepayAssetChange> repayAssetChanges, String groupSeqNo, BatchAssetChange batchAssetChange, boolean advance) throws ExecutionException {
+    private long doGenerateAssetChangeRecodeByRepay(Borrow borrow, Map<Long, Tender> tenderMap, BorrowRepayment borrowRepayment, long repayUserId, List<RepayAssetChange> repayAssetChanges, String groupSeqNo, BatchAssetChange batchAssetChange, boolean advance) throws ExecutionException {
         long batchAssetChangeId = batchAssetChange.getId();
         Long feeAccountId = assetChangeProvider.getFeeAccountId();  // 平台收费账户ID
         Date nowDate = new Date();
@@ -2021,6 +2024,8 @@ public class RepaymentBizImpl implements RepaymentBiz {
             repayMoney += repayAssetChange.getPrincipal() + repayAssetChange.getInterest();
             /* 回款记录 */
             BorrowCollection borrowCollection = repayAssetChange.getBorrowCollection();
+            /* 投标记录 */
+            Tender tender = tenderMap.get(borrowCollection.getTenderId());
             // 归还本金和利息
             BatchAssetChangeItem batchAssetChangeItem = new BatchAssetChangeItem();
             batchAssetChangeItem.setBatchAssetChangeId(batchAssetChangeId);
@@ -2029,6 +2034,9 @@ public class RepaymentBizImpl implements RepaymentBiz {
                 batchAssetChangeItem.setType(AssetChangeTypeEnum.compensatoryReceivedPayments.getLocalType());  // 名义借款人收到垫付还款
             } else {
                 batchAssetChangeItem.setType(AssetChangeTypeEnum.receivedPayments.getLocalType()); //借款人收到还款
+            }
+            if (tender.getType().intValue() == 1) {
+                batchAssetChangeItem.setAssetType(AssetTypeContants.finance);
             }
             batchAssetChangeItem.setUserId(repayAssetChange.getUserId());
             batchAssetChangeItem.setForUserId(repayUserId);  // 还款人
@@ -2047,6 +2055,9 @@ public class RepaymentBizImpl implements RepaymentBiz {
                 batchAssetChangeItem.setBatchAssetChangeId(batchAssetChangeId);
                 batchAssetChangeItem.setState(0);
                 batchAssetChangeItem.setType(AssetChangeTypeEnum.interestManagementFee.getLocalType());  // 扣除投资人利息管理费
+                if (tender.getType().intValue() == 1) {
+                    batchAssetChangeItem.setAssetType(AssetTypeContants.finance);
+                }
                 batchAssetChangeItem.setUserId(repayAssetChange.getUserId());
                 batchAssetChangeItem.setForUserId(feeAccountId);
                 batchAssetChangeItem.setMoney(repayAssetChange.getInterestFee());
@@ -2063,6 +2074,9 @@ public class RepaymentBizImpl implements RepaymentBiz {
                 batchAssetChangeItem.setBatchAssetChangeId(batchAssetChangeId);
                 batchAssetChangeItem.setState(0);
                 batchAssetChangeItem.setType(AssetChangeTypeEnum.platformInterestManagementFee.getLocalType());  // 收费账户添加利息管理费用
+                if (tender.getType().intValue() == 1) {
+                    batchAssetChangeItem.setAssetType(AssetTypeContants.finance);
+                }
                 batchAssetChangeItem.setUserId(feeAccountId);
                 batchAssetChangeItem.setForUserId(repayAssetChange.getUserId());
                 batchAssetChangeItem.setMoney(repayAssetChange.getInterestFee());
@@ -2081,6 +2095,9 @@ public class RepaymentBizImpl implements RepaymentBiz {
                 batchAssetChangeItem.setBatchAssetChangeId(batchAssetChangeId);
                 batchAssetChangeItem.setState(0);
                 batchAssetChangeItem.setType(AssetChangeTypeEnum.platformRepayMentPenaltyFee.getLocalType());  // 收取逾期管理费
+                if (tender.getType().intValue() == 1) {
+                    batchAssetChangeItem.setAssetType(AssetTypeContants.finance);
+                }
                 batchAssetChangeItem.setUserId(feeAccountId);
                 batchAssetChangeItem.setForUserId(repayAssetChange.getUserId());
                 batchAssetChangeItem.setMoney(repayAssetChange.getPlatformOverdueFee());
@@ -2098,6 +2115,9 @@ public class RepaymentBizImpl implements RepaymentBiz {
             batchAssetChangeItem.setBatchAssetChangeId(batchAssetChangeId);
             batchAssetChangeItem.setState(0);
             batchAssetChangeItem.setType(AssetChangeTypeEnum.collectionSub.getLocalType());  //  扣除投资人待收
+            if (tender.getType().intValue() == 1) {
+                batchAssetChangeItem.setAssetType(AssetTypeContants.finance);
+            }
             batchAssetChangeItem.setUserId(repayAssetChange.getUserId());
             batchAssetChangeItem.setMoney(borrowCollection.getCollectionMoney());
             batchAssetChangeItem.setInterest(borrowCollection.getInterest());
@@ -2696,6 +2716,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
                 .build();
         List<Tender> tenderList = tenderService.findList(specification);
         Preconditions.checkState(!CollectionUtils.isEmpty(tenderList), "投资人投标信息不存在!");
+        Map<Long/*tenderId*/, Tender> tenderMap = tenderList.stream().collect(Collectors.toMap(Tender::getId, Function.identity()));
         /* 投资记录id集合 */
         List<Long> tenderIds = tenderList.stream().map(tender -> tender.getId()).collect(Collectors.toList());
         /* 查询未转让的回款记录 */
@@ -2743,7 +2764,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
         // 生成债权转让记录
         addTransferTenderByAdvance(borrow, transferList, borrowRepayment, transferBuyLogList, tenderList, borrowCollectionMaps, titularBorrowAccount.getUserId(), lateDays, lateInterest);
         // 生成还款记录
-        doGenerateAssetChangeRecodeByAdvance(borrow, borrowRepayment, advanceAssetChangeList, batchAssetChange, titularBorrowAccount, assetChangeProvider.getSeqNo(), groupSeqNo);
+        doGenerateAssetChangeRecodeByAdvance(borrow, tenderMap, borrowRepayment, advanceAssetChangeList, batchAssetChange, titularBorrowAccount, assetChangeProvider.getSeqNo(), groupSeqNo);
         // 垫付金额 = sum(垫付本金 + 垫付利息)
         double txAmount = 0d;
         for (CreditInvest creditInvest : creditInvestList) {
@@ -2912,18 +2933,23 @@ public class RepaymentBizImpl implements RepaymentBiz {
      * @param seqNo
      * @param groupSeqNo
      */
-    private void doGenerateAssetChangeRecodeByAdvance(Borrow borrow, BorrowRepayment borrowRepayment, List<AdvanceAssetChange> advanceAsserChangeList, BatchAssetChange batchAssetChange, UserThirdAccount titularBorrowAccount, String seqNo, String groupSeqNo) throws ExecutionException {
+    private void doGenerateAssetChangeRecodeByAdvance(Borrow borrow, Map<Long, Tender> tenderMap, BorrowRepayment borrowRepayment, List<AdvanceAssetChange> advanceAsserChangeList, BatchAssetChange batchAssetChange, UserThirdAccount titularBorrowAccount, String seqNo, String groupSeqNo) throws ExecutionException {
         long batchAssetChangeId = batchAssetChange.getId();
         Date nowDate = new Date();
 
         for (AdvanceAssetChange advanceAssetChange : advanceAsserChangeList) {
             /* 回款记录 */
             BorrowCollection borrowCollection = advanceAssetChange.getBorrowCollection();
+            /*投标记录*/
+            Tender tender = tenderMap.get(borrowCollection.getTenderId());
 
             BatchAssetChangeItem batchAssetChangeItem = new BatchAssetChangeItem();   // 还款本金和利息
             batchAssetChangeItem.setBatchAssetChangeId(batchAssetChangeId);
             batchAssetChangeItem.setState(0);
             batchAssetChangeItem.setType(AssetChangeTypeEnum.receivedPayments.getLocalType());  // 投资人收到还款
+            if (tender.getType().intValue() == 1){
+                batchAssetChangeItem.setAssetType(AssetTypeContants.finance);
+            }
             batchAssetChangeItem.setUserId(advanceAssetChange.getUserId());
             batchAssetChangeItem.setForUserId(titularBorrowAccount.getUserId());  // 垫付人
             batchAssetChangeItem.setMoney(advanceAssetChange.getPrincipal() + advanceAssetChange.getInterest());   // 本金加利息
@@ -2939,6 +2965,9 @@ public class RepaymentBizImpl implements RepaymentBiz {
                 batchAssetChangeItem.setBatchAssetChangeId(batchAssetChangeId);
                 batchAssetChangeItem.setState(0);
                 batchAssetChangeItem.setType(AssetChangeTypeEnum.receivedPaymentsPenalty.getLocalType());  // 收取用户逾期费
+                if (tender.getType().intValue() == 1){
+                    batchAssetChangeItem.setAssetType(AssetTypeContants.finance);
+                }
                 batchAssetChangeItem.setUserId(advanceAssetChange.getUserId());
                 batchAssetChangeItem.setForUserId(titularBorrowAccount.getUserId());
                 batchAssetChangeItem.setMoney(advanceAssetChange.getOverdueFee());
@@ -2956,6 +2985,9 @@ public class RepaymentBizImpl implements RepaymentBiz {
             batchAssetChangeItem.setBatchAssetChangeId(batchAssetChangeId);
             batchAssetChangeItem.setState(0);
             batchAssetChangeItem.setType(AssetChangeTypeEnum.collectionSub.getLocalType());  //  扣除投资人待收
+            if (tender.getType().intValue() == 1){
+                batchAssetChangeItem.setAssetType(AssetTypeContants.finance);
+            }
             batchAssetChangeItem.setUserId(advanceAssetChange.getUserId());
             batchAssetChangeItem.setMoney(advanceAssetChange.getInterest() + advanceAssetChange.getPrincipal());
             batchAssetChangeItem.setInterest(advanceAssetChange.getInterest());

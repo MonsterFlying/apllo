@@ -158,6 +158,7 @@ public class AssetChangeProvider {
                     newAssetLog.setForUserId(entity.getForUserId());
                 }
                 newAssetLog.setLocalSeqNo(entity.getSeqNo());
+                newAssetLog.setType(entity.getAssetType());
                 newAssetLog.setNoUseMoney(asset.getNoUseMoney());
                 newAssetLog.setOpMoney(entity.getMoney());
                 newAssetLog.setLocalType(entity.getType().getLocalType());

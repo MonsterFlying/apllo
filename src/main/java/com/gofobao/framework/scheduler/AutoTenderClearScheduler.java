@@ -49,12 +49,11 @@ public class AutoTenderClearScheduler {
                 }
                 //删除过期自动投标
                 autoTenderService.delete(autoTenderList);
-
                 //更新自动投标序号
                 autoTenderService.updateAutoTenderOrder();
             } while (false);
-        }catch (Exception e){
-            exceptionEmailHelper.sendException("调度-自动清除过期自动失败",e);
+        } catch (Exception e) {
+            exceptionEmailHelper.sendException("调度-自动清除过期自动失败", e);
         }
     }
 }

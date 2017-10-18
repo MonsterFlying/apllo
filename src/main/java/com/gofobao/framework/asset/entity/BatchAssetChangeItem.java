@@ -23,12 +23,13 @@ public class BatchAssetChangeItem {
     @GeneratedValue
     private Long id;
     private Long batchAssetChangeId;
+    private int assetType;
     private Integer state;
     private Long userId;
     private Long forUserId;
     private Long money;
     private Long principal;
-    private Long interest ;
+    private Long interest;
     private String asset;
     private String type;
     private String remark;
@@ -36,14 +37,14 @@ public class BatchAssetChangeItem {
     private Date createdAt;
     private Date updatedAt;
     /**
-     *  引用ID
+     * 引用ID
      */
-    private Long sourceId ;
+    private Long sourceId;
     /**
      * 请求流水
      */
-    private String seqNo ;
-    private String groupSeqNo ;
+    private String seqNo;
+    private String groupSeqNo;
 
 
 }
