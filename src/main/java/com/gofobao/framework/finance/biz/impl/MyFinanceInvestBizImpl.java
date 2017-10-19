@@ -13,7 +13,7 @@ import com.gofobao.framework.tender.vo.request.VoDetailReq;
 import com.gofobao.framework.tender.vo.request.VoFinanceInvestListReq;
 import com.gofobao.framework.tender.vo.request.VoInvestListReq;
 import com.gofobao.framework.tender.vo.response.*;
-import groovy.util.logging.Slf4j;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -24,8 +24,8 @@ import java.util.Map;
 /**
  * Created by admin on 2017/6/6.
  */
-@Slf4j
 @Service
+@Slf4j
 public class MyFinanceInvestBizImpl implements MyFinanceInvestBiz {
 
     @Autowired
@@ -44,7 +44,7 @@ public class MyFinanceInvestBizImpl implements MyFinanceInvestBiz {
             voViewBackMoneyListWarpRes.setTotalCount(totalCount);
             return ResponseEntity.ok(voViewBackMoneyListWarpRes);
         } catch (Throwable e) {
-
+            log.error("查询异常:",e);
             e.printStackTrace();
             return ResponseEntity
                     .badRequest()
@@ -64,6 +64,7 @@ public class MyFinanceInvestBizImpl implements MyFinanceInvestBiz {
             wrapResRes.setTotalCount(totalCount);
             return ResponseEntity.ok(wrapResRes);
         } catch (Throwable e) {
+            log.error("查询异常:",e);
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "查询失败", VoViewBiddingListWrapRes.class));
@@ -83,6 +84,7 @@ public class MyFinanceInvestBizImpl implements MyFinanceInvestBiz {
             viewSettleWarpRes.setVoViewSettleRes(settleList);
             return ResponseEntity.ok(viewSettleWarpRes);
         } catch (Throwable e) {
+            log.error("查询异常:",e);
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "查询失败", VoViewSettleWarpRes.class));
@@ -97,6 +99,7 @@ public class MyFinanceInvestBizImpl implements MyFinanceInvestBiz {
             voViewTenderDetailWarpRes.setVoViewTenderDetail(viewTenderDetail);
             return ResponseEntity.ok(voViewTenderDetailWarpRes);
         } catch (Throwable e) {
+            log.error("查询异常:",e);
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "查询失败", VoViewFinanceTenderDetailWarpRes.class));
@@ -111,7 +114,7 @@ public class MyFinanceInvestBizImpl implements MyFinanceInvestBiz {
             voViewReturnMoneyWarpRes.setVoViewReturnedMoney(voViewReturnedMoney);
             return ResponseEntity.ok(voViewReturnMoneyWarpRes);
         } catch (Throwable e) {
-            e.printStackTrace();
+            log.error("查询异常:",e);
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "查询失败", VoViewFinanceReturnMoneyWarpRes.class));

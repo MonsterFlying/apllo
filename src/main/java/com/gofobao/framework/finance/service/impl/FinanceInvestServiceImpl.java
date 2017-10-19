@@ -197,7 +197,7 @@ public class FinanceInvestServiceImpl implements FinanceInvestService {
 
             //预期收益
             BorrowCalculatorHelper borrowCalculatorHelper = new BorrowCalculatorHelper(new Double(validMoney), new Double(apr),
-                    financePlan.getTimeLimit(), DateHelper.subDays(financePlan.getSuccessAt(), 1));
+                    financePlan.getTimeLimit(), DateHelper.subDays(ObjectUtils.isEmpty(financePlan.getSuccessAt()) ? new Date() : financePlan.getSuccessAt(), 1));
             Map<String, Object> calculatorMap = borrowCalculatorHelper.simpleCount(2);
             Integer earnings = NumberHelper.toInt(StringHelper.toString(calculatorMap.get("earnings")));
 
