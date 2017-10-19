@@ -1004,7 +1004,6 @@ public class ThirdBatchDealBizImpl implements ThirdBatchDealBiz {
             successTransferList.stream().forEach(buyLogConsumer -> {
                 //设置转让状态为true
                 buyLogConsumer.setThirdTransferFlag(true);
-
             });
 
             transferBuyLogService.save(successTransferList);

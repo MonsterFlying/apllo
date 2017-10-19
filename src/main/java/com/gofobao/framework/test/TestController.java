@@ -315,6 +315,20 @@ public class TestController {
         log.info(GSON.toJson(creditDetailsQueryResponse));
     }
 
+    @ApiOperation("用户债权列表查询")
+    @RequestMapping("/pub/bid/seed/credit")
+    @Transactional
+    public void testCredit(@RequestParam("transferId") Object transferId) {
+        MqConfig mqConfig = new MqConfig();
+        mqConfig.setQueue(MqQueueEnum.RABBITMQ_TRANSFER);
+        mqConfig.setTag(MqTagEnum.AGAIN_VERIFY_TRANSFER);
+        ImmutableMap<String, String> body = ImmutableMap
+                .of(MqConfig.MSG_TRANSFER_ID, StringHelper.toString(transferId), MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
+        mqConfig.setMsg(body);
+        log.info(String.format("transferBizImpl testCredit send mq %s", GSON.toJson(body)));
+        mqHelper.convertAndSend(mqConfig);
+    }
+
     @Override
     public boolean equals(Object obj) {
         return super.equals(obj);
