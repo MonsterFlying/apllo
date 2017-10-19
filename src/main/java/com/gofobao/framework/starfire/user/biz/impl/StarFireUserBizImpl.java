@@ -428,7 +428,7 @@ public class StarFireUserBizImpl implements StarFireUserBiz {
                     //跳转target_url
                     String bidUrl = bindUserModel.getBid_url();
                     //if (voLoginReq.getSource().equals("1")) {  //pc端
-                    targetUrl += StringUtils.isEmpty(bidUrl) ? pcDomain : bidUrl;
+                    targetUrl = StringUtils.isEmpty(bidUrl) ? pcDomain :pcDomain+ bidUrl;
                     // } else {
                     //  targetUrl = StringUtils.isEmpty(bidUrl) ? h5Domain : h5Domain + "/" + bidUrl;
                     //}
