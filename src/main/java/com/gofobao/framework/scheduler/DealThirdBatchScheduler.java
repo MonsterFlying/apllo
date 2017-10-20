@@ -45,7 +45,6 @@ public class DealThirdBatchScheduler {
     private ThirdBatchDealBiz thirdBatchDealBiz;
 
     @Scheduled(cron = "0 0/30 8,9,10,11,12,13,14,15,16,17,18,19,20,21,22 * * ? ")
-    @Transactional(rollbackOn = Exception.class)
     public void process() {
         log.info("处理第三方批次任务调度启动");
         //1.查询未处理 参数校验成功的批次 gfb_third_batch_log
@@ -74,7 +73,7 @@ public class DealThirdBatchScheduler {
                         thirdBatchDealBiz.batchDeal(thirdBatchLog.getSourceId(), thirdBatchLog.getBatchNo(), thirdBatchLog.getType(),
                                 thirdBatchLog.getAcqRes(), "");
                     } catch (Exception e) {
-                        log.error("处理第三方批次任务调度批次执行异常:", e);
+                        log.error(String.format("处理第三方批次任务调度批次执行异常:batchNo->%s,sourceId->%s", thirdBatchLog.getBatchNo(), thirdBatchLog.getSourceId()), e);
                     }
 
                 }

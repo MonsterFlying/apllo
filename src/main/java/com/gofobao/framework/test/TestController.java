@@ -181,6 +181,8 @@ public class TestController {
     private TransferBuyLogService transferBuyLogService;
 
 
+
+
     @ApiOperation("获取自动投标列表")
     @RequestMapping("/pub/batch/deal")
     @Transactional
