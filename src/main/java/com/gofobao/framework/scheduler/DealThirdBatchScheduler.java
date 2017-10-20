@@ -74,12 +74,12 @@ public class DealThirdBatchScheduler {
                         thirdBatchDealBiz.batchDeal(thirdBatchLog.getSourceId(), thirdBatchLog.getBatchNo(), thirdBatchLog.getType(),
                                 thirdBatchLog.getAcqRes(), "");
                     } catch (Exception e) {
-                        log.error("批次执行异常:", e);
+                        log.error("处理第三方批次任务调度批次执行异常:", e);
                     }
 
                 }
             });
         } while (thirdBatchLogList.size() >= pageSize);
-        log.info("################批次调度结束####################");
+        log.info("################处理第三方批次任务调度批次调度结束####################");
     }
 }

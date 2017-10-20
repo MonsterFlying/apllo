@@ -975,6 +975,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
      */
     @Transactional(rollbackFor = Exception.class)
     public ResponseEntity<VoBaseResp> newRepayDeal(long repaymentId, String batchNo) throws Exception {
+        log.info(String.format("进入本地还款业务：batchNo->%s,sourceId->%s", batchNo, repaymentId));
         //1.查询并判断还款记录是否存在!
         BorrowRepayment borrowRepayment = borrowRepaymentService.findByIdLock(repaymentId);/* 当期还款记录 */
         Preconditions.checkNotNull(borrowRepayment, "还款记录不存在!");
@@ -1026,7 +1027,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
             smsNoticeByReceivedRepay(borrowCollectionList, parentBorrow, borrowRepayment);
         }
 
-        return ResponseEntity.ok(VoBaseResp.ok("还款处理成功!"));
+        return ResponseEntity.ok(VoBaseResp.ok(String.format("还款处理成功!batchNo->%s,sourceId->%s", batchNo, repaymentId)));
     }
 
     /**
@@ -1674,7 +1675,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
                                                    Asset repayAsset,
                                                    VoRepayReq voRepayReq) throws Exception {
         Date nowDate = new Date();
-        log.info(String.format("批次还款: 进入正常还款流程 repaymentId->", borrowRepayment.getId()));
+        log.info(String.format("批次还款: 进入正常还款流程 repaymentId->%s", borrowRepayment.getId()));
         int lateDays = getLateDays(borrowRepayment);   //计算逾期天数
         String batchNo = jixinHelper.getBatchNo();    // 批次号
         String groupSeqNo = assetChangeProvider.getGroupSeqNo(); // 资产记录分组流水号
@@ -2947,7 +2948,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
             batchAssetChangeItem.setBatchAssetChangeId(batchAssetChangeId);
             batchAssetChangeItem.setState(0);
             batchAssetChangeItem.setType(AssetChangeTypeEnum.receivedPayments.getLocalType());  // 投资人收到还款
-            if (tender.getType().intValue() == 1){
+            if (tender.getType().intValue() == 1) {
                 batchAssetChangeItem.setAssetType(AssetTypeContants.finance);
             }
             batchAssetChangeItem.setUserId(advanceAssetChange.getUserId());
@@ -2965,7 +2966,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
                 batchAssetChangeItem.setBatchAssetChangeId(batchAssetChangeId);
                 batchAssetChangeItem.setState(0);
                 batchAssetChangeItem.setType(AssetChangeTypeEnum.receivedPaymentsPenalty.getLocalType());  // 收取用户逾期费
-                if (tender.getType().intValue() == 1){
+                if (tender.getType().intValue() == 1) {
                     batchAssetChangeItem.setAssetType(AssetTypeContants.finance);
                 }
                 batchAssetChangeItem.setUserId(advanceAssetChange.getUserId());
