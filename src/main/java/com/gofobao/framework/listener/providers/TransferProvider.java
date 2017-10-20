@@ -426,7 +426,7 @@ public class TransferProvider {
             tenderUserThirdAccount = userThirdAccountService.findByUserId(transferBuyLog.getUserId());
             Preconditions.checkNotNull(tenderUserThirdAccount, "投资人开户记录不存在!");
             //购买债权转让有效金额
-            long txAmount = new Double(MoneyHelper.round(transferBuyLog.getValidMoney(), 0)).longValue();
+            long txAmount = new Double(MoneyHelper.round(transferBuyLog.getPrincipal(), 0)).longValue();
             // 全部有效投保金额
             sumAmount += txAmount;
             //收取转让人债权转让管理费

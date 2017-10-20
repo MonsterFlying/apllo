@@ -511,16 +511,7 @@ public class AplloApplicationTests {
 
     }
 
-    public void testCredit() {
-        MqConfig mqConfig = new MqConfig();
-        mqConfig.setQueue(MqQueueEnum.RABBITMQ_TRANSFER);
-        mqConfig.setTag(MqTagEnum.AGAIN_VERIFY_TRANSFER);
-        ImmutableMap<String, String> body = ImmutableMap
-                .of(MqConfig.MSG_TRANSFER_ID, StringHelper.toString(5708), MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
-        mqConfig.setMsg(body);
-        log.info(String.format("transferBizImpl buyTransfer send mq %s", GSON.toJson(body)));
-        mqHelper.convertAndSend(mqConfig);
-    }
+
 
     public void batchDeal() {
        /* Map<String,Object> acqMap = new HashMap<>();

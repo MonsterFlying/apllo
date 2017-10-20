@@ -28,10 +28,10 @@ import java.util.Map;
  * Created by Zeke on 2017/8/10.
  */
 @RestController
-@Api(description = "理财")
+@Api(description = "理财金服")
 @RequestMapping("")
 @Slf4j
-public class FinanceController {
+public class FinanceServerController {
 
     @Autowired
     private FinancePlanBiz financePlanBiz;
@@ -57,35 +57,35 @@ public class FinanceController {
      * @param voFinanceAgainVerifyTransfer
      */
     @ApiOperation("理财计划复审")
-    @PostMapping("/pub/finance/pub/again/verify")
+    @PostMapping("/pub/financeserver/pub/again/verify")
     public ResponseEntity<VoBaseResp> financeAgainVerifyTransfer(@Valid @ModelAttribute VoFinanceAgainVerifyTransfer voFinanceAgainVerifyTransfer) {
         return financePlanBiz.financeAgainVerifyTransfer(voFinanceAgainVerifyTransfer);
     }
 
-    @ApiOperation("理财列表")
-    @GetMapping("/pub/finance/plan/list/{pageIndex}/{pageSize}")
-    public ResponseEntity<PlanListWarpRes> list(@PathVariable Integer pageIndex, @PathVariable Integer pageSize) {
+    @ApiOperation("金服理财理财列表")
+    @GetMapping("/pub/financeserver/plan/list/{pageIndex}/{pageSize}")
+    public ResponseEntity<VoViewFinanceServerPlanResp> financeServerPlanList(@PathVariable Integer pageIndex, @PathVariable Integer pageSize) {
         Page page = new Page();
         page.setPageIndex(pageIndex);
         page.setPageSize(pageSize);
-        return financePlanBiz.list(page);
+        return financePlanBiz.financeServerlist(page);
     }
 
     @ApiOperation("理财标详情")
-    @GetMapping("/pub/finance/plan/info/{id}")
+    @GetMapping("/pub/financeserver/plan/info/{id}")
     public ResponseEntity<PlanDetail> info(@PathVariable Long id) {
         return financePlanBiz.details(id);
     }
 
 
     @ApiOperation("投资记录")
-    @GetMapping("/pub/finance/plan/tender/list/logs/{id}")
+    @GetMapping("/pub/financeserver/plan/tender/list/logs/{id}")
     public ResponseEntity<PlanBuyUserListWarpRes> buyUserList(@PathVariable Long id) {
         return financePlanBuyerBiz.buyUserList(id);
     }
 
     @ApiOperation(value = "标合同")
-    @GetMapping(value = "/pub/finance/plan/flanContract/{planId}")
+    @GetMapping(value = "/pub/financeserver/plan/flanContract/{planId}")
     public ResponseEntity<String> flanContract(@PathVariable Long planId, HttpServletRequest request) throws Exception {
         Long userId = 0L;
         String authToken = request.getHeader(this.tokenHeader);
@@ -114,7 +114,7 @@ public class FinanceController {
      * @return
      */
     @ApiOperation("购买理财计划")
-    @PostMapping("/finance/v2/tender/finance/plan")
+    @PostMapping("/financeserver/v2/tender/finance/plan")
     public ResponseEntity<VoBaseResp> tenderFinancePlan(@Valid @ModelAttribute VoTenderFinancePlan voTenderFinancePlan, @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
         try {
             voTenderFinancePlan.setUserId(userId);
