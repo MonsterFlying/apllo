@@ -40,6 +40,13 @@ public interface InviteFriendsService {
 
 
     /**
+     * 员工邀请用户
+     * @param voFriendsReq
+     * @return
+     */
+    List<FriendsTenderInfo> employeeInviteUserFirstTender(VoFriendsReq voFriendsReq);
+
+    /**
      * pc:邀请用户
      * @param voFriendsReq
      * @return

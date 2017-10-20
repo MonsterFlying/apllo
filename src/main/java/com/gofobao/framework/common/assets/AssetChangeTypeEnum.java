@@ -62,22 +62,22 @@ public enum AssetChangeTypeEnum {
     /**
      * 用户购买理财计划债权
      */
-    InvestorsFinanceBatchBuyClaims("用户购买理财计划债权", "finance_batch_buy_claims", "2789", "sub@financePlanMoney", "", "C"),
+    InvestorsFinanceBatchBuyClaims("用户购买理财计划债权", "investors_finance_batch_buy_claims", "2789", "sub@financePlanMoney", "", "C"),
 
     /**
      * 平台出售理财计划债权
      */
-    platformFinanceBatchSellBonds("平台出售理财计划债权", "finance_batch_sell_bonds", "7785", "add@useMoney", "", "D"),
+    platformFinanceBatchSellBonds("平台出售理财计划债权", "platform_finance_batch_sell_bonds", "7785", "add@useMoney", "", "D"),
 
     /**
      * 平台回购理财计划债权
      */
-    platformFinanceBatchBuyClaims("平台回购理财计划债权", "finance_batch_buy_claims", "2789", "sub@noUseMoney", "", "C"),
+    platformFinanceBatchBuyClaims("平台回购理财计划债权", "platform_finance_batch_buy_claims", "2789", "sub@noUseMoney", "", "C"),
 
     /**
      * 用户出售理财计划债权
      */
-    InvestorsFinanceBatchSellBonds("用户出售理财计划债权", "finance_batch_sell_bonds", "7785", "add@financePlanMoney", "", "D"),
+    InvestorsFinanceBatchSellBonds("用户出售理财计划债权", "investors_finance_batch_sell_bonds", "7785", "add@financePlanMoney", "", "D"),
 
     /**
      * 理财计划接触冻结

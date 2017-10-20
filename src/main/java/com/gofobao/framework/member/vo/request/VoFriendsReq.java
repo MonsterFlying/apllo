@@ -15,4 +15,7 @@ public class VoFriendsReq extends Page {
     @ApiModelProperty(hidden = true)
     private Integer type;
 
+    @ApiModelProperty("员工登录终端 理财:true ; ")
+    private Boolean source=true;
+
 }

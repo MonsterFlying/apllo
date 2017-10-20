@@ -130,6 +130,19 @@ public class BrokerBounsBizImpl implements BrokerBounsBiz {
         }
     }
 
+    @Override
+    public ResponseEntity<VoViewFriendsTenderInfoWarpRes> employeeInviteUserFirstTender(VoFriendsReq voFriendsReq) {
+        try {
+            List<FriendsTenderInfo> tenderInfoList = inviteFriendsService.employeeInviteUserFirstTender(voFriendsReq);
+            VoViewFriendsTenderInfoWarpRes warpRes = VoBaseResp.ok("查询成功", VoViewFriendsTenderInfoWarpRes.class);
+            warpRes.setFrindsTenderInfo(tenderInfoList);
+            return ResponseEntity.ok(warpRes);
+        } catch (Throwable e) {
+            e.printStackTrace();
+            return ResponseEntity.ok(VoBaseResp.error(VoBaseResp.ERROR, "查询失败", VoViewFriendsTenderInfoWarpRes.class));
+        }
+    }
+
     /**
      * 分享注册邀请码
      *

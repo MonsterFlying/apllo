@@ -229,14 +229,16 @@ public class UserBizImpl implements UserBiz {
         users.setPassword(PasswordHelper.encodingPassword(voRegisterReq.getPassword())); // 设置密码
         users.setPayPassword("");
         users.setRealname("");
-        //用户类型
-        if (parentId != 0) {
+        //用户类型  用户用户从那个端注册就是什么类型用户
+        users.setType(voRegisterReq.getType());
+
+     /*   if (parentId != 0) {
             //当前用户类型根据邀请人的类型一致
             Users parentUser = userService.findById(parentId);
             users.setType(parentUser.getType());
         } else {
             users.setType(voRegisterReq.getType());
-        }
+        }*/
         users.setBranch(0);
         users.setSource(channel);
         users.setInviteCode(GenerateInviteCodeHelper.getRandomCode()); // 生成用户邀请码

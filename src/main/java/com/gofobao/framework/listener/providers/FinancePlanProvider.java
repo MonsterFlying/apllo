@@ -206,6 +206,7 @@ public class FinancePlanProvider {
         batchAssetChangeItem.setBatchAssetChangeId(batchAssetChangeId);
         batchAssetChangeItem.setState(0);
         //理财计划债权转让是否是赎回债权
+        long transferPrincipal = transferBuyLogList.stream().filter(transferBuyLog -> transferBuyLog.getState()==1).mapToLong(TransferBuyLog::getPrincipal).sum();
         if (repurchaseFlag) {
             batchAssetChangeItem.setType(AssetChangeTypeEnum.InvestorsFinanceBatchSellBonds.getLocalType());  // 理财计划购买人出售债权
             batchAssetChangeItem.setAssetType(AssetTypeContants.finance);
@@ -213,9 +214,9 @@ public class FinancePlanProvider {
             batchAssetChangeItem.setType(AssetChangeTypeEnum.platformFinanceBatchSellBonds.getLocalType());  // 平台出售债权
         }
         batchAssetChangeItem.setUserId(transfer.getUserId());
-        batchAssetChangeItem.setMoney(transfer.getPrincipal() + transfer.getAlreadyInterest());
+        batchAssetChangeItem.setMoney(transferPrincipal + transfer.getAlreadyInterest());
         batchAssetChangeItem.setRemark(String.format("出售理财计划匹配债权[%s]获得待收本金和应计利息%s元", transfer.getTitle(),
-                StringHelper.formatDouble((transfer.getPrincipal() + transfer.getAlreadyInterest()), 100D, true)));
+                StringHelper.formatDouble((transferPrincipal + transfer.getAlreadyInterest()), 100D, true)));
         batchAssetChangeItem.setCreatedAt(nowDate);
         batchAssetChangeItem.setUpdatedAt(nowDate);
         batchAssetChangeItem.setSourceId(transferId);

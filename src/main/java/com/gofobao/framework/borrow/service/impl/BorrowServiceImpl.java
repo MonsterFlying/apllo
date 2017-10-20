@@ -95,7 +95,6 @@ public class BorrowServiceImpl implements BorrowService {
             new Integer(BorrowContants.PENDING));
 
 
-
     LoadingCache<String, Borrow> newBorrow = CacheBuilder
             .newBuilder()
             .expireAfterWrite(60, TimeUnit.MINUTES)
@@ -342,6 +341,7 @@ public class BorrowServiceImpl implements BorrowService {
 
     /**
      * 首页标列表
+     *
      * @return
      */
     @Override
@@ -604,7 +604,8 @@ public class BorrowServiceImpl implements BorrowService {
 
         Specification<Transfer> specification = Specifications.<Transfer>and()
                 .eq("state", TransferContants.TRANSFERIND)
-                .eq("type",TransferContants.GENERAL)
+                .eq("type", TransferContants.GENERAL)
+                .eq("successAt", null)
                 .build();
         Integer liuZhuanCount = transferService.findList(specification).size();
         borrowStatistics.setJingZhi(jingZhi);

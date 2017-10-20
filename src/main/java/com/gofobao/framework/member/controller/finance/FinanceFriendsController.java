@@ -76,6 +76,7 @@ public class FinanceFriendsController {
         return brokerBounsBiz.firstTender(voFriendsReq);
     }
 
+
     @ApiOperation("理财app-邀请好友首页页面")
     @GetMapping("invite/finance/v2/shareRegister")
     public ResponseEntity<VoViewShareRegiestRes> shareRegister(@RequestAttribute(SecurityContants.USERID_KEY) Long userId) {

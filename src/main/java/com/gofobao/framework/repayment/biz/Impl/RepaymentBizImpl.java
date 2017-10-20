@@ -2985,9 +2985,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
             batchAssetChangeItem.setBatchAssetChangeId(batchAssetChangeId);
             batchAssetChangeItem.setState(0);
             batchAssetChangeItem.setType(AssetChangeTypeEnum.collectionSub.getLocalType());  //  扣除投资人待收
-            if (tender.getType().intValue() == 1){
-                batchAssetChangeItem.setAssetType(AssetTypeContants.finance);
-            }
+
             batchAssetChangeItem.setUserId(advanceAssetChange.getUserId());
             batchAssetChangeItem.setMoney(advanceAssetChange.getInterest() + advanceAssetChange.getPrincipal());
             batchAssetChangeItem.setInterest(advanceAssetChange.getInterest());

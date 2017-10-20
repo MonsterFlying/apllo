@@ -65,7 +65,11 @@ public class Jwtintercepter extends HandlerInterceptorAdapter {
         } catch (Exception e) {
         }
         String type = jwtTokenHelper.getType(token);
-        if (url.contains("finance")) {  // 理财用户
+        if (url.contains("/financeserver/")) { //金服理财用户
+            if ("finance".equals(type)) {
+                throw new Exception("系统拒绝当前请求");
+            }
+        } else if (url.contains("/finance/")) {  // 理财用户
             if (!"finance".equals(type)) {
                 throw new Exception("系统拒绝当前请求");
             }

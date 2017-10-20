@@ -26,7 +26,9 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
-
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
+import javax.persistence.Query;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -43,6 +45,9 @@ public class InviteFriendServiceImpl implements InviteFriendsService {
     private UsersRepository usersRepository;
     @Autowired
     private TenderRepository tenderRepository;
+
+    @PersistenceContext
+    private EntityManager entityManager;
 
     @Override
     public List<InviteFriends> list(VoFriendsReq voFriendsReq) {
@@ -184,11 +189,19 @@ public class InviteFriendServiceImpl implements InviteFriendsService {
      */
     @Override
     public List<FriendsTenderInfo> inviteUserFirstTender(VoFriendsReq voFriendsReq) {
-        Page<Users> usersPage = usersRepository.findByParentId(voFriendsReq.getUserId(),
+        Specification<Users> usersSpecification = Specifications.<Users>and()
+                .eq("parentId", voFriendsReq.getUserId())
+                .build();
+        Page<Users> usersPage = usersRepository.findAll(usersSpecification,
                 new PageRequest(
                         voFriendsReq.getPageIndex(),
                         voFriendsReq.getPageSize(), new Sort(Sort.Direction.DESC, "createdAt")));
         List<Users> usersList = usersPage.getContent();
+
+        return commonHandle(usersList);
+    }
+
+    private List<FriendsTenderInfo> commonHandle(List<Users> usersList) {
         if (CollectionUtils.isEmpty(usersList)) {
             return Collections.EMPTY_LIST;
         }
@@ -215,6 +228,20 @@ public class InviteFriendServiceImpl implements InviteFriendsService {
             tenderInfoList.add(info);
         });
         return Optional.ofNullable(tenderInfoList).orElse(Collections.EMPTY_LIST);
+    }
+
+
+    @Override
+    public List<FriendsTenderInfo> employeeInviteUserFirstTender(VoFriendsReq voFriendsReq) {
+        String sql = "SELECT u FROM Users u WHERE  u.parentId=:userId AND ";
+        sql += !voFriendsReq.getSource() ? "u.type!=:type" : "u.type=:type";
+        Query query = entityManager.createQuery(sql.toString(), Users.class);
+        query.setParameter("type", "finance");
+        query.setParameter("userId", voFriendsReq.getUserId());
+        query.setFirstResult(voFriendsReq.getPageIndex());
+        query.setMaxResults(voFriendsReq.getPageSize() * voFriendsReq.getPageIndex());
+        List<Users> usersList = query.getResultList();
+        return commonHandle(usersList);
     }
 
     /**
