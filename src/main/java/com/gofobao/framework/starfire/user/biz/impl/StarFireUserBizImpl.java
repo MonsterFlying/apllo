@@ -428,7 +428,7 @@ public class StarFireUserBizImpl implements StarFireUserBiz {
                     //跳转target_url
                     String bidUrl = bindUserModel.getBid_url();
                     //if (voLoginReq.getSource().equals("1")) {  //pc端
-                    targetUrl = StringUtils.isEmpty(bidUrl) ? pcDomain :pcDomain+ bidUrl;
+                    targetUrl = StringUtils.isEmpty(bidUrl) ? pcDomain : pcDomain + bidUrl;
                     // } else {
                     //  targetUrl = StringUtils.isEmpty(bidUrl) ? h5Domain : h5Domain + "/" + bidUrl;
                     //}
@@ -564,7 +564,8 @@ public class StarFireUserBizImpl implements StarFireUserBiz {
      */
     @Override
     public String requestUrl(LoginModel loginModel, HttpServletRequest request, HttpServletResponse response) {
-
+        log.info("===========进入星火获取登录授权接口========");
+        log.info("打印星火请求参数:" + GSON.toJson(loginModel));
         //封装验证参数
         baseRequest.setSign(loginModel.getSign());
         baseRequest.setSerial_num(loginModel.getSerial_num());
@@ -602,8 +603,10 @@ public class StarFireUserBizImpl implements StarFireUserBiz {
         //验证成功
         if (flag) {
             try {
+                log.info("====获取用户登录token====");
                 String redisTokenStr = redisHelper.get("JWT_TOKEN_" + users.getId(), null);
                 String bidUrl = loginModel.getBid_url();
+                log.info("打印星火请求的项目bid_url地址:" + bidUrl);
                 if (StringUtils.isEmpty(redisTokenStr)) {
                     redisTokenStr = jwtTokenHelper.generateToken(users, Integer.valueOf(source));
                     response.addHeader(tokenHeader, String.format("%s %s", prefix, redisTokenStr));
@@ -622,8 +625,11 @@ public class StarFireUserBizImpl implements StarFireUserBiz {
                     mqConfig.setMsg(body);
                     mqHelper.convertAndSend(mqConfig);
                 }
+                log.info("打印用户登录token" + redisTokenStr);
+                log.info("获取重定向地址");
                 String address = source.equals("1") ? pcDomain : h5Domain;
                 targetUrl = address + bidUrl + "?token=" + redisTokenStr;
+                log.info("打印授权登录成功重定向地址:" + targetUrl);
             } catch (Exception e) {
                 log.info("授权登录 获取token失败", e);
             }

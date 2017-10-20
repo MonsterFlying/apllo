@@ -44,6 +44,14 @@ public interface BrokerBounsBiz {
     ResponseEntity<VoViewFriendsTenderInfoWarpRes> firstTender(VoFriendsReq voFriendsReq);
 
 
+
+
+
+
+    ResponseEntity<VoViewFriendsTenderInfoWarpRes> employeeInviteUserFirstTender(VoFriendsReq voFriendsReq);
+
+
+
     Map<String, Object> shareRegister(Long userId,String type);
 
 

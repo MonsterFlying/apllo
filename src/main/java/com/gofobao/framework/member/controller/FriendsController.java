@@ -31,6 +31,7 @@ import java.util.Map;
 @RequestMapping("")
 @Api(description = "我的邀请")
 @RestController
+@SuppressWarnings("all")
 public class FriendsController {
     @Autowired
     private BrokerBounsBiz brokerBounsBiz;
@@ -58,6 +59,39 @@ public class FriendsController {
         voFriendsReq.setUserId(userId);
         return brokerBounsBiz.list(voFriendsReq);
     }
+
+    @ApiOperation("员工邀请好友投标列表")
+    @GetMapping("/invite/v2/employee/first/tender/list")
+    public ResponseEntity<VoViewFriendsTenderInfoWarpRes> firstTenderList(@RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
+        VoFriendsReq voFriendsReq = new VoFriendsReq();
+        voFriendsReq.setUserId(userId);
+        return brokerBounsBiz.employeeInviteUserFirstTender(voFriendsReq);
+    }
+
+    @ApiOperation("理财app-员工邀请二维码")
+    @GetMapping("invite/v2/employee/shareRegister")
+    public ResponseEntity<VoViewShareRegiestRes> employeeShareRegister(@RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
+        String content;
+        VoViewShareRegiestRes res = VoBaseResp.ok("查询成功", VoViewShareRegiestRes.class);
+        try {
+            Map<String, Object> resultMaps = brokerBounsBiz.shareRegister(userId,"finance");
+            res.setCodeUrl(resultMaps.get("QRCodeURL").toString());
+            res.setTitle("江西银行存管,您值得信赖");
+            //   res.setDesc("新手福利,投资即可发放红包+加息0.5%-3%");
+            res.setRequestHtmlUrl(resultMaps.get("inviteUrl").toString());
+            res.setIcon(javaDomain + "/images/bankLogo/logo.png");
+            content = thymeleafHelper.build("user/financeFriends", resultMaps);
+            res.setHtml(content);
+        } catch (Throwable e) {
+            e.printStackTrace();
+            content = thymeleafHelper.build("load_error", null);
+        }
+        res.setHtml(content);
+
+        return ResponseEntity.ok(res);
+    }
+
+
 
     @ApiOperation("邀请统计")
     @GetMapping("/invite/v2/statistic")
