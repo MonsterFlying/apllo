@@ -425,16 +425,18 @@ public class TransferProvider {
             /* 债权转让购买人存管账户信息 */
             tenderUserThirdAccount = userThirdAccountService.findByUserId(transferBuyLog.getUserId());
             Preconditions.checkNotNull(tenderUserThirdAccount, "投资人开户记录不存在!");
-            //购买债权转让有效金额
-            long txAmount = new Double(MoneyHelper.round(transferBuyLog.getPrincipal(), 0)).longValue();
-            // 全部有效投保金额
-            sumAmount += txAmount;
+            //购买债权转让有效金额 本金
+            long principal = new Double(MoneyHelper.round(transferBuyLog.getPrincipal(), 0)).longValue();
             //收取转让人债权转让管理费
             long tempTransferFee = new Double(MoneyHelper.round(MoneyHelper.multiply(transferBuyLog.getValidMoney() / new Double(transfer.getPrincipal()), transferFee), 0)).longValue();
             txFee += tempTransferFee;  // 分摊转让费用到各项中
             sumTransferFee += tempTransferFee;
+            txFee += transferBuyLog.getAlreadyInterest();//加上当期应计利息
             //判断标的已在存管登记转让
+            //long transferredPrincipal = 0;
+            long txAmount = principal + txFee;//买入债权+买入手续费
             if (BooleanHelper.isTrue(transferBuyLog.getThirdTransferFlag())) {
+                //transferredPrincipal += transferBuyLog.getPrincipal();
                 continue;
             }
             /* 购买债权转让orderId */
@@ -464,8 +466,11 @@ public class TransferProvider {
             balanceUnfreezeReq.setOrgOrderId(transferBuyLog.getFreezeOrderId());
             BalanceUnfreezeResp balanceUnfreezeResp = jixinManager.send(JixinTxCodeEnum.BALANCE_UN_FREEZE, balanceUnfreezeReq, BalanceUnfreezeResp.class);
             if ((ObjectUtils.isEmpty(balanceUnfreezeResp)) || (!JixinResultContants.SUCCESS.equalsIgnoreCase(balanceUnfreezeResp.getRetCode()))) {
-                throw new Exception("购买债权转让解冻资金失败：" + balanceUnfreezeResp.getRetMsg());
+                log.error("购买债权转让解冻资金失败：" + balanceUnfreezeResp.getRetMsg());
             }
+
+            // 全部有效投保金额
+            sumAmount += txAmount;
         }
         //更新债权转让购买记录
         transferBuyLogService.save(transferBuyLogList);

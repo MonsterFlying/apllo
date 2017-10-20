@@ -48,6 +48,8 @@ public class UserActiveListener {
                 result = userActiveProvider.userLogin(msg) ;
             }else if(tag.equalsIgnoreCase(MqTagEnum.OP_JIXIN_QUERY.getValue())){ // 即信确认查询
                 result = userActiveProvider.jixinOpQuery(msg) ;
+            }else if(tag.equalsIgnoreCase(MqTagEnum.RECHARGE_CALLBACK.getValue())){  // 充值回调确认
+                result = userActiveProvider.offlineRechargeCallback(msg) ;
             }
 
             if(!result){

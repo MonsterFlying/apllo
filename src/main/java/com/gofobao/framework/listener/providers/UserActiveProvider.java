@@ -5,6 +5,7 @@ import com.gofobao.framework.api.helper.JixinManager;
 import com.gofobao.framework.api.helper.JixinTxCodeEnum;
 import com.gofobao.framework.api.model.fund_trans_query.FundTransQueryRequest;
 import com.gofobao.framework.api.model.fund_trans_query.FundTransQueryResponse;
+import com.gofobao.framework.api.model.offline_recharge_call.OfflineRechargeCallbackResponse;
 import com.gofobao.framework.asset.entity.CashDetailLog;
 import com.gofobao.framework.asset.entity.RechargeDetailLog;
 import com.gofobao.framework.asset.service.CashDetailLogService;
@@ -19,6 +20,7 @@ import com.gofobao.framework.common.rabbitmq.MqQueueEnum;
 import com.gofobao.framework.common.rabbitmq.MqTagEnum;
 import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.helper.ExceptionEmailHelper;
+import com.gofobao.framework.helper.MoneyHelper;
 import com.gofobao.framework.helper.StringHelper;
 import com.gofobao.framework.member.biz.UserThirdBiz;
 import com.gofobao.framework.member.entity.UserThirdAccount;
@@ -465,5 +467,84 @@ public class UserActiveProvider {
             entity.setType(AssetChangeTypeEnum.cancelPlatformCashFee);
             assetChangeProvider.commonAssetChange(entity);
         }
+    }
+
+    /**
+     * 线下充值回调
+     *
+     * @param msg
+     * @return
+     */
+    @Transactional(rollbackFor = Exception.class)
+    public boolean offlineRechargeCallback(Map<String, String> msg) throws Exception {
+        Gson gson = new Gson();
+        String bgData = gson.toJson(msg);
+        log.info("================================");
+        log.info("线下充值回调执行: " + bgData);
+        log.info("================================");
+        try {
+            String accountId = msg.get("accountId"); // 当前账户类型
+            String orgSeqNo = msg.get("orgSeqNo");  // 原始流水号
+            String orgTxDate = msg.get("orgTxDate"); // 原始日期
+            String orgTxTime = msg.get("orgTxTime"); // 原始时间
+            String txAmount = msg.get("txAmount"); // 交易金额
+            String seqNo = String.format("%s%s%s", orgTxDate, orgTxTime, orgSeqNo);
+            log.info("交易流水" + seqNo);
+            RechargeDetailLog existsRechargeDatailLog = rechargeDetailLogService.findTopBySeqNo(seqNo);
+            if (!ObjectUtils.isEmpty(existsRechargeDatailLog)) {  // 重复调用
+                log.error(String.format("线下充值回调接口, 重复调用充值接口: 数据[%s]", bgData));
+                return false;
+            }
+
+            UserThirdAccount userThirdAccount = userThirdAccountService.findByAccountId(accountId);
+            Preconditions.checkNotNull(userThirdAccount, "线下充值, 当前开户信息为空");
+            Long userId = userThirdAccount.getUserId();
+            Users users = userService.findByIdLock(userId);
+            Preconditions.checkNotNull(users, "会员记录不存在!");
+            Date nowDate = new Date();
+            Date synDate = DateHelper.stringToDate(orgTxDate, DateHelper.DATE_FORMAT_YMD_NUM);
+            // 写入线下充值日志
+            Double recordRecharge = new Double(MoneyHelper.multiply(txAmount, "100", 0));
+            Long money = recordRecharge.longValue();
+            RechargeDetailLog rechargeDetailLog = new RechargeDetailLog();
+            rechargeDetailLog.setUserId(userId);
+            rechargeDetailLog.setBankName(userThirdAccount.getBankName());
+            rechargeDetailLog.setCallbackTime(nowDate);
+            rechargeDetailLog.setCardNo(userThirdAccount.getCardNo());
+            rechargeDetailLog.setDel(0);
+            rechargeDetailLog.setState(1); // 充值成功
+            rechargeDetailLog.setMoney(money.longValue());
+            rechargeDetailLog.setRechargeChannel(1);  // 其他渠道
+            rechargeDetailLog.setRechargeType(1); // 线下充值
+            rechargeDetailLog.setSeqNo(seqNo);
+            rechargeDetailLog.setCreateTime(synDate);
+            rechargeDetailLog.setUpdateTime(nowDate);
+            rechargeDetailLogService.save(rechargeDetailLog);
+
+            AssetChange assetChange = new AssetChange();
+            assetChange.setType(AssetChangeTypeEnum.offlineRecharge);
+            assetChange.setUserId(userId);
+            assetChange.setMoney(money.longValue());
+            assetChange.setRemark(String.format("成功线下充值%s元", StringHelper.formatDouble(money.longValue() / 100D, true)));
+            assetChange.setSourceId(rechargeDetailLog.getId());
+            assetChange.setSeqNo(assetChangeProvider.getSeqNo());
+            assetChange.setGroupSeqNo(assetChangeProvider.getGroupSeqNo());
+            assetChangeProvider.commonAssetChange(assetChange);
+
+            // 触发用户充值
+            MqConfig mqConfig = new MqConfig();
+            mqConfig.setTag(MqTagEnum.RECHARGE);
+            mqConfig.setQueue(MqQueueEnum.RABBITMQ_USER_ACTIVE);
+            mqConfig.setSendTime(DateHelper.addSeconds(new Date(), 30));
+            ImmutableMap<String, String> body = ImmutableMap.of(MqConfig.MSG_ID, rechargeDetailLog.getId().toString());
+            mqConfig.setMsg(body);
+            mqHelper.convertAndSend(mqConfig);
+        } catch (Exception e) {
+            log.error(String.format("线下充值回调接口, 发生异常: 数据[%s]", bgData), e);
+            exceptionEmailHelper.sendException(String.format("线下充值回调接口, 发生异常: 数据[%s]", bgData), e);
+            throw new Exception(e);
+        }
+
+        return true;
     }
 }

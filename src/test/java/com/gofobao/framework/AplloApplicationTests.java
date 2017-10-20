@@ -210,6 +210,9 @@ public class AplloApplicationTests {
 
     }
 
+    @Autowired
+    TestTransaction testTransaction;
+
 
     @Test
     public void testQueryFeeAccount() {
@@ -512,7 +515,6 @@ public class AplloApplicationTests {
     }
 
 
-
     public void batchDeal() {
        /* Map<String,Object> acqMap = new HashMap<>();
         acqMap.put("borrowId", 169979);
@@ -579,10 +581,13 @@ public class AplloApplicationTests {
     private ThirdBatchDealLogBiz thirdBatchDealLogBiz;
 
 
-
     @Test
     public void test() {
-        repaymentBiz.test01();
+        try {
+            testTransaction.test();
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+        }
        /* //批次处理
        batchDeal();
         //unfrozee();

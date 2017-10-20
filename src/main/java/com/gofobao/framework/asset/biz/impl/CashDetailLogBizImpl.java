@@ -338,15 +338,7 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
         boolean bigCashState = false;
         // 判断是否为大额提现
         if (voCashReq.getCashMoney() >= 200000) {
-            // TODO 国庆后解除
-            Date guoqi = DateHelper.stringToDate("2017-10-08 23:59:59", DateHelper.DATE_FORMAT_YMDHMS);
-            if (DateHelper.diffInDays(guoqi, nowDate, false) > 0) {
-                return ResponseEntity
-                        .badRequest()
-                        .body(VoBaseResp.error(VoBaseResp.ERROR, "2017国庆期间, 暂不开放大额提现！", VoHtmlResp.class));
-            } else {
-                bigCashState = true;
-            }
+            bigCashState = true;
         }
 
         WithDrawRequest withDrawRequest = new WithDrawRequest();
@@ -537,7 +529,7 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
         } else {
             cashDetailLog.setState(4);
             cashDetailLog.setCallbackTime(new Date());
-            cashDetailLog.setVerifyRemark(response.getRetMsg());
+            cashDetailLog.setVerifyRemark(response.getRetCode());
             cashDetailLogService.save(cashDetailLog);
 
             titel = "提现失败";

@@ -30,6 +30,8 @@ import com.gofobao.framework.api.model.bid_apply_query.BidApplyQueryRequest;
 import com.gofobao.framework.api.model.bid_apply_query.BidApplyQueryResponse;
 import com.gofobao.framework.api.model.credit_details_query.CreditDetailsQueryRequest;
 import com.gofobao.framework.api.model.credit_details_query.CreditDetailsQueryResponse;
+import com.gofobao.framework.api.model.credit_invest_query.CreditInvestQueryReq;
+import com.gofobao.framework.api.model.credit_invest_query.CreditInvestQueryResp;
 import com.gofobao.framework.api.model.freeze_details_query.FreezeDetailsQueryRequest;
 import com.gofobao.framework.api.model.freeze_details_query.FreezeDetailsQueryResponse;
 import com.gofobao.framework.api.model.voucher_pay.VoucherPayRequest;
@@ -194,6 +196,19 @@ public class TestController {
         if (CollectionUtils.isEmpty(thirdBatchLogList)) {
             return;
         }
+    }
+
+    @ApiOperation("获取自动投标列表")
+    @RequestMapping("/pub/credit/invest/query")
+    @Transactional
+    public void creditInvestQuery(@RequestParam("accountId") Object accountId, @RequestParam("orgOrderId") Object orgOrderId) {
+        CreditInvestQueryReq request = new CreditInvestQueryReq();
+        request.setChannel(ChannelContant.HTML);
+        request.setAccountId(String.valueOf(accountId));
+        request.setOrgOrderId(String.valueOf(orgOrderId));
+        request.setAcqRes("1");
+        CreditInvestQueryResp response = jixinManager.send(JixinTxCodeEnum.CREDIT_INVEST_QUERY, request, CreditInvestQueryResp.class);
+        System.out.println(response);
     }
 
     @ApiOperation("获取自动投标列表")
