@@ -56,7 +56,7 @@ windmill: #风车理财
   from: wrb #风车理财简称
   local-des-key : 2l0IYbNnRcShWOM9Q5Ej0A3gCGOFOBAO #和风车理财交互时 平台的关键字段加密key值
   notify-address:  https://p.fengchelicai.com/wrb/ws_info_call_back.json  #通知风车理财接口
-  ips: 121.42.52.42
+  ips: 114.215.102.2,114.215.113.35,121.42.15.7
 starfire: # 星火
   key: gofobao_hyfbGxll  #asc加密key值
   initVector: gofobao_hyfbGxll  #

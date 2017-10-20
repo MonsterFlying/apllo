@@ -7,6 +7,7 @@ import com.gofobao.framework.common.jxl.ExcelUtil;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.helper.*;
 import com.gofobao.framework.member.biz.BrokerBounsBiz;
+import com.gofobao.framework.member.contants.UsersContants;
 import com.gofobao.framework.member.entity.BrokerBouns;
 import com.gofobao.framework.member.entity.Users;
 import com.gofobao.framework.member.repository.UsersRepository;
@@ -154,16 +155,21 @@ public class BrokerBounsBizImpl implements BrokerBounsBiz {
         Map<String, Object> paramMaps = new HashMap<>();
         Users user = usersRepository.findOne(userId);
         String inviteCode = user.getInviteCode();
-        paramMaps.put("inviteUrl", h5Domain + "/#/auth/register?inviteCode=" + inviteCode);
+
         paramMaps.put("inviteCode", inviteCode);
         paramMaps.put("invitePhone", user.getPhone());
+        String inviteUrl="";
         String qRCodeURL="";
+        String registerAddress="http://find.financeplan.gofobao.com/#/register";
         //理财邀请
-        if(type.equals("finance")){
+        if(type.equals(UsersContants.FINANCE)){
             qRCodeURL= javaDomain + "/pub/invite/finance/qrcode/getInviteFriendQRCode?inviteCode=";
+            inviteUrl=registerAddress+"inviteCode="+inviteCode;
         }else{//金服邀请
             qRCodeURL= javaDomain + "/pub/invite/qrcode/getInviteFriendQRCode?inviteCode=";
+            inviteUrl= h5Domain + "/#/auth/register?inviteCode=" + inviteCode;
         }
+        paramMaps.put("inviteUrl",inviteUrl);
         paramMaps.put("QRCodeURL", qRCodeURL + inviteCode);
         paramMaps.put("requestSource", 3);
         return paramMaps;

@@ -56,7 +56,8 @@ import java.util.stream.Collectors;
 
 @Component
 @Slf4j
-public class AssetSynBizImpl implements AssetSynBiz {
+public class
+AssetSynBizImpl implements AssetSynBiz {
     @Autowired
     AssetLogService assetLogService;
 

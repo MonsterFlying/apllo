@@ -83,7 +83,7 @@ public class FinanceFriendsController {
         String content;
         VoViewShareRegiestRes res = VoBaseResp.ok("查询成功", VoViewShareRegiestRes.class);
         try {
-            Map<String, Object> resultMaps = brokerBounsBiz.shareRegister(userId,"finance");
+            Map<String, Object> resultMaps = brokerBounsBiz.shareRegister(userId,"FINANCE");
             res.setCodeUrl(resultMaps.get("QRCodeURL").toString());
             res.setTitle("江西银行存管,您值得信赖");
          //   res.setDesc("新手福利,投资即可发放红包+加息0.5%-3%");
@@ -120,12 +120,12 @@ public class FinanceFriendsController {
         response.setHeader("Cache-Control", "no-store, no-cache, must-revalidate");  // Set standard HTTP/1.1 no-cache headers.
         response.addHeader("Cache-Control", "post-check=0, pre-check=0"); // Set IE extended HTTP/1.1 no-cache headers (use addHeader).
         response.setHeader("Pragma", "no-cache");  // Set standard HTTP/1.0 no-cache header.
-        response.setContentType("image/jpeg"); // return a jpeg
-
+        response.setContentType("image/png"); // return a jpeg
+        String registerAddress="http://find.financeplan.gofobao.com/#/register";
         try {
             InputStream in = FinanceFriendsController.class.getResourceAsStream("/static/images/shareLogo/finance_logo.png");
 
-            QRCodeHelper.createQRCodeTStream(h5Domain + "/#/auth/register?inviteCode=" + inviteCode, in, 100, 100, out);
+            QRCodeHelper.createQRCodeTStream(registerAddress+"?inviteCode=" + inviteCode, in, 100, 100, out);
             out.flush();
         } catch (Throwable e) {
             log.error(String.format("获取二维码接口：%s", e.getMessage()));
