@@ -397,8 +397,8 @@ public class TransferBizImpl implements TransferBiz {
             financePlan.setLeftMoney(financePlan.getLeftMoney() + principal);
             financePlan.setRightMoney(financePlan.getRightMoney() - principal);
             //存在理财计划时通知后台
-            String resultStr = OKHttpHelper.postForm(adminDomain + "/api/open/FINANCE-plan/auto-match", new HashMap<>(), null);
-            log.info(" 理财计划债权转让复审 url:" + adminDomain + "/api/open/FINANCE-plan/auto-match");
+            String resultStr = OKHttpHelper.postForm(adminDomain + "/api/open/finance-plan/auto-match", new HashMap<>(), null);
+            log.info(" 理财计划债权转让复审 url:" + adminDomain + "/api/open/finance-plan/auto-match");
             log.info(" 理财计划债权转让复审 调用后台返回响应:" + resultStr);
 
         }

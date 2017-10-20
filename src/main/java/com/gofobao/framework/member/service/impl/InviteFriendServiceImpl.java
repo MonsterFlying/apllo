@@ -236,7 +236,7 @@ public class InviteFriendServiceImpl implements InviteFriendsService {
         String sql = "SELECT u FROM Users u WHERE  u.parentId=:userId AND ";
         sql += !voFriendsReq.getSource() ? "u.type!=:type" : "u.type=:type";
         Query query = entityManager.createQuery(sql.toString(), Users.class);
-        query.setParameter("type", "FINANCE");
+        query.setParameter("type", "finance");
         query.setParameter("userId", voFriendsReq.getUserId());
         query.setFirstResult(voFriendsReq.getPageIndex());
         query.setMaxResults(voFriendsReq.getPageSize() * voFriendsReq.getPageIndex());

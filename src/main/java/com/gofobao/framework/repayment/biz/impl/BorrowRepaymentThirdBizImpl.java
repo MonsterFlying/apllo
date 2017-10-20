@@ -245,8 +245,8 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
             BatchLendPayReq batchLendPayReq = new BatchLendPayReq();
             batchLendPayReq.setBatchNo(batchNo);
             batchLendPayReq.setAcqRes(GSON.toJson(acqResMap));
-            batchLendPayReq.setNotifyURL(javaDomain + "/pub/repayment/v2/third/batch/FINANCE/lendrepay/check");
-            batchLendPayReq.setRetNotifyURL(javaDomain + "/pub/repayment/v2/third/batch/FINANCE/lendrepay/run");
+            batchLendPayReq.setNotifyURL(javaDomain + "/pub/repayment/v2/third/batch/finance/lendrepay/check");
+            batchLendPayReq.setRetNotifyURL(javaDomain + "/pub/repayment/v2/third/batch/finance/lendrepay/run");
             batchLendPayReq.setTxAmount(StringHelper.formatDouble(sumTxAmount, 100, false));
             batchLendPayReq.setTxCounts(StringHelper.toString(lendPayList.size()));
             batchLendPayReq.setChannel(ChannelContant.HTML);

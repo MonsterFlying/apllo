@@ -416,13 +416,13 @@ public class UserBizImpl implements UserBiz {
 
         if (!adminState) { // 非员工登陆
             if (financeState) {
-                if (!user.getType().equals("FINANCE")) {  // 理财用户
+                if (!user.getType().equals(UsersContants.FINANCE)) {  // 理财用户
                     return ResponseEntity
                             .badRequest()
                             .body(VoBaseResp.error(VoBaseResp.ERROR, "系统拒绝了你的访问请求", VoBasicUserInfoResp.class));
                 }
             } else {
-                if (user.getType().equals("FINANCE")) {  // 金服用户
+                if (user.getType().equals(UsersContants.FINANCE)) {  // 金服用户
                     return ResponseEntity
                             .badRequest()
                             .body(VoBaseResp.error(VoBaseResp.ERROR, "系统拒绝了你的访问请求", VoBasicUserInfoResp.class));
