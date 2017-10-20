@@ -83,7 +83,7 @@ public class FinanceFriendsController {
         String content;
         VoViewShareRegiestRes res = VoBaseResp.ok("查询成功", VoViewShareRegiestRes.class);
         try {
-            Map<String, Object> resultMaps = brokerBounsBiz.shareRegister(userId,"FINANCE");
+            Map<String, Object> resultMaps = brokerBounsBiz.shareRegister(userId,"finance");
             res.setCodeUrl(resultMaps.get("QRCodeURL").toString());
             res.setTitle("江西银行存管,您值得信赖");
          //   res.setDesc("新手福利,投资即可发放红包+加息0.5%-3%");
