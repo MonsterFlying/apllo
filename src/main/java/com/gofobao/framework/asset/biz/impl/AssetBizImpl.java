@@ -1571,69 +1571,25 @@ public class AssetBizImpl implements AssetBiz {
         log.info("==================================");
         log.info(String.format("即信线下充值回调: 数据[%s]", bgData));
         log.info("==================================");
+
         try {
+            // 参数校验
             OfflineRechargeCallbackResponse offlineRechargeCallbackResponse = jixinManager.specialCallback(request,
                     new TypeToken<OfflineRechargeCallbackResponse>() {
                     });
-
             if (ObjectUtils.isEmpty(offlineRechargeCallbackResponse)) {
                 exceptionEmailHelper.sendErrorMessage("线下充值回调通知异常", bgData);
                 return ResponseEntity.ok("success");
             }
 
-            String accountId = offlineRechargeCallbackResponse.getAccountId(); // 当前账户类型
-            String orgSeqNo = offlineRechargeCallbackResponse.getOrgSeqNo();  // 原始流水号
-            String orgTxDate = offlineRechargeCallbackResponse.getOrgTxDate(); // 原始日期
-            String orgTxTime = offlineRechargeCallbackResponse.getOrgTxTime(); // 原始时间
-            String txAmount = offlineRechargeCallbackResponse.getTxAmount(); // 交易金额
-            String seqNo = String.format("%s%s%s", orgTxDate, orgTxTime, orgSeqNo);
-            RechargeDetailLog existsRechargeDatailLog = rechargeDetailLogService.findTopBySeqNo(seqNo);
-            if (!ObjectUtils.isEmpty(existsRechargeDatailLog)) {  // 重复调用
-                log.error(String.format("线下充值回调接口, 重复调用充值接口: 数据[%s]", bgData));
-                return ResponseEntity.ok("success");
-            }
-
-            UserThirdAccount userThirdAccount = userThirdAccountService.findByAccountId(accountId);
-            Preconditions.checkNotNull(userThirdAccount, "线下充值, 当前开户信息为空");
-            Long userId = userThirdAccount.getUserId();
-            Users users = userService.findByIdLock(userId);
-            Preconditions.checkNotNull(users, "会员记录不存在!");
-            Date nowDate = new Date();
-            Date synDate = DateHelper.stringToDate(orgTxDate, DateHelper.DATE_FORMAT_YMD_NUM);
-            // 写入线下充值日志
-            Double recordRecharge = new Double(MoneyHelper.multiply(txAmount, "100", 0));
-            Long money = recordRecharge.longValue();
-            RechargeDetailLog rechargeDetailLog = new RechargeDetailLog();
-            rechargeDetailLog.setUserId(userId);
-            rechargeDetailLog.setBankName(userThirdAccount.getBankName());
-            rechargeDetailLog.setCallbackTime(nowDate);
-            rechargeDetailLog.setCardNo(userThirdAccount.getCardNo());
-            rechargeDetailLog.setDel(0);
-            rechargeDetailLog.setState(1); // 充值成功
-            rechargeDetailLog.setMoney(money.longValue());
-            rechargeDetailLog.setRechargeChannel(1);  // 其他渠道
-            rechargeDetailLog.setRechargeType(1); // 线下充值
-            rechargeDetailLog.setSeqNo(seqNo);
-            rechargeDetailLog.setCreateTime(synDate);
-            rechargeDetailLog.setUpdateTime(nowDate);
-            rechargeDetailLogService.save(rechargeDetailLog);
-
-            AssetChange assetChange = new AssetChange();
-            assetChange.setType(AssetChangeTypeEnum.offlineRecharge);
-            assetChange.setUserId(userId);
-            assetChange.setMoney(money.longValue());
-            assetChange.setRemark(String.format("成功线下充值%s元", StringHelper.formatDouble(money.longValue() / 100D, true)));
-            assetChange.setSourceId(rechargeDetailLog.getId());
-            assetChange.setSeqNo(assetChangeProvider.getSeqNo());
-            assetChange.setGroupSeqNo(assetChangeProvider.getGroupSeqNo());
-            assetChangeProvider.commonAssetChange(assetChange);
-
+            Gson gson = new Gson();
+            Map<String, String> body = gson.fromJson(bgData, TypeTokenContants.MAP_ALL_STRING_TOKEN);
+            log.info("发送线下充值回调");
             // 触发用户充值
             MqConfig mqConfig = new MqConfig();
-            mqConfig.setTag(MqTagEnum.RECHARGE);
+            mqConfig.setTag(MqTagEnum.RECHARGE_CALLBACK);
             mqConfig.setQueue(MqQueueEnum.RABBITMQ_USER_ACTIVE);
             mqConfig.setSendTime(DateHelper.addSeconds(new Date(), 30));
-            ImmutableMap<String, String> body = ImmutableMap.of(MqConfig.MSG_ID, rechargeDetailLog.getId().toString());
             mqConfig.setMsg(body);
             mqHelper.convertAndSend(mqConfig);
         } catch (Exception e) {
