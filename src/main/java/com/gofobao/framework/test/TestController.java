@@ -208,7 +208,10 @@ public class TestController {
         request.setOrgOrderId(String.valueOf(orgOrderId));
         request.setAcqRes("1");
         CreditInvestQueryResp response = jixinManager.send(JixinTxCodeEnum.CREDIT_INVEST_QUERY, request, CreditInvestQueryResp.class);
-        System.out.println(response);
+        log.info("=========================================================================================");
+        log.info("即信用户债权查询:");
+        log.info("=========================================================================================");
+        log.info(GSON.toJson(response));
     }
 
     @ApiOperation("获取自动投标列表")
