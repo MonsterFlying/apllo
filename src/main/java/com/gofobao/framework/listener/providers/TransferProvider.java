@@ -422,12 +422,23 @@ public class TransferProvider {
         /* 债权转让管理费费率 */
         double transferFeeRate = BorrowHelper.getTransferFeeRate(transfer.getTimeLimit());
         long transferFee = new Double(MoneyHelper.round(MoneyHelper.multiply(transfer.getPrincipal(), transferFeeRate), 0)).longValue();  /* 转让管理费 */
-        for (TransferBuyLog transferBuyLog : transferBuyLogList) {
+        /**
+         * 本金之和
+         */
+        long sumPrincipal = 0;
+        for (int i = 0; i < transferBuyLogList.size(); i++) {
+            TransferBuyLog transferBuyLog = transferBuyLogList.get(i);
             /* 债权转让购买人存管账户信息 */
             tenderUserThirdAccount = userThirdAccountService.findByUserId(transferBuyLog.getUserId());
             Preconditions.checkNotNull(tenderUserThirdAccount, "投资人开户记录不存在!");
             //购买债权转让有效金额 本金
             long principal = new Double(MoneyHelper.round(transferBuyLog.getPrincipal(), 0)).longValue();
+            //判断是否是最后一期
+            if (i == (transferBuyLogList.size() - 1)) {
+                principal = transfer.getPrincipal() - sumPrincipal;
+            }
+            //累加总转让本金
+            sumPrincipal += sumPrincipal;
             //收取转让人债权转让管理费
             long tempTransferFee = new Double(MoneyHelper.round(MoneyHelper.multiply(transferBuyLog.getValidMoney() / new Double(transfer.getPrincipal()), transferFee), 0)).longValue();
             /**
@@ -441,7 +452,7 @@ public class TransferProvider {
             /**
              * 购买债权 买方需要付出多少钱  买入本金+当期应计利息
              */
-            long txAmount = transferBuyLog.getPrincipal() + transferBuyLog.getAlreadyInterest();
+            long txAmount = principal + transferBuyLog.getAlreadyInterest();
             //判断标的已在存管登记转让
             if (BooleanHelper.isTrue(transferBuyLog.getThirdTransferFlag())) {
                 continue;

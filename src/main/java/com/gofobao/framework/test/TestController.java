@@ -184,6 +184,8 @@ public class TestController {
     private TransferBuyLogService transferBuyLogService;
 
 
+    @RequestMapping("/pub/repair/transfer")
+    @Transactional
     public void repairTransfer() {
 
         List<CreditInvest> creditInvestList = new ArrayList<>();
