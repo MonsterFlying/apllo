@@ -1,7 +1,10 @@
 package com.gofobao.framework.security.filter;
 
+import com.alibaba.druid.support.http.util.IPAddress;
+import com.gofobao.framework.helper.IpHelper;
 import com.google.common.collect.Lists;
 import lombok.extern.slf4j.Slf4j;
+import org.omg.CosNaming.NamingContextExtPackage.AddressHelper;
 
 import javax.servlet.*;
 import javax.servlet.http.HttpServletRequest;
@@ -26,16 +29,20 @@ public class OtherOpenApiFilter implements Filter {
 
         HttpServletRequest httpServletRequest = (HttpServletRequest) servletRequest;
         String requestUrl = httpServletRequest.getRequestURI();
-      /*  String requestIp = httpServletRequest.getRemoteHost();
-        if (requestUrl.contains("starfire")) {
+        String requestIp =IpHelper.getIpAddress(httpServletRequest);
+        String passUrl = config.getInitParameter("passUrl");
+        /*if (requestUrl.contains("starfire")) {
+
             log.info("=============进入过滤器中==============");
             log.info("===========访问进入星火接口==============");
             String starFireStr = config.getInitParameter("starFireIps");
             List<String> ips = Lists.newArrayList(starFireStr.split(","));
             log.info("打印当前访问信息: ip" + requestIp + ",访问接口url:" + requestUrl);
             if (!ips.contains(requestIp)) {
-                log.info("当前ip非方访问星火接口");
-                return;
+                if (!requestUrl.contains(passUrl)) {
+                    log.info("当前ip非方访问星火接口");
+                    return;
+                }
             }
         } else if (requestUrl.contains("windmill")) {
             log.info("=============进入过滤器中==============");
@@ -44,10 +51,13 @@ public class OtherOpenApiFilter implements Filter {
             List<String> ips = Lists.newArrayList(windmillIps.split(","));
             log.info("打印当前访问信息: ip:" + requestIp + ",访问接口url:" + requestUrl);
             if (!ips.contains(requestIp)) {
-                log.info("当前ip非方访问风车接口");
-                return;
+                if (!requestUrl.contains(passUrl)) {
+                    log.info("当前ip非方访问风车接口");
+                    return;
+                }
             }
         }*/
+
         filterChain.doFilter(servletRequest, servletResponse);
         return;
     }

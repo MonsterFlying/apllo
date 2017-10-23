@@ -35,10 +35,12 @@ public class SecurityAdapter extends WebMvcConfigurerAdapter {
 
     @Bean
     public FilterRegistrationBean otherOpenApiFilter() {
+
         FilterRegistrationBean registration = new FilterRegistrationBean();
         registration.addUrlPatterns("/*");
         registration.addInitParameter("starFireIps",starFireIps);
         registration.addInitParameter("windmillIps",windmillIps);
+        registration.addInitParameter("passUrl","bind");
         registration.setFilter(new OtherOpenApiFilter());
         return registration;
     }

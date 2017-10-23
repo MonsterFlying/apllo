@@ -26,6 +26,7 @@ import com.gofobao.framework.helper.*;
 import com.gofobao.framework.integral.entity.Integral;
 import com.gofobao.framework.integral.service.IntegralService;
 import com.gofobao.framework.member.biz.UserBiz;
+import com.gofobao.framework.member.contants.UsersContants;
 import com.gofobao.framework.member.entity.*;
 import com.gofobao.framework.member.enums.RegisterSourceEnum;
 import com.gofobao.framework.member.service.*;
@@ -229,16 +230,12 @@ public class UserBizImpl implements UserBiz {
         users.setPassword(PasswordHelper.encodingPassword(voRegisterReq.getPassword())); // 设置密码
         users.setPayPassword("");
         users.setRealname("");
-        //用户类型  用户用户从那个端注册就是什么类型用户
-        users.setType(voRegisterReq.getType());
-
-     /*   if (parentId != 0) {
-            //当前用户类型根据邀请人的类型一致
-            Users parentUser = userService.findById(parentId);
-            users.setType(parentUser.getType());
-        } else {
+        //如果是
+        if(voRegisterReq.getSourceType().equals(UsersContants.TYPE_SOURCE_FINANCE)){
+            users.setType(UsersContants.FINANCE);
+        }else{
             users.setType(voRegisterReq.getType());
-        }*/
+        }
         users.setBranch(0);
         users.setSource(channel);
         users.setInviteCode(GenerateInviteCodeHelper.getRandomCode()); // 生成用户邀请码
@@ -419,13 +416,13 @@ public class UserBizImpl implements UserBiz {
 
         if (!adminState) { // 非员工登陆
             if (financeState) {
-                if (!user.getType().equals("finance")) {  // 理财用户
+                if (!user.getType().equals(UsersContants.FINANCE)) {  // 理财用户
                     return ResponseEntity
                             .badRequest()
                             .body(VoBaseResp.error(VoBaseResp.ERROR, "系统拒绝了你的访问请求", VoBasicUserInfoResp.class));
                 }
             } else {
-                if (user.getType().equals("finance")) {  // 金服用户
+                if (user.getType().equals(UsersContants.FINANCE)) {  // 金服用户
                     return ResponseEntity
                             .badRequest()
                             .body(VoBaseResp.error(VoBaseResp.ERROR, "系统拒绝了你的访问请求", VoBasicUserInfoResp.class));
