@@ -70,7 +70,11 @@ public class Jwtintercepter extends HandlerInterceptorAdapter {
                 throw new Exception("系统拒绝当前请求");
             }
         } else if (url.contains("/finance/")) {  // 理财用户
-            if (!"finance".equals(type)) {
+            String branch = "branch";
+            String finance = "finance";
+            if (url.contains(branch) && !type.contains(finance)) {
+                return true;
+            } else if (!finance.equals(type)) {
                 throw new Exception("系统拒绝当前请求");
             }
         } else {  // 金服用户
