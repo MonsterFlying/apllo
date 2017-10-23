@@ -28,6 +28,7 @@ public class WithDrawRequest extends JixinBaseRequest {
     private String cardBankProvince ;
     private String cardBankCity ;
     private String forgotPwdUrl ;
+    private String businessAccountIdFlag ;
     private String retUrl ;
     private String notifyUrl ;
     private String acqRes ;
