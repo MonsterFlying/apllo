@@ -2031,14 +2031,15 @@ public class RepaymentBizImpl implements RepaymentBiz {
             BatchAssetChangeItem batchAssetChangeItem = new BatchAssetChangeItem();
             batchAssetChangeItem.setBatchAssetChangeId(batchAssetChangeId);
             batchAssetChangeItem.setState(0);
-            if (advance) {//判断是否是垫付
+            if (tender.getType().intValue() == 1) {
+                batchAssetChangeItem.setType(AssetChangeTypeEnum.financeReceivedPayments.getLocalType());  // 名义借款人收到垫付还款
+                batchAssetChangeItem.setAssetType(AssetTypeContants.finance);
+            }else if (advance) {//判断是否是垫付
                 batchAssetChangeItem.setType(AssetChangeTypeEnum.compensatoryReceivedPayments.getLocalType());  // 名义借款人收到垫付还款
             } else {
                 batchAssetChangeItem.setType(AssetChangeTypeEnum.receivedPayments.getLocalType()); //借款人收到还款
             }
-            if (tender.getType().intValue() == 1) {
-                batchAssetChangeItem.setAssetType(AssetTypeContants.finance);
-            }
+
             batchAssetChangeItem.setUserId(repayAssetChange.getUserId());
             batchAssetChangeItem.setForUserId(repayUserId);  // 还款人
             batchAssetChangeItem.setMoney(repayAssetChange.getPrincipal() + repayAssetChange.getInterest());   // 本金加利息
@@ -2112,23 +2113,25 @@ public class RepaymentBizImpl implements RepaymentBiz {
             }
 
             //扣除投资人待收
-            batchAssetChangeItem = new BatchAssetChangeItem();
-            batchAssetChangeItem.setBatchAssetChangeId(batchAssetChangeId);
-            batchAssetChangeItem.setState(0);
-            batchAssetChangeItem.setType(AssetChangeTypeEnum.collectionSub.getLocalType());  //  扣除投资人待收
-            if (tender.getType().intValue() == 1) {
-                batchAssetChangeItem.setAssetType(AssetTypeContants.finance);
+            if (tender.getType().intValue() != 1) {
+                batchAssetChangeItem = new BatchAssetChangeItem();
+                batchAssetChangeItem.setBatchAssetChangeId(batchAssetChangeId);
+                batchAssetChangeItem.setState(0);
+                batchAssetChangeItem.setType(AssetChangeTypeEnum.collectionSub.getLocalType());  //  扣除投资人待收
+                if (tender.getType().intValue() == 1) {
+                    batchAssetChangeItem.setAssetType(AssetTypeContants.finance);
+                }
+                batchAssetChangeItem.setUserId(repayAssetChange.getUserId());
+                batchAssetChangeItem.setMoney(borrowCollection.getCollectionMoney());
+                batchAssetChangeItem.setInterest(borrowCollection.getInterest());
+                batchAssetChangeItem.setRemark(String.format("收到客户对[%s]借款的还款,扣除待收", borrow.getName()));
+                batchAssetChangeItem.setCreatedAt(nowDate);
+                batchAssetChangeItem.setUpdatedAt(nowDate);
+                batchAssetChangeItem.setSourceId(borrowRepayment.getId());
+                batchAssetChangeItem.setSeqNo(assetChangeProvider.getSeqNo());
+                batchAssetChangeItem.setGroupSeqNo(groupSeqNo);
+                batchAssetChangeItemService.save(batchAssetChangeItem);
             }
-            batchAssetChangeItem.setUserId(repayAssetChange.getUserId());
-            batchAssetChangeItem.setMoney(borrowCollection.getCollectionMoney());
-            batchAssetChangeItem.setInterest(borrowCollection.getInterest());
-            batchAssetChangeItem.setRemark(String.format("收到客户对[%s]借款的还款,扣除待收", borrow.getName()));
-            batchAssetChangeItem.setCreatedAt(nowDate);
-            batchAssetChangeItem.setUpdatedAt(nowDate);
-            batchAssetChangeItem.setSourceId(borrowRepayment.getId());
-            batchAssetChangeItem.setSeqNo(assetChangeProvider.getSeqNo());
-            batchAssetChangeItem.setGroupSeqNo(groupSeqNo);
-            batchAssetChangeItemService.save(batchAssetChangeItem);
         }
         return repayMoney;
     }

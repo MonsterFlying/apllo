@@ -3,6 +3,12 @@ package com.gofobao.framework.common.assets;
 
 public enum AssetChangeTypeEnum {
 
+
+    /**
+     * 理财计划到期收回本息
+     */
+    financeReceivedPayments("理财计划回款", "financeReceivedPayments", "7781", "add@financePlanMoney", "", "D"),
+
     /**
      * 投资人到期收回本息
      */

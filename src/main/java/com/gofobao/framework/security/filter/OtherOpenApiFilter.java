@@ -26,7 +26,7 @@ public class OtherOpenApiFilter implements Filter {
 
         HttpServletRequest httpServletRequest = (HttpServletRequest) servletRequest;
         String requestUrl = httpServletRequest.getRequestURI();
-        String requestIp = httpServletRequest.getRemoteHost();
+      /*  String requestIp = httpServletRequest.getRemoteHost();
         if (requestUrl.contains("starfire")) {
             log.info("=============进入过滤器中==============");
             log.info("===========访问进入星火接口==============");
@@ -47,7 +47,7 @@ public class OtherOpenApiFilter implements Filter {
                 log.info("当前ip非方访问风车接口");
                 return;
             }
-        }
+        }*/
         filterChain.doFilter(servletRequest, servletResponse);
         return;
     }
