@@ -183,6 +183,159 @@ public class TestController {
     @Autowired
     private TransferBuyLogService transferBuyLogService;
 
+    /**
+     * 新增子级标的
+     *
+     * @param nowDate
+     * @param transfer
+     * @param transferBuyLogList
+     * @return
+     */
+    public List<Tender> addChildTender(Date nowDate, Transfer transfer, Tender parentTender, List<TransferBuyLog> transferBuyLogList) {
+        //生成债权记录与回款记录
+        List<Tender> childTenderList = new ArrayList<>();
+        transferBuyLogList.stream().forEach(transferBuyLog -> {
+            Tender childTender = new Tender();
+            UserThirdAccount buyUserThirdAccount = userThirdAccountService.findByUserId(transferBuyLog.getUserId());
+
+            childTender.setUserId(transferBuyLog.getUserId());
+            childTender.setStatus(1);
+            childTender.setType(transferBuyLog.getType());
+            childTender.setBorrowId(transfer.getBorrowId());
+            childTender.setSource(transferBuyLog.getSource());
+            childTender.setIsAuto(transferBuyLog.getAuto());
+            childTender.setAutoOrder(transferBuyLog.getAutoOrder());
+            childTender.setMoney(transferBuyLog.getBuyMoney());
+            childTender.setValidMoney(transferBuyLog.getPrincipal());
+            childTender.setFinanceBuyId(transferBuyLog.getFinanceBuyId());
+            childTender.setTransferFlag(0);
+            childTender.setTUserId(buyUserThirdAccount.getUserId());
+            childTender.setState(2);
+            childTender.setParentId(parentTender.getId());
+            childTender.setTransferBuyId(transferBuyLog.getId());
+            childTender.setAlreadyInterest(transferBuyLog.getAlreadyInterest());
+            childTender.setThirdTenderOrderId(transferBuyLog.getThirdTransferOrderId());
+            childTender.setAuthCode(transferBuyLog.getTransferAuthCode());
+            childTender.setCreatedAt(nowDate);
+            childTender.setUpdatedAt(nowDate);
+            childTenderList.add(childTender);
+
+        });
+        //保存生成投标记录
+        tenderService.save(childTenderList);
+        return childTenderList;
+    }
+
+    /**
+     * 生成子级债权回款记录，标注老债权回款已经转出
+     *
+     * @param nowDate
+     * @param transfer
+     * @param parentBorrow
+     * @param childTenderList
+     */
+    public List<BorrowCollection> addChildTenderCollection(Date nowDate, Transfer transfer, Borrow parentBorrow, List<Tender> childTenderList) throws Exception {
+        List<BorrowCollection> childTenderCollectionList = new ArrayList<>();/* 债权子记录回款记录 */
+        String borrowCollectionIds = transfer.getBorrowCollectionIds();
+        //生成子级债权回款记录，标注老债权回款已经转出
+        Specification<BorrowCollection> bcs = null;
+        if (transfer.getIsAll()) {
+            bcs = Specifications
+                    .<BorrowCollection>and()
+                    .eq("tenderId", transfer.getTenderId())
+                    .eq("status", 0)
+                    .build();
+        } else {
+            bcs = Specifications
+                    .<BorrowCollection>and()
+                    .eq("tenderId", transfer.getTenderId())
+                    .eq("id", borrowCollectionIds.split(","))
+                    .eq("status", 0)
+                    .build();
+        }
+        List<BorrowCollection> borrowCollectionList = borrowCollectionService.findList(bcs);/* 债权转让原投资回款记录 */
+        long transferInterest = borrowCollectionList.stream().mapToLong(BorrowCollection::getInterest).sum();/* 债权转让总利息 */
+        Date repayAt = transfer.getRepayAt();/* 原借款下一期还款日期 */
+        Date startAt = null;/* 计息开始时间 */
+        if (parentBorrow.getRepayFashion() == 1) {
+            startAt = DateHelper.subDays(repayAt, parentBorrow.getTimeLimit());
+        } else if (parentBorrow.getRepayFashion() == 0 || parentBorrow.getRepayFashion() == 2) {
+            startAt = DateHelper.subMonths(repayAt, 1);
+        }
+
+        long sumCollectionInterest = 0;//总回款利息
+        for (int j = 0; j < childTenderList.size(); j++) {
+            Tender childTender = childTenderList.get(j);/* 购买债权转让子投资记录 */
+            //生成购买债权转让新的回款记录
+            BorrowCalculatorHelper borrowCalculatorHelper = new BorrowCalculatorHelper(
+                    childTender.getValidMoney().doubleValue(),
+                    transfer.getApr().doubleValue(),
+                    transfer.getTimeLimit(),
+                    startAt);
+            Map<String, Object> rsMap = borrowCalculatorHelper.simpleCount(parentBorrow.getRepayFashion());
+            List<Map<String, Object>> repayDetailList = (List<Map<String, Object>>) rsMap.get("repayDetailList");
+            Preconditions.checkState(!CollectionUtils.isEmpty(repayDetailList), "生成用户回款计划开始: 计划生成为空");
+            BorrowCollection borrowCollection;
+            long collectionMoney = 0;
+            long collectionInterest = 0;
+            int startOrder = borrowCollectionList.get(0).getOrder();/* 获取开始转让期数,期数下标从0开始 */
+            for (int i = 0; i < repayDetailList.size(); i++) {
+                borrowCollection = new BorrowCollection();
+                Map<String, Object> repayDetailMap = repayDetailList.get(i);
+                collectionMoney += new Double(NumberHelper.toDouble(repayDetailMap.get("repayMoney"))).longValue();
+                long interest = new Double(NumberHelper.toDouble(repayDetailMap.get("interest"))).longValue();
+                collectionInterest += interest;
+                sumCollectionInterest += interest;
+                //最后一个购买债权转让的最后一期回款，需要把还款溢出的利息补给新的回款记录
+                if ((j == childTenderList.size() - 1) && (i == repayDetailList.size() - 1)) {
+                    interest += transferInterest - sumCollectionInterest;/* 新的回款利息添加溢出的利息 */
+                }
+
+                borrowCollection.setTenderId(childTender.getId());
+                borrowCollection.setStatus(0);
+                borrowCollection.setOrder(startOrder++);
+                borrowCollection.setUserId(childTender.getUserId());
+                borrowCollection.setStartAt(i > 0 ? DateHelper.stringToDate(StringHelper.toString(repayDetailList.get(i - 1).get("repayAt"))) : startAt);
+                borrowCollection.setStartAtYes(i > 0 ? DateHelper.stringToDate(StringHelper.toString(repayDetailList.get(i - 1).get("repayAt"))) : nowDate);
+                borrowCollection.setCollectionAt(DateHelper.stringToDate(StringHelper.toString(repayDetailMap.get("repayAt"))));
+                borrowCollection.setCollectionAtYes(DateHelper.stringToDate(StringHelper.toString(repayDetailMap.get("repayAt"))));
+                borrowCollection.setCollectionMoney(NumberHelper.toLong(repayDetailMap.get("repayMoney")));
+                borrowCollection.setPrincipal(NumberHelper.toLong(repayDetailMap.get("principal")));
+                borrowCollection.setInterest(interest);
+                borrowCollection.setCreatedAt(nowDate);
+                borrowCollection.setUpdatedAt(nowDate);
+                borrowCollection.setCollectionMoneyYes(0l);
+                borrowCollection.setLateInterest(0l);
+                borrowCollection.setLateDays(0);
+                borrowCollection.setBorrowId(parentBorrow.getId());
+                childTenderCollectionList.add(borrowCollection);
+            }
+            borrowCollectionService.save(childTenderCollectionList);
+
+        }
+
+        return childTenderCollectionList;
+    }
+
+    @RequestMapping("/pub/generate/tender")
+    @Transactional
+    public void generateTender() {
+        Transfer transfer = transferService.findById(317);
+        Borrow borrow = borrowService.findById(transfer.getBorrowId());
+        Tender tender = tenderService.findById(transfer.getTenderId());
+        Specification<TransferBuyLog> tbls = Specifications
+                .<TransferBuyLog>and()
+                .eq("transferId", 317)
+                .eq("state", 1)
+                .build();
+        List<TransferBuyLog> transferBuyLogList = transferBuyLogService.findList(tbls);
+        List<Tender> childTender = addChildTender(DateHelper.stringToDate("2017-10-19 13:37:53"), transfer, tender, transferBuyLogList);
+        try {
+            addChildTenderCollection(DateHelper.stringToDate("2017-10-19 13:37:53"), transfer, borrow, childTender);
+        } catch (Exception e) {
+            log.error("異常!");
+        }
+    }
 
     @RequestMapping("/pub/repair/transfer")
     @Transactional
