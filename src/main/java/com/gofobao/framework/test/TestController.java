@@ -347,7 +347,7 @@ public class TestController {
         CreditInvest creditInvest = new CreditInvest();
         creditInvest.setAccountId("6212462190000722558");
         creditInvest.setOrderId(transferOrderId);
-        creditInvest.setTxAmount("3.02");
+        creditInvest.setTxAmount("0");
         creditInvest.setTxFee("0");
         creditInvest.setTsfAmount("3.02");
         creditInvest.setForAccountId("6212462190000109095");
