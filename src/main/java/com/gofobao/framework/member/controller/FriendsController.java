@@ -77,9 +77,9 @@ public class FriendsController {
             Map<String, Object> resultMaps = brokerBounsBiz.shareRegister(userId,"finance");
             res.setCodeUrl(resultMaps.get("QRCodeURL").toString());
             res.setTitle("江西银行存管,您值得信赖");
-            //   res.setDesc("新手福利,投资即可发放红包+加息0.5%-3%");
+            res.setDesc("掌上理财,畅享生活,预期年华30倍银行活期收益。");
             res.setRequestHtmlUrl(resultMaps.get("inviteUrl").toString());
-            res.setIcon(javaDomain + "/images/bankLogo/logo.png");
+            res.setIcon(javaDomain + "/images/shareLogo/finance_logo.png");
             content = thymeleafHelper.build("user/financeFriends", resultMaps);
             res.setHtml(content);
         } catch (Throwable e) {
