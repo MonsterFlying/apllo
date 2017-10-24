@@ -739,6 +739,7 @@ public class FinancePlanBizImpl implements FinancePlanBiz {
         Specification<FinancePlan> specification = Specifications.<FinancePlan>and()
                 .notIn("status", statusArray.toArray())
                 .eq("type", 1)
+                .eq("status", 1)
                 .build();
         List<FinancePlan> financePlans = financePlanService.findList(specification, new PageRequest(page.getPageIndex(), page.getPageSize(), new Sort(Sort.Direction.DESC, "id")));
 

@@ -364,7 +364,7 @@ public class TestController {
         //调用存管批次债权转让接口
         BatchCreditInvestReq request = new BatchCreditInvestReq();
         request.setBatchNo(batchNo);
-        request.setTxAmount("3.02");
+        request.setTxAmount("0");
         request.setTxCounts(StringHelper.toString(creditInvestList.size()));
         request.setSubPacks(GSON.toJson(creditInvestList));
         request.setAcqRes(GSON.toJson(acqResMap));
