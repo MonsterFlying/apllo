@@ -160,7 +160,7 @@ public class BrokerBounsBizImpl implements BrokerBounsBiz {
         paramMaps.put("invitePhone", user.getPhone());
         String inviteUrl="";
         String qRCodeURL="";
-        String registerAddress="http://find.financeplan.gofobao.com/#/register";
+        String registerAddress="http://find.financeplan.gofobao.com/#/register?";
         //理财邀请
         if(type.equals(UsersContants.FINANCE)){
             qRCodeURL= javaDomain + "/pub/invite/finance/qrcode/getInviteFriendQRCode?inviteCode=";

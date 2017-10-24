@@ -513,6 +513,7 @@ public class NewEveBizImpl implements NewEveBiz {
 
 
     @Override
+    @Deprecated
     public void audit(String date) {
         String localFileName = String.format("%s-平台资金流水", date);  // 本地文件名称
         String remoteFileName = String.format("%s-即信资金流水", date); // 即信平台流水名称
