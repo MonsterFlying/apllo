@@ -33,7 +33,7 @@ public class FinanceInvestController {
      */
     @ApiOperation("pc:回款中列表")
     @GetMapping("v2/backMoney/list/{pageIndex}/{pageSize}")
-    public ResponseEntity<VoViewBackMoneyListWarpRes> pcBackMoneyList(@RequestAttribute(SecurityContants.USERID_KEY) Long userId,
+    public ResponseEntity<VoViewFinanceBackMoneyListWarpRes> pcBackMoneyList(@RequestAttribute(SecurityContants.USERID_KEY) Long userId,
                                                                     @PathVariable Integer pageIndex,
                                                                     @PathVariable Integer pageSize) {
         VoFinanceInvestListReq voFinanceInvestListReq = new VoFinanceInvestListReq();
@@ -47,7 +47,7 @@ public class FinanceInvestController {
 
     @ApiOperation("pc:投标中列表")
     @GetMapping("v2/bidding/list/{pageIndex}/{pageSize}")
-    public ResponseEntity<VoViewBiddingListWrapRes> pcBiddingList(@RequestAttribute(SecurityContants.USERID_KEY) Long userId,
+    public ResponseEntity<VoViewFinanceBiddingListWrapRes> pcBiddingList(@RequestAttribute(SecurityContants.USERID_KEY) Long userId,
                                                                 @PathVariable Integer pageIndex,
                                                                 @PathVariable Integer pageSize) {
         VoFinanceInvestListReq voFinanceInvestListReq = new VoFinanceInvestListReq();
@@ -59,7 +59,7 @@ public class FinanceInvestController {
 
     @ApiOperation("pc:已结清列表")
     @GetMapping("v2/settle/list/{pageIndex}/{pageSize}")
-    public ResponseEntity<VoViewSettleWarpRes> pcSettleList(@RequestAttribute(SecurityContants.USERID_KEY) Long userId,
+    public ResponseEntity<VoViewFinanceSettleWarpRes> pcSettleList(@RequestAttribute(SecurityContants.USERID_KEY) Long userId,
                                                           @PathVariable Integer pageIndex,
                                                           @PathVariable Integer pageSize) {
         VoFinanceInvestListReq voFinanceInvestListReq = new VoFinanceInvestListReq();

@@ -20,21 +20,21 @@ public interface MyFinanceInvestBiz {
      * @param voInvestListReq
      * @return
      */
-    ResponseEntity<VoViewBackMoneyListWarpRes> backMoneyList(VoFinanceInvestListReq voInvestListReq);
+    ResponseEntity<VoViewFinanceBackMoneyListWarpRes> backMoneyList(VoFinanceInvestListReq voInvestListReq);
 
     /**
      * 投标中列表
      * @param voInvestListReq
      * @return
      */
-    ResponseEntity<VoViewBiddingListWrapRes> biddingList(VoFinanceInvestListReq voInvestListReq);
+    ResponseEntity<VoViewFinanceBiddingListWrapRes> biddingList(VoFinanceInvestListReq voInvestListReq);
 
     /**
      * 已结清
      * @param voInvestListReq
      * @return
      */
-    ResponseEntity<VoViewSettleWarpRes> settleList(VoFinanceInvestListReq voInvestListReq);
+    ResponseEntity<VoViewFinanceSettleWarpRes> settleList(VoFinanceInvestListReq voInvestListReq);
 
 
     /**
