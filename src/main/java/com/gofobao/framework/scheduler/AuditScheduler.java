@@ -20,6 +20,7 @@ import org.springframework.stereotype.Component;
  */
 @Component
 @Slf4j
+@Deprecated
 public class AuditScheduler {
     @Autowired
     JixinTxDateHelper jixinTxDateHelper;
@@ -47,7 +48,7 @@ public class AuditScheduler {
         log.info("=======================================");
 
         // 进行系统审计
-        newEveBiz.audit(date) ;
+        // newEveBiz.audit(date) ;
     }
 
 }

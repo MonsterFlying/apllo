@@ -186,7 +186,7 @@ public class FinanceInvestServiceImpl implements FinanceInvestService {
         financePlanBuyerList.stream().forEach(p -> {
             VoViewFinanceBiddingRes voViewFinanceBiddingRes = new VoViewFinanceBiddingRes();
             FinancePlan financePlan = financePlanMap.get(p.getPlanId());
-            voViewFinanceBiddingRes.setTenderId(p.getId());
+            voViewFinanceBiddingRes.setBuyerId(p.getId());
             Double aDouble = financePlan.getMoneyYes().doubleValue() / financePlan.getMoney().doubleValue();
             voViewFinanceBiddingRes.setSpend(new Double(StringHelper.formatDouble(aDouble, false)));
             voViewFinanceBiddingRes.setCreatedAt(DateHelper.dateToString(p.getCreatedAt()));
@@ -205,7 +205,7 @@ public class FinanceInvestServiceImpl implements FinanceInvestService {
             voViewFinanceBiddingRes.setApr(StringHelper.formatMon(apr / 100D));
             voViewFinanceBiddingRes.setMoney(StringHelper.formatMon(validMoney / 100D));
             voViewFinanceBiddingRes.setBorrowName(financePlan.getName());
-            voViewFinanceBiddingRes.setTenderId(p.getId());
+            voViewFinanceBiddingRes.setBuyerId(p.getId());
             voViewFinanceBiddingRes.setPlanId(financePlan.getId());
             voViewFinanceBiddingResList.add(voViewFinanceBiddingRes);
         });
@@ -272,7 +272,7 @@ public class FinanceInvestServiceImpl implements FinanceInvestService {
             voViewFinanceSettleRes.setCreatedAt(DateHelper.dateToString(p.getCreatedAt()));
             voViewFinanceSettleRes.setCollectionMoneyYes(StringHelper.formatMon(collectionMoneyYes / 100D));
             voViewFinanceSettleRes.setCloseAt(DateHelper.dateToString(p.getUpdatedAt(), DateHelper.DATE_FORMAT_YMD));
-            voViewFinanceSettleRes.setTenderId(p.getId());
+            voViewFinanceSettleRes.setBuyerId(p.getId());
             voViewFinanceSettleRes.setPlanId(financePlan.getId());
             voViewFinanceSettleRes.setRemark("正常结清");
             voViewFinanceSettleResArrayList.add(voViewFinanceSettleRes);

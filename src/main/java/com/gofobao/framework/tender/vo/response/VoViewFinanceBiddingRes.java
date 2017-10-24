@@ -29,8 +29,8 @@ public class VoViewFinanceBiddingRes {
     @ApiModelProperty("年化利率")
     private String  apr;
 
-    @ApiModelProperty("tenderId")
-    private Long tenderId;
+    @ApiModelProperty("buyerId")
+    private Long buyerId;
 
     @ApiModelProperty("进度")
     private Double spend;
