@@ -1750,6 +1750,7 @@ public class BorrowBizImpl implements BorrowBiz {
      * @param borrow
      */
     private void fillStatisticByBorrowReview(Borrow borrow, List<BorrowRepayment> borrowRepaymentList) {
+        log.info(String.format("放款统计增加待收:borrowId->%s", borrow.getId()));
         Statistic statistic = new Statistic();
         if (CollectionUtils.isEmpty(borrowRepaymentList)) {//查询当前借款 还款记录
             return;

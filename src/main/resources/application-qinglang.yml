@@ -80,7 +80,7 @@ jixin: #银行存管
   p12-path:  # p12证书路径
 gofobao:
   dev: true # 开发环境
-  javaDomain:  http://lang.hk1.mofasuidao.cn
+  javaDomain:  192.168.1.124:8080
   h5Domain:  http://18164xy341.51mypc.cn
   imageDomain : http://www.gofobao.com
   pcDomain: http://gofobao.55555.io
