@@ -6,6 +6,7 @@ import com.gofobao.framework.system.repository.ApplicationRepository;
 import com.gofobao.framework.system.service.ApplicationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Example;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Component;
 
@@ -29,6 +30,6 @@ public class ApplicationServiceImpl implements ApplicationService {
     @Override
     public List<Application> list(Example example) {
 
-        return applicationRepository.findAll(example);
+        return applicationRepository.findAll(example,new Sort(Sort.Direction.DESC,"id"));
     }
 }

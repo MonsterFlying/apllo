@@ -21,9 +21,8 @@ public class ApplicationVersionServiceImpl implements ApplicationVersionService 
     private ApplicationVersionRepository applicationVersionRepository;
 
 
-
     @Override
-    public List<ApplicationVersion> list(Example example,Sort sort) {
-        return null;
+    public List<ApplicationVersion> list(Example example, Sort sort) {
+        return applicationVersionRepository.findAll(example, sort);
     }
 }

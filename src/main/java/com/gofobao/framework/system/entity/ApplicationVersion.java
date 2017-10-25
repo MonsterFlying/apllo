@@ -24,7 +24,7 @@ public class ApplicationVersion {
 
     private String viewVersion;
 
-    private String force;
+    private Integer force;
 
     private String applicationUrl;
 
