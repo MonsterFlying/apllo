@@ -29,7 +29,6 @@ public class StatisticServiceImpl implements StatisticService {
     @Autowired
     DictItemService dictItemService;
 
-    DictValueService dictValueService;
 
     @Override
     @Lock(LockModeType.PESSIMISTIC_WRITE)
