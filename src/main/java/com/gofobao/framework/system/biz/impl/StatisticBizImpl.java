@@ -162,6 +162,7 @@ public class StatisticBizImpl implements StatisticBiz {
             Preconditions.checkNotNull(changeEntity, "StatisticBizImpl.caculate: changeEntity is empty");
             log.info(String.format("全站统计增加: %s", GSON.toJson(changeEntity)));
             Statistic statistic = statisticService.findLast();
+            log.info(String.format("全站统计更新前数据：%s", GSON.toJson(statistic)));
             Preconditions.checkNotNull(statistic, "StatisticBizImpl.caculate: statistic is empty");
             MultiCaculateHelper.caculate(Statistic.class, statistic, changeEntity);
             statistic.setUpdatedAt(new Date());
