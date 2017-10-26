@@ -291,7 +291,7 @@ public enum AssetChangeTypeEnum {
     /**
      * 小额提现手续费
      */
-    smallCashFee("小额提现手续费", "smallCashFee", "4616", "sub@useMoney", "add@expenditureFee", "C"),
+    smallCashFee("小额提现手续费", "smallCashFee", "4820", "sub@useMoney", "add@expenditureFee", "C"),
 
     /**
      * 大额提现手续费
@@ -306,7 +306,7 @@ public enum AssetChangeTypeEnum {
     /**
      * 小额提现
      */
-    smallCash("小额提现", "smallCash", "2616", "sub@useMoney", "add@cashTotal", "C"),
+    smallCash("小额提现", "smallCash", "2820", "sub@useMoney", "add@cashTotal", "C"),
 
     /**
      * 大额提现
