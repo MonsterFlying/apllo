@@ -933,8 +933,6 @@ public class TransferBizImpl implements TransferBiz {
                 borrowCollection.setLateDays(0);
                 borrowCollection.setBorrowId(parentBorrow.getId());
                 childTenderCollectionList.add(borrowCollection);
-
-
             }
             borrowCollectionService.save(childTenderCollectionList);
 

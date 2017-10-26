@@ -206,7 +206,7 @@ public class FinancePlanProvider {
         batchAssetChangeItem.setBatchAssetChangeId(batchAssetChangeId);
         batchAssetChangeItem.setState(0);
         //理财计划债权转让是否是赎回债权
-        long transferPrincipal = transferBuyLogList.stream().filter(transferBuyLog -> transferBuyLog.getState()==1).mapToLong(TransferBuyLog::getPrincipal).sum();
+        long transferPrincipal = transferBuyLogList.stream().filter(transferBuyLog -> transferBuyLog.getState() == 1).mapToLong(TransferBuyLog::getPrincipal).sum();
         if (repurchaseFlag) {
             batchAssetChangeItem.setType(AssetChangeTypeEnum.InvestorsFinanceBatchSellBonds.getLocalType());  // 理财计划购买人出售债权
             batchAssetChangeItem.setAssetType(AssetTypeContants.finance);
@@ -268,7 +268,10 @@ public class FinancePlanProvider {
         UserThirdAccount tenderUserThirdAccount = null;
         // 全部有效投标金额
         int sumAmount = 0;
-        for (TransferBuyLog transferBuyLog : transferBuyLogList) {
+        // 全部本金之和
+        int sumPrincipal = 0;
+        for (int i = 0; i < transferBuyLogList.size(); i++) {
+            TransferBuyLog transferBuyLog = transferBuyLogList.get(i);
             double txFee = 0;
             /* 债权转让购买人存管账户信息 */
             tenderUserThirdAccount = userThirdAccountService.findByUserId(transferBuyLog.getUserId());
@@ -277,6 +280,14 @@ public class FinancePlanProvider {
             double txAmount = MoneyHelper.round(transferBuyLog.getValidMoney(), 0);
             // 全部有效投标金额
             sumAmount += txAmount;
+            //购买债权转让有效金额 本金
+            long principal = new Double(MoneyHelper.round(transferBuyLog.getPrincipal(), 0)).longValue();
+            //判断是否是最后一期
+            if (i == (transferBuyLogList.size() - 1)) {
+                principal = transfer.getPrincipal() - sumPrincipal;
+            }
+            //累加全部转让本金
+            sumPrincipal += sumPrincipal;
             //判断标的已在存管登记转让
             if (BooleanHelper.isTrue(transferBuyLog.getThirdTransferFlag())) {
                 continue;
@@ -288,7 +299,7 @@ public class FinancePlanProvider {
             creditInvest.setOrderId(transferOrderId);
             creditInvest.setTxAmount(StringHelper.formatDouble(txAmount, 100, false));
             creditInvest.setTxFee(StringHelper.formatDouble(txFee, 100, false));
-            creditInvest.setTsfAmount(StringHelper.formatDouble(transferBuyLog.getPrincipal(), 100, false));
+            creditInvest.setTsfAmount(StringHelper.formatDouble(principal, 100, false));
             creditInvest.setForAccountId(transferUserThirdAccount.getAccountId());
             creditInvest.setOrgOrderId(parentTender.getThirdTenderOrderId());
             creditInvest.setOrgTxAmount(StringHelper.formatDouble(parentTender.getValidMoney(), 100, false));

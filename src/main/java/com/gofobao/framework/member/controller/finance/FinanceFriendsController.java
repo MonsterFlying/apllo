@@ -86,9 +86,9 @@ public class FinanceFriendsController {
             Map<String, Object> resultMaps = brokerBounsBiz.shareRegister(userId,"finance");
             res.setCodeUrl(resultMaps.get("QRCodeURL").toString());
             res.setTitle("江西银行存管,您值得信赖");
-         //   res.setDesc("新手福利,投资即可发放红包+加息0.5%-3%");
+            res.setDesc("掌上理财,畅享生活,预期年化30倍银行活期收益。");
             res.setRequestHtmlUrl(resultMaps.get("inviteUrl").toString());
-            res.setIcon(javaDomain + "/images/bankLogo/logo.png");
+            res.setIcon(javaDomain + "/images/shareLogo/finance_logo.png");
             content = thymeleafHelper.build("user/financeFriends", resultMaps);
             res.setHtml(content);
         } catch (Throwable e) {
@@ -120,7 +120,7 @@ public class FinanceFriendsController {
         response.setHeader("Cache-Control", "no-store, no-cache, must-revalidate");  // Set standard HTTP/1.1 no-cache headers.
         response.addHeader("Cache-Control", "post-check=0, pre-check=0"); // Set IE extended HTTP/1.1 no-cache headers (use addHeader).
         response.setHeader("Pragma", "no-cache");  // Set standard HTTP/1.0 no-cache header.
-        response.setContentType("image/png"); // return a jpeg
+        response.setContentType("image/jpeg"); // return a jpeg
         String registerAddress="http://find.financeplan.gofobao.com/#/register";
         try {
             InputStream in = FinanceFriendsController.class.getResourceAsStream("/static/images/shareLogo/finance_logo.png");

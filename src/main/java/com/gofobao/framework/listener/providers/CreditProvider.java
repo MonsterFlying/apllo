@@ -21,10 +21,13 @@ import com.gofobao.framework.helper.NumberHelper;
 import com.gofobao.framework.helper.StringHelper;
 import com.gofobao.framework.member.entity.UserThirdAccount;
 import com.gofobao.framework.member.service.UserThirdAccountService;
+import com.gofobao.framework.repayment.entity.BorrowRepayment;
+import com.gofobao.framework.repayment.service.BorrowRepaymentService;
 import com.gofobao.framework.system.contants.ThirdBatchLogContants;
 import com.gofobao.framework.system.entity.ThirdBatchLog;
 import com.gofobao.framework.system.service.ThirdBatchLogService;
 import com.gofobao.framework.tender.entity.Tender;
+import com.gofobao.framework.tender.entity.Transfer;
 import com.gofobao.framework.tender.service.TenderService;
 import com.gofobao.framework.tender.service.TransferBuyLogService;
 import com.gofobao.framework.tender.service.TransferService;
@@ -41,6 +44,7 @@ import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 
@@ -69,6 +73,8 @@ public class CreditProvider {
     private TransferBuyLogService transferBuyLogService;
     @Autowired
     private BorrowCollectionService borrowCollectionService;
+    @Autowired
+    private BorrowRepaymentService borrowRepaymentService;
     @Autowired
     private TransferService transferService;
     @Value("${gofobao.javaDomain}")
@@ -116,6 +122,7 @@ public class CreditProvider {
                 log.info(String.format("结束债权正在处理中，third_batch:%s", gson.toJson(thirdBatchLogList.get(0))));
                 return false;
             }
+
             buildNotTransferCreditEndList(creditEndList, userThirdAccount.getAccountId(), borrow.getProductId(), borrowId);
         } else if (tag.equals(MqTagEnum.END_CREDIT_BY_TRANSFER.getValue())) { // 结束债权by转让标
             //查询是否存在进行中的结束债权
@@ -144,6 +151,7 @@ public class CreditProvider {
                 log.info(String.format("结束债权正在处理中，third_batch:%s", gson.toJson(thirdBatchLogList.get(0))));
                 return false;
             }
+
             buildTransferCreditEndList(creditEndList, userThirdAccount.getAccountId(), borrow.getProductId(), borrowId);
         } else {
             log.error("未找到对应类型!");
@@ -222,23 +230,42 @@ public class CreditProvider {
             List<Tender> tenderList = tenderService.findList(ts); /* 成功投资记录 */
             if (CollectionUtils.isEmpty(tenderList)) {
                 log.info("creditProvider buildTransferCreditEndList: 借款" + borrowId + " 未找到投递成功债权！");
+                return;
             }
+
+            List<Long> tenderIds = tenderList.stream().map(Tender::getId).collect(Collectors.toList());
+
+            Specification<Transfer> transferSpecification = Specifications
+                    .<Transfer>and()
+                    .in("tenderId", tenderIds.toArray())
+                    .eq("state", 2)
+                    .build();
+            List<Transfer> transferList = transferService.findList(transferSpecification);
+            if (CollectionUtils.isEmpty(transferList)) {
+                log.info("creditProvider buildTransferCreditEndList: 借款" + borrowId + " 未找到投递成功债权！");
+                return;
+            }
+            Map<Long, Transfer> transferMap = transferList.stream().collect(Collectors.toMap(Transfer::getTenderId, Function.identity()));
 
             //筛选出已转让的投资记录
             tenderList.stream().filter(p -> p.getTransferFlag() == 2).forEach(tender -> {
-                CreditEnd creditEnd = new CreditEnd();
-                String orderId = JixinHelper.getOrderId(JixinHelper.END_CREDIT_PREFIX);
-                UserThirdAccount tenderUserThirdAccount = userThirdAccountService.findByUserId(tender.getUserId());
-                creditEnd.setAccountId(borrowUserThirdAccountId);
-                creditEnd.setOrderId(orderId);
-                creditEnd.setAuthCode(tender.getAuthCode());
-                creditEnd.setForAccountId(tenderUserThirdAccount.getAccountId());
-                creditEnd.setProductId(productId);
-                creditEndList.add(creditEnd);
-                //保存结束债权id
-                tender.setThirdCreditEndOrderId(orderId);
-                tender.setThirdCreditEndFlag(false);
-                tenderService.save(tender);
+                Transfer transfer = transferMap.get(tender.getId());
+                //判断是否成功转让
+                if (transfer.getState() == 2) {
+                    CreditEnd creditEnd = new CreditEnd();
+                    String orderId = JixinHelper.getOrderId(JixinHelper.END_CREDIT_PREFIX);
+                    UserThirdAccount tenderUserThirdAccount = userThirdAccountService.findByUserId(tender.getUserId());
+                    creditEnd.setAccountId(borrowUserThirdAccountId);
+                    creditEnd.setOrderId(orderId);
+                    creditEnd.setAuthCode(tender.getAuthCode());
+                    creditEnd.setForAccountId(tenderUserThirdAccount.getAccountId());
+                    creditEnd.setProductId(productId);
+                    creditEndList.add(creditEnd);
+                    //保存结束债权id
+                    tender.setThirdCreditEndOrderId(orderId);
+                    tender.setThirdCreditEndFlag(false);
+                    tenderService.save(tender);
+                }
             });
 
         } while (false);
@@ -252,6 +279,23 @@ public class CreditProvider {
      */
     public void buildNotTransferCreditEndList(List<CreditEnd> creditEndList, String borrowUserThirdAccountId, String productId, Long borrowId) {
         do {
+            Borrow borrow = borrowService.findById(borrowId);
+            //判断标的是否可以结束
+            if ((borrow.getStatus() != 3) || ObjectUtils.isEmpty(borrow.getCloseAt())) {
+                log.info(String.format("非转让标存在未结清的债权关系，不能结束债权，borrowId:%s", borrowId));
+                return;
+            }
+
+            Specification<BorrowRepayment> brs = Specifications
+                    .<BorrowRepayment>and()
+                    .eq("status", 0)
+                    .build();
+            long count = borrowRepaymentService.count(brs);
+            if (count > 0) {
+                log.info(String.format("非转让标存在未结清的债权关系，不能结束债权，borrowId:%s", borrowId));
+                return;
+            }
+
             Specification<Tender> ts = Specifications
                     .<Tender>and()
                     .eq("borrowId", borrowId)
@@ -261,6 +305,7 @@ public class CreditProvider {
             tenderList = tenderList.stream().filter(tender -> BooleanHelper.isFalse(tender.getThirdCreditEndFlag())).collect(Collectors.toList());
             if (CollectionUtils.isEmpty(tenderList)) {
                 log.info("creditProvider buildNotTransferCreditEndList: 借款" + borrowId + " 未找到投递成功债权！");
+                return;
             }
 
             //排除已经在存管登记结束债权的投标记录

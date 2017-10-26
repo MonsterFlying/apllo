@@ -438,6 +438,7 @@ public class AutoTenderBizImpl implements AutoTenderBiz {
             } else {
                 autoTender.setStatus(true);
             }
+            autoTender.setUpdatedAt(new Date());
             autoTenderService.updateById(autoTender);
         }
         return ResponseEntity.ok(VoBaseResp.ok("开启/关闭自动投标规则成功!"));

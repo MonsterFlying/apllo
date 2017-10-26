@@ -391,7 +391,7 @@ public class BorrowBizImpl implements BorrowBiz {
                 //待发布
                 if (releaseAt.getTime() >= nowDate.getTime()) {
                     status = 1;
-                    borrowInfoRes.setSurplusSecond(((releaseAt.getTime() - nowDate.getTime()) / 1000) + 5);
+                    borrowInfoRes.setSurplusSecond(((releaseAt.getTime() - nowDate.getTime()) / 1000) + 60);
                 } else if (borrow.getLendRepayStatus().intValue() == 1) {
                     //复审中
                     status = 6;
@@ -1750,6 +1750,7 @@ public class BorrowBizImpl implements BorrowBiz {
      * @param borrow
      */
     private void fillStatisticByBorrowReview(Borrow borrow, List<BorrowRepayment> borrowRepaymentList) {
+        log.info(String.format("放款统计增加待收:borrowId->%s", borrow.getId()));
         Statistic statistic = new Statistic();
         if (CollectionUtils.isEmpty(borrowRepaymentList)) {//查询当前借款 还款记录
             return;

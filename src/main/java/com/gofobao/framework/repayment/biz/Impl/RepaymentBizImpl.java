@@ -1394,6 +1394,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
      * @param borrowRepayment
      */
     private void fillRepaymentStatistics(Borrow parentBorrow, BorrowRepayment borrowRepayment) {
+        log.info(String.format("还款统计减去待收：borrowRepaymentId->%s", borrowRepayment.getId()));
         Statistic statistic = new Statistic();
         long repayMoney = borrowRepayment.getRepayMoney();/* 还款金额 */
         long principal = borrowRepayment.getPrincipal();/* 还款本金 */
@@ -2034,7 +2035,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
             if (tender.getType().intValue() == 1) {
                 batchAssetChangeItem.setType(AssetChangeTypeEnum.financeReceivedPayments.getLocalType());  // 名义借款人收到垫付还款
                 batchAssetChangeItem.setAssetType(AssetTypeContants.finance);
-            }else if (advance) {//判断是否是垫付
+            } else if (advance) {//判断是否是垫付
                 batchAssetChangeItem.setType(AssetChangeTypeEnum.compensatoryReceivedPayments.getLocalType());  // 名义借款人收到垫付还款
             } else {
                 batchAssetChangeItem.setType(AssetChangeTypeEnum.receivedPayments.getLocalType()); //借款人收到还款

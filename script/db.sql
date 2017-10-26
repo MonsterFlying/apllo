@@ -883,3 +883,38 @@ ALTER TABLE  gfb_user_third_account
 ALTER TABLE gfb_new_asset_log ADD `type` int(11) DEFAULT '0' COMMENT '资金变动类型：0基本 1.理财计划 默认为0';
 
 ALTER TABLE gfb_batch_asset_change_item ADD `asset_type` int(11) DEFAULT '0' COMMENT '资金变动类型：0基本 1.金服理财计划 2.理财计划，默认为0';
+
+
+DROP TABLE IF EXISTS `gfb_application`;
+CREATE TABLE `gfb_application` (
+  `id` int(10) NOT NULL AUTO_INCREMENT,
+  `name` varchar(10) DEFAULT NULL COMMENT '应用名',
+  `sketch` varchar(200) DEFAULT NULL COMMENT '应用简介',
+  `created_at` datetime DEFAULT NULL,
+  `logo` varchar(50) DEFAULT NULL COMMENT 'logo',
+  `qrode_url` varchar(100) DEFAULT NULL COMMENT '应用二维码地址',
+  `alias_name` varchar(20) DEFAULT NULL,
+  `update_at` datetime DEFAULT NULL COMMENT '更新时间',
+  `terminal` int(11) DEFAULT '0' COMMENT '终端：1:andrion ; 2:ISO;3:H5',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `gfb_application_id_uindex` (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8;
+
+-- ----------------------------
+-- Table structure for gfb_application_version
+-- ----------------------------
+DROP TABLE IF EXISTS `gfb_application_version`;
+CREATE TABLE `gfb_application_version` (
+  `id` int(10) NOT NULL AUTO_INCREMENT,
+  `application_id` int(10) DEFAULT NULL COMMENT '应用id',
+  `terminal` int(2) DEFAULT NULL COMMENT '终端: ',
+  `version_id` int(2) DEFAULT NULL COMMENT '版本id',
+  `view_version` varchar(10) CHARACTER SET latin1 DEFAULT NULL COMMENT '展示描述版本id\n',
+  `description` varchar(500) DEFAULT NULL COMMENT '版本描述',
+  `force` tinyint(4) DEFAULT '0' COMMENT '是否强制更\n    新',
+  `application_url` varchar(50) CHARACTER SET latin1 DEFAULT NULL COMMENT '版本地址\n',
+  `update_at` datetime DEFAULT NULL COMMENT '更新时间',
+  `created_at` datetime DEFAULT NULL COMMENT '添加时间',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `gfb_application_version_id_uindex` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;

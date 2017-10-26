@@ -24,7 +24,7 @@ public class VoViewFinanceSettleRes {
     private String money;
 
     @ApiModelProperty("投标ID")
-    private Long tenderId;
+    private Long buyerId;
 
     @ApiModelProperty("已收本金")
     private String principal;

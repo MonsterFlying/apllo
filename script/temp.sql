@@ -21,3 +21,32 @@ resv VARCHAR(200) DEFAULT '' COMMENT '保留域',
 create_at DATETIME COMMENT '创建时间'
 );
 ALTER TABLE gfb_eve COMMENT = '交易明细全流水' DEFAULT CHARSET=utf8;
+
+
+CREATE TABLE gfb0810.gfb_application
+(
+  id INT(10) PRIMARY KEY NOT NULL AUTO_INCREMENT,
+  name VARCHAR(10) COMMENT '应用名',
+  sketch VARCHAR(200) COMMENT '应用简介',
+  created_at DATETIME,
+  logo VARCHAR(50) COMMENT 'logo',
+  qrode_url VARCHAR(100) COMMENT '应用二维码地址'
+);
+CREATE UNIQUE INDEX gfb_application_id_uindex ON gfb0810.gfb_application (id);
+
+CREATE TABLE gfb0810.gfb_application_version
+(
+  id INT(10) PRIMARY KEY NOT NULL AUTO_INCREMENT,
+  appiicationId INT(10) COMMENT '应用id',
+  update_at DATETIME COMMENT '更新时间',
+  created_at DATETIME COMMENT '添加时间',
+  version_id INT(2) COMMENT '版本id',
+  view_version VARCHAR(10) COMMENT '展示描述版本id
+',
+  description INT COMMENT '版本描述',
+  `force` TINYINT DEFAULT 0 COMMENT '是否强制更
+    新',
+  application_url VARCHAR(50) COMMENT '版本地址
+'
+);
+CREATE UNIQUE INDEX gfb_application_version_id_uindex ON gfb0810.gfb_application_version (id);

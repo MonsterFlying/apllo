@@ -6,9 +6,7 @@ import com.gofobao.framework.security.contants.SecurityContants;
 import com.gofobao.framework.system.vo.request.VoFinanceDetailReq;
 import com.gofobao.framework.system.vo.response.VoViewFinanceReturnMoneyWarpRes;
 import com.gofobao.framework.tender.vo.request.VoFinanceInvestListReq;
-import com.gofobao.framework.tender.vo.response.VoViewBackMoneyListWarpRes;
-import com.gofobao.framework.tender.vo.response.VoViewBiddingListWrapRes;
-import com.gofobao.framework.tender.vo.response.VoViewSettleWarpRes;
+import com.gofobao.framework.tender.vo.response.*;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,9 +31,9 @@ public class FinanceServerInvestController {
      */
     @ApiOperation("pc:回款中列表")
     @GetMapping("v2/backMoney/list/{pageIndex}/{pageSize}")
-    public ResponseEntity<VoViewBackMoneyListWarpRes> pcBackMoneyList(@RequestAttribute(SecurityContants.USERID_KEY) Long userId,
-                                                                    @PathVariable Integer pageIndex,
-                                                                    @PathVariable Integer pageSize) {
+    public ResponseEntity<VoViewFinanceBackMoneyListWarpRes> pcBackMoneyList(@RequestAttribute(SecurityContants.USERID_KEY) Long userId,
+                                                                             @PathVariable Integer pageIndex,
+                                                                             @PathVariable Integer pageSize) {
         VoFinanceInvestListReq voFinanceInvestListReq = new VoFinanceInvestListReq();
         voFinanceInvestListReq.setUserId(userId);
         voFinanceInvestListReq.setPageIndex(pageIndex);
@@ -47,9 +45,9 @@ public class FinanceServerInvestController {
 
     @ApiOperation("pc:投标中列表")
     @GetMapping("v2/bidding/list/{pageIndex}/{pageSize}")
-    public ResponseEntity<VoViewBiddingListWrapRes> pcBiddingList(@RequestAttribute(SecurityContants.USERID_KEY) Long userId,
-                                                                @PathVariable Integer pageIndex,
-                                                                @PathVariable Integer pageSize) {
+    public ResponseEntity<VoViewFinanceBiddingListWrapRes> pcBiddingList(@RequestAttribute(SecurityContants.USERID_KEY) Long userId,
+                                                                         @PathVariable Integer pageIndex,
+                                                                         @PathVariable Integer pageSize) {
         VoFinanceInvestListReq voFinanceInvestListReq = new VoFinanceInvestListReq();
         voFinanceInvestListReq.setUserId(userId);
         voFinanceInvestListReq.setPageIndex(pageIndex);
@@ -59,7 +57,7 @@ public class FinanceServerInvestController {
 
     @ApiOperation("pc:已结清列表")
     @GetMapping("v2/settle/list/{pageIndex}/{pageSize}")
-    public ResponseEntity<VoViewSettleWarpRes> pcSettleList(@RequestAttribute(SecurityContants.USERID_KEY) Long userId,
+    public ResponseEntity<VoViewFinanceSettleWarpRes> pcSettleList(@RequestAttribute(SecurityContants.USERID_KEY) Long userId,
                                                           @PathVariable Integer pageIndex,
                                                           @PathVariable Integer pageSize) {
         VoFinanceInvestListReq voFinanceInvestListReq = new VoFinanceInvestListReq();

@@ -33,13 +33,13 @@ public class MyFinanceInvestBizImpl implements MyFinanceInvestBiz {
 
 
     @Override
-    public ResponseEntity<VoViewBackMoneyListWarpRes> backMoneyList(VoFinanceInvestListReq voInvestListReq) {
+    public ResponseEntity<VoViewFinanceBackMoneyListWarpRes> backMoneyList(VoFinanceInvestListReq voInvestListReq) {
         voInvestListReq.setType(TenderConstans.BACK_MONEY);
         try {
             Map<String, Object> resultMaps = financeInvestService.backMoneyList(voInvestListReq);
             Integer totalCount = Integer.valueOf(resultMaps.get("totalCount").toString());
-            List<VoViewBackMoney> backMoneyList = (List<VoViewBackMoney>) resultMaps.get("backMoneyList");
-            VoViewBackMoneyListWarpRes voViewBackMoneyListWarpRes = VoBaseResp.ok("查询成功", VoViewBackMoneyListWarpRes.class);
+            List<VoViewFinanceBackMoney> backMoneyList = (List<VoViewFinanceBackMoney>) resultMaps.get("backMoneyList");
+            VoViewFinanceBackMoneyListWarpRes voViewBackMoneyListWarpRes = VoBaseResp.ok("查询成功", VoViewFinanceBackMoneyListWarpRes.class);
             voViewBackMoneyListWarpRes.setVoViewBackMonies(backMoneyList);
             voViewBackMoneyListWarpRes.setTotalCount(totalCount);
             return ResponseEntity.ok(voViewBackMoneyListWarpRes);
@@ -48,18 +48,18 @@ public class MyFinanceInvestBizImpl implements MyFinanceInvestBiz {
             e.printStackTrace();
             return ResponseEntity
                     .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, "查询失败", VoViewBackMoneyListWarpRes.class));
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "查询失败", VoViewFinanceBackMoneyListWarpRes.class));
         }
     }
 
     @Override
-    public ResponseEntity<VoViewBiddingListWrapRes> biddingList(VoFinanceInvestListReq voInvestListReq) {
+    public ResponseEntity<VoViewFinanceBiddingListWrapRes> biddingList(VoFinanceInvestListReq voInvestListReq) {
         voInvestListReq.setType(TenderConstans.BIDDING);
         try {
             Map<String, Object> resultMaps = financeInvestService.biddingList(voInvestListReq);
             Integer totalCount = Integer.valueOf(resultMaps.get("totalCount").toString());
-            List<VoViewBiddingRes> biddingRes = (List<VoViewBiddingRes>) resultMaps.get("biddingResList");
-            VoViewBiddingListWrapRes wrapResRes = VoBaseResp.ok("查询成功", VoViewBiddingListWrapRes.class);
+            List<VoViewFinanceBiddingRes> biddingRes = (List<VoViewFinanceBiddingRes>) resultMaps.get("biddingResList");
+            VoViewFinanceBiddingListWrapRes wrapResRes = VoBaseResp.ok("查询成功", VoViewFinanceBiddingListWrapRes.class);
             wrapResRes.setVoViewBiddingRes(biddingRes);
             wrapResRes.setTotalCount(totalCount);
             return ResponseEntity.ok(wrapResRes);
@@ -67,19 +67,19 @@ public class MyFinanceInvestBizImpl implements MyFinanceInvestBiz {
             log.error("查询异常:",e);
             return ResponseEntity
                     .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, "查询失败", VoViewBiddingListWrapRes.class));
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "查询失败", VoViewFinanceBiddingListWrapRes.class));
         }
     }
 
     @Override
-    public ResponseEntity<VoViewSettleWarpRes> settleList(VoFinanceInvestListReq voInvestListReq) {
+    public ResponseEntity<VoViewFinanceSettleWarpRes> settleList(VoFinanceInvestListReq voInvestListReq) {
         voInvestListReq.setType(TenderConstans.SETTLE);
         try {
             Map<String, Object> resultMaps = financeInvestService.settleList(voInvestListReq);
             Integer totalCount = Integer.valueOf(resultMaps.get("totalCount").toString());
-            List<VoViewSettleRes> settleList = (List<VoViewSettleRes>) resultMaps.get("settleResList");
+            List<VoViewFinanceSettleRes> settleList = (List<VoViewFinanceSettleRes>) resultMaps.get("settleResList");
 
-            VoViewSettleWarpRes viewSettleWarpRes = VoBaseResp.ok("查询成功", VoViewSettleWarpRes.class);
+            VoViewFinanceSettleWarpRes viewSettleWarpRes = VoBaseResp.ok("查询成功", VoViewFinanceSettleWarpRes.class);
             viewSettleWarpRes.setTotalCount(totalCount);
             viewSettleWarpRes.setVoViewSettleRes(settleList);
             return ResponseEntity.ok(viewSettleWarpRes);
@@ -87,7 +87,7 @@ public class MyFinanceInvestBizImpl implements MyFinanceInvestBiz {
             log.error("查询异常:",e);
             return ResponseEntity
                     .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, "查询失败", VoViewSettleWarpRes.class));
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "查询失败", VoViewFinanceSettleWarpRes.class));
         }
     }
 

@@ -101,7 +101,7 @@ public class QRCodeHelper {
      * @throws Exception
      */
     public static void createQRCodeTStream(String content, InputStream logoStream, int logoWidth, int logoHeight, OutputStream outputStream) throws Exception {
-        createQRCodeTStream(content, UTF8, ErrorCorrectionLevel.Q, outputStream, logoStream, logoWidth, logoHeight, DEFAULT_WIDTH, DEFAULT_HEIGHT, GIF);
+        createQRCodeTStream(content, UTF8, ErrorCorrectionLevel.H, outputStream, logoStream, logoWidth, logoHeight, DEFAULT_WIDTH, DEFAULT_HEIGHT, GIF);
     }
 
     /**
