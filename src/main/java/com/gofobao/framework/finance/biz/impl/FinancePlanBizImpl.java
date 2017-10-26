@@ -703,7 +703,8 @@ public class FinancePlanBizImpl implements FinancePlanBiz {
                 .notIn("status", statusArray.toArray())
                 .eq("type", 0)
                 .build();
-        List<FinancePlan> financePlans = financePlanService.findList(specification, new PageRequest(page.getPageIndex(), page.getPageSize(), new Sort(Sort.Direction.DESC, "id")));
+        List<FinancePlan> financePlans = financePlanService.findList(specification, new PageRequest(page.getPageIndex(), page.getPageSize(),
+                new Sort(Sort.Direction.DESC, "id")));
 
         if (CollectionUtils.isEmpty(financePlans)) {
             return ResponseEntity.ok(warpRes);

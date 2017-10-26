@@ -333,7 +333,7 @@ public class TestController {
         log.info(GSON.toJson(creditDetailsQueryResponse));
     }
 
-    @RequestMapping("/pub/send/repair/packer")
+   /* @RequestMapping("/pub/send/repair/packer")
     @Transactional
     public void read(@RequestParam("accountId") Object accountId) {
         long redpackAccountId = 0;
@@ -355,6 +355,13 @@ public class TestController {
             String msg = ObjectUtils.isEmpty(response) ? "当前网络不稳定，请稍候重试" : response.getRetMsg();
             log.error("pc发送红包 请求即信异常:%s", msg);
         }
+    }*/
+
+
+    @RequestMapping("/pub/repair/call")
+    @Transactional
+    public ResponseEntity<String> read() {
+        return ResponseEntity.ok("success");
     }
 
 
@@ -380,12 +387,12 @@ public class TestController {
 
         transferOrderId = JixinHelper.getOrderId(JixinHelper.LEND_REPAY_PREFIX);
         creditInvest = new CreditInvest();
-        creditInvest.setAccountId("6212462190000772850");
+        creditInvest.setAccountId("6212462190000131545");
         creditInvest.setOrderId(transferOrderId);
         creditInvest.setTxAmount("0.01");
         creditInvest.setTxFee("0");
         creditInvest.setTsfAmount("48828.88");
-        creditInvest.setForAccountId("6212462190000120092");
+        creditInvest.setForAccountId("6212462190000772850");
         creditInvest.setOrgOrderId("GFBLR_1508850003280079995428");
         creditInvest.setOrgTxAmount(StringHelper.formatDouble(4950000, 100, false));
         creditInvest.setProductId("183143");
@@ -394,12 +401,12 @@ public class TestController {
 
         transferOrderId = JixinHelper.getOrderId(JixinHelper.LEND_REPAY_PREFIX);
         creditInvest = new CreditInvest();
-        creditInvest.setAccountId("6212462190000783154");
+        creditInvest.setAccountId("6212462190000131545");
         creditInvest.setOrderId(transferOrderId);
         creditInvest.setTxAmount("0.01");
         creditInvest.setTxFee("0");
         creditInvest.setTsfAmount("2155.96");
-        creditInvest.setForAccountId("6212462190000120092");
+        creditInvest.setForAccountId("6212462190000783154");
         creditInvest.setOrgOrderId("GFBLR_1508933436810150450207");
         creditInvest.setOrgTxAmount(StringHelper.formatDouble(281420, 100, false));
         creditInvest.setProductId("130295");
@@ -417,8 +424,8 @@ public class TestController {
         request.setSubPacks(GSON.toJson(creditInvestList));
         request.setAcqRes(GSON.toJson(acqResMap));
         request.setChannel(ChannelContant.HTML);
-        request.setNotifyURL(javaDomain + "/pub/tender/v2/third/batch/creditinvest/check");
-        request.setRetNotifyURL(javaDomain + "/pub/tender/v2/third/batch/creditinvest/run");
+        request.setNotifyURL(javaDomain + "/pub/repair/call");
+        request.setRetNotifyURL(javaDomain + "/pub/repair/call");
         BatchCreditInvestResp response = jixinManager.send(JixinTxCodeEnum.BATCH_CREDIT_INVEST, request, BatchCreditInvestResp.class);
         if ((ObjectUtils.isEmpty(response)) || (!JixinResultContants.BATCH_SUCCESS.equalsIgnoreCase(response.getReceived()))) {
             BatchCancelReq batchCancelReq = new BatchCancelReq();
