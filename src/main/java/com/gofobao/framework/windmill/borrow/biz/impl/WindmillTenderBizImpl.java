@@ -226,7 +226,7 @@ public class WindmillTenderBizImpl implements WindmillTenderBiz {
                         if (w.getState() == TenderConstans.BACK_MONEY) {
                             //过滤掉已回款的期数 获取第一条 就是下个还款日
                             BorrowCollection borrowCollection = borrowCollections.stream().filter(p -> p.getStatus() == BorrowCollectionContants.STATUS_NO).collect(Collectors.toList()).get(0);
-                            investRecords.setNext_back_date(DateHelper.dateToString(borrowCollection.getCollectionAt()));
+                            investRecords.setNext_back_date(DateHelper.dateToString(borrowCollection.getCollectionAt(),DateHelper.DATE_FORMAT_YMD));
                             investRecords.setNext_back_money(StringHelper.formatDouble(borrowCollection.getCollectionMoney() / 100D, false));
                             investRecords.setNext_back_principal(StringHelper.formatDouble(borrowCollection.getPrincipal() / 100D, false));
                             investRecords.setNext_back_interest(StringHelper.formatDouble(borrowCollection.getInterest() / 100D, false));
