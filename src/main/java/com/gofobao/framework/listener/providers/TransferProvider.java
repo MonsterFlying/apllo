@@ -426,7 +426,6 @@ public class TransferProvider {
         /**
          * 本金之和
          */
-        long sumPrincipal = 0;
         for (int i = 0; i < transferBuyLogList.size(); i++) {
             TransferBuyLog transferBuyLog = transferBuyLogList.get(i);
             /* 债权转让购买人存管账户信息 */
@@ -434,12 +433,6 @@ public class TransferProvider {
             Preconditions.checkNotNull(tenderUserThirdAccount, "投资人开户记录不存在!");
             //购买债权转让有效金额 本金
             long principal = new Double(MoneyHelper.round(transferBuyLog.getPrincipal(), 0)).longValue();
-            //判断是否是最后一期
-            if (i == (transferBuyLogList.size() - 1)) {
-                principal = transfer.getPrincipal() - sumPrincipal;
-            }
-            //累加总转让本金
-            sumPrincipal += principal;
             //收取转让人债权转让管理费
             long tempTransferFee = new Double(MoneyHelper.round(MoneyHelper.multiply(transferBuyLog.getValidMoney() / new Double(transfer.getPrincipal()), transferFee), 0)).longValue();
             /**
