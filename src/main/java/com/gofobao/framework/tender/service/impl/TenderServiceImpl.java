@@ -18,6 +18,7 @@ import com.gofobao.framework.tender.entity.Tender;
 import com.gofobao.framework.tender.repository.TenderRepository;
 import com.gofobao.framework.tender.service.TenderService;
 import com.gofobao.framework.tender.vo.request.TenderUserReq;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -73,6 +74,8 @@ public class TenderServiceImpl implements TenderService {
         Specification<Tender> tenderSpecification = Specifications.<Tender>and()
                 .eq("borrowId", borrowId)
                 .eq("status", TenderConstans.SUCCESS)
+                .notIn("transferFlag", Lists.newArrayList(TenderConstans.TRANSFER_YES,
+                        TenderConstans.TRANSFER_PART_YES).toArray())
                 .build();
         Page<Tender> tenderPage = tenderRepository.findAll(tenderSpecification, pageRequest);
         //Optional<List<Tender>> listOptional = Optional.ofNullable(tenderList);
