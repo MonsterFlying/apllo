@@ -333,6 +333,121 @@ public class TestController {
         log.info(GSON.toJson(creditDetailsQueryResponse));
     }
 
+    @RequestMapping("/pub/send/repair/packer")
+    @Transactional
+    public void read(@RequestParam("accountId") Object accountId) {
+        long redpackAccountId = 0;
+        try {
+            redpackAccountId = assetChangeProvider.getRedpackAccountId();
+        } catch (ExecutionException e) {
+            e.printStackTrace();
+        }
+        UserThirdAccount redpackAccount = userThirdAccountService.findByUserId(redpackAccountId);
+        VoucherPayRequest voucherPayRequest = new VoucherPayRequest();
+        voucherPayRequest.setAccountId(redpackAccount.getAccountId());
+        voucherPayRequest.setTxAmount("0.01");
+        voucherPayRequest.setForAccountId(String.valueOf(accountId));
+        voucherPayRequest.setDesLineFlag(DesLineFlagContant.TURE);
+        voucherPayRequest.setDesLine("修复债权转让!");
+        voucherPayRequest.setChannel(ChannelContant.HTML);
+        VoucherPayResponse response = jixinManager.send(JixinTxCodeEnum.SEND_RED_PACKET, voucherPayRequest, VoucherPayResponse.class);
+        if ((ObjectUtils.isEmpty(response)) || (!JixinResultContants.SUCCESS.equals(response.getRetCode()))) {
+            String msg = ObjectUtils.isEmpty(response) ? "当前网络不稳定，请稍候重试" : response.getRetMsg();
+            log.error("pc发送红包 请求即信异常:%s", msg);
+        }
+    }
+
+
+    @RequestMapping("/pub/repair/transfer")
+    @Transactional
+    public void repairTransfer() {
+
+        List<CreditInvest> creditInvestList = new ArrayList<>();
+        /* 购买债权转让orderId */
+        String transferOrderId = JixinHelper.getOrderId(JixinHelper.LEND_REPAY_PREFIX);
+        CreditInvest creditInvest = new CreditInvest();
+        creditInvest.setAccountId("6212462190000131545");
+        creditInvest.setOrderId(transferOrderId);
+        creditInvest.setTxAmount("0.01");
+        creditInvest.setTxFee("0");
+        creditInvest.setTsfAmount("12080.98");
+        creditInvest.setForAccountId("6212462190000120092");
+        creditInvest.setOrgOrderId("GFBLR_1508817618033967228798");
+        creditInvest.setOrgTxAmount(StringHelper.formatDouble(1308098, 100, false));
+        creditInvest.setProductId("167656");
+        creditInvest.setContOrderId("15045829751907143714021");
+        creditInvestList.add(creditInvest);
+
+        transferOrderId = JixinHelper.getOrderId(JixinHelper.LEND_REPAY_PREFIX);
+        creditInvest = new CreditInvest();
+        creditInvest.setAccountId("6212462190000772850");
+        creditInvest.setOrderId(transferOrderId);
+        creditInvest.setTxAmount("0.01");
+        creditInvest.setTxFee("0");
+        creditInvest.setTsfAmount("48828.88");
+        creditInvest.setForAccountId("6212462190000120092");
+        creditInvest.setOrgOrderId("GFBLR_1508850003280079995428");
+        creditInvest.setOrgTxAmount(StringHelper.formatDouble(4950000, 100, false));
+        creditInvest.setProductId("183143");
+        creditInvest.setContOrderId("15045829751907143714021");
+        creditInvestList.add(creditInvest);
+
+        transferOrderId = JixinHelper.getOrderId(JixinHelper.LEND_REPAY_PREFIX);
+        creditInvest = new CreditInvest();
+        creditInvest.setAccountId("6212462190000783154");
+        creditInvest.setOrderId(transferOrderId);
+        creditInvest.setTxAmount("0.01");
+        creditInvest.setTxFee("0");
+        creditInvest.setTsfAmount("2155.96");
+        creditInvest.setForAccountId("6212462190000120092");
+        creditInvest.setOrgOrderId("GFBLR_1508933436810150450207");
+        creditInvest.setOrgTxAmount(StringHelper.formatDouble(281420, 100, false));
+        creditInvest.setProductId("130295");
+        creditInvest.setContOrderId("15045829751907143714021");
+        creditInvestList.add(creditInvest);
+        //批次号
+        String batchNo = jixinHelper.getBatchNo();
+        //请求保留参数
+        Map<String, Object> acqResMap = new HashMap<>();
+        //调用存管批次债权转让接口
+        BatchCreditInvestReq request = new BatchCreditInvestReq();
+        request.setBatchNo(batchNo);
+        request.setTxAmount("0.03");
+        request.setTxCounts(StringHelper.toString(creditInvestList.size()));
+        request.setSubPacks(GSON.toJson(creditInvestList));
+        request.setAcqRes(GSON.toJson(acqResMap));
+        request.setChannel(ChannelContant.HTML);
+        request.setNotifyURL(javaDomain + "/pub/tender/v2/third/batch/creditinvest/check");
+        request.setRetNotifyURL(javaDomain + "/pub/tender/v2/third/batch/creditinvest/run");
+        BatchCreditInvestResp response = jixinManager.send(JixinTxCodeEnum.BATCH_CREDIT_INVEST, request, BatchCreditInvestResp.class);
+        if ((ObjectUtils.isEmpty(response)) || (!JixinResultContants.BATCH_SUCCESS.equalsIgnoreCase(response.getReceived()))) {
+            BatchCancelReq batchCancelReq = new BatchCancelReq();
+            batchCancelReq.setBatchNo(batchNo);
+            batchCancelReq.setTxAmount("0.03");
+            batchCancelReq.setTxCounts(StringHelper.toString(creditInvestList.size()));
+            batchCancelReq.setChannel(ChannelContant.HTML);
+            BatchCancelResp batchCancelResp = jixinManager.send(JixinTxCodeEnum.BATCH_CANCEL, batchCancelReq, BatchCancelResp.class);
+            if ((ObjectUtils.isEmpty(batchCancelResp)) || (!ObjectUtils.isEmpty(batchCancelResp.getRetCode()))) {
+                log.error("即信批次撤销失败!");
+            }
+            log.error(String.format("复审: 批量债权转让申请失败: %s", response));
+            log.error(("投资人批次购买债权失败!:" + response.getRetMsg()));
+        }
+        //记录日志
+        ThirdBatchLog thirdBatchLog = new ThirdBatchLog();
+        thirdBatchLog.setBatchNo(batchNo);
+        thirdBatchLog.setCreateAt(new Date());
+        thirdBatchLog.setTxDate(request.getTxDate());
+        thirdBatchLog.setTxTime(request.getTxTime());
+        thirdBatchLog.setSeqNo(request.getSeqNo());
+        thirdBatchLog.setUpdateAt(new Date());
+        thirdBatchLog.setSourceId(0L);
+        thirdBatchLog.setType(ThirdBatchLogContants.BATCH_CREDIT_INVEST);
+        thirdBatchLog.setAcqRes(GSON.toJson(acqResMap));
+        thirdBatchLog.setRemark("投资人批次购买债权(修复)");
+        thirdBatchLogService.save(thirdBatchLog);
+    }
+
     @ApiOperation("用户债权列表查询")
     @RequestMapping("/pub/bid/seed/credit")
     @Transactional

@@ -1942,7 +1942,9 @@ public class RepaymentBizImpl implements RepaymentBiz {
             //用户来源集合
             /*            ImmutableSet<Integer> userSourceSet = ImmutableSet.of(12);*/
             // 车贷标和渠道标利息管理费，风车理财不收
-            if (borrowTypeSet.contains(borrow.getType())) {
+            // 满标复审在2017-11-1号之前收取利息管理费
+            if (borrowTypeSet.contains(borrow.getType()) &&
+                    borrow.getRecheckAt().getTime() < DateHelper.stringToDate("2017-11-01 00:00:00").getTime()) {
                 ImmutableSet<Long> stockholder = ImmutableSet.of(2480L, 1753L, 1699L,
                         3966L, 1413L, 1857L,
                         183L, 2327L, 2432L,
@@ -2853,6 +2855,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
      * @param lateInterest
      * @return
      * @throws Exception
+     * @// TODO: 2017/10/26 官标垫付需要收利息管理费  因为用不上暂时没有实现
      */
     public List<CreditInvest> calculateAdvancePlan(Borrow borrow, BorrowRepayment borrowRepayment, UserThirdAccount titularBorrowAccount, Map<Long, Transfer> transferMaps, Map<Long, TransferBuyLog> transferBuyLogMaps,
                                                    List<Tender> tenderList, Map<Long/* tenderId */, BorrowCollection> borrowCollectionMaps, List<AdvanceAssetChange> advanceAssetChanges,
