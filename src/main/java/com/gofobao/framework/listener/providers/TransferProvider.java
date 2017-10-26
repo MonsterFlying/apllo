@@ -439,7 +439,7 @@ public class TransferProvider {
                 principal = transfer.getPrincipal() - sumPrincipal;
             }
             //累加总转让本金
-            sumPrincipal += sumPrincipal;
+            sumPrincipal += principal;
             //收取转让人债权转让管理费
             long tempTransferFee = new Double(MoneyHelper.round(MoneyHelper.multiply(transferBuyLog.getValidMoney() / new Double(transfer.getPrincipal()), transferFee), 0)).longValue();
             /**
@@ -465,7 +465,7 @@ public class TransferProvider {
             creditInvest.setOrderId(transferOrderId);
             creditInvest.setTxAmount(StringHelper.formatDouble(txAmount, 100, false));
             creditInvest.setTxFee(StringHelper.formatDouble(txFee, 100, false));
-            creditInvest.setTsfAmount(StringHelper.formatDouble(transferBuyLog.getPrincipal(), 100, false));
+            creditInvest.setTsfAmount(StringHelper.formatDouble(principal, 100, false));
             creditInvest.setForAccountId(transferUserThirdAccount.getAccountId());
             creditInvest.setOrgOrderId(parentTender.getThirdTenderOrderId());
             creditInvest.setOrgTxAmount(StringHelper.formatDouble(parentTender.getValidMoney(), 100, false));

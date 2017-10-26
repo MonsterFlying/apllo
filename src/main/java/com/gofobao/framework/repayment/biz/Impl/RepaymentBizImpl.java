@@ -2881,6 +2881,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
 
             intAmount += borrowCollection.getInterest();//还款利息
             principal += borrowCollection.getPrincipal(); //还款本金
+
             //垫付资金变动
             AdvanceAssetChange advanceAssetChange = new AdvanceAssetChange();
             advanceAssetChanges.add(advanceAssetChange);

@@ -583,11 +583,15 @@ public class AplloApplicationTests {
 
     @Test
     public void test() {
-        try {
+        //购买债权转让有效金额 本金
+
+
+
+        /*try {
             testTransaction.test();
         } catch (Exception e) {
             System.out.println(e.getMessage());
-        }
+        }*/
        /* //批次处理
        batchDeal();
         //unfrozee();

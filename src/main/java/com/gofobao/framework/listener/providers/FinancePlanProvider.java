@@ -269,7 +269,7 @@ public class FinancePlanProvider {
         // 全部有效投标金额
         int sumAmount = 0;
         // 全部本金之和
-        int sumPrincipal = 0;
+        long sumPrincipal = 0;
         for (int i = 0; i < transferBuyLogList.size(); i++) {
             TransferBuyLog transferBuyLog = transferBuyLogList.get(i);
             double txFee = 0;
@@ -287,7 +287,7 @@ public class FinancePlanProvider {
                 principal = transfer.getPrincipal() - sumPrincipal;
             }
             //累加全部转让本金
-            sumPrincipal += sumPrincipal;
+            sumPrincipal = sumPrincipal + principal;
             //判断标的已在存管登记转让
             if (BooleanHelper.isTrue(transferBuyLog.getThirdTransferFlag())) {
                 continue;
