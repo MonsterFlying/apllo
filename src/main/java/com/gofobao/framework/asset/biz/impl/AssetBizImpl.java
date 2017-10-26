@@ -517,6 +517,7 @@ public class AssetBizImpl implements AssetBiz {
 
             // 插入充值记录
             RechargeDetailLog rechargeDetailLog = new RechargeDetailLog();
+            rechargeDetailLog.setRechargeType(0);
             rechargeDetailLog.setUserId(users.getId());
             rechargeDetailLog.setBankName(userThirdAccount.getBankName());
             rechargeDetailLog.setCallbackTime(new Date());

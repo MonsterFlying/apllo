@@ -49,6 +49,12 @@ public enum AssetChangeTypeEnum {
      * 联机充值
      */
     onlineRecharge("在线充值", "online_recharge", "7616", "add@useMoney", "add@rechargeTotal", "D"),
+
+    /**
+     * 系统充值拨正
+     */
+    cancelRecharge("系统充值拨正", "cancel_recharge", "0", "sub@useMoney", "sub@rechargeTotal", "C"),
+
     /**
      * 线下转账
      */
@@ -285,7 +291,7 @@ public enum AssetChangeTypeEnum {
     /**
      * 小额提现手续费
      */
-    smallCashFee("小额提现手续费", "smallCashFee", "4616", "sub@useMoney", "add@expenditureFee", "C"),
+    smallCashFee("小额提现手续费", "smallCashFee", "4820", "sub@useMoney", "add@expenditureFee", "C"),
 
     /**
      * 大额提现手续费
@@ -300,7 +306,7 @@ public enum AssetChangeTypeEnum {
     /**
      * 小额提现
      */
-    smallCash("小额提现", "smallCash", "2616", "sub@useMoney", "add@cashTotal", "C"),
+    smallCash("小额提现", "smallCash", "2820", "sub@useMoney", "add@cashTotal", "C"),
 
     /**
      * 大额提现
@@ -411,5 +417,17 @@ public enum AssetChangeTypeEnum {
         }
 
         throw new Exception(String.format("没有该种类型的资金变动: %s", localType));
+    }
+
+
+    public static AssetChangeTypeEnum findByRemoteType(String remoteType) throws Exception{
+        AssetChangeTypeEnum[] values = AssetChangeTypeEnum.values();
+        for (AssetChangeTypeEnum typeEnum : values) {
+            if (typeEnum.getPlatformType().equals(remoteType)) {
+                return typeEnum;
+            }
+        }
+
+        throw new Exception(String.format("没有该种平台类型: %s", remoteType));
     }
 }
