@@ -1,7 +1,5 @@
 package com.gofobao.framework.system.biz;
 
-import com.gofobao.framework.system.entity.ApplicationVersion;
-
 import javax.servlet.http.HttpServletResponse;
 
 /**
@@ -9,6 +7,6 @@ import javax.servlet.http.HttpServletResponse;
  */
 public interface ApplicationVersionBiz {
 
-    void recheckVersion(ApplicationVersion applicationVersion,HttpServletResponse response);
+    void recheckVersion(Integer aliasName,Integer versionId ,HttpServletResponse response);
 
 }

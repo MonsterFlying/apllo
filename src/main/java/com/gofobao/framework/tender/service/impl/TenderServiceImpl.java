@@ -73,6 +73,7 @@ public class TenderServiceImpl implements TenderService {
         Specification<Tender> tenderSpecification = Specifications.<Tender>and()
                 .eq("borrowId", borrowId)
                 .eq("status", TenderConstans.SUCCESS)
+                .eq("transferFlag",TenderConstans.TRANSFER_NO)
                 .build();
         Page<Tender> tenderPage = tenderRepository.findAll(tenderSpecification, pageRequest);
         //Optional<List<Tender>> listOptional = Optional.ofNullable(tenderList);

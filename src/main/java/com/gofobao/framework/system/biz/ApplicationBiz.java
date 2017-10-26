@@ -8,8 +8,11 @@ import org.springframework.http.ResponseEntity;
  * Created by master on 2017/10/23.
  */
 public interface ApplicationBiz {
-
-        ResponseEntity<ApplicationWarpRes> list(Application application);
-
-
+    /**
+     *
+     *
+     * @param application
+     * @return
+     */
+    ResponseEntity<ApplicationWarpRes> list(Application application);
 }
