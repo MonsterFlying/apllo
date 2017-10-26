@@ -268,6 +268,7 @@ public class UserActiveProvider {
             entity.setSeqNo(seqNo);
             entity.setUserId(rechargeDetailLog.getUserId());
             entity.setRemark(String.format("你在 %s 成功充值%s元", DateHelper.dateToString(nowDate), StringHelper.formatDouble(rechargeDetailLog.getMoney() / 100D, false)));
+            entity.setSourceId(rechargeDetailLog.getId());
             entity.setType(AssetChangeTypeEnum.onlineRecharge);
             assetChangeProvider.commonAssetChange(entity);
 
@@ -452,6 +453,7 @@ public class UserActiveProvider {
             entity.setSeqNo(seqNo);
             entity.setUserId(userId);
             entity.setForUserId(feeAccountId);
+            entity.setSourceId(cashDetailLog.getId());
             entity.setRemark(String.format("你在 %s 成功返还提现手续费%s元", DateHelper.dateToString(nowDate), StringHelper.formatDouble(cashDetailLog.getFee() / 100D, true)));
             entity.setType(AssetChangeTypeEnum.cancelCashFee);
             assetChangeProvider.commonAssetChange(entity);
@@ -463,6 +465,7 @@ public class UserActiveProvider {
             entity.setSeqNo(seqNo);
             entity.setUserId(feeAccountId);
             entity.setForUserId(userId);
+            entity.setSourceId(cashDetailLog.getId());
             entity.setRemark(String.format("你在 %s 成功返还提现手续费%s元", DateHelper.dateToString(nowDate), StringHelper.formatDouble(cashDetailLog.getFee() / 100D, true)));
             entity.setType(AssetChangeTypeEnum.cancelPlatformCashFee);
             assetChangeProvider.commonAssetChange(entity);
