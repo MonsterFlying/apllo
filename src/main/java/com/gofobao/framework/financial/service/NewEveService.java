@@ -5,6 +5,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 
+import java.util.Date;
 import java.util.List;
 
 public interface NewEveService {
@@ -63,4 +64,6 @@ public interface NewEveService {
     Page<Object[]> findLocalAssetChangeRecord(String beginDate, String endDate, Pageable pageable);
 
     Page<Object[]> findRemoteByQueryTime(String date, Pageable evePageable);
+
+    List<NewEve> findAllByTranTypeAndDateAndUserId(String type, Long userId, Date date) throws Exception;
 }

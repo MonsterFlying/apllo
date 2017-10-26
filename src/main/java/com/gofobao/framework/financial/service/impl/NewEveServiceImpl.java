@@ -1,15 +1,20 @@
 package com.gofobao.framework.financial.service.impl;
 
+import com.github.wenhao.jpa.Specifications;
 import com.gofobao.framework.financial.entity.NewEve;
 import com.gofobao.framework.financial.repository.NewEveRepository;
 import com.gofobao.framework.financial.service.NewEveService;
+import com.gofobao.framework.helper.DateHelper;
+import com.google.common.collect.Lists;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
+import java.util.Date;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class NewEveServiceImpl implements NewEveService {
@@ -60,5 +65,24 @@ public class NewEveServiceImpl implements NewEveService {
     @Override
     public Page<Object[]> findRemoteByQueryTime(String date, Pageable pageable) {
         return newEveRepository.findRemoteByQueryTime(date, pageable);
+    }
+
+    @Override
+    public List<NewEve> findAllByTranTypeAndDateAndUserId(String type, Long userId, Date date) throws Exception {
+        Date nowDate = new Date();
+        if (DateHelper.diffInDays(nowDate, DateHelper.beginOfDate(date), false) != 0) {
+            // 此处隔天, 直接查询eve对账文件
+            Specification<NewEve> newEveSpecification = Specifications
+                    .<NewEve>and()
+                    .eq("cardnbr", userId)
+                    .eq("transtype", type)
+                    .eq("queryTime", DateHelper.dateToString(date, DateHelper.DATE_FORMAT_YMD_NUM))
+                    .build();
+            List<NewEve> eveLists = this.findAll(newEveSpecification);
+            Optional<List<NewEve>> result = Optional.ofNullable(eveLists);
+            return result.orElse(Lists.newArrayList());
+        } else {
+            throw new Exception("eve 只能查询隔天即信流水记录");
+        }
     }
 }

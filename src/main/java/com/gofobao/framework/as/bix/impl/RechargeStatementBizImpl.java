@@ -47,8 +47,6 @@ import java.util.*;
 @Component
 @Slf4j
 public class RechargeStatementBizImpl implements RechargeStatementBiz {
-    @Autowired
-    private UserService userService;
 
     @Autowired
     private RechargeDetailLogService rechargeDetailLogService;
@@ -92,7 +90,8 @@ public class RechargeStatementBizImpl implements RechargeStatementBiz {
         Preconditions.checkNotNull(date, "date is null");
         List<NewEve> thirdRechargeRecords = null;
         try {
-            thirdRechargeRecords = findThirdRechargeRecord(userThirdAccount, date, rechargeType);
+            String type = rechargeType.getType();
+            thirdRechargeRecords = newEveService.findAllByTranTypeAndDateAndUserId(type, userId, date) ;
         } catch (Exception e) {
             log.warn("对账: 查询线下充值记录异常", e);
             return false;
@@ -693,34 +692,6 @@ public class RechargeStatementBizImpl implements RechargeStatementBiz {
 
     private final static Gson GSON = new Gson();
 
-
-    /**
-     * 查询第三方充值记录
-     *
-     * @param userThirdAccount 用户账户
-     * @param date             查询日期
-     * @param rechargeType     充值类型
-     * @return
-     */
-    private List<NewEve> findThirdRechargeRecord(UserThirdAccount userThirdAccount,
-                                                 Date date,
-                                                 RechargeType rechargeType) throws Exception {
-        Date nowDate = new Date();
-        if (DateHelper.diffInDays(nowDate, DateHelper.beginOfDate(date), false) != 0) {
-            // 此处隔天, 直接查询eve对账文件
-            Specification<NewEve> newEveSpecification = Specifications
-                    .<NewEve>and()
-                    .eq("cardnbr", userThirdAccount.getAccountId())
-                    .eq("transtype", rechargeType.getType())
-                    .eq("queryTime", DateHelper.dateToString(date, DateHelper.DATE_FORMAT_YMD_NUM))
-                    .build();
-            List<NewEve> eveLists = newEveService.findAll(newEveSpecification);
-            Optional<List<NewEve>> result = Optional.ofNullable(eveLists);
-            return result.orElse(Lists.newArrayList());
-        } else {
-            throw new Exception("eve 只能查询隔天充值记录");
-        }
-    }
 
 
 }
