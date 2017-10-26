@@ -233,6 +233,7 @@ public class TransferProvider {
                         autoTenderIds.add(autoTender.getId());
                         tenderUserIds.add(autoTender.getUserId());
                         autoTender.setAutoAt(nowDate);
+                        autoTender.setUpdatedAt(nowDate);
                         autoTenderService.updateById(autoTender);
                         autoTenderCount++;
                     } else {
