@@ -72,7 +72,7 @@ public class BatchAssetChangeHelper {
      * @param sourceId
      * @param batchNo
      */
-    public void batchAssetChangeAndCollection(long sourceId, String batchNo, int type) throws Exception {
+    public void batchAssetChangeAndCollection(String sourceId, String batchNo, int type) throws Exception {
         Specification<BatchAssetChange> bacs = Specifications
                 .<BatchAssetChange>and()
                 .eq("sourceId", sourceId)
