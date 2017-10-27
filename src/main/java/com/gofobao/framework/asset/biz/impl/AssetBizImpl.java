@@ -23,12 +23,10 @@ import com.gofobao.framework.api.model.voucher_pay_cancel.VoucherPayCancelRespon
 import com.gofobao.framework.asset.biz.AssetBiz;
 import com.gofobao.framework.asset.biz.AssetSynBiz;
 import com.gofobao.framework.asset.entity.Asset;
+import com.gofobao.framework.asset.entity.CurrentIncomeLog;
 import com.gofobao.framework.asset.entity.NewAssetLog;
 import com.gofobao.framework.asset.entity.RechargeDetailLog;
-import com.gofobao.framework.asset.service.AssetLogService;
-import com.gofobao.framework.asset.service.AssetService;
-import com.gofobao.framework.asset.service.NewAssetLogService;
-import com.gofobao.framework.asset.service.RechargeDetailLogService;
+import com.gofobao.framework.asset.service.*;
 import com.gofobao.framework.asset.vo.request.*;
 import com.gofobao.framework.asset.vo.response.*;
 import com.gofobao.framework.asset.vo.response.pc.AssetLogs;
@@ -46,6 +44,7 @@ import com.gofobao.framework.common.rabbitmq.MqQueueEnum;
 import com.gofobao.framework.common.rabbitmq.MqTagEnum;
 import com.gofobao.framework.core.helper.RandomHelper;
 import com.gofobao.framework.core.vo.VoBaseResp;
+import com.gofobao.framework.financial.entity.NewAleve;
 import com.gofobao.framework.helper.*;
 import com.gofobao.framework.helper.project.SecurityHelper;
 import com.gofobao.framework.marketing.service.MarketingRedpackRecordService;
@@ -161,6 +160,9 @@ public class AssetBizImpl implements AssetBiz {
 
     @Autowired
     AssetChangeProvider assetChangeProvider;
+
+    @Autowired
+    CurrentIncomeLogService currentIncomeLogService;
 
 
     @Autowired
@@ -1676,5 +1678,43 @@ public class AssetBizImpl implements AssetBiz {
         log.info(GSON.toJson(assetChange));
         assetChangeProvider.commonAssetChange(assetChange);
         return ResponseEntity.ok(VoBaseResp.ok("执行成功"));
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public void doAssetChangeByCurrentInterest(NewAleve eve, UserThirdAccount userThirdAccount, String money) throws Exception {
+        Date nowDate = new Date();
+        long currMoney = MoneyHelper.yuanToFen(money);  // 元转分
+        String accountId = userThirdAccount.getAccountId(); // 账号
+        String reldate = StringUtils.trimAllWhitespace(eve.getReldate());  // 日期
+        String inputTime = StringUtils.trimAllWhitespace(eve.getInptime()); // 时间
+        String seqNo = StringUtils.trimAllWhitespace(eve.getTranno());
+        String no = String.format("%s%s%s", reldate, inputTime, seqNo); // 序列号
+        List<CurrentIncomeLog> currentIncomeLogs = currentIncomeLogService.findBySeqNoAndState(no, 1);
+        if (!CollectionUtils.isEmpty(currentIncomeLogs)) {
+            log.error(String.format("当前用户已添加活期收益: %s - %s", accountId, no));
+            return;
+        }
+
+        // 添加活期收益利息日志
+        CurrentIncomeLog currentIncomeLog = new CurrentIncomeLog();
+        currentIncomeLog.setCreateAt(nowDate);
+        currentIncomeLog.setUserId(userThirdAccount.getUserId());
+        currentIncomeLog.setSeqNo(no);
+        currentIncomeLog.setState(1);
+        currentIncomeLog.setMoney(currMoney);
+        currentIncomeLog = currentIncomeLogService.save(currentIncomeLog);  // 保存活期利息
+
+        // 活期收益资金变动
+        AssetChange assetChange = new AssetChange();
+        assetChange.setUserId(userThirdAccount.getUserId());
+        assetChange.setForUserId(0L);
+        assetChange.setSeqNo(no);
+        assetChange.setRemark(String.format("收到活期收益%s元", money));
+        assetChange.setGroupSeqNo(assetChangeProvider.getGroupSeqNo());
+        assetChange.setSourceId(currentIncomeLog.getId());
+        assetChange.setType(AssetChangeTypeEnum.currentIncome);  //活期收益
+        assetChange.setMoney(currMoney);
+        assetChangeProvider.commonAssetChange(assetChange);
+        log.info(String.format("处理活期收益成功: %s", no));
     }
 }

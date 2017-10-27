@@ -5,6 +5,8 @@ import com.gofobao.framework.asset.vo.response.*;
 import com.gofobao.framework.asset.vo.response.pc.VoViewAssetLogsWarpRes;
 import com.gofobao.framework.borrow.vo.request.VoDoAgainVerifyReq;
 import com.gofobao.framework.core.vo.VoBaseResp;
+import com.gofobao.framework.financial.entity.NewAleve;
+import com.gofobao.framework.member.entity.UserThirdAccount;
 import com.gofobao.framework.member.vo.response.VoHtmlResp;
 import com.gofobao.framework.member.vo.response.pc.ExpenditureDetail;
 import com.gofobao.framework.member.vo.response.pc.IncomeEarnedDetail;
@@ -263,5 +265,8 @@ public interface AssetBiz {
      * @return
      */
     ResponseEntity<VoBaseResp> changeLocalAsset(VoLocalAssetChangeReq voLocalAssetChangeReq) throws Exception;
+
+
+    void doAssetChangeByCurrentInterest(NewAleve eve, UserThirdAccount userThirdAccount, String money) throws Exception ;
 
 }
