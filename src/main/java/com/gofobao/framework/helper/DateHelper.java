@@ -606,7 +606,7 @@ public class DateHelper {
      * 将字符串转化时间
      *
      * @param dateStr 需要转化的时间 格式默认 yyyy-MM-dd HH:mm:ss
-     * @return
+     * @return Date
      */
     public static Date stringToDate(String dateStr) {
 
