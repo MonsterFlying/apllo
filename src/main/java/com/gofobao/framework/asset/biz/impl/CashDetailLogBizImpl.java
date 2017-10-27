@@ -693,6 +693,11 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
     public String showCash(String seqNo, Model model) {
         CashDetailLog cashDetailLog = cashDetailLogService.findTopBySeqNoLock(seqNo);
         model.addAttribute("h5Domain", h5Domain);
+
+        if ( ObjectUtils.isEmpty(cashDetailLog.getCallbackTime()) )  {
+            return "cash/loading";
+        }
+
         if (ObjectUtils.isEmpty(cashDetailLog)) {
             return "cash/faile";
         }

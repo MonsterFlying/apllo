@@ -10,6 +10,7 @@ import com.gofobao.framework.member.vo.response.pc.ExpenditureDetail;
 import com.gofobao.framework.member.vo.response.pc.IncomeEarnedDetail;
 import com.gofobao.framework.member.vo.response.pc.VoViewAssetStatisticWarpRes;
 import com.gofobao.framework.tender.vo.request.VoAdminRechargeReq;
+import com.gofobao.framework.tender.vo.request.VoLocalAssetChangeReq;
 import org.springframework.http.ResponseEntity;
 import org.springframework.ui.Model;
 
@@ -255,4 +256,12 @@ public interface AssetBiz {
      * @return
      */
     ResponseEntity<VoDueInRes>dueInInfo(Long userId);
+
+    /**
+     * 本地租金记录修改
+     * @param voLocalAssetChangeReq
+     * @return
+     */
+    ResponseEntity<VoBaseResp> changeLocalAsset(VoLocalAssetChangeReq voLocalAssetChangeReq) throws Exception;
+
 }
