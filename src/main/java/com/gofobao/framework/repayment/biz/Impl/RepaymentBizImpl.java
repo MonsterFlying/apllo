@@ -1624,7 +1624,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
         batchAssetChangeItem.setGroupSeqNo(groupSeqNo);
         batchAssetChangeItemService.save(batchAssetChangeItem);
 
-        if ((lateInterest > 0) && new Date().getTime() > DateHelper.endOfDate(DateHelper.stringToDate("2017-09-03 23:59:59")).getTime()) { // 扣除借款人还款滞纳金
+        if (lateInterest > 0) { // 扣除借款人还款滞纳金
             batchAssetChangeItem = new BatchAssetChangeItem();
             batchAssetChangeItem.setBatchAssetChangeId(batchAssetChangeId);
             batchAssetChangeItem.setState(0);
@@ -1743,7 +1743,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
         String groupSeqNo = assetChangeProvider.getGroupSeqNo(); // 资产记录分组流水号
         boolean advance = !ObjectUtils.isEmpty(borrowRepayment.getAdvanceAtYes());   // 是否是垫付
 
-        /* 投资记录：不包含理财计划 */
+        /* 成功的投资记录 */
         Specification<Tender> specification = Specifications
                 .<Tender>and()
                 .eq("status", 1)
@@ -1995,8 +1995,9 @@ public class RepaymentBizImpl implements RepaymentBiz {
             RepayAssetChange repayAssetChange = new RepayAssetChange();
             repayAssetChanges.add(repayAssetChange);
             double inInDouble = MoneyHelper.multiply(borrowCollection.getInterest(), interestPercent, 0);
-            inIn = MoneyHelper.doubleToLong(inInDouble);  // 还款利息
-
+            if (tender.getType() != 1) {
+                inIn = MoneyHelper.doubleToLong(inInDouble);  // 还款利息
+            }
             inPr = borrowCollection.getPrincipal(); // 还款本金
             repayAssetChange.setUserId(tender.getUserId());
             repayAssetChange.setInterest(inIn);
@@ -2947,9 +2948,11 @@ public class RepaymentBizImpl implements RepaymentBiz {
             if (tender.getTransferFlag() == 2) {
                 continue;
             }
-
-            intAmount += borrowCollection.getInterest();//还款利息
-            principal += borrowCollection.getPrincipal(); //还款本金
+            //如果是理财计划不需要回款利息
+            if (tender.getType() != 1) {
+                intAmount = intAmount + borrowCollection.getInterest();//还款利息
+            }
+            principal = principal + borrowCollection.getPrincipal(); //还款本金
 
             //垫付资金变动
             AdvanceAssetChange advanceAssetChange = new AdvanceAssetChange();
