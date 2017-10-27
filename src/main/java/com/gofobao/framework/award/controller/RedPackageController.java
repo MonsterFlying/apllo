@@ -8,6 +8,7 @@ import com.gofobao.framework.award.vo.response.VoViewRedPackageWarpRes;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.helper.project.SecurityHelper;
 import com.gofobao.framework.security.contants.SecurityContants;
+import com.gofobao.framework.tender.vo.request.VoLocalAssetChangeReq;
 import com.gofobao.framework.tender.vo.request.VoPublishRedReq;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -68,7 +69,6 @@ public class RedPackageController {
 
 
 
-    @ApiOperation("重新触发派发红包")
     @PostMapping("pub/publishActivity/red")
     public ResponseEntity<VoBaseResp> publishActivity(@ModelAttribute VoPublishRedReq voPublishRedReq) throws Exception {
         String paramStr = voPublishRedReq.getParamStr();
@@ -80,6 +80,10 @@ public class RedPackageController {
 
         return redPackageBiz.publishActivity(voPublishRedReq) ;
     }
+
+
+
+
 
     @ApiOperation("重新触发邀请好友红包派发")
     @PostMapping("pub/publishActivity/red/openAccount")

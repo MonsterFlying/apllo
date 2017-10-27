@@ -65,6 +65,7 @@ import com.gofobao.framework.system.entity.DictValue;
 import com.gofobao.framework.system.service.DictItemService;
 import com.gofobao.framework.system.service.DictValueService;
 import com.gofobao.framework.tender.vo.request.VoAdminRechargeReq;
+import com.gofobao.framework.tender.vo.request.VoLocalAssetChangeReq;
 import com.google.common.base.Preconditions;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
@@ -1653,5 +1654,27 @@ public class AssetBizImpl implements AssetBiz {
                             "查询异常,请稍后在试",
                             VoDueInRes.class));
         }
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public ResponseEntity<VoBaseResp> changeLocalAsset(VoLocalAssetChangeReq voLocalAssetChangeReq) throws Exception {
+        String paramStr = voLocalAssetChangeReq.getParamStr();
+        log.info("执行计划" + paramStr);
+        Map<String, String> tempMap = GSON.fromJson(paramStr, TypeTokenContants.MAP_ALL_STRING_TOKEN);
+        Preconditions.checkNotNull(tempMap, "tempMap is null");
+        AssetChange assetChange = GSON.fromJson(paramStr, AssetChange.class);
+        Preconditions.checkNotNull(assetChange, "assetChange is null");
+        if (StringUtils.isEmpty(assetChange.getGroupSeqNo())) {
+            assetChange.setGroupSeqNo(assetChangeProvider.getGroupSeqNo());
+        }
+
+        if (StringUtils.isEmpty(assetChange.getSeqNo())) {
+            assetChange.setSeqNo(assetChangeProvider.getSeqNo());
+        }
+
+        log.info(GSON.toJson(assetChange));
+        assetChangeProvider.commonAssetChange(assetChange);
+        return ResponseEntity.ok(VoBaseResp.ok("执行成功"));
     }
 }

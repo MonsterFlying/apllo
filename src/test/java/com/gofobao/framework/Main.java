@@ -7,7 +7,7 @@ import java.util.Map;
 
 public class Main {
     public static void main(String[] args) {
-        publishRedpack() ;
+        statementRechargeOffline() ;
     }
 
 
@@ -17,9 +17,22 @@ public class Main {
      */
     private static boolean publishRedpack() {
         String url = "https://api.gofobao.com/pub/publishActivity/red";
-        //String url = "http://127.0.0.1:8080/pub/admin/companyAccountInfo" ;
         Map<String, String> data = new HashMap<>();
         data.put("beginTime", "2017-10-21 17:44:00");
+        ReleaseHelper.sendMsg(url, data);
+        return true;
+    }
+
+
+    /**
+     * 离线拨正充值记录
+     * @return
+     */
+    private static boolean statementRechargeOffline(){
+        String url = "https://api.gofobao.com/pub/rechargeStatement/offline";
+        Map<String, String> data = new HashMap<>();
+        data.put("date", "2017-09-30 11:37:50");
+        data.put("id", "5930") ;
         ReleaseHelper.sendMsg(url, data);
         return true;
     }

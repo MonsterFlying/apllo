@@ -69,8 +69,9 @@ public class NewEveServiceImpl implements NewEveService {
 
     @Override
     public List<NewEve> findAllByTranTypeAndDateAndUserId(String type, Long userId, Date date) throws Exception {
+
         Date nowDate = new Date();
-        if (DateHelper.diffInDays(nowDate, DateHelper.beginOfDate(date), false) != 0) {
+        if (DateHelper.diffInDays(nowDate, date, false) != 0) {
             // 此处隔天, 直接查询eve对账文件
             Specification<NewEve> newEveSpecification = Specifications
                     .<NewEve>and()
