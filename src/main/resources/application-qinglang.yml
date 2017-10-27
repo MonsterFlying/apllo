@@ -47,7 +47,7 @@ qiniu:
     sk : GjGZAJBUpe8UzPoWmKeKBPSi7Kq_IshmuW-UC89o
 
 server:
-  port: 8080
+  port: 80
 
 windmill: #风车理财
   des-key: 2l0IYbNnRcShWOM9Q5Ej0A3gCEP07LBS #des加密key值

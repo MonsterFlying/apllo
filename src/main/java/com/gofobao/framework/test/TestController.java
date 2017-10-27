@@ -194,7 +194,7 @@ public class TestController {
     public void repairCall(@RequestParam("sourceId") Object sourceId, @RequestParam("batchNo") Object batchNo, @RequestParam("type") Object type) {
         //2.处理资金还款人、收款人资金变动
         try {
-            batchAssetChangeHelper.batchAssetChangeAndCollection(String.valueOf(sourceId), String.valueOf(batchNo), NumberHelper.toInt(type));
+            batchAssetChangeHelper.batchAssetChangeAndCollection(NumberHelper.toLong(sourceId), String.valueOf(batchNo), NumberHelper.toInt(type));
         } catch (Exception e) {
             log.error("变动异常：",e);
         }

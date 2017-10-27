@@ -2952,6 +2952,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
             if (tender.getType() != 1) {
                 intAmount = intAmount + borrowCollection.getInterest();//还款利息
             }
+
             principal = principal + borrowCollection.getPrincipal(); //还款本金
 
             //垫付资金变动
