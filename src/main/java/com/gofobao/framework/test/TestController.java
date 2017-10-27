@@ -325,7 +325,7 @@ public class TestController {
         Tender tender = tenderService.findById(transfer.getTenderId());
         Specification<TransferBuyLog> tbls = Specifications
                 .<TransferBuyLog>and()
-                .eq("transferId", 317)
+                .eq("transferId", transferId)
                 .eq("state", 1)
                 .build();
         List<TransferBuyLog> transferBuyLogList = transferBuyLogService.findList(tbls);

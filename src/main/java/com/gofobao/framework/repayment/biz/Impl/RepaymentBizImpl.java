@@ -232,7 +232,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
         VoRepayReq voRepayReq = new VoRepayReq();
         voRepayReq.setRepaymentId(repaymentId);
         if (isAdvance) {
-            voRepayReq.setUserId(22002L);
+            voRepayReq.setUserId(titularBorrowAccount.getUserId());
         } else {
             voRepayReq.setUserId(borrowRepayment.getUserId());
         }
@@ -1521,10 +1521,10 @@ public class RepaymentBizImpl implements RepaymentBiz {
         acqResMap.put("isUserOpen", true);
         acqResMap.put("freezeOrderId", freezeOrderId);
 
-        /*ResponseEntity<VoBaseResp> conditionResponse = repayConditionCheck(repayUserThirdAccount, borrowRepayment, acqResMap);  // 验证参数
+        ResponseEntity<VoBaseResp> conditionResponse = repayConditionCheck(repayUserThirdAccount, borrowRepayment, acqResMap);  // 验证参数
         if (!conditionResponse.getStatusCode().equals(HttpStatus.OK)) {
             return conditionResponse;
-        }*/
+        }
 
         // 正常还款
         ResponseEntity resp = normalRepay(freezeOrderId, acqResMap, repayUserThirdAccount, borrowRepayment, parentBorrow,
