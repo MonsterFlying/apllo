@@ -18,6 +18,12 @@ public class SecurityAdapter extends WebMvcConfigurerAdapter {
     @Value("${windmill.ips}")
     private String windmillIps;
 
+    /**
+     * 车轮密钥
+     */
+    @Value("${wheel.secret-key}")
+    private String wheelSecretKey;
+
 
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
@@ -28,7 +34,7 @@ public class SecurityAdapter extends WebMvcConfigurerAdapter {
                 .excludePathPatterns("/swagger-resources/**", "/v2/**")
                 .excludePathPatterns("/*.html", "/favicon.ico", "/**/*.html", "/**/*.css", "/**/*.js", "/**/*.png", "/**/*.jpg")
                 .excludePathPatterns("/index/**")
-                .excludePathPatterns("/version/**") ;
+                .excludePathPatterns("/version/**");
 
         super.addInterceptors(registry);
     }
@@ -38,9 +44,10 @@ public class SecurityAdapter extends WebMvcConfigurerAdapter {
 
         FilterRegistrationBean registration = new FilterRegistrationBean();
         registration.addUrlPatterns("/*");
-        registration.addInitParameter("starFireIps",starFireIps);
-        registration.addInitParameter("windmillIps",windmillIps);
-        registration.addInitParameter("passUrl","bind");
+        registration.addInitParameter("starFireIps", starFireIps);
+        registration.addInitParameter("windmillIps", windmillIps);
+        registration.addInitParameter("wheelSecretKey", wheelSecretKey);
+        registration.addInitParameter("passUrl", "bind");
         registration.setFilter(new OtherOpenApiFilter());
         return registration;
     }

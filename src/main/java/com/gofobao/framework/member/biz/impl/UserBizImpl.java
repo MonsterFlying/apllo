@@ -377,12 +377,13 @@ public class UserBizImpl implements UserBiz {
                 && !RegexHelper.matches(RegexHelper.REGEX_MOBILE_EXACT, account)) {
             log.info("员工登陆");
             user = userService.findById(Long.valueOf(account));
-            //判断该用户是否是理财用户
+            //todo 取消 员工登陆判断是否是理财用户
+ /*           //判断该用户是否是理财用户
             if (!StringUtils.isEmpty(user.getType()) && user.getType().equals("financer")) {
                 return ResponseEntity
                         .badRequest()
                         .body(VoBaseResp.error(VoBaseResp.ERROR, "非法登陆", VoBasicUserInfoResp.class));
-            }
+            }*/
 
             adminState = true;
         } else {
