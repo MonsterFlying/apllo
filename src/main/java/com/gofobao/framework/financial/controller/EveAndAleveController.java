@@ -1,6 +1,5 @@
 package com.gofobao.framework.financial.controller;
 
-import com.gofobao.framework.api.helper.JixinFileManager;
 import com.gofobao.framework.as.bix.RechargeStatementBiz;
 import com.gofobao.framework.as.bix.impl.RechargeStatementBizImpl;
 import com.gofobao.framework.common.constans.TypeTokenContants;
@@ -10,10 +9,8 @@ import com.gofobao.framework.financial.biz.NewAleveBiz;
 import com.gofobao.framework.financial.biz.NewEveBiz;
 import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.helper.project.SecurityHelper;
-import com.gofobao.framework.tender.vo.request.VoPublishRedReq;
 import com.gofobao.framework.tender.vo.request.VoRechargeReq;
 import com.google.gson.Gson;
-import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -194,11 +191,11 @@ public class EveAndAleveController {
      * @return
      */
     @GetMapping(value = "/pub/eveAndAleve/currentInterest/{date}")
-    public ResponseEntity<VoBaseResp> publishCurrentInterest(String date) {
+    public ResponseEntity<VoBaseResp> publishCurrentInterest(@PathVariable String date) {
         if (StringUtils.isNullOrEmpty(date)) {
             return ResponseEntity
                     .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, "活期利息派发时间"));
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "活期利息派发时间错误"));
         }
 
         try {
