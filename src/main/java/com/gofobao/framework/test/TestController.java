@@ -196,7 +196,7 @@ public class TestController {
         try {
             batchAssetChangeHelper.batchAssetChangeAndCollection(NumberHelper.toLong(sourceId), String.valueOf(batchNo), NumberHelper.toInt(type));
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("变动异常：",e);
         }
     }
 

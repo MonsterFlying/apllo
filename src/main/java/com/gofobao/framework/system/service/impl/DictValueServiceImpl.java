@@ -14,7 +14,7 @@ import java.util.Optional;
  * Created by Max on 17/6/6.
  */
 @Service
-public class DictValueServcieImpl implements DictValueService {
+public class DictValueServiceImpl implements DictValueService {
     @Autowired
     DictValueRepository dictValueRepository ;
 

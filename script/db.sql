@@ -918,3 +918,6 @@ CREATE TABLE `gfb_application_version` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `gfb_application_version_id_uindex` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+ALTER TABLE gfb0810.gfb_users ADD wheel_id VARCHAR(50) NULL;
+ALTER TABLE gfb0810.gfb_users ADD bind_wheel_date DATETIME NULL;
