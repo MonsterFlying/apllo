@@ -36,6 +36,7 @@ import com.gofobao.framework.api.model.freeze_details_query.FreezeDetailsQueryRe
 import com.gofobao.framework.api.model.freeze_details_query.FreezeDetailsQueryResponse;
 import com.gofobao.framework.api.model.voucher_pay.VoucherPayRequest;
 import com.gofobao.framework.api.model.voucher_pay.VoucherPayResponse;
+import com.gofobao.framework.asset.contants.AssetTypeContants;
 import com.gofobao.framework.asset.contants.BatchAssetChangeContants;
 import com.gofobao.framework.asset.entity.Asset;
 import com.gofobao.framework.asset.entity.BatchAssetChange;
@@ -59,6 +60,10 @@ import com.gofobao.framework.common.rabbitmq.MqHelper;
 import com.gofobao.framework.common.rabbitmq.MqQueueEnum;
 import com.gofobao.framework.common.rabbitmq.MqTagEnum;
 import com.gofobao.framework.core.vo.VoBaseResp;
+import com.gofobao.framework.finance.entity.FinancePlan;
+import com.gofobao.framework.finance.entity.FinancePlanBuyer;
+import com.gofobao.framework.finance.service.FinancePlanBuyerService;
+import com.gofobao.framework.finance.service.FinancePlanService;
 import com.gofobao.framework.helper.*;
 import com.gofobao.framework.helper.project.BatchAssetChangeHelper;
 import com.gofobao.framework.helper.project.BorrowCalculatorHelper;
@@ -182,6 +187,19 @@ public class TestController {
     private BorrowRepaymentService borrowRepaymentService;
     @Autowired
     private TransferBuyLogService transferBuyLogService;
+
+
+    @RequestMapping("/pub/test/asset/change")
+    @Transactional(rollbackFor = Exception.class)
+    public void repairCall(@RequestParam("sourceId") Object sourceId, @RequestParam("batchNo") Object batchNo, @RequestParam("type") Object type) {
+        //2.处理资金还款人、收款人资金变动
+        try {
+            batchAssetChangeHelper.batchAssetChangeAndCollection(NumberHelper.toLong(sourceId), String.valueOf(batchNo), NumberHelper.toInt(type));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
 
     @ApiOperation("获取自动投标列表")
     @RequestMapping("/pub/batch/deal")
@@ -365,6 +383,21 @@ public class TestController {
             mqHelper.convertAndSend(mqConfig);
         } catch (Throwable e) {
             log.error("thirdBatchProvider endPcThirdTransferTender send mq exception", e);
+        }
+    }
+
+    @ApiOperation("用户债权列表查询")
+    @RequestMapping("/pub/test/batch/cancel")
+    @Transactional
+    public void cancelBatch(@RequestParam("batchNo") Object batchNo, @RequestParam("txAmount") Object txAmount, @RequestParam("count") Object count) {
+        BatchCancelReq batchCancelReq = new BatchCancelReq();
+        batchCancelReq.setBatchNo(String.valueOf(batchNo));
+        batchCancelReq.setTxAmount(String.valueOf(txAmount));
+        batchCancelReq.setTxCounts(String.valueOf(count));
+        batchCancelReq.setChannel(ChannelContant.HTML);
+        BatchCancelResp batchCancelResp = jixinManager.send(JixinTxCodeEnum.BATCH_CANCEL, batchCancelReq, BatchCancelResp.class);
+        if ((ObjectUtils.isEmpty(batchCancelResp)) || (!ObjectUtils.isEmpty(batchCancelResp.getRetCode()))) {
+            log.error("即信批次撤销失败!" + GSON.toJson(batchCancelResp));
         }
     }
 

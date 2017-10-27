@@ -1,5 +1,8 @@
 package com.gofobao.framework.financial.biz;
 
+import com.gofobao.framework.financial.entity.NewAleve;
+import com.gofobao.framework.member.entity.UserThirdAccount;
+
 import java.io.FileNotFoundException;
 
 public interface NewAleveBiz {
@@ -27,4 +30,9 @@ public interface NewAleveBiz {
     void calculationCurrentInterest(String date) throws Exception;
 
     void simpleDownload(String date);
+
+
+
+
+
 }

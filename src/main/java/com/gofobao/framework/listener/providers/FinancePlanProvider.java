@@ -268,8 +268,6 @@ public class FinancePlanProvider {
         UserThirdAccount tenderUserThirdAccount = null;
         // 全部有效投标金额
         int sumAmount = 0;
-        // 全部本金之和
-        int sumPrincipal = 0;
         for (int i = 0; i < transferBuyLogList.size(); i++) {
             TransferBuyLog transferBuyLog = transferBuyLogList.get(i);
             double txFee = 0;
@@ -282,12 +280,7 @@ public class FinancePlanProvider {
             sumAmount += txAmount;
             //购买债权转让有效金额 本金
             long principal = new Double(MoneyHelper.round(transferBuyLog.getPrincipal(), 0)).longValue();
-            //判断是否是最后一期
-            if (i == (transferBuyLogList.size() - 1)) {
-                principal = transfer.getPrincipal() - sumPrincipal;
-            }
-            //累加全部转让本金
-            sumPrincipal += sumPrincipal;
+
             //判断标的已在存管登记转让
             if (BooleanHelper.isTrue(transferBuyLog.getThirdTransferFlag())) {
                 continue;

@@ -4,7 +4,10 @@ import com.gofobao.framework.asset.biz.AssetBiz;
 import com.gofobao.framework.asset.vo.request.VoSynAssetsRep;
 import com.gofobao.framework.asset.vo.response.*;
 import com.gofobao.framework.borrow.vo.request.VoDoAgainVerifyReq;
+import com.gofobao.framework.core.vo.VoBaseResp;
+import com.gofobao.framework.helper.project.SecurityHelper;
 import com.gofobao.framework.security.contants.SecurityContants;
+import com.gofobao.framework.tender.vo.request.VoLocalAssetChangeReq;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,6 +23,19 @@ import springfox.documentation.annotations.ApiIgnore;
 public class AssetController {
     @Autowired
     private AssetBiz assetBiz;
+
+
+    @PostMapping("pub/asset/changeRecord")
+    public ResponseEntity<VoBaseResp> insertLocalRecord(@ModelAttribute VoLocalAssetChangeReq voLocalAssetChangeReq) throws Exception {
+        String paramStr = voLocalAssetChangeReq.getParamStr();
+        if (!SecurityHelper.checkSign(voLocalAssetChangeReq.getSign(), paramStr)) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "本地记录修改异常!"));
+        }
+
+        return assetBiz.changeLocalAsset(voLocalAssetChangeReq) ;
+    }
 
     @ApiOperation("获取用户资产信息")
     @GetMapping("/asset/v2/info")

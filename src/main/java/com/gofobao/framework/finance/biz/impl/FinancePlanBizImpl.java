@@ -571,16 +571,16 @@ public class FinancePlanBizImpl implements FinancePlanBiz {
         ThirdAccountHelper.allConditionCheck(buyUserAccount);
         //判断是否是购买人操作
         if (financePlanBuyer.getUserId() != userId) {
-            throw new Exception("匹配失败!");
+            throw new Exception("匹配失败! 债权转让匹配非本人操作!");
         }
         //进行购买债权操作（部分债权转让），并推送到存管系统
         if (transfer.getTransferMoney() == transfer.getTransferMoneyYes()) {
-            throw new Exception("匹配失败!");
+            throw new Exception("匹配失败! 债权转让可转金额为0");
         }
         /*购买债权有效金额*/
         long validMoney = (long) MathHelper.min(transfer.getTransferMoney() - transfer.getTransferMoneyYes(), money);
         if (validMoney <= 0) {
-            throw new Exception("匹配失败!");
+            throw new Exception("匹配失败! 购买债权有效金额小于0!");
         }
         //理财计划购买债权转让
         TransferBuyLog transferBuyLog = financePlanBuyTransfer(nowDate, money, transferId, userId, financePlanBuyer, financePlan, transfer, validMoney);
@@ -591,7 +591,7 @@ public class FinancePlanBizImpl implements FinancePlanBiz {
                             MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
             Boolean result = financePlanProvider.againVerifyFinanceTransfer(body);
             if (!result) {
-                throw new Exception("匹配失败!");
+                throw new Exception("匹配失败! 理财计划购买债权转让失败!");
             }
         }
         return ResponseEntity.ok(GSON.toJson(transferBuyLog));
@@ -703,7 +703,8 @@ public class FinancePlanBizImpl implements FinancePlanBiz {
                 .notIn("status", statusArray.toArray())
                 .eq("type", 0)
                 .build();
-        List<FinancePlan> financePlans = financePlanService.findList(specification, new PageRequest(page.getPageIndex(), page.getPageSize(), new Sort(Sort.Direction.DESC, "id")));
+        List<FinancePlan> financePlans = financePlanService.findList(specification, new PageRequest(page.getPageIndex(), page.getPageSize(),
+                new Sort(Sort.Direction.DESC, "id")));
 
         if (CollectionUtils.isEmpty(financePlans)) {
             return ResponseEntity.ok(warpRes);
