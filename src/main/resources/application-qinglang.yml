@@ -64,6 +64,11 @@ starfire: # 星火
   notify_url: https://www.xeenho.com/openapi/user_bind/notify/
   ips: 120.76.29.193,120.76.31.153,120.76.204.32,120.77.12.124
 
+wheel:
+  short-name: gfb
+  secret-key: dsDaNZY7
+  domain: promotion-test.chelun.com
+  check_ticket_url: /Financial/ps_check_ticket
 jixin: #银行存管
   keysPassword: guangfubao_uat@2016 #私钥密码
   url: http://uat.gofobao.com/escrow  #即信服务器路径
