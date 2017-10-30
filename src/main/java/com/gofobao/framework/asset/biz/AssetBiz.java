@@ -269,4 +269,6 @@ public interface AssetBiz {
 
     void doAssetChangeByCurrentInterest(NewAleve eve, UserThirdAccount userThirdAccount, String money) throws Exception ;
 
+
+    void doAssetChangeByCurrentInterestSpecial(NewAleve eve, UserThirdAccount userThirdAccount, String money) throws Exception ;
 }

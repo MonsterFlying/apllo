@@ -32,7 +32,5 @@ public interface NewAleveBiz {
     void simpleDownload(String date);
 
 
-
-
-
+    void adminPublishCurrentInterest(String date) throws Exception;
 }
