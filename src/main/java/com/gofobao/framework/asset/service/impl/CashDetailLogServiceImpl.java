@@ -37,11 +37,6 @@ public class CashDetailLogServiceImpl implements CashDetailLogService {
     @Autowired
     CashDetailLogRepository cashDetailLogRepository;
 
-    @Autowired
-    private RedisHelper redisHelper;
-
-    @Autowired
-    private DictValueRepository dictValueRepository;
 
     @Override
     public List<CashDetailLog> findByStateInAndUserId(ImmutableList<Integer> states, long userId) {
@@ -49,8 +44,15 @@ public class CashDetailLogServiceImpl implements CashDetailLogService {
     }
 
     @Override
-    public void save(CashDetailLog cashDetailLog) {
-        cashDetailLogRepository.save(cashDetailLog);
+    public CashDetailLog save(CashDetailLog cashDetailLog) {
+        return cashDetailLogRepository.save(cashDetailLog);
+    }
+
+    @Override
+    public List<CashDetailLog> findAll(Specification<CashDetailLog> cashDetailLogSpecification) {
+        List<CashDetailLog> all = cashDetailLogRepository.findAll(cashDetailLogSpecification);
+        Optional<List<CashDetailLog>> optional = Optional.ofNullable(all);
+        return optional.orElse(Lists.newArrayList());
     }
 
     @Override
@@ -72,11 +74,12 @@ public class CashDetailLogServiceImpl implements CashDetailLogService {
 
     @Override
     public List<CashDetailLog> findByUserIdAndStateInAndCreateTimeBetween(Long userId, ImmutableList<Integer> stateList, Date startDate, Date endDate) {
-        return Optional.ofNullable(cashDetailLogRepository.findByUserIdAndStateInAndCreateTimeBetween(userId, stateList, startDate, endDate)).orElse(Collections.EMPTY_LIST) ;
+        return Optional.ofNullable(cashDetailLogRepository.findByUserIdAndStateInAndCreateTimeBetween(userId, stateList, startDate, endDate)).orElse(Collections.EMPTY_LIST);
     }
 
     /**
      * 提现记录
+     *
      * @param voPcCashLogs
      * @return
      */
@@ -84,7 +87,7 @@ public class CashDetailLogServiceImpl implements CashDetailLogService {
     public List<VoCashLog> pcLogs(VoPcCashLogs voPcCashLogs) {
         Specification specification = Specifications.<CashDetailLog>and()
                 .eq("userId", voPcCashLogs.getUserId())
-                .eq(!StringUtils.isEmpty(voPcCashLogs.getStatus()),"state", voPcCashLogs.getStatus())
+                .eq(!StringUtils.isEmpty(voPcCashLogs.getStatus()), "state", voPcCashLogs.getStatus())
                 .build();
         Page<CashDetailLog> cashDetailLogPage = cashDetailLogRepository.findAll(specification,
                 new PageRequest(voPcCashLogs.getPageIndex(),
@@ -119,7 +122,7 @@ public class CashDetailLogServiceImpl implements CashDetailLogService {
 
     @Override
     public long count(Specification<CashDetailLog> cashDetailLogSpecification) {
-        return cashDetailLogRepository.count(cashDetailLogSpecification) ;
+        return cashDetailLogRepository.count(cashDetailLogSpecification);
     }
 
 

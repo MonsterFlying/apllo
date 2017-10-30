@@ -68,14 +68,14 @@ public class NewEveServiceImpl implements NewEveService {
     }
 
     @Override
-    public List<NewEve> findAllByTranTypeAndDateAndUserId(String type, Long userId, Date date) throws Exception {
+    public List<NewEve> findAllByTranTypeAndDateAndAccountId(String type, String accountId, Date date) throws Exception {
 
         Date nowDate = new Date();
         if (DateHelper.diffInDays(nowDate, date, false) != 0) {
             // 此处隔天, 直接查询eve对账文件
             Specification<NewEve> newEveSpecification = Specifications
                     .<NewEve>and()
-                    .eq("cardnbr", userId)
+                    .eq("cardnbr", accountId)
                     .eq("transtype", type)
                     .eq("queryTime", DateHelper.dateToString(date, DateHelper.DATE_FORMAT_YMD_NUM))
                     .build();

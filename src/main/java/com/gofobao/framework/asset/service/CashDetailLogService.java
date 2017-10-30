@@ -14,9 +14,23 @@ import java.util.List;
  * Created by Administrator on 2017/6/12 0012.
  */
 public interface CashDetailLogService {
+
     List<CashDetailLog> findByStateInAndUserId(ImmutableList<Integer> states, long userId);
 
-    void save(CashDetailLog cashDetailLog);
+    /**
+     * 保存
+     * @param cashDetailLog
+     * @return
+     */
+    CashDetailLog save(CashDetailLog cashDetailLog);
+
+    /**
+     * 根据条件查询提现记录
+     * @param cashDetailLogSpecification
+     * @return
+     */
+
+    List<CashDetailLog> findAll(Specification<CashDetailLog> cashDetailLogSpecification) ;
 
     /**
      * 根据流水号查询充值记录

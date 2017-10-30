@@ -199,7 +199,7 @@ public class EveAndAleveController {
         }
 
         try {
-            newAleveBiz.adminPublishCurrentInterest(date);
+            newAleveBiz.calculationCurrentInterest(date);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "活期派发失败"));
         }

@@ -249,7 +249,7 @@ public class UserActiveProvider {
         Gson gson = new Gson();
         Date nowDate = new Date();
         String seqNo = rechargeDetailLog.getSeqNo();
-        FundTransQueryResponse fundTransQueryResponse = queryJixinOp(seqNo, userThirdAccount);
+        FundTransQueryResponse fundTransQueryResponse = queryJixinOp(seqNo, userThirdAccount, 5);
         if (ObjectUtils.isEmpty(fundTransQueryResponse)) {
             exceptionEmailHelper.sendErrorMessage("充值单笔资金操作确认请求异常", String.format("充值Id: %s", sourceId));
             return false;
@@ -318,7 +318,12 @@ public class UserActiveProvider {
      * @param userThirdAccount
      * @return
      */
-    private FundTransQueryResponse queryJixinOp(String seqNo, UserThirdAccount userThirdAccount) {
+    private FundTransQueryResponse queryJixinOp(String seqNo, UserThirdAccount userThirdAccount, int looper) {
+        if (looper <= 0) {
+            log.warn(String.format("[单笔资金查询] 查询stack over flow ", seqNo));
+            return null;
+        }
+
         String orgTxDate = seqNo.substring(0, 8);  // 原始日期
         String orgTxTime = seqNo.substring(8, 14);  // 原始时间
         String orgSeqNo = seqNo.substring(14);  // 原始序列号
@@ -331,23 +336,34 @@ public class UserActiveProvider {
         FundTransQueryResponse fundTransQueryResponse = jixinManager.send(JixinTxCodeEnum.FUND_TRANS_QUERY,
                 fundTransQueryRequest,
                 FundTransQueryResponse.class);
-
-        if (ObjectUtils.isEmpty(fundTransQueryResponse)
-                || !JixinResultContants.SUCCESS.equalsIgnoreCase(fundTransQueryResponse.getRetCode())) {
+        // 网络请求异常, 重新查询
+        if (JixinResultContants.isNetWordError(fundTransQueryResponse)) {
+            log.warn(String.format("[单笔资金查询] 查询网络异常 %s , 重新请求", seqNo));
             try {
                 Thread.sleep(2 * 1000L);
             } catch (InterruptedException e) {
-                log.info("单笔资金操作确认休眠异常");
+                log.error("[单笔资金查询] 休眠异常");
             }
-            fundTransQueryResponse = jixinManager.send(JixinTxCodeEnum.FUND_TRANS_QUERY,
-                    fundTransQueryRequest,
-                    FundTransQueryResponse.class);
-            if (ObjectUtils.isEmpty(fundTransQueryResponse)
-                    || !JixinResultContants.SUCCESS.equalsIgnoreCase(fundTransQueryResponse.getTxCode())) {
-                return null;
-            }
+            return queryJixinOp(seqNo, userThirdAccount, looper - 1);
         }
-        return fundTransQueryResponse;
+
+        if (JixinResultContants.isBusy(fundTransQueryResponse)) {
+            log.warn(String.format("[单笔资金查询] 服务器繁忙 %s , 重新请求", seqNo));
+            try {
+                Thread.sleep(2 * 1000L);
+            } catch (InterruptedException e) {
+                log.error("[单笔资金查询] 休眠异常");
+            }
+            return queryJixinOp(seqNo, userThirdAccount, looper - 1);
+        }
+
+        if (ObjectUtils.isEmpty(fundTransQueryResponse)
+                || !JixinResultContants.SUCCESS.equalsIgnoreCase(fundTransQueryResponse.getRetCode())) {
+            return fundTransQueryResponse;
+        } else {
+            log.error(String.format("[单笔资金查询] 查询失败 %s", seqNo ));
+            return queryJixinOp(seqNo, userThirdAccount, looper - 1);
+        }
     }
 
     /**
@@ -364,7 +380,7 @@ public class UserActiveProvider {
         Date nowDate = new Date();
         String seqNo = cashDetailLog.getSeqNo();
 
-        FundTransQueryResponse fundTransQueryResponse = queryJixinOp(seqNo, userThirdAccount);
+        FundTransQueryResponse fundTransQueryResponse = queryJixinOp(seqNo, userThirdAccount, 5);
         if (ObjectUtils.isEmpty(fundTransQueryResponse)) {
             exceptionEmailHelper.sendErrorMessage("提现单笔资金操作确认请求异常", String.format("提现Id: %s", sourceId));
             return false;

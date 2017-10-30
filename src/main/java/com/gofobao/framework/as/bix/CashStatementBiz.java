@@ -1,8 +1,12 @@
 package com.gofobao.framework.as.bix;
 
 import com.gofobao.framework.as.bix.impl.CashStatementBizImpl;
+import com.gofobao.framework.asset.entity.CashDetailLog;
+import com.gofobao.framework.financial.entity.NewEve;
+import com.gofobao.framework.member.entity.UserThirdAccount;
 
 import java.util.Date;
+import java.util.List;
 
 /**
  * 提现对账
@@ -31,5 +35,21 @@ public interface CashStatementBiz {
      * @return
      */
     boolean onlineStatement(Long userId, Date date, CashStatementBizImpl.CashType cashType, boolean force) throws Exception;
+
+
+    /**
+     * 离线提现分析
+     * @param userThirdAccount
+     * @param date
+     * @param cashType
+     * @param thirdCashRecordList
+     * @param localCashDetailLogs
+     * @return
+     */
+    boolean doCashOfOfflineMatch(UserThirdAccount userThirdAccount,
+                                 Date date,
+                                 CashStatementBizImpl.CashType cashType,
+                                 List<NewEve> thirdCashRecordList,
+                                 List<CashDetailLog> localCashDetailLogs) throws Exception;
 
 }
