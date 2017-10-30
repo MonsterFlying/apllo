@@ -1681,6 +1681,7 @@ public class AssetBizImpl implements AssetBiz {
     }
 
     @Transactional(rollbackFor = Exception.class)
+    @Override
     public void doAssetChangeByCurrentInterest(NewAleve eve, UserThirdAccount userThirdAccount, String money) throws Exception {
         Date nowDate = new Date();
         long currMoney = MoneyHelper.yuanToFen(money);  // 元转分
@@ -1705,6 +1706,127 @@ public class AssetBizImpl implements AssetBiz {
         currentIncomeLog = currentIncomeLogService.save(currentIncomeLog);  // 保存活期利息
 
         // 活期收益资金变动
+        AssetChange assetChange = new AssetChange();
+        assetChange.setUserId(userThirdAccount.getUserId());
+        assetChange.setForUserId(0L);
+        assetChange.setSeqNo(no);
+        assetChange.setRemark(String.format("收到活期收益%s元", money));
+        assetChange.setGroupSeqNo(assetChangeProvider.getGroupSeqNo());
+        assetChange.setSourceId(currentIncomeLog.getId());
+        assetChange.setType(AssetChangeTypeEnum.currentIncome);  //活期收益
+        assetChange.setMoney(currMoney);
+        assetChangeProvider.commonAssetChange(assetChange);
+        log.info(String.format("处理活期收益成功: %s", no));
+    }
+
+
+
+    public static List<Long> SUB_001 = new ArrayList<>() ;
+    static {
+        SUB_001.add(197L) ;
+        SUB_001.add(1297L) ;
+        SUB_001.add(1309L) ;
+        SUB_001.add(2330L) ;
+        SUB_001.add(2375L) ;
+        SUB_001.add(2623L) ;
+        SUB_001.add(3083L) ;
+        SUB_001.add(3460L) ;
+        SUB_001.add(3612L) ;
+        SUB_001.add(4022L) ;
+        SUB_001.add(5948L) ;
+        SUB_001.add(8628L) ;
+        SUB_001.add(13345L) ;
+        SUB_001.add(24313L) ;
+        SUB_001.add(26622L) ;
+        SUB_001.add(46908L) ;
+        SUB_001.add(50692L) ;
+        SUB_001.add(59087L) ;
+        SUB_001.add(62654L) ;
+        SUB_001.add(62844L) ;
+        SUB_001.add(62959L) ;
+        SUB_001.add(110866L) ;
+    }
+    public static List<Long> SUB_003 = new ArrayList<>() ;
+    static {
+        SUB_003.add(2552L) ;
+        SUB_003.add(10513L) ;
+    }
+
+    public static List<Long> ADD_001 = new ArrayList<>() ;
+    static {
+        ADD_001.add(544L) ;
+        ADD_001.add(1766L) ;
+        ADD_001.add(3449L) ;
+        ADD_001.add(8663L) ;
+        ADD_001.add(41737L) ;
+    }
+
+    public static List<Long> ADD_002 = new ArrayList<>() ;
+    static {
+        ADD_002.add(1947L) ;
+        ADD_002.add(3850L) ;
+    }
+
+    public static List<Long> ADD_003 = new ArrayList<>() ;
+    static {
+        ADD_003.add(4632L) ;
+        ADD_003.add(901L) ;
+    }
+
+    public static List<Long> ADD_005 = new ArrayList<>() ;
+    static {
+        ADD_005.add(4811L) ;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void doAssetChangeByCurrentInterestSpecial(NewAleve eve, UserThirdAccount userThirdAccount, String money) throws Exception {
+        log.info("===================================================");
+        log.info("执行特殊活期收益");
+        log.info("===================================================");
+        Date nowDate = new Date();
+        long currMoney = MoneyHelper.yuanToFen(money);
+        Long userId = userThirdAccount.getUserId();
+        if(SUB_001.contains(userId)){
+            log.info("派发减去1分");
+            currMoney = currMoney - 1; // 派发收益减去 0.01
+        }else if(SUB_003.contains(userId)){
+            log.info("派发减去3分");
+            currMoney = currMoney - 3 ; // 派发收益减去 0.03
+        }else if(ADD_001.contains(userId)){ // 多派发 0.01
+            log.info("派发增加1分");
+            currMoney = currMoney + 1 ;
+        }else if(ADD_002.contains(userId)){
+            log.info("派发增加2分");
+            currMoney = currMoney + 2 ;
+        }else if(ADD_003.contains(userId)){
+            log.info("派发增加3分");
+            currMoney = currMoney + 3 ;
+        }else if(ADD_005.contains(userId)){
+            log.info("派发增加5分");
+            currMoney = currMoney + 5 ;
+        }
+
+        // 针对特殊差异进行补少不多
+        String accountId = userThirdAccount.getAccountId();
+        String reldate = StringUtils.trimAllWhitespace(eve.getReldate());
+        String inputTime = StringUtils.trimAllWhitespace(eve.getInptime());
+        String seqNo = StringUtils.trimAllWhitespace(eve.getTranno());
+        String no = String.format("%s%s%s", reldate, inputTime, seqNo);
+        List<CurrentIncomeLog> currentIncomeLogs = currentIncomeLogService.findBySeqNoAndState(no, 1);
+        if (!CollectionUtils.isEmpty(currentIncomeLogs)) {
+            log.error(String.format("当前用户已添加活期收益: %s - %s", accountId, no));
+            return;
+        }
+
+        CurrentIncomeLog currentIncomeLog = new CurrentIncomeLog();
+        currentIncomeLog.setCreateAt(nowDate);
+        currentIncomeLog.setUserId(userThirdAccount.getUserId());
+        currentIncomeLog.setSeqNo(no);
+        currentIncomeLog.setState(1);
+        currentIncomeLog.setMoney(currMoney);
+        currentIncomeLog = currentIncomeLogService.save(currentIncomeLog);
+
         AssetChange assetChange = new AssetChange();
         assetChange.setUserId(userThirdAccount.getUserId());
         assetChange.setForUserId(0L);

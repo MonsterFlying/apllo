@@ -4,21 +4,16 @@ import com.github.wenhao.jpa.Specifications;
 import com.gofobao.framework.api.helper.JixinFileManager;
 import com.gofobao.framework.api.helper.JixinTxDateHelper;
 import com.gofobao.framework.asset.biz.AssetBiz;
-import com.gofobao.framework.asset.entity.CurrentIncomeLog;
 import com.gofobao.framework.asset.service.CurrentIncomeLogService;
-import com.gofobao.framework.common.assets.AssetChange;
 import com.gofobao.framework.common.assets.AssetChangeProvider;
-import com.gofobao.framework.common.assets.AssetChangeTypeEnum;
 import com.gofobao.framework.financial.biz.NewAleveBiz;
 import com.gofobao.framework.financial.entity.NewAleve;
-import com.gofobao.framework.financial.entity.NewEve;
 import com.gofobao.framework.financial.service.NewAleveService;
 import com.gofobao.framework.helper.*;
 import com.gofobao.framework.member.entity.UserThirdAccount;
 import com.gofobao.framework.member.service.UserService;
 import com.gofobao.framework.member.service.UserThirdAccountService;
 import com.gofobao.framework.migrate.FormatHelper;
-import com.google.common.base.Preconditions;
 import com.google.common.io.Files;
 import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;
@@ -30,8 +25,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 
@@ -284,7 +277,142 @@ public class NewAleveBizImpl implements NewAleveBiz {
             pageIndexTotal = count.intValue() % pageSize == 0 ? pageIndexTotal : pageIndexTotal + 1;
 
             for (; pageIndex < pageIndexTotal; pageIndex++) {
-                log.info("执行积分派发" + pageIndex) ;
+                log.info("执行积分派发" + pageIndex);
+                Pageable pageable = new PageRequest(pageIndex, pageSize, new Sort(new Sort.Order(Sort.Direction.DESC, "id")));
+                Page<NewAleve> newAleves = newAleveService.findAll(specification, pageable);
+                List<NewAleve> data = newAleves.getContent();
+                if (ObjectUtils.isEmpty(data)) {
+                    log.warn("当期活期收益数据为空");
+                    break;
+                }
+
+                for (NewAleve item : data) {
+                    String cardnbr = item.getCardnbr();  // 账户
+                    String amount = item.getAmount(); // 金额 元
+                    String accountId = StringUtils.trimAllWhitespace(cardnbr);
+                    String money = StringUtils.trimAllWhitespace(amount);
+                    UserThirdAccount userThirdAccount = userThirdAccountService.findByAccountId(accountId);
+                    if (ObjectUtils.isEmpty(userThirdAccount)) {
+                        log.error(String.format("活期收益派发, 开户信息为空: %s", accountId));
+                        exceptionEmailHelper.sendErrorMessage("活期收益派发", String.format("查询当前开户账户为空, 数据[ 账户:%s, 时间:%s ]", accountId, date));  // 对于特殊用户进行特殊处理
+                        continue;
+                    }
+
+                    try {
+                        log.info("派发活期" + new Gson().toJson(item));
+                        assetBiz.doAssetChangeByCurrentInterest(item, userThirdAccount, money);
+                    } catch (Exception e) {
+                        log.error("活期收益资金变动异常", e);
+                        exceptionEmailHelper.sendException("活期收益派发", e);
+                        throw new Exception(e);
+                    }
+                }
+            }
+        } catch (Exception e) {
+            log.error("派发用户活期收益异常", e);
+            exceptionEmailHelper.sendException("派发用户活期收益异常", e);
+            throw new Exception(e);
+        }
+    }
+
+    public static List<Long> PUBLISH_ID = new ArrayList<>(100);
+
+    static {
+       PUBLISH_ID.add(22L);
+        PUBLISH_ID.add(1L);
+        PUBLISH_ID.add(197L);
+        PUBLISH_ID.add(375L);
+        PUBLISH_ID.add(544L);
+        PUBLISH_ID.add(901L);
+        PUBLISH_ID.add(1190L);
+        PUBLISH_ID.add(1297L);
+        PUBLISH_ID.add(1309L);
+        PUBLISH_ID.add(1766L);
+        PUBLISH_ID.add(1947L);
+        PUBLISH_ID.add(2330L);
+        PUBLISH_ID.add(2375L);
+        PUBLISH_ID.add(2552L);
+        PUBLISH_ID.add(2623L);
+        PUBLISH_ID.add(3083L);
+        PUBLISH_ID.add(3449L);
+        PUBLISH_ID.add(3460L);
+        PUBLISH_ID.add(3612L);
+        PUBLISH_ID.add(3850L);
+        // PUBLISH_ID.add(3851L); 已修补
+        PUBLISH_ID.add(4022L);
+        PUBLISH_ID.add(4213L);
+        PUBLISH_ID.add(4632L);
+        PUBLISH_ID.add(4811L);
+        PUBLISH_ID.add(5930L);
+        PUBLISH_ID.add(5948L);
+        PUBLISH_ID.add(8628L);
+        PUBLISH_ID.add(8663L);
+        PUBLISH_ID.add(9769L);
+        PUBLISH_ID.add(9789L);
+        PUBLISH_ID.add(10513L);
+        PUBLISH_ID.add(12489L);
+        PUBLISH_ID.add(13345L);
+        PUBLISH_ID.add(13378L);
+        PUBLISH_ID.add(22002L);
+        PUBLISH_ID.add(24313L);
+        PUBLISH_ID.add(26622L);
+        PUBLISH_ID.add(31323L);
+        PUBLISH_ID.add(41231L);
+        PUBLISH_ID.add(41737L);
+        PUBLISH_ID.add(42334L);
+        PUBLISH_ID.add(46908L);
+        PUBLISH_ID.add(49824L);
+        PUBLISH_ID.add(50692L);
+        PUBLISH_ID.add(51450L);
+        PUBLISH_ID.add(59087L);
+        PUBLISH_ID.add(60002L);
+        PUBLISH_ID.add(62654L);
+        PUBLISH_ID.add(62844L);
+        PUBLISH_ID.add(62959L);
+        PUBLISH_ID.add(63588L);
+        PUBLISH_ID.add(26108L);
+        PUBLISH_ID.add(87134L);
+        PUBLISH_ID.add(92571L);
+        PUBLISH_ID.add(96632L);
+        PUBLISH_ID.add(63469L);
+        PUBLISH_ID.add(108377L);
+        PUBLISH_ID.add(110825L);
+        PUBLISH_ID.add(110866L);
+        PUBLISH_ID.add(110907L);
+    }
+
+
+    @Override
+    public void simpleDownload(String date) {
+        String fileName = String.format("%s-ALEVE%s-%s", bankNo, productNo, date);
+        log.info("========================");
+        log.info("执行下载文件:" + fileName);
+        log.info("========================");
+        boolean downloadState = jixinFileManager.download(fileName);
+        if (!downloadState) {
+            log.error("ALEVE文件下载失败");
+        }
+    }
+
+    @Override
+    public void adminPublishCurrentInterest(String date) throws Exception {
+        try {
+            Specification<NewAleve> specification = Specifications
+                    .<NewAleve>and()
+                    .eq("transtype", "5500")  // 活期收益
+                    .eq("queryTime", date)  // 日期
+                    .build();
+            Long count = newAleveService.count(specification);
+            if (count <= 0) {
+                log.warn(String.format("[当前活期收益]"));
+                return;
+            }
+            int pageSize = 20, pageIndex = 0, pageIndexTotal = 0;
+            pageIndexTotal = count.intValue() / pageSize;
+            pageIndexTotal = count.intValue() % pageSize == 0 ? pageIndexTotal : pageIndexTotal + 1;
+
+            for (; pageIndex < pageIndexTotal; pageIndex++) {
+                log.info("后台派发积分派发" + pageIndex);
                 Pageable pageable = new PageRequest(pageIndex, pageSize, new Sort(new Sort.Order(Sort.Direction.DESC, "id")));
                 Page<NewAleve> newAleves = newAleveService.findAll(specification, pageable);
                 List<NewAleve> data = newAleves.getContent();
@@ -306,7 +434,7 @@ public class NewAleveBizImpl implements NewAleveBiz {
                     }
 
                     // 判断是否允许派发
-                    if(NO_PUBLISH_ID.contains(userThirdAccount.getUserId())){
+                    if (!PUBLISH_ID.contains(userThirdAccount.getUserId())) {
                         log.error("=================================================");
                         log.error("系统不允许派发" + userThirdAccount.getUserId());
                         log.error("=================================================");
@@ -315,7 +443,7 @@ public class NewAleveBizImpl implements NewAleveBiz {
 
                     try {
                         log.info("派发活期" + new Gson().toJson(item));
-                        assetBiz.doAssetChangeByCurrentInterest(item, userThirdAccount, money);
+                        assetBiz.doAssetChangeByCurrentInterestSpecial(item, userThirdAccount, money);
                     } catch (Exception e) {
                         log.error("活期收益资金变动异常", e);
                         exceptionEmailHelper.sendException("活期收益派发", e);
@@ -329,89 +457,6 @@ public class NewAleveBizImpl implements NewAleveBiz {
             throw new Exception(e);
         }
     }
-
-
-    public static List<Long> NO_PUBLISH_ID = new ArrayList<>(100) ;
-
-    static {
-        NO_PUBLISH_ID.add(22L);
-        NO_PUBLISH_ID.add(1L);
-        NO_PUBLISH_ID.add(197L);
-        NO_PUBLISH_ID.add(375L);
-        NO_PUBLISH_ID.add(544L);
-        NO_PUBLISH_ID.add(901L);
-        NO_PUBLISH_ID.add(1190L);
-        NO_PUBLISH_ID.add(1297L);
-        NO_PUBLISH_ID.add(1309L);
-        NO_PUBLISH_ID.add(1766L);
-        NO_PUBLISH_ID.add(1947L);
-        NO_PUBLISH_ID.add(2330L);
-        NO_PUBLISH_ID.add(2375L);
-        NO_PUBLISH_ID.add(2552L);
-        NO_PUBLISH_ID.add(2623L);
-        NO_PUBLISH_ID.add(3083L);
-        NO_PUBLISH_ID.add(3449L);
-        NO_PUBLISH_ID.add(3460L);
-        NO_PUBLISH_ID.add(3612L);
-        NO_PUBLISH_ID.add(3850L);
-        NO_PUBLISH_ID.add(3851L);
-        NO_PUBLISH_ID.add(4022L);
-        NO_PUBLISH_ID.add(4213L);
-        NO_PUBLISH_ID.add(4632L);
-        NO_PUBLISH_ID.add(4811L);
-        NO_PUBLISH_ID.add(5930L);
-        NO_PUBLISH_ID.add(5948L);
-        NO_PUBLISH_ID.add(8628L);
-        NO_PUBLISH_ID.add(8663L);
-        NO_PUBLISH_ID.add(9769L);
-        NO_PUBLISH_ID.add(9789L);
-        NO_PUBLISH_ID.add(10513L);
-        NO_PUBLISH_ID.add(12489L);
-        NO_PUBLISH_ID.add(13345L);
-        NO_PUBLISH_ID.add(13378L);
-        NO_PUBLISH_ID.add(22002L);
-        NO_PUBLISH_ID.add(24313L);
-        NO_PUBLISH_ID.add(26622L);
-        NO_PUBLISH_ID.add(31323L);
-        NO_PUBLISH_ID.add(41231L);
-        NO_PUBLISH_ID.add(41737L);
-        NO_PUBLISH_ID.add(42334L);
-        NO_PUBLISH_ID.add(46908L);
-        NO_PUBLISH_ID.add(49824L);
-        NO_PUBLISH_ID.add(50692L);
-        NO_PUBLISH_ID.add(51450L);
-        NO_PUBLISH_ID.add(59087L);
-        NO_PUBLISH_ID.add(60002L);
-        NO_PUBLISH_ID.add(62654L);
-        NO_PUBLISH_ID.add(62844L);
-        NO_PUBLISH_ID.add(62959L);
-        NO_PUBLISH_ID.add(63588L);
-        NO_PUBLISH_ID.add(26108L);
-        NO_PUBLISH_ID.add(87134L);
-        NO_PUBLISH_ID.add(92571L);
-        NO_PUBLISH_ID.add(96632L);
-        NO_PUBLISH_ID.add(63469L);
-        NO_PUBLISH_ID.add(108377L);
-        NO_PUBLISH_ID.add(110825L);
-        NO_PUBLISH_ID.add(110866L);
-        NO_PUBLISH_ID.add(110907L);
-    }
-
-
-    @Override
-    public void simpleDownload(String date) {
-        String fileName = String.format("%s-ALEVE%s-%s", bankNo, productNo, date);
-        log.info("========================");
-        log.info("执行下载文件:" + fileName);
-        log.info("========================");
-        boolean downloadState = jixinFileManager.download(fileName);
-        if (!downloadState) {
-            log.error("ALEVE文件下载失败");
-        }
-    }
-
-
-
 
 
 }
