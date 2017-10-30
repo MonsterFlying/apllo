@@ -65,17 +65,23 @@ public class Jwtintercepter extends HandlerInterceptorAdapter {
         } catch (Exception e) {
         }
         String type = jwtTokenHelper.getType(token);
+        String employee="employee";
+        String branch="branch";
+
         if (url.contains("/financeserver/")) { //金服理财用户
             if ("finance".equals(type)) {
                 throw new Exception("系统拒绝当前请求");
             }
-        } else if (url.contains("/finance/")) {  // 理财用户
-            String branch = "branch";
+        }else if(url.contains(employee)||url.contains(branch)){
+            return true;
+        }
+        else if (url.contains("/finance/")) {  // 理财用户
             String finance = "finance";
-            if (url.contains(branch) && !type.contains(finance)) {
+            if (type.contains(finance)) {
                 return true;
             } else if (!finance.equals(type)) {
-                throw new Exception("系统拒绝当前请求");
+                throw new Exception("系统拒绝当前请求"
+                );
             }
         } else {  // 金服用户
             if ("finance".equals(type)) {

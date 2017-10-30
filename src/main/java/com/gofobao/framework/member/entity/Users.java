@@ -84,5 +84,10 @@ public class Users implements Serializable {
     @Column(name = "starfire_bind_date")
     private Date starFireBindAt;
 
+    @Column(name = "wheel_id")
+    private String wheelId;
+
+    @Column(name = "bind_wheel_date")
+    private Date bindWheelAt;
 
 }
