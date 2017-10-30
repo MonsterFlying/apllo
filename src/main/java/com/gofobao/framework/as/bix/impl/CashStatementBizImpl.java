@@ -5,9 +5,7 @@ import com.gofobao.framework.api.helper.JixinManager;
 import com.gofobao.framework.api.helper.JixinTxDateHelper;
 import com.gofobao.framework.as.bix.CashStatementBiz;
 import com.gofobao.framework.asset.entity.CashDetailLog;
-import com.gofobao.framework.asset.entity.RechargeDetailLog;
 import com.gofobao.framework.asset.service.CashDetailLogService;
-import com.gofobao.framework.collection.vo.response.web.Collection;
 import com.gofobao.framework.common.assets.AssetChange;
 import com.gofobao.framework.common.assets.AssetChangeProvider;
 import com.gofobao.framework.common.assets.AssetChangeTypeEnum;
@@ -33,7 +31,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 
-import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Iterator;
@@ -74,6 +71,7 @@ public class CashStatementBizImpl implements CashStatementBiz {
 
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public boolean offlineStatement(Long userId, Date date, CashType cashType) throws Exception {
         // 查询即信流水
         UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(userId);
@@ -102,7 +100,7 @@ public class CashStatementBizImpl implements CashStatementBiz {
         }
 
         // 匹配提现记录
-        return doCashOfOfflineMatch(userThirdAccount, date, cashType, thirdCashRecordList, localCashDetailLogs);
+        return this.doCashOfOfflineMatch(userThirdAccount, date, cashType, thirdCashRecordList, localCashDetailLogs);
     }
 
     /**
@@ -227,7 +225,7 @@ public class CashStatementBizImpl implements CashStatementBiz {
                         msg);
             }
         }
-        
+
         return true;
     }
 
@@ -313,6 +311,7 @@ public class CashStatementBizImpl implements CashStatementBiz {
         cashDetailLog.setBankName(userThirdAccount.getBankName());
         cashDetailLog.setCardNo(userThirdAccount.getCardNo());
         cashDetailLog.setCashType(bigCashState ? 1 : 0);
+        cashDetailLog.setCallbackTime(nowDate);
         /*if (bigCashState) {
             cashDetailLog.setCompanyBankNo(""); // 联行卡号
         }*/
