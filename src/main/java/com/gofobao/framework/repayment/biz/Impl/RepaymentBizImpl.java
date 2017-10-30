@@ -2161,19 +2161,39 @@ public class RepaymentBizImpl implements RepaymentBiz {
                 batchAssetChangeItemService.save(batchAssetChangeItem);
             }
 
-            // 收取逾期管理费
+            // 收取逾期滞纳金
             if (repayAssetChange.getOverdueFee() > 0) {
+                //平台收取逾期滞纳金
                 batchAssetChangeItem = new BatchAssetChangeItem();
                 batchAssetChangeItem.setBatchAssetChangeId(batchAssetChangeId);
                 batchAssetChangeItem.setState(0);
-                batchAssetChangeItem.setType(AssetChangeTypeEnum.platformRepayMentPenaltyFee.getLocalType());  // 收取逾期管理费
+                batchAssetChangeItem.setType(AssetChangeTypeEnum.platformRepayMentPenaltyFee.getLocalType());  // 收取逾期滞纳金
                 if (tender.getType().intValue() == 1) {
                     batchAssetChangeItem.setAssetType(AssetTypeContants.finance);
                 }
                 batchAssetChangeItem.setUserId(feeAccountId);
-                batchAssetChangeItem.setForUserId(repayAssetChange.getUserId());
+                batchAssetChangeItem.setForUserId(borrowRepayment.getUserId());
                 batchAssetChangeItem.setMoney(repayAssetChange.getPlatformOverdueFee());
-                batchAssetChangeItem.setRemark(String.format("收取借款标的[%s]逾期管理费%s元", borrow.getName(), StringHelper.formatDouble(repayAssetChange.getPlatformOverdueFee() / 100D, false)));
+                batchAssetChangeItem.setRemark(String.format("收取借款标的[%s]逾期滞纳金%s元", borrow.getName(), StringHelper.formatDouble(repayAssetChange.getPlatformOverdueFee() / 100D, false)));
+                batchAssetChangeItem.setCreatedAt(nowDate);
+                batchAssetChangeItem.setUpdatedAt(nowDate);
+                batchAssetChangeItem.setSourceId(borrowRepayment.getId());
+                batchAssetChangeItem.setSeqNo(assetChangeProvider.getSeqNo());
+                batchAssetChangeItem.setGroupSeqNo(groupSeqNo);
+                batchAssetChangeItemService.save(batchAssetChangeItem);
+
+                //投资人收取逾期滞纳金
+                batchAssetChangeItem = new BatchAssetChangeItem();
+                batchAssetChangeItem.setBatchAssetChangeId(batchAssetChangeId);
+                batchAssetChangeItem.setState(0);
+                batchAssetChangeItem.setType(AssetChangeTypeEnum.receivedPaymentsPenalty.getLocalType());  // 收取逾期滞纳金
+                if (tender.getType().intValue() == 1) {
+                    batchAssetChangeItem.setAssetType(AssetTypeContants.finance);
+                }
+                batchAssetChangeItem.setUserId(repayAssetChange.getUserId());
+                batchAssetChangeItem.setForUserId(borrowRepayment.getUserId());
+                batchAssetChangeItem.setMoney(repayAssetChange.getOverdueFee());
+                batchAssetChangeItem.setRemark(String.format("收取借款标的[%s]逾期滞纳金%s元", borrow.getName(), StringHelper.formatDouble(repayAssetChange.getOverdueFee() / 100D, false)));
                 batchAssetChangeItem.setCreatedAt(nowDate);
                 batchAssetChangeItem.setUpdatedAt(nowDate);
                 batchAssetChangeItem.setSourceId(borrowRepayment.getId());
@@ -2705,7 +2725,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
             if ((lateDays > 0) && (lateInterest > 0) && tender.getType().intValue() != 1) {//理财计划不需要收取罚息
                 double overdueFeeRatio = MoneyHelper.divide(borrowCollection.getPrincipal(), new Double(borrowRepayment.getPrincipal()));
                 double singleLateInterest = MoneyHelper.multiply(overdueFeeRatio, lateInterest);
-                long overdueFee = new Double(MoneyHelper.round(MoneyHelper.divide(singleLateInterest, 2d), 0)).longValue();// 名义借款人收取50% 逾期管理费 ;
+                long overdueFee = new Double(MoneyHelper.round(MoneyHelper.divide(singleLateInterest, 2d), 0)).longValue();// 名义借款人收取50% 逾期滞纳金 ;
                 alreadyInterest += overdueFee;
             }
             //新增债权转让记录
@@ -2966,7 +2986,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
             if ((lateDays > 0) && (lateInterest > 0) && tender.getType().intValue() != 1) {//理财计划不需要收取罚息
                 double overdueFeeRatio = MoneyHelper.divide(borrowCollection.getPrincipal(), new Double(borrowRepayment.getPrincipal()));
                 double singleLateInterest = MoneyHelper.multiply(overdueFeeRatio, lateInterest);
-                long overdueFee = new Double(MoneyHelper.round(MoneyHelper.divide(singleLateInterest, 2d), 0)).longValue();// 出借人收取50% 逾期管理费 ;
+                long overdueFee = new Double(MoneyHelper.round(MoneyHelper.divide(singleLateInterest, 2d), 0)).longValue();// 出借人收取50% 逾期滞纳金 ;
                 advanceAssetChange.setOverdueFee(overdueFee);
                 intAmount += overdueFee;
             }
@@ -3039,11 +3059,11 @@ public class RepaymentBizImpl implements RepaymentBiz {
             batchAssetChangeItem.setGroupSeqNo(groupSeqNo);
             batchAssetChangeItemService.save(batchAssetChangeItem);
 
-            if (advanceAssetChange.getOverdueFee() > 0 && new Date().getTime() > DateHelper.endOfDate(DateHelper.stringToDate("2017-09-03 23:59:59")).getTime()) {  // 用户收取逾期管理费
+            if (advanceAssetChange.getOverdueFee() > 0 && new Date().getTime() > DateHelper.endOfDate(DateHelper.stringToDate("2017-09-03 23:59:59")).getTime()) {  // 用户收取逾期滞纳金
                 batchAssetChangeItem = new BatchAssetChangeItem();
                 batchAssetChangeItem.setBatchAssetChangeId(batchAssetChangeId);
                 batchAssetChangeItem.setState(0);
-                batchAssetChangeItem.setType(AssetChangeTypeEnum.receivedPaymentsPenalty.getLocalType());  // 收取用户逾期费
+                batchAssetChangeItem.setType(AssetChangeTypeEnum.receivedPaymentsPenalty.getLocalType());  // 收取借款逾期费
                 if (tender.getType().intValue() == 1) {
                     batchAssetChangeItem.setAssetType(AssetTypeContants.finance);
                 }

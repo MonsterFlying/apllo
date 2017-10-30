@@ -327,6 +327,9 @@ public class TransferProvider {
         batchAssetChange.setUpdatedAt(nowDate);
         batchAssetChange = batchAssetChangeService.save(batchAssetChange);
 
+        //债权转让总本金
+        long transferPrincipal = transferBuyLogList.stream().filter(transferBuyLog -> transferBuyLog.getState() == 0).mapToLong(TransferBuyLog::getPrincipal).sum();
+
         long batchAssetChangeId = batchAssetChange.getId();
         // 债权转让人收款 = 转让本金加应收利息
         BatchAssetChangeItem batchAssetChangeItem = new BatchAssetChangeItem();
@@ -334,9 +337,9 @@ public class TransferProvider {
         batchAssetChangeItem.setState(0);
         batchAssetChangeItem.setType(AssetChangeTypeEnum.batchSellBonds.getLocalType());  // 出售债权
         batchAssetChangeItem.setUserId(transfer.getUserId());
-        batchAssetChangeItem.setMoney(transfer.getPrincipal() + transfer.getAlreadyInterest());
+        batchAssetChangeItem.setMoney(transferPrincipal + transfer.getAlreadyInterest());
         batchAssetChangeItem.setRemark(String.format("出售债权[%s]获得待收本金和应计利息%s元", transfer.getTitle(),
-                StringHelper.formatDouble((transfer.getPrincipal() + transfer.getAlreadyInterest()), 100D, true)));
+                StringHelper.formatDouble((transferPrincipal + transfer.getAlreadyInterest()), 100D, true)));
         batchAssetChangeItem.setCreatedAt(nowDate);
         batchAssetChangeItem.setUpdatedAt(nowDate);
         batchAssetChangeItem.setSourceId(transferId);

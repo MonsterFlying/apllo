@@ -17,7 +17,7 @@ public class AdvanceAssetChange {
     private long interest ;
 
     /**
-     * 逾期管理费
+     * 逾期滞纳金
      */
     private long overdueFee ;
 
