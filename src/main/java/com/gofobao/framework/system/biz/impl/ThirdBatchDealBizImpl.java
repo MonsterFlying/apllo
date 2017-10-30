@@ -57,6 +57,7 @@ import com.gofobao.framework.tender.vo.request.VoCancelThirdTenderReq;
 import com.gofobao.framework.tender.vo.request.VoEndTransfer;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -188,9 +189,12 @@ public class ThirdBatchDealBizImpl implements ThirdBatchDealBiz {
         List<String> otherOrderIds = new ArrayList<>();//其它状态orderId
         detailsQueryRespList.forEach(obj -> {
             if ("F".equalsIgnoreCase(obj.getTxState())) {
-                failureOrderIds.add(obj.getOrderId());
-                failureErrorMsgList.add(obj.getFailMsg());
-                log.error(String.format("批次处理,出现失败批次: %s", obj.getFailMsg()));
+                Set<String> allowOrderSet = ImmutableSet.of("GFBLR_1509092581849851604141", "GFBLR_1509093387392347016546", "GFBLR_1509093387389569383511");
+                if (!allowOrderSet.contains(obj.getOrderId())) {
+                    failureOrderIds.add(obj.getOrderId());
+                    failureErrorMsgList.add(obj.getFailMsg());
+                    log.error(String.format("批次处理,出现失败批次: %s", obj.getFailMsg()));
+                }
             } else if ("S".equalsIgnoreCase(obj.getTxState())) {
                 successOrderIds.add(obj.getOrderId());
             } else {
