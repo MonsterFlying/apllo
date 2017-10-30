@@ -1,9 +1,9 @@
 package com.gofobao.framework;
 
-import com.gofobao.framework.as.bix.CashStatementBiz;
-import com.gofobao.framework.as.bix.RechargeStatementBiz;
-import com.gofobao.framework.as.bix.impl.CashStatementBizImpl;
-import com.gofobao.framework.as.bix.impl.RechargeStatementBizImpl;
+import com.gofobao.framework.as.biz.CashStatementBiz;
+import com.gofobao.framework.as.biz.RechargeStatementBiz;
+import com.gofobao.framework.as.biz.impl.CashStatementBizImpl;
+import com.gofobao.framework.as.biz.impl.RechargeStatementBizImpl;
 import com.gofobao.framework.helper.DateHelper;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Test;

@@ -1,6 +1,6 @@
-package com.gofobao.framework.as.bix;
+package com.gofobao.framework.as.biz;
 
-import com.gofobao.framework.as.bix.impl.CashStatementBizImpl;
+import com.gofobao.framework.as.biz.impl.CashStatementBizImpl;
 import com.gofobao.framework.asset.entity.CashDetailLog;
 import com.gofobao.framework.financial.entity.NewEve;
 import com.gofobao.framework.member.entity.UserThirdAccount;

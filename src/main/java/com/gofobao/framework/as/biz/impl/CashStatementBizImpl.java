@@ -1,9 +1,9 @@
-package com.gofobao.framework.as.bix.impl;
+package com.gofobao.framework.as.biz.impl;
 
 import com.github.wenhao.jpa.Specifications;
 import com.gofobao.framework.api.helper.JixinManager;
 import com.gofobao.framework.api.helper.JixinTxDateHelper;
-import com.gofobao.framework.as.bix.CashStatementBiz;
+import com.gofobao.framework.as.biz.CashStatementBiz;
 import com.gofobao.framework.asset.entity.CashDetailLog;
 import com.gofobao.framework.asset.service.CashDetailLogService;
 import com.gofobao.framework.common.assets.AssetChange;

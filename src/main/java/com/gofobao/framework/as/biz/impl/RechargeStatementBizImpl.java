@@ -1,4 +1,4 @@
-package com.gofobao.framework.as.bix.impl;
+package com.gofobao.framework.as.biz.impl;
 
 import com.github.wenhao.jpa.Specifications;
 import com.gofobao.framework.api.contants.JixinResultContants;
@@ -8,7 +8,7 @@ import com.gofobao.framework.api.helper.JixinTxDateHelper;
 import com.gofobao.framework.api.model.account_details_query.AccountDetailsQueryItem;
 import com.gofobao.framework.api.model.account_details_query.AccountDetailsQueryRequest;
 import com.gofobao.framework.api.model.account_details_query.AccountDetailsQueryResponse;
-import com.gofobao.framework.as.bix.RechargeStatementBiz;
+import com.gofobao.framework.as.biz.RechargeStatementBiz;
 import com.gofobao.framework.asset.entity.RechargeDetailLog;
 import com.gofobao.framework.asset.service.RechargeDetailLogService;
 import com.gofobao.framework.common.assets.AssetChange;
