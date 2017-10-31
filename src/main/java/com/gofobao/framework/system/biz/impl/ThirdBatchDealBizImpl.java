@@ -135,6 +135,7 @@ public class ThirdBatchDealBizImpl implements ThirdBatchDealBiz {
      * @throws Exception
      */
     @Transactional(rollbackFor = Exception.class)
+    @Override
     public boolean batchDeal(long sourceId, String batchNo, int batchType, String acqRes, String batchResp) throws Exception {
         log.info(String.format("进入批次处理业务:batchNo->%s,sourceId->%s,batchType->%s", batchNo, sourceId, batchType));
         Specification<ThirdBatchLog> tbls = Specifications
