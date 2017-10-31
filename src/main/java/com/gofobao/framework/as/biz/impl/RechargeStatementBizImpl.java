@@ -22,6 +22,7 @@ import com.gofobao.framework.financial.entity.NewEve;
 import com.gofobao.framework.financial.service.NewAleveService;
 import com.gofobao.framework.financial.service.NewEveService;
 import com.gofobao.framework.helper.*;
+import com.gofobao.framework.helper.project.QueryThirdRecordHelper;
 import com.gofobao.framework.member.entity.UserThirdAccount;
 import com.gofobao.framework.member.service.UserThirdAccountService;
 import com.google.common.base.Preconditions;
@@ -73,6 +74,9 @@ public class RechargeStatementBizImpl implements RechargeStatementBiz {
 
     @Autowired
     MqHelper mqHelper;
+
+    @Autowired
+    QueryThirdRecordHelper queryThirdRecordHelper ;
 
     /**
      * 离线匹配账单
@@ -126,9 +130,9 @@ public class RechargeStatementBizImpl implements RechargeStatementBiz {
         List<AccountDetailsQueryItem> thirdRechargeRecordList = null;
         try {
             log.info("[实时对账] 实时查询即信流水记录");
-            thirdRechargeRecordList = findOnlineThirdRecord(userThirdAccount, date, rechargeType);
+            thirdRechargeRecordList = queryThirdRecordHelper.queryThirdRecord(userThirdAccount.getAccountId(), date, rechargeType.getLocalType()) ;
         } catch (Exception e) {
-            log.error("[实时对账] 实时查询充值记录出现补单异常", e);
+            return false ;
         }
 
         List<RechargeDetailLog> localRechargeRecordList = findLocalRechargeRecord(userThirdAccount, date, rechargeType);

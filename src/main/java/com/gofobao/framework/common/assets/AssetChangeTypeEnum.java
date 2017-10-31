@@ -243,6 +243,27 @@ public enum AssetChangeTypeEnum {
     receiveRedpack("红包奖励", "receiveRedpack", "7833", "add@useMoney", "add@incomeOther", "D"),
 
     /**
+     * 红包派发补单(只针对红包, 积分, 广富币兑换)
+     */
+    redpackOkRemedy("红包派发补单", "systemIn", "7833", "add@useMoney", "add@incomeOther", "D"),
+
+    /**
+     * 红包派发拨正(只针对红包, 积分, 广富币兑换)
+     */
+    redpackOkCancel("红包派发拨正", "cancel", "0", "sub@useMoney", "", "C"),
+
+    /**
+     * 红包撤销补单(只针对红包, 积分, 广富币兑换)
+     */
+    redpackErrorRemedy("红包撤销补单", "redpackErrorRemedy", "2833", "sub@useMoney", "", "C"),
+
+    /**
+     * 红包撤销拨正 (只针对红包, 积分, 广富币兑换)
+     */
+    redpackErrorCancel("红包撤销拨正", "redpackErrorCancel", "0", "add@useMoney", "add@incomeOther", "D"),
+
+
+    /**
      * 接收提成
      */
     receiveCommissions("接收提成", "receiveCommissions", "7833", "add@useMoney", "add@incomeBonus", "D"),
