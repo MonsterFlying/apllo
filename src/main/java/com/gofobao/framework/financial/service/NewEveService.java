@@ -65,5 +65,5 @@ public interface NewEveService {
 
     Page<Object[]> findRemoteByQueryTime(String date, Pageable evePageable);
 
-    List<NewEve> findAllByTranTypeAndDateAndUserId(String type, Long userId, Date date) throws Exception;
+    List<NewEve> findAllByTranTypeAndDateAndAccountId(String type, String accountId, Date date) throws Exception;
 }

@@ -1,7 +1,7 @@
 package com.gofobao.framework.financial.controller;
 
-import com.gofobao.framework.as.bix.RechargeStatementBiz;
-import com.gofobao.framework.as.bix.impl.RechargeStatementBizImpl;
+import com.gofobao.framework.as.biz.RechargeStatementBiz;
+import com.gofobao.framework.as.biz.impl.RechargeStatementBizImpl;
 import com.gofobao.framework.common.constans.TypeTokenContants;
 import com.gofobao.framework.common.qiniu.util.StringUtils;
 import com.gofobao.framework.core.vo.VoBaseResp;
@@ -199,7 +199,7 @@ public class EveAndAleveController {
         }
 
         try {
-            newAleveBiz.adminPublishCurrentInterest(date);
+            newAleveBiz.calculationCurrentInterest(date);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "活期派发失败"));
         }

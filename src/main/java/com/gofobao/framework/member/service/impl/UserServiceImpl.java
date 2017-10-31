@@ -54,6 +54,7 @@ public class UserServiceImpl implements UserService {
     }
 
 
+    @Override
     public Users findById(Long id) {
         return userRepository.findOne(id);
     }
@@ -73,6 +74,7 @@ public class UserServiceImpl implements UserService {
      * @return
      */
     @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Override
     public Users findByIdLock(Long userId) {
         return userRepository.findOne(userId);
     }
@@ -113,6 +115,7 @@ public class UserServiceImpl implements UserService {
      * @param users
      * @return
      */
+    @Override
     public boolean checkRealname(Users users) {
         if (ObjectUtils.isEmpty(users)) {
             return false;
@@ -120,18 +123,22 @@ public class UserServiceImpl implements UserService {
         return !(ObjectUtils.isEmpty(users.getCardId()) || ObjectUtils.isEmpty(users.getUsername()));
     }
 
+    @Override
     public List<Users> findList(Specification<Users> specification) {
         return userRepository.findAll(specification);
     }
 
+    @Override
     public List<Users> findList(Specification<Users> specification, Sort sort) {
         return userRepository.findAll(specification, sort);
     }
 
+    @Override
     public List<Users> findList(Specification<Users> specification, Pageable pageable) {
         return userRepository.findAll(specification, pageable).getContent();
     }
 
+    @Override
     public long count(Specification<Users> specification) {
         return userRepository.count(specification);
     }
