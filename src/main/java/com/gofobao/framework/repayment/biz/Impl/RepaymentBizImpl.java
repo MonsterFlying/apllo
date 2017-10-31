@@ -974,6 +974,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
      * @throws Exception
      */
     @Transactional(rollbackFor = Exception.class)
+    @Override
     public ResponseEntity<VoBaseResp> newRepayDeal(long repaymentId, String batchNo) throws Exception {
         log.info(String.format("进入本地还款业务：batchNo->%s,sourceId->%s", batchNo, repaymentId));
         //1.查询并判断还款记录是否存在!
@@ -1738,11 +1739,14 @@ public class RepaymentBizImpl implements RepaymentBiz {
                                                    VoRepayReq voRepayReq) throws Exception {
         Date nowDate = new Date();
         log.info(String.format("批次还款: 进入正常还款流程 repaymentId->%s", borrowRepayment.getId()));
-        int lateDays = getLateDays(borrowRepayment);   //计算逾期天数
-        String batchNo = jixinHelper.getBatchNo();    // 批次号
-        String groupSeqNo = assetChangeProvider.getGroupSeqNo(); // 资产记录分组流水号
-        boolean advance = !ObjectUtils.isEmpty(borrowRepayment.getAdvanceAtYes());   // 是否是垫付
-
+        //计算逾期天数
+        int lateDays = getLateDays(borrowRepayment);
+        //还款批次号
+        String batchNo = JixinHelper.getBatchNo();
+        // 资产记录分组流水号
+        String groupSeqNo = assetChangeProvider.getGroupSeqNo();
+        // 是否是垫付
+        boolean advance = !ObjectUtils.isEmpty(borrowRepayment.getAdvanceAtYes());
         /* 成功的投资记录 */
         Specification<Tender> specification = Specifications
                 .<Tender>and()
@@ -1788,7 +1792,6 @@ public class RepaymentBizImpl implements RepaymentBiz {
         }
         double freezeMoney = MoneyHelper.round(MoneyHelper.add(MoneyHelper.add(txAmount, intAmount), txFeeOut), 2);
 
-        // MoneyHelper.add(MoneyHelper.add(txAmount, intAmount),  txFeeOut, 2);
         // 生成投资人还款资金变动记录
         BatchAssetChange batchAssetChange = addBatchAssetChange(batchNo, borrowRepayment.getId(), advance);
         // 生成回款人资金变动记录  返回值实际还款本金和利息  不包括手续费

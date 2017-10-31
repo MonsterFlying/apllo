@@ -255,7 +255,7 @@ public class CreditProvider {
             tenderList.stream().filter(p -> p.getTransferFlag() == 2).forEach(tender -> {
                 Transfer transfer = transferMap.get(tender.getId());
                 //判断是否成功转让
-                if (transfer.getState() == 2) {
+                if (transfer.getState() == 2 && chackTenderIsOver(tender)) {
                     //结束债权订单号
                     String orderId = JixinHelper.getOrderId(JixinHelper.END_CREDIT_PREFIX);
                     if (!authCodeSet.contains(tender.getAuthCode())) {
@@ -282,21 +282,11 @@ public class CreditProvider {
     /**
      * 检查债权是否结束
      *
-     * @param accountId  用户存管账号
-     * @param orgOrderId 债权orderid
-     * @// TODO: 2017/10/30 需要对接存管接口
+     * @param tender 用户债权
+     * @// TODO: 2017/10/30 存管暂时没有开发相关接口给平台
      */
-    private boolean chackTenderIsOver(String accountId, String orgOrderId) {
-        CreditInvestQueryReq request = new CreditInvestQueryReq();
-        request.setChannel(ChannelContant.HTML);
-        request.setAccountId(String.valueOf(accountId));
-        request.setOrgOrderId(String.valueOf(orgOrderId));
-        request.setAcqRes("1");
-        CreditInvestQueryResp response = jixinManager.send(JixinTxCodeEnum.CREDIT_INVEST_QUERY, request, CreditInvestQueryResp.class);
-        if ((ObjectUtils.isEmpty(response)) || (!JixinResultContants.SUCCESS.equalsIgnoreCase(response.getRetCode()))) {
-            log.error(String.format("检查到债权未结束：authCode->%s ,msg-> %s", response.getRetMsg()));
-            return false;
-        }
+    private boolean chackTenderIsOver(Tender tender) {
+
         return true;
     }
 
@@ -339,18 +329,20 @@ public class CreditProvider {
 
             //排除已经在存管登记结束债权的投标记录
             tenderList.stream().filter(tender -> (BooleanHelper.isFalse(tender.getThirdCreditEndFlag()))).forEach(tender -> {
-                CreditEnd creditEnd = new CreditEnd();
-                String orderId = JixinHelper.getOrderId(JixinHelper.END_CREDIT_PREFIX);
+                if (chackTenderIsOver(tender)) {
+                    CreditEnd creditEnd = new CreditEnd();
+                    String orderId = JixinHelper.getOrderId(JixinHelper.END_CREDIT_PREFIX);
 
-                UserThirdAccount tenderUserThirdAccount = userThirdAccountService.findByUserId(tender.getUserId());
-                creditEnd.setAccountId(borrowUserThirdAccountId);
-                creditEnd.setOrderId(orderId);
-                creditEnd.setAuthCode(tender.getAuthCode());
-                creditEnd.setForAccountId(tenderUserThirdAccount.getAccountId());
-                creditEnd.setProductId(productId);
-                creditEndList.add(creditEnd);
+                    UserThirdAccount tenderUserThirdAccount = userThirdAccountService.findByUserId(tender.getUserId());
+                    creditEnd.setAccountId(borrowUserThirdAccountId);
+                    creditEnd.setOrderId(orderId);
+                    creditEnd.setAuthCode(tender.getAuthCode());
+                    creditEnd.setForAccountId(tenderUserThirdAccount.getAccountId());
+                    creditEnd.setProductId(productId);
+                    creditEndList.add(creditEnd);
 
-                tender.setThirdCreditEndOrderId(orderId);
+                    tender.setThirdCreditEndOrderId(orderId);
+                }
             });
             tenderService.save(tenderList);
 
