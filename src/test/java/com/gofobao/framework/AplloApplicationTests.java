@@ -404,9 +404,9 @@ public class AplloApplicationTests {
 
     private void batchDetailsQuery() {
         BatchDetailsQueryReq batchDetailsQueryReq = new BatchDetailsQueryReq();
-        batchDetailsQueryReq.setBatchNo("191212");
+        batchDetailsQueryReq.setBatchNo("173642");
 
-        batchDetailsQueryReq.setBatchTxDate("20170927");
+        batchDetailsQueryReq.setBatchTxDate("20171031");
         batchDetailsQueryReq.setType("0");
         batchDetailsQueryReq.setPageNum("1");
         batchDetailsQueryReq.setPageSize("10");
@@ -625,7 +625,7 @@ public class AplloApplicationTests {
         //batchQuery();
         //freezeDetailsQuery();
         //批次详情查询
-        //batchDetailsQuery();
+        batchDetailsQuery();
         //查询投标申请
         //bidApplyQuery();
         //转让标复审回调

@@ -231,33 +231,21 @@ public class BorrowBizImpl implements BorrowBiz {
                 borrow.setSuccessAt(new Date());
                 borrowService.save(borrow);
             }
-            //判断是否是理财计划借款
-            if (borrow.getIsFinance()) {
-                //复审
-                MqConfig mqConfig = new MqConfig();
-                mqConfig.setQueue(MqQueueEnum.RABBITMQ_BORROW);
-                mqConfig.setTag(MqTagEnum.AGAIN_VERIFY_FINANCE);
-                mqConfig.setSendTime(DateHelper.addSeconds(new Date(), 1));
-                ImmutableMap<String, String> body = ImmutableMap
-                        .of(MqConfig.MSG_BORROW_ID, StringHelper.toString(borrow.getId()), MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
-                mqConfig.setMsg(body);
-                log.info(String.format("BorrowBizImpl sendAgainVerify send mq %s", GSON.toJson(body)));
+
+            MqConfig mqConfig = new MqConfig();
+            mqConfig.setTag(MqTagEnum.AGAIN_VERIFY);
+            mqConfig.setQueue(MqQueueEnum.RABBITMQ_BORROW);
+            ImmutableMap<String, String> body = ImmutableMap
+                    .of(MqConfig.MSG_BORROW_ID, StringHelper.toString(borrow.getId()),
+                            MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
+            mqConfig.setMsg(body);
+            log.info(String.format("BorrowBizImpl sendAgainVerify send mq %s", GSON.toJson(body)));
+            try {
                 mqHelper.convertAndSend(mqConfig);
-            } else {
-                MqConfig mqConfig = new MqConfig();
-                mqConfig.setTag(MqTagEnum.AGAIN_VERIFY);
-                mqConfig.setQueue(MqQueueEnum.RABBITMQ_BORROW);
-                ImmutableMap<String, String> body = ImmutableMap
-                        .of(MqConfig.MSG_BORROW_ID, StringHelper.toString(borrow.getId()),
-                                MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
-                mqConfig.setMsg(body);
-                log.info(String.format("BorrowBizImpl sendAgainVerify send mq %s", GSON.toJson(body)));
-                try {
-                    mqHelper.convertAndSend(mqConfig);
-                } catch (Exception e) {
-                    log.error("发送复审异常:", e);
-                }
+            } catch (Exception e) {
+                log.error("发送复审异常:", e);
             }
+
             return ResponseEntity.ok(VoBaseResp.ok("发送成功!"));
         }
         return ResponseEntity.ok(VoBaseResp.ok("发送失败!"));
@@ -1874,7 +1862,7 @@ public class BorrowBizImpl implements BorrowBiz {
      * @param releaseAt
      * @return
      */
-    private void sendAutoTender(Borrow borrow, Date nowDate, Date releaseAt) throws Exception{
+    private void sendAutoTender(Borrow borrow, Date nowDate, Date releaseAt) throws Exception {
         Integer borrowType = borrow.getType();
         ImmutableList<Integer> autoTenderBorrowType = ImmutableList.of(0, 1, 4);
         // 自动投标前提:
