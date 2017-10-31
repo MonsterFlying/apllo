@@ -1021,50 +1021,52 @@ public class ThirdBatchDealBizImpl implements ThirdBatchDealBiz {
             Specification<TransferBuyLog> tbls = Specifications
                     .<TransferBuyLog>and()
                     .in("thirdTransferOrderId", failureThirdTransferOrderIds.toArray())
+                    .eq("state", 0)
                     .build();
 
             List<TransferBuyLog> failureTransferBuyLogList = transferBuyLogService.findList(tbls);
-            Preconditions.checkState(!CollectionUtils.isEmpty(failureTransferBuyLogList), "摘取批次处理: 查询失败的投标记录不存在!");
-            Set<Long> transferIdSet = failureTransferBuyLogList.stream().map(transferBuyLog -> transferBuyLog.getTransferId()).collect(Collectors.toSet());
-            //3.挑选出失败有失败批次的债权转让
-            Specification<Transfer> ts = Specifications
-                    .<Transfer>and()
-                    .in("id", transferIdSet.toArray())
-                    .build();
-            List<Transfer> transferList = transferService.findList(ts);
-            Preconditions.checkState(!CollectionUtils.isEmpty(transferList), "债权批次回调处理: 查询债权转让记录不存在!");
-            Map<Long, List<TransferBuyLog>> transferByLogMap = failureTransferBuyLogList.stream().collect(Collectors.groupingBy(TransferBuyLog::getTransferId));
-            for (Transfer transfer : transferList) {
-                List<TransferBuyLog> transferBuyLogList = transferByLogMap.get(transfer.getId());
-                for (TransferBuyLog transferBuyLog : transferBuyLogList) {
-                    transferBuyLog.setState(2);
-                    transferBuyLog.setUpdatedAt(nowDate);
+            if (!CollectionUtils.isEmpty(failureTransferBuyLogList)) {
+                Set<Long> transferIdSet = failureTransferBuyLogList.stream().map(transferBuyLog -> transferBuyLog.getTransferId()).collect(Collectors.toSet());
+                //3.挑选出失败有失败批次的债权转让
+                Specification<Transfer> ts = Specifications
+                        .<Transfer>and()
+                        .in("id", transferIdSet.toArray())
+                        .build();
+                List<Transfer> transferList = transferService.findList(ts);
+                Preconditions.checkState(!CollectionUtils.isEmpty(transferList), "债权批次回调处理: 查询债权转让记录不存在!");
+                Map<Long, List<TransferBuyLog>> transferByLogMap = failureTransferBuyLogList.stream().collect(Collectors.groupingBy(TransferBuyLog::getTransferId));
+                for (Transfer transfer : transferList) {
+                    List<TransferBuyLog> transferBuyLogList = transferByLogMap.get(transfer.getId());
+                    for (TransferBuyLog transferBuyLog : transferBuyLogList) {
+                        transferBuyLog.setState(2);
+                        transferBuyLog.setUpdatedAt(nowDate);
 
-                    // 解除冻结资金
-                    AssetChange assetChange = new AssetChange();
-                    assetChange.setSourceId(transferBuyLog.getId());
-                    assetChange.setGroupSeqNo(assetChangeProvider.getGroupSeqNo());
-                    assetChange.setMoney(transferBuyLog.getValidMoney());
-                    assetChange.setSeqNo(assetChangeProvider.getSeqNo());
-                    assetChange.setRemark(String.format("存管系统审核债权转让[%s]不通过, 成功解冻资金%s元", transfer.getTitle(), StringHelper.formatDouble(transferBuyLog.getValidMoney() / 100D, true)));
-                    assetChange.setType(AssetChangeTypeEnum.unfreeze);
-                    assetChange.setUserId(transferBuyLog.getUserId());
-                    assetChangeProvider.commonAssetChange(assetChange);
+                        // 解除冻结资金
+                        AssetChange assetChange = new AssetChange();
+                        assetChange.setSourceId(transferBuyLog.getId());
+                        assetChange.setGroupSeqNo(assetChangeProvider.getGroupSeqNo());
+                        assetChange.setMoney(transferBuyLog.getValidMoney());
+                        assetChange.setSeqNo(assetChangeProvider.getSeqNo());
+                        assetChange.setRemark(String.format("存管系统审核债权转让[%s]不通过, 成功解冻资金%s元", transfer.getTitle(), StringHelper.formatDouble(transferBuyLog.getValidMoney() / 100D, true)));
+                        assetChange.setType(AssetChangeTypeEnum.unfreeze);
+                        assetChange.setUserId(transferBuyLog.getUserId());
+                        assetChangeProvider.commonAssetChange(assetChange);
+                    }
+
+                    // 发送取消债权通知
+                    sendCancelTransfer(nowDate, transfer, transferBuyLogList);
+                    transfer.setTenderCount(transfer.getTenderCount() - transferBuyLogList.size());
+                    long sum = transferBuyLogList.stream().mapToLong(transferBuyLog -> transferBuyLog.getValidMoney()).sum();  // 取消的总总债权
+                    transfer.setTransferMoneyYes(transfer.getTransferMoneyYes() - sum);
+                    transfer.setUpdatedAt(nowDate);
+                    transfer.setSuccessAt(null);
+                    transferService.save(transfer);
                 }
-
-                // 发送取消债权通知
-                sendCancelTransfer(nowDate, transfer, transferBuyLogList);
-                transfer.setTenderCount(transfer.getTenderCount() - transferBuyLogList.size());
-                long sum = transferBuyLogList.stream().mapToLong(transferBuyLog -> transferBuyLog.getValidMoney()).sum();  // 取消的总总债权
-                transfer.setTransferMoneyYes(transfer.getTransferMoneyYes() - sum);
-                transfer.setUpdatedAt(nowDate);
-                transfer.setSuccessAt(null);
-                transferService.save(transfer);
+                //更新批次日志状态
+                updateThirdBatchLogState(batchNo, transferId, ThirdBatchLogContants.BATCH_CREDIT_INVEST, 4);
+                transferService.save(transferList);
+                transferBuyLogService.save(failureTransferBuyLogList);
             }
-            //更新批次日志状态
-            updateThirdBatchLogState(batchNo, transferId, ThirdBatchLogContants.BATCH_CREDIT_INVEST, 4);
-            transferService.save(transferList);
-            transferBuyLogService.save(failureTransferBuyLogList);
         }
 
         //1.判断失败orderId集合为空

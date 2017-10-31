@@ -1181,6 +1181,22 @@ public class TransferBizImpl implements TransferBiz {
      * @param alreadyInterest
      */
     private TransferBuyLog saveTransferAndTransferLog(long userId, long transferId, long buyMoney, Transfer transfer, long validMoney, long alreadyInterest, boolean auto, int autoOrder) {
+        long buyPrincipal = validMoney - alreadyInterest;
+        Specification<TransferBuyLog> tbls = Specifications
+                .<TransferBuyLog>and()
+                .in("state", 0, 1)
+                .eq("transferId", transferId)
+                .build();
+        List<TransferBuyLog> transferBuyLogList = transferBuyLogService.findList(tbls);
+        /*已购买金额*/
+        long boughtPrincipal = transferBuyLogList.stream().mapToLong(TransferBuyLog::getPrincipal).sum();
+        /*剩余可购买金额*/
+        long leftPrincipal = transfer.getPrincipal() - boughtPrincipal;
+        //如果检测到最后一个购买金额本金溢出，则重新计算本金与利息
+        if (buyPrincipal > leftPrincipal) {
+            buyPrincipal = leftPrincipal;
+            alreadyInterest = validMoney - buyPrincipal;
+        }
         //新增购买债权记录
         TransferBuyLog transferBuyLog = new TransferBuyLog();
         transferBuyLog.setUserId(userId);
@@ -1189,7 +1205,7 @@ public class TransferBizImpl implements TransferBiz {
         transferBuyLog.setAuto(auto);
         transferBuyLog.setBuyMoney(buyMoney);
         transferBuyLog.setValidMoney(validMoney);
-        transferBuyLog.setPrincipal(validMoney - alreadyInterest);
+        transferBuyLog.setPrincipal(buyPrincipal);
         transferBuyLog.setCreatedAt(new Date());
         transferBuyLog.setUpdatedAt(new Date());
         transferBuyLog.setDel(false);
