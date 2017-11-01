@@ -42,20 +42,26 @@ public class CreditListener {
 
         boolean bool = false;
 
-        try {
-            bool = creditProvider.endThirdCredit(msg, tag);
-        } catch (Throwable throwable) {
-            log.error("结束存管债权异常:", throwable);
-        }
-
-        if (bool) {
-            log.info("===========================BorrowListener===========================");
-            log.info("结束存管债权成功! borrowId：" + borrowId);
-            log.info("====================================================================");
+        if (true) {
+            log.error("=============================================================================");
+            log.error("说明：结束债权改版，自动结束债权改为手动结束债权，请针对单个用户进行结束债权操作！");
+            log.error("=============================================================================");
         } else {
-            log.info("===========================BorrowListener===========================");
-            log.info("结束存管债权失败! borrowId：" + borrowId);
-            log.info("====================================================================");
+            try {
+                bool = creditProvider.endThirdCredit(msg, tag);
+            } catch (Throwable throwable) {
+                log.error("结束存管债权异常:", throwable);
+            }
+
+            if (bool) {
+                log.info("===========================BorrowListener===========================");
+                log.info("结束存管债权成功! borrowId：" + borrowId);
+                log.info("====================================================================");
+            } else {
+                log.info("===========================BorrowListener===========================");
+                log.info("结束存管债权失败! borrowId：" + borrowId);
+                log.info("====================================================================");
+            }
         }
     }
 }

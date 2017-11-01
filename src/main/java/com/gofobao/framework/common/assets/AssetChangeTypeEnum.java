@@ -12,7 +12,7 @@ public enum AssetChangeTypeEnum {
     /**
      * 投资人到期收回本息
      */
-    financeSettlement("理财计划结算", "financeSettlement", "2833", "add@useMoney", "add@incomeInterest#interest", "C"),
+    financeSettlement("理财计划结算", "financeSettlement", "2833", "add@useMoney", "add@incomeInterest#interest", "D"),
 
 /*    *//**
      * 投资人到期收回本息
@@ -441,7 +441,7 @@ public enum AssetChangeTypeEnum {
     }
 
 
-    public static AssetChangeTypeEnum findByRemoteType(String remoteType) throws Exception{
+    public static AssetChangeTypeEnum findByRemoteType(String remoteType) throws Exception {
         AssetChangeTypeEnum[] values = AssetChangeTypeEnum.values();
         for (AssetChangeTypeEnum typeEnum : values) {
             if (typeEnum.getPlatformType().equals(remoteType)) {

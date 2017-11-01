@@ -47,7 +47,9 @@ public interface TenderBiz {
     ResponseEntity<VoBaseResp> adminCancelTender(VoAdminCancelTender voAdminCancelTender);
 
     /**
-     * 结束普通第三方债权接口
+     * pc结束第三方债权接口
+     *
+     * @return
      */
     ResponseEntity<VoBaseResp> pcEndThirdTender(VoPcEndThirdTender voPcEndThirdTender);
 }

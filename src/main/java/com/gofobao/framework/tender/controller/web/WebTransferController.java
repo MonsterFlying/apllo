@@ -145,18 +145,6 @@ public class WebTransferController {
     }
 
     /**
-     * 结束债权转让第三方转让债权
-     *
-     * @return
-     */
-    @ApiOperation("结束债权转让第三方转让债权")
-    @PostMapping("/pub/transfer/pc/v2/third/end")
-    public ResponseEntity<VoBaseResp> endPcThirdTransferTender(@ModelAttribute VoPcEndThirdTransferTender voPcEndThirdTransferTender){
-        return transferBiz.endPcThirdTransferTender(voPcEndThirdTransferTender);
-    }
-
-
-    /**
      * pc购买债权转让
      */
     @ApiOperation("购买债权转让")

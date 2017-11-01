@@ -33,10 +33,4 @@
         <appender-ref ref="STDOUT"/>
         <appender-ref ref="FILE_LOG"/>
     </root>
-    <logger name="com.gofobao.framework" level="DEBUG" additivity="true">
-        <appender-ref ref="STDOUT"/>
-    </logger>
-    <logger name="com.gofobao.framework" level="DEBUG" additivity="true">
-        <appender-ref ref="STDOUT"/>
-    </logger>
 </configuration>

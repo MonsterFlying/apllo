@@ -1,6 +1,5 @@
 package com.gofobao.framework.tender.biz.impl;
 
-import com.github.wenhao.jpa.Specifications;
 import com.gofobao.framework.api.contants.ChannelContant;
 import com.gofobao.framework.api.contants.FrzFlagContant;
 import com.gofobao.framework.api.contants.JixinResultContants;
@@ -40,7 +39,6 @@ import com.gofobao.framework.member.entity.Users;
 import com.gofobao.framework.member.service.UserCacheService;
 import com.gofobao.framework.member.service.UserService;
 import com.gofobao.framework.member.service.UserThirdAccountService;
-import com.gofobao.framework.repayment.entity.BorrowRepayment;
 import com.gofobao.framework.repayment.service.BorrowRepaymentService;
 import com.gofobao.framework.tender.biz.TenderBiz;
 import com.gofobao.framework.tender.biz.TenderThirdBiz;
@@ -58,7 +56,6 @@ import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -289,6 +286,7 @@ public class TenderBizImpl implements TenderBiz {
             voCreateThirdTenderReq.setProductId(borrow.getProductId());
             voCreateThirdTenderReq.setOrderId(orderId);
             voCreateThirdTenderReq.setFrzFlag(FrzFlagContant.FREEZE);
+            voCreateThirdTenderReq.setAcqRes(borrowTender.getId() + "");
             ResponseEntity<VoBaseResp> resp = tenderThirdBiz.createThirdTender(voCreateThirdTenderReq);
             if (resp.getBody().getState().getCode() == VoBaseResp.ERROR) {
                 log.info("马上投资: 投资报备失败");
@@ -634,48 +632,78 @@ public class TenderBizImpl implements TenderBiz {
         return ResponseEntity.badRequest().body(VoBaseResp.ok("撤销成功"));
     }
 
-
     /**
-     * 结束普通第三方债权接口
+     * pc结束第三方债权接口
+     *
+     * @return
      */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
     public ResponseEntity<VoBaseResp> pcEndThirdTender(VoPcEndThirdTender voPcEndThirdTender) {
         String paramStr = voPcEndThirdTender.getParamStr();
         if (!SecurityHelper.checkSign(voPcEndThirdTender.getSign(), paramStr)) {
             return ResponseEntity
                     .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, "结束普通第三方债权接口 签名验证不通过!"));
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "结束第三方债权 签名验证不通过!"));
         }
-
         Map<String, String> paramMap = new Gson().fromJson(paramStr, TypeTokenContants.MAP_ALL_STRING_TOKEN);
-        Long borrowId = NumberHelper.toLong(paramMap.get("borrowId"));
-        Borrow borrow = borrowService.findById(borrowId);
-        Preconditions.checkNotNull(borrow, "借款记录不存在!");
-        //判断是否是最后一起还款已还清
-        Specification<BorrowRepayment> brs = Specifications
-                .<BorrowRepayment>and()
-                .eq("borrowId", borrowId)
-                .eq("status", 0)
-                .build();
-        long count = borrowRepaymentService.count(brs);//判断是否有未还还款
-        if (count > 0) {
-            return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "借款未结清不能结束债权!"));
+        /*用户id*/
+        long userId = NumberHelper.toLong(paramMap.get("userId"));
+        //1.用户本地前置校验（例如是否锁定什么的）
+        /*用户对象*/
+        Users users = userService.findByIdLock(userId);
+        Preconditions.checkNotNull(users, "结束第三方债权 用户记录不存在!");
+        if (users.getIsLock()) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "当前用户已锁定，请先解锁再做此项操作!"));
+        }
+        //2.校验用户本地资金户
+        /*用户资金对象*/
+        Asset asset = assetService.findByUserIdLock(userId);
+        Preconditions.checkNotNull(asset, "结束第三方债权 用户资金记录不存在!");
+        //3.校验用户即信资金账户
+        // 查询存管系统资金
+        UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(userId);
+        BalanceQueryRequest balanceQueryRequest = new BalanceQueryRequest();
+        balanceQueryRequest.setChannel(ChannelContant.HTML);
+        balanceQueryRequest.setAccountId(userThirdAccount.getAccountId());
+        BalanceQueryResponse balanceQueryResponse = jixinManager.send(JixinTxCodeEnum.BALANCE_QUERY, balanceQueryRequest, BalanceQueryResponse.class);
+        if ((ObjectUtils.isEmpty(balanceQueryResponse)) || !balanceQueryResponse.getRetCode().equals(JixinResultContants.SUCCESS)) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, String.format("当前网络不稳定,请稍后重试! %s", balanceQueryResponse.getRetMsg())));
         }
 
-        //推送队列结束债权
-        MqConfig mqConfig = new MqConfig();
-        mqConfig.setQueue(MqQueueEnum.RABBITMQ_CREDIT);
-        mqConfig.setTag(MqTagEnum.END_CREDIT);
-        mqConfig.setSendTime(DateHelper.addMinutes(new Date(), 1));
-        ImmutableMap<String, String> body = ImmutableMap
-                .of(MqConfig.MSG_BORROW_ID, StringHelper.toString(borrowId),
-                        MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
-        mqConfig.setMsg(body);
-        try {
-            log.info(String.format("repaymentBizImpl endThirdTenderAndChangeBorrowStatus send mq %s", GSON.toJson(body)));
-            mqHelper.convertAndSend(mqConfig);
-        } catch (Throwable e) {
-            log.error("repaymentBizImpl endThirdTenderAndChangeBorrowStatus send mq exception", e);
+        //可用余额
+        long availBal = MoneyHelper.yuanToFen(balanceQueryResponse.getAvailBal());
+        //账面余额
+        long currBal = MoneyHelper.yuanToFen(balanceQueryResponse.getCurrBal());
+        //本地可用金额
+        long useMoney = asset.getUseMoney().longValue();
+        //本地剩余冻结
+        long noUseMoney = asset.getNoUseMoney().longValue();
+        //理财计划金额
+        long financePlanMoney = asset.getFinancePlanMoney();
+        if ((availBal + currBal + useMoney + noUseMoney + financePlanMoney) > 0) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "资金账户还存在余额，请清0后重试!"));
         }
-        return ResponseEntity.ok(VoBaseResp.ok("发送结束债权成功!"));
+        //待还金额
+        long payment = asset.getPayment().longValue();
+        //待回金额
+        long collection = asset.getCollection();
+        if ((payment + collection) > 0) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "资金账户还存在待还/待收金额，请清0后重试!"));
+        }
+
+        //4.校验用户本地债权
+
+        //5.通过即信的债权反查本地债权，然后统一结束
+
+        return ResponseEntity.ok(VoBaseResp.ok("结束申请成功!"));
     }
 }

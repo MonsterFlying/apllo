@@ -957,7 +957,7 @@ public class ThirdBatchDealBizImpl implements ThirdBatchDealBiz {
             if ((resp.getBody().getState().getCode() == VoBaseResp.OK)) { //只有全部转让才会触发结束债权
                 //更新批次状态
                 thirdBatchLogBiz.updateBatchLogState(String.valueOf(batchNo), transferId, 3, ThirdBatchLogContants.BATCH_FINANCE_CREDIT_INVEST);
-                if (transfer.getTransferMoneyYes() >= transfer.getTransferMoney()) {
+                /*if (transfer.getTransferMoneyYes() >= transfer.getTransferMoney()) {
                     //推送队列结束债权
                     MqConfig mqConfig = new MqConfig();
                     mqConfig.setQueue(MqQueueEnum.RABBITMQ_CREDIT);
@@ -972,7 +972,7 @@ public class ThirdBatchDealBizImpl implements ThirdBatchDealBiz {
                     } catch (Throwable e) {
                         log.error("thirdBatchProvider financeCreditInvestDeal send mq exception", e);
                     }
-                }
+                }*/
 
                 log.info("理财计划批量债权转让复审: 成功");
             } else {
@@ -1079,7 +1079,7 @@ public class ThirdBatchDealBizImpl implements ThirdBatchDealBiz {
                 //更新批次状态
                 thirdBatchLogBiz.updateBatchLogState(String.valueOf(batchNo), transferId, 3, ThirdBatchLogContants.BATCH_CREDIT_INVEST);
 
-                Transfer transfer = transferService.findById(transferId);
+                /*Transfer transfer = transferService.findById(transferId);
                 //推送队列结束债权
                 MqConfig mqConfig = new MqConfig();
                 mqConfig.setQueue(MqQueueEnum.RABBITMQ_CREDIT);
@@ -1093,7 +1093,7 @@ public class ThirdBatchDealBizImpl implements ThirdBatchDealBiz {
                     mqHelper.convertAndSend(mqConfig);
                 } catch (Throwable e) {
                     log.error("thirdBatchProvider creditInvestDeal send mq exception", e);
-                }
+                }*/
 
                 log.info("批量债权转让复审: 成功");
             } else {
