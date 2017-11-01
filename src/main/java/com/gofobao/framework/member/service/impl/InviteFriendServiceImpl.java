@@ -26,6 +26,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
+
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
@@ -122,6 +123,10 @@ public class InviteFriendServiceImpl implements InviteFriendsService {
     public List<InviteFriends> toExcel(VoFriendsTenderReq friendsTenderReq) {
         Specification specification = Specifications.<BrokerBouns>and()
                 .eq("userId", friendsTenderReq.getUserId())
+                .between("createdAt", new Range<>(DateHelper.stringToDate(friendsTenderReq.getBeginAt(),
+                        DateHelper.DATE_FORMAT_YMD),
+                        DateHelper.stringToDate(friendsTenderReq.getEndAt(),
+                                DateHelper.DATE_FORMAT_YMD)))
                 .build();
         List<BrokerBouns> bounsList = brokerBounsRepository.findAll(specification, new Sort(Sort.Direction.DESC, "id"));
         List<InviteFriends> brokerBouns = new ArrayList<>(bounsList.size());

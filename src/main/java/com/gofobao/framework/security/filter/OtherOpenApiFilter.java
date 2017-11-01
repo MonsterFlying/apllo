@@ -35,7 +35,7 @@ public class OtherOpenApiFilter implements Filter {
         String starfire = "starfire";
         String windmill = "windmill";
         String wheel = "wheel";
-
+/*
         String passUrl = config.getInitParameter("passUrl");
         if (requestUrl.contains(starfire)) {
 
@@ -71,8 +71,7 @@ public class OtherOpenApiFilter implements Filter {
             }
             String secretKey = config.getInitParameter("wheelSecretKey");
             try {
-                String decryptStr = JEncryption.decrypt(params,
-                        secretKey);
+                String decryptStr = JEncryption.decrypt(params, secretKey);
                 Map<String, Object> paramMaps = StrToJsonStrUtil.getUrlParams(decryptStr);
                 for (String keyStr : paramMaps.keySet()) {
                     httpServletRequest.setAttribute(keyStr, paramMaps.get(keyStr));
@@ -81,7 +80,7 @@ public class OtherOpenApiFilter implements Filter {
                 log.info("车轮请求平台失败,请求参数解密失败", e);
                 return;
             }
-        }
+        }*/
         filterChain.doFilter(httpServletRequest, servletResponse);
         return;
     }

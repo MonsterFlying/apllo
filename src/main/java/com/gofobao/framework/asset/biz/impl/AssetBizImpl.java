@@ -893,12 +893,9 @@ public class AssetBizImpl implements AssetBiz {
      */
     @Override
     public void pcToExcel(VoAssetLogReq voAssetLogReq, HttpServletResponse response) {
-
-        Users user = userService.findById(voAssetLogReq.getUserId());
-        voAssetLogReq.setStartTime(DateHelper.dateToString(user.getCreatedAt()));
-        voAssetLogReq.setEndTime(DateHelper.dateToString(new Date()));
+        voAssetLogReq.setStartTime(voAssetLogReq.getStartTime());
+        voAssetLogReq.setEndTime(voAssetLogReq.getEndTime());
         List<NewAssetLog> assetLogs = assetLogService.pcToExcel(voAssetLogReq);
-
         List<AssetLogs> assetLogsList = new ArrayList<>(assetLogs.size());
         if (!CollectionUtils.isEmpty(assetLogs)) {
             assetLogs.stream().forEach(p -> {
