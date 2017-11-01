@@ -16,29 +16,6 @@ import javax.servlet.http.HttpServletResponse;
 public interface BorrowRepaymentThirdBiz {
 
     /**
-     * 非流转标的 理财计划即信批次放款 （满标后调用）
-     *
-     * @param voThirdBatchLendRepay
-     * @return
-     */
-    ResponseEntity<VoBaseResp> thirdBatchFinanceLendRepay(VoThirdBatchLendRepay voThirdBatchLendRepay) throws Exception;
-
-
-    /**
-     * 理财计划即信批次放款  （满标后调用）
-     *
-     * @return
-     */
-    ResponseEntity<String> thirdBatchFinanceLendRepayCheckCall(HttpServletRequest request, HttpServletResponse response);
-
-    /**
-     * 理财计划即信批次放款  （满标后调用）
-     *
-     * @return
-     */
-    ResponseEntity<String> thirdBatchFinanceLendRepayRunCall(HttpServletRequest request, HttpServletResponse response) throws Exception;
-
-    /**
      * 即信批次还款
      *
      * @return

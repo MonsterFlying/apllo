@@ -2,8 +2,8 @@ package com.gofobao.framework.wheel.borrow.biz;
 
 
 import com.gofobao.framework.borrow.entity.Borrow;
+import com.gofobao.framework.tender.entity.Tender;
 import com.gofobao.framework.wheel.borrow.vo.request.BorrowsReq;
-import com.gofobao.framework.wheel.borrow.vo.response.BorrowUpdateRes;
 import com.gofobao.framework.wheel.borrow.vo.response.BorrowsRes;
 
 
@@ -21,10 +21,19 @@ public interface WheelBorrowBiz {
     BorrowsRes borrows(BorrowsReq borrowId);
 
     /**
+
      * 4.2 标的变化接口通知接口
-     * @return
+     *
+     * @param borrow
      */
-    BorrowUpdateRes borrowUpdateNotice(Borrow borrow);
+    void borrowUpdateNotice(Borrow borrow);
+
+    /**
+     * 4.1投资通知
+     * @param tender
+     *
+     */
+    void investNotice(Tender tender);
 
 
 }

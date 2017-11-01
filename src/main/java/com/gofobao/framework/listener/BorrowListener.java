@@ -53,10 +53,7 @@ public class BorrowListener {
             } else if (tag.equals(MqTagEnum.AGAIN_VERIFY.getValue())) {  // 复审
                 bool = borrowProvider.doAgainVerify(msg);
                 processMsg = "标的复审";
-            }  else if (tag.equals(MqTagEnum.AGAIN_VERIFY_FINANCE.getValue())) {  // 复审
-                bool = borrowProvider.doAgainVerifyFinance(msg);
-                processMsg = "理财计划标的复审";
-            }else {
+            } else {
                 processMsg = "其他";
             }
 

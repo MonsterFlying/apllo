@@ -1,7 +1,7 @@
 spring:
   datasource:
     type: com.alibaba.druid.pool.DruidDataSource
-    url: jdbc:mysql://192.168.1.5:3306/gfb0918?useUnicode=true&characterEncoding=utf8&autoReconnect=true&failOverReadOnly=false&&useSSL=true
+    url: jdbc:mysql://192.168.1.5:3306/gfb0810?useUnicode=true&characterEncoding=utf8&autoReconnect=true&failOverReadOnly=false&&useSSL=true
     username: root
     password:
     driver-class-name: com.mysql.jdbc.Driver
@@ -47,7 +47,7 @@ qiniu:
     sk : GjGZAJBUpe8UzPoWmKeKBPSi7Kq_IshmuW-UC89o
 
 server:
-  port: 80
+  port: 8080
 
 windmill: #风车理财
   des-key: 2l0IYbNnRcShWOM9Q5Ej0A3gCEP07LBS #des加密key值
@@ -85,7 +85,7 @@ jixin: #银行存管
   p12-path:  # p12证书路径
 gofobao:
   dev: true # 开发环境
-  javaDomain:  192.168.1.124:8080
+  javaDomain:  http://lang.hk1.mofasuidao.cn
   h5Domain:  http://18164xy341.51mypc.cn
   imageDomain : http://www.gofobao.com
   pcDomain: http://gofobao.55555.io

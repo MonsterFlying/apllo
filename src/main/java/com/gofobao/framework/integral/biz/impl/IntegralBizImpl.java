@@ -112,9 +112,6 @@ public class IntegralBizImpl implements IntegralBiz {
                 }
             });
 
-    @Autowired
-    private MqHelper mqHelper;
-
 
     private static Map<String, String> integralTypeMap = new HashMap<>();
 

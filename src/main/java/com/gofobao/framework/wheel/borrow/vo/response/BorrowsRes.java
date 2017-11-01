@@ -15,7 +15,6 @@ public class BorrowsRes extends BaseResponse {
 
     private List<BorrowInfo>invest_list= Collections.emptyList();
 
-
     @Data
     public class BorrowInfo {
 

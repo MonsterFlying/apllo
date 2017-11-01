@@ -231,33 +231,21 @@ public class BorrowBizImpl implements BorrowBiz {
                 borrow.setSuccessAt(new Date());
                 borrowService.save(borrow);
             }
-            //判断是否是理财计划借款
-            if (borrow.getIsFinance()) {
-                //复审
-                MqConfig mqConfig = new MqConfig();
-                mqConfig.setQueue(MqQueueEnum.RABBITMQ_BORROW);
-                mqConfig.setTag(MqTagEnum.AGAIN_VERIFY_FINANCE);
-                mqConfig.setSendTime(DateHelper.addSeconds(new Date(), 1));
-                ImmutableMap<String, String> body = ImmutableMap
-                        .of(MqConfig.MSG_BORROW_ID, StringHelper.toString(borrow.getId()), MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
-                mqConfig.setMsg(body);
-                log.info(String.format("BorrowBizImpl sendAgainVerify send mq %s", GSON.toJson(body)));
+
+            MqConfig mqConfig = new MqConfig();
+            mqConfig.setTag(MqTagEnum.AGAIN_VERIFY);
+            mqConfig.setQueue(MqQueueEnum.RABBITMQ_BORROW);
+            ImmutableMap<String, String> body = ImmutableMap
+                    .of(MqConfig.MSG_BORROW_ID, StringHelper.toString(borrow.getId()),
+                            MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
+            mqConfig.setMsg(body);
+            log.info(String.format("BorrowBizImpl sendAgainVerify send mq %s", GSON.toJson(body)));
+            try {
                 mqHelper.convertAndSend(mqConfig);
-            } else {
-                MqConfig mqConfig = new MqConfig();
-                mqConfig.setTag(MqTagEnum.AGAIN_VERIFY);
-                mqConfig.setQueue(MqQueueEnum.RABBITMQ_BORROW);
-                ImmutableMap<String, String> body = ImmutableMap
-                        .of(MqConfig.MSG_BORROW_ID, StringHelper.toString(borrow.getId()),
-                                MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
-                mqConfig.setMsg(body);
-                log.info(String.format("BorrowBizImpl sendAgainVerify send mq %s", GSON.toJson(body)));
-                try {
-                    mqHelper.convertAndSend(mqConfig);
-                } catch (Exception e) {
-                    log.error("发送复审异常:", e);
-                }
+            } catch (Exception e) {
+                log.error("发送复审异常:", e);
             }
+
             return ResponseEntity.ok(VoBaseResp.ok("发送成功!"));
         }
         return ResponseEntity.ok(VoBaseResp.ok("发送失败!"));
@@ -1803,6 +1791,7 @@ public class BorrowBizImpl implements BorrowBiz {
      * @throws Exception
      */
     @Transactional(rollbackFor = Exception.class)
+    @Override
     public boolean doFirstVerify(Long borrowId) throws Exception {
         Borrow borrow = borrowService.findByIdLock(borrowId);
         if ((ObjectUtils.isEmpty(borrow)) || (borrow.getStatus() != 0)) {
@@ -1829,7 +1818,7 @@ public class BorrowBizImpl implements BorrowBiz {
      *
      * @return
      */
-    private boolean verifyStandardBorrow(Borrow borrow) {
+    private boolean verifyStandardBorrow(Borrow borrow) throws Exception {
         Date nowDate = DateHelper.subSeconds(new Date(), 10);
         borrow.setStatus(1);
         borrow.setVerifyAt(nowDate);
@@ -1838,25 +1827,51 @@ public class BorrowBizImpl implements BorrowBiz {
         borrow = borrowService.save(borrow);    //更新借款状态
         if (!borrowThirdBiz.registerBorrrowConditionCheck(borrow)) { // 判断没有在即信注册、并且类型为非转让标
             int type = borrow.getType();
-            if (type != 0 && type != 4) { // 判断是否是官标、官标不需要在这里登记标的
+            // 判断是否是官标、官标不需要在这里登记标的
+            Set<Integer> typeSet = ImmutableSet.of(0, 4);
+            if (!typeSet.contains(type)) {
                 VoCreateThirdBorrowReq voCreateThirdBorrowReq = new VoCreateThirdBorrowReq();
                 voCreateThirdBorrowReq.setBorrowId(borrow.getId());
                 ResponseEntity<VoBaseResp> resp = borrowThirdBiz.createThirdBorrow(voCreateThirdBorrowReq);
-                if (resp.getBody().getState().getCode() == VoBaseResp.ERROR) { //创建状态为失败时返回错误提示
+                //创建状态为失败时返回错误提示
+                if (resp.getBody().getState().getCode() == VoBaseResp.ERROR) {
                     log.error(String.format("标的初审: 普通标的报备 %s", new Gson().toJson(resp)));
                     return false;
                 }
             }
         }
 
+        //判断是否理财计划借款，如果是理财计划借款不需要推送自动投标队列
+        if (borrow.getIsFinance()) {
+            //理财计划借款处理
+            financeBorrowDeal(borrow);
+        } else {
+            //推送到自动投标队列
+            sendAutoTender(borrow, nowDate, releaseAt);
+        }
+        return true;
+    }
+
+    /**
+     * 1.没有设置标密码
+     * 2.车贷标, 渠道标, 流转表
+     * 3.标的年化率为 800 以上
+     *
+     * @param borrow
+     * @param nowDate
+     * @param releaseAt
+     * @return
+     */
+    private void sendAutoTender(Borrow borrow, Date nowDate, Date releaseAt) throws Exception {
+        Integer borrowType = borrow.getType();
+        ImmutableList<Integer> autoTenderBorrowType = ImmutableList.of(0, 1, 4);
         // 自动投标前提:
         // 1.没有设置标密码
         // 2.车贷标, 渠道标, 流转表
         // 3.标的年化率为 800 以上
-        Integer borrowType = borrow.getType();
-        ImmutableList<Integer> autoTenderBorrowType = ImmutableList.of(0, 1, 4);
         if ((ObjectUtils.isEmpty(borrow.getPassword()))
-                && (autoTenderBorrowType.contains(borrowType)) && borrow.getApr() > 800) {
+                && (autoTenderBorrowType.contains(borrowType))
+                && borrow.getApr() > 800) {
             borrow.setIsLock(true);
             borrowService.updateById(borrow);  // 锁住标的,禁止手动投标
 
@@ -1878,15 +1893,35 @@ public class BorrowBizImpl implements BorrowBiz {
             try {
                 log.info(String.format("borrowProvider autoTender send mq %s", GSON.toJson(body)));
                 mqHelper.convertAndSend(mqConfig);
-                return true;
             } catch (Throwable e) {
-                log.error("borrowProvider autoTender send mq exception", e);
-                return false;
+                throw new Exception("borrowProvider autoTender send mq exception", e);
             }
         }
+    }
 
-
-        return true;
+    /**
+     * 理财计划借款处理
+     *
+     * @param borrow
+     */
+    private void financeBorrowDeal(Borrow borrow) throws Exception {
+        VoCreateTenderReq voCreateBorrowTender = new VoCreateTenderReq();
+        // 标的
+        voCreateBorrowTender.setBorrowId(borrow.getId());
+        // 投标用户 理财计划投标用户默认22002L zfh
+        long tenderId = 22002L;
+        voCreateBorrowTender.setUserId(tenderId);
+        // 投标金额
+        voCreateBorrowTender.setTenderMoney(MoneyHelper.round(MoneyHelper.divide(borrow.getMoney(), 100d), 2));
+        //投标来源
+        voCreateBorrowTender.setRequestSource("0");
+        //调用借款投标方法
+        ResponseEntity<VoBaseResp> response = tenderBiz.createTender(voCreateBorrowTender);
+        if (response.getBody().getState().getCode() == VoBaseResp.OK) {
+            log.info(String.format("理财计划借款投标成功：borrowId->%s", borrow.getId()));
+        } else {
+            throw new Exception(String.format("理财计划借款投标失败：borrowId->%s", borrow.getId()));
+        }
     }
 
     /**

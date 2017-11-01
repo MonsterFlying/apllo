@@ -545,7 +545,10 @@ public class CashStatementBizImpl implements CashStatementBiz {
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public boolean onlineStatement(Long userId, Date date, CashType cashType, boolean force) throws Exception {
+        
+        // 查询本地
         return false;
     }
 

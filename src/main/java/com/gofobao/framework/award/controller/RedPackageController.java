@@ -63,7 +63,10 @@ public class RedPackageController {
         try {
             return redPackageBiz.openRedPackage(voOpenRedPackageReq);
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "系统异常, 请稍后重试!", VoViewOpenRedPackageWarpRes.class));
+            return ResponseEntity.badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR,
+                                    "系统异常, 请稍后重试!",
+                                    VoViewOpenRedPackageWarpRes.class));
         }
     }
 

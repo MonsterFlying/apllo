@@ -22,23 +22,6 @@ public class BorrowRepaymentThirdContorller {
     @Autowired
     private BorrowRepaymentThirdBiz borrowRepaymentThirdBiz;
 
-    @RequestMapping("/v2/third/batch/finance/lendrepay/check")
-    @ApiOperation("批次放款参数检查通知")
-    public ResponseEntity<String> thirdFinanceBatchLendRepayCheckCall(HttpServletRequest request, HttpServletResponse response) {
-        return borrowRepaymentThirdBiz.thirdBatchFinanceLendRepayCheckCall(request, response);
-    }
-
-    @RequestMapping("/v2/third/batch/finance/lendrepay/run")
-    @ApiOperation("批次放款运行结果通知")
-    public ResponseEntity<String> thirdFinanceBatchLendRepayRunCall(HttpServletRequest request, HttpServletResponse response) {
-        try {
-            return borrowRepaymentThirdBiz.thirdBatchFinanceLendRepayRunCall(request, response);
-        } catch (Exception e) {
-            e.printStackTrace();
-            return ResponseEntity.ok("error");
-        }
-    }
-
     @RequestMapping("/v2/third/batch/lendrepay/check")
     @ApiOperation("批次放款参数检查通知")
     public ResponseEntity<String> thirdBatchLendRepayCheckCall(HttpServletRequest request, HttpServletResponse response) {

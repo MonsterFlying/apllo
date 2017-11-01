@@ -14,7 +14,7 @@ public class BaseResponse {
 
     private Integer retcode;
 
-    private String retmsg;
+    private String retmsg="";
 
 
 }
