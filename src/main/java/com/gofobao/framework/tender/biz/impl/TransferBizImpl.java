@@ -602,6 +602,7 @@ public class TransferBizImpl implements TransferBiz {
      * @return
      */
     @Transactional(rollbackFor = Exception.class)
+    @Override
     public ResponseEntity<VoBaseResp> againVerifyTransfer(long transferId, String batchNo) throws Exception {
         Date nowDate = new Date();
         /*
@@ -858,6 +859,7 @@ public class TransferBizImpl implements TransferBiz {
      * @param parentBorrow
      * @param childTenderList
      */
+    @Override
     public List<BorrowCollection> addChildTenderCollection(Date nowDate, Transfer transfer, Borrow parentBorrow, List<Tender> childTenderList) throws Exception {
         List<BorrowCollection> childTenderCollectionList = new ArrayList<>();/* 债权子记录回款记录 */
         String groupSeqNo = assetChangeProvider.getGroupSeqNo();
@@ -911,9 +913,11 @@ public class TransferBizImpl implements TransferBiz {
                 long interest = new Double(NumberHelper.toDouble(repayDetailMap.get("interest"))).longValue();
                 collectionInterest += interest;
                 sumCollectionInterest += interest;
-                //最后一个购买债权转让的最后一期回款，需要把还款溢出的利息补给新的回款记录
-                if ((j == childTenderList.size() - 1) && (i == repayDetailList.size() - 1)) {
-                    interest += transferInterest - sumCollectionInterest;/* 新的回款利息添加溢出的利息 */
+                //最后一个购买债权转让的最后一期回款，需要把转让溢出的利息补给新的回款记录
+                //排除理财计划转让，因为理财计划没有回款利息
+                if ((j == childTenderList.size() - 1) && (i == repayDetailList.size() - 1) && transfer.getType() != 1) {
+                    /* 新的回款利息添加溢出的利息 */
+                    interest += transferInterest - sumCollectionInterest;
                 }
 
                 borrowCollection.setTenderId(childTender.getId());
@@ -929,8 +933,8 @@ public class TransferBizImpl implements TransferBiz {
                 borrowCollection.setInterest(interest);
                 borrowCollection.setCreatedAt(nowDate);
                 borrowCollection.setUpdatedAt(nowDate);
-                borrowCollection.setCollectionMoneyYes(0l);
-                borrowCollection.setLateInterest(0l);
+                borrowCollection.setCollectionMoneyYes(0L);
+                borrowCollection.setLateInterest(0L);
                 borrowCollection.setLateDays(0);
                 borrowCollection.setBorrowId(parentBorrow.getId());
                 childTenderCollectionList.add(borrowCollection);
