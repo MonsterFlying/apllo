@@ -6,7 +6,6 @@ import com.gofobao.framework.security.helper.JwtTokenHelper;
 import com.gofobao.framework.tender.biz.TenderBiz;
 import com.gofobao.framework.tender.vo.request.TenderUserReq;
 import com.gofobao.framework.tender.vo.request.VoCreateTenderReq;
-import com.gofobao.framework.tender.vo.request.VoPcEndThirdTender;
 import com.gofobao.framework.tender.vo.response.VoBorrowTenderUserWarpListRes;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -69,14 +68,5 @@ public class WebTenderController {
         voCreateTenderReq.setRequestSource(requestSource);
         voCreateTenderReq.setUserId(userId);
         return tenderBiz.tender(voCreateTenderReq);
-    }
-
-    /**
-     * 结束普通第三方债权接口
-     */
-    @ApiOperation("结束普通第三方债权接口")
-    @PostMapping("/pub/tender/pc/v2/third/end")
-    public ResponseEntity<VoBaseResp> pcEndThirdTender(@ModelAttribute VoPcEndThirdTender voPcEndThirdTender) {
-        return tenderBiz.pcEndThirdTender(voPcEndThirdTender);
     }
 }

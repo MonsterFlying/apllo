@@ -6,10 +6,13 @@ import lombok.Data;
 import javax.validation.constraints.NotNull;
 
 /**
- * Created by Zeke on 2017/10/11.
+ * Created by Zeke on 2017/7/14.
  */
 @Data
 public class VoPcEndThirdTender {
+    /**
+     * 签名
+     */
     @ApiModelProperty(name = "sign", value = "签名")
     private String sign;
 
