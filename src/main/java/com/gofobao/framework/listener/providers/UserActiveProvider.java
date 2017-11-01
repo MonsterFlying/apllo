@@ -227,7 +227,7 @@ public class UserActiveProvider {
             log.error(String.format("单笔资金操作处理成功处理失败:%s", gson.toJson(msg)));
         }
 
-        return false;
+        return result;
     }
 
     /**
