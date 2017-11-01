@@ -70,7 +70,7 @@ public class TenderServiceImpl implements TenderService {
         List<VoBorrowTenderUserRes> tenderUserResList = new ArrayList<>();
         PageRequest pageRequest = new PageRequest(tenderUserReq.getPageIndex(),
                 tenderUserReq.getPageSize(),
-                new Sort(Sort.Direction.DESC, "createdAt"));
+                new Sort(Sort.Direction.DESC, "autoOrder"));
         Specification<Tender> tenderSpecification = Specifications.<Tender>and()
                 .eq("borrowId", borrowId)
                 .eq("status", TenderConstans.SUCCESS)

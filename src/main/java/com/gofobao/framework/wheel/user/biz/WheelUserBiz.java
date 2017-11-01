@@ -32,12 +32,15 @@ public interface WheelUserBiz {
      */
     CheckTicketRes checkTicket(CheckTicketReq checkTicket);
 
+
     /**
-     *
+     * 授权登录
      * @param authLogin
+     * @param response
+     * @param request
      * @return
      */
-    String AuthLogin(AuthLoginReq authLogin, HttpServletResponse response);
+    String authLogin(AuthLoginReq authLogin, HttpServletResponse response, HttpServletRequest request);
 
 
 }

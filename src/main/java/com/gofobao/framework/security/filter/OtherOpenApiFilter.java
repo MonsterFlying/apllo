@@ -1,23 +1,17 @@
 package com.gofobao.framework.security.filter;
 
-import com.alibaba.druid.support.http.util.IPAddress;
 import com.gofobao.framework.helper.IpHelper;
 import com.gofobao.framework.wheel.util.JEncryption;
 import com.gofobao.framework.windmill.util.StrToJsonStrUtil;
 import com.google.common.collect.Lists;
 import lombok.extern.slf4j.Slf4j;
-import org.omg.CosNaming.NamingContextExtPackage.AddressHelper;
-import org.springframework.util.Base64Utils;
 import org.springframework.util.StringUtils;
 
 import javax.servlet.*;
 import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
-import java.util.Base64;
 import java.util.List;
 import java.util.Map;
-
-import static com.gofobao.framework.windmill.util.StrToJsonStrUtil.getUrlParams;
 
 /**
  * 第三方接口访问过滤
@@ -36,16 +30,14 @@ public class OtherOpenApiFilter implements Filter {
     public void doFilter(ServletRequest servletRequest, ServletResponse servletResponse, FilterChain filterChain) throws IOException, ServletException {
 
         HttpServletRequest httpServletRequest = (HttpServletRequest) servletRequest;
-       /*
         String requestUrl = httpServletRequest.getRequestURI();
         String requestIp = IpHelper.getIpAddress(httpServletRequest);
-
         String starfire = "starfire";
         String windmill = "windmill";
         String wheel = "wheel";
 
         String passUrl = config.getInitParameter("passUrl");
-      if (requestUrl.contains(starfire)) {
+        if (requestUrl.contains(starfire)) {
 
             log.info("=============进入过滤器中==============");
             log.info("===========访问进入星火接口==============");
@@ -79,18 +71,18 @@ public class OtherOpenApiFilter implements Filter {
             }
             String secretKey = config.getInitParameter("wheelSecretKey");
             try {
-                String requestParams = JEncryption.decrypt(new String(Base64.getDecoder().decode(params), "utf-8"), secretKey);
-                Map<String, Object> paramMaps = StrToJsonStrUtil.getUrlParams(requestParams);
-                for (String key : paramMaps.keySet()
-                        ) {
-                    servletRequest.setAttribute(key, paramMaps.get(key));
+                String decryptStr = JEncryption.decrypt(params,
+                        secretKey);
+                Map<String, Object> paramMaps = StrToJsonStrUtil.getUrlParams(decryptStr);
+                for (String keyStr : paramMaps.keySet()) {
+                    httpServletRequest.setAttribute(keyStr, paramMaps.get(keyStr));
                 }
             } catch (Exception e) {
                 log.info("车轮请求平台失败,请求参数解密失败", e);
                 return;
             }
-        }*/
-        filterChain.doFilter(servletRequest, servletResponse);
+        }
+        filterChain.doFilter(httpServletRequest, servletResponse);
         return;
     }
 
