@@ -1,6 +1,6 @@
 package com.gofobao.framework.wheel.user.vo.request;
 
-import com.gofobao.framework.starfire.common.request.BaseRequest;
+import com.gofobao.framework.wheel.common.BaseRequest;
 import lombok.Data;
 
 /**

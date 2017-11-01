@@ -85,17 +85,25 @@ public class WheelUserBizmpl implements WheelUserBiz {
     @Value("${gofobao.h5Domain}")
     private String h5Domain;
 
-
+    /**
+     * @param register
+     * @param request
+     * @return
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public RegisterRes register(RegisterReq register, HttpServletRequest request) {
+        log.info("============车轮理财注册接口=============");
+        log.info("打印车轮理财请求参数:" + GSON.toJson(register));
         Users user = userService.findByAccount(register.getMobile());
         RegisterRes registerRes = new RegisterRes();
-        if (ObjectUtils.isEmpty(user)) {
+        if (!ObjectUtils.isEmpty(user)) {
+            log.info("注册失败: 当前" + register.getMobile() + "手机号已被注册");
             registerRes.setRetcode(1);
             registerRes.setRetmsg("手机号已注册");
             return registerRes;
         }
+        log.info("手机未被注册,进入用户注册");
         try {
             Date now = new Date();
             // 插入数据
@@ -105,12 +113,14 @@ public class WheelUserBizmpl implements WheelUserBiz {
             users.setPhone(register.getMobile());
             PassWordCreate pwc = new PassWordCreate();
             String password = pwc.createPassWord(8);
-            users.setPassword(PasswordHelper.encodingPassword(password)); // 设置密码
+            // 设置密码
+            users.setPassword(PasswordHelper.encodingPassword(password));
             users.setPayPassword("");
             users.setType("");
             users.setBranch(0);
             users.setSource(14);
-            users.setInviteCode(GenerateInviteCodeHelper.getRandomCode()); // 生成用户邀请码
+            // 生成用户邀请码
+            users.setInviteCode(GenerateInviteCodeHelper.getRandomCode());
             users.setParentId(0L);
             users.setParentAward(0);
             users.setCreatedAt(now);
@@ -166,6 +176,7 @@ public class WheelUserBizmpl implements WheelUserBiz {
             registerRes.setRetcode(0);
             registerRes.setPf_user_id(users.getId().toString());
             log.info("风车理财：用户注册成功");
+            log.info("打印当前用户注册信息:" + GSON.toJson(user));
             return registerRes;
         } catch (Exception e) {
             return registerRes;
@@ -177,31 +188,47 @@ public class WheelUserBizmpl implements WheelUserBiz {
      * @return
      */
     @Override
-    public String AuthLogin(AuthLoginReq authLogin, HttpServletResponse response) {
+    public String authLogin(AuthLoginReq authLogin,
+                            HttpServletResponse response,
+                            HttpServletRequest request) {
+        log.info("============车轮理财授权接口=============");
+        log.info("打印授权登陆参数：" + GSON.toJson(authLogin));
         //验证票据
         CheckTicketReq checkTicketReq = new CheckTicketReq();
         checkTicketReq.setTicket(authLogin.getTicket());
         checkTicketReq.setTs(System.currentTimeMillis());
+        checkTicketReq.setFrom(shortName);
         CheckTicketRes checkTicket = checkTicket(checkTicketReq);
         log.info("打印车轮返回信息:" + GSON.toJson(checkTicket));
         //网络错误
         if (checkTicket.getRetcode().equals(ResponseConstant.NET_ERROR)) {
+            log.info("验证票据发生网络错误");
             return "load_error";
         } else if (checkTicket.getRetcode().equals(ResponseConstant.FAIL)) {
-            log.info("ticket验证失败");
+            log.info("请求车轮ticket验证失败");
             return "load_error";
         } else {
             Users users = userService.findById(Long.valueOf(checkTicket.getPf_user_id()));
             if (!ObjectUtils.isEmpty(users)
                     && users.getPhone().equals(checkTicket.getMobile())
                     && users.getWheelId().equals(checkTicket.getCl_user_id())) {
+                log.info("车轮返回的id和平台绑定车轮id不一致");
+                log.info("打印平台的用户信息" + GSON.toJson(users));
                 log.info("非法请求");
                 return "load_error";
+            } else if (ObjectUtils.isEmpty(users)) {
+                log.info("当前用户没绑定调用注册方法重新注册");
+                RegisterReq registerReq = new RegisterReq();
+                registerReq.setMobile(checkTicket.getMobile());
+                registerReq.setCl_user_id(checkTicket.getCl_user_id());
+                RegisterRes register = register(registerReq, request);
+                users = userService.findById(Long.valueOf(register.getPf_user_id()));
             }
             try {
                 String tokenStr = redisHelper.get("JTW_" + users.getId(), null);
                 if (StringUtils.isEmpty(tokenStr)) {
                     tokenStr = jwtTokenHelper.generateToken(users, Integer.valueOf(3));
+                    log.info("生成token" + tokenStr);
                     response.addHeader(tokenHeader, String.format("%s %s", prefix, tokenStr));
                     // 触发登录队列
                     MqConfig mqConfig = new MqConfig();
@@ -227,17 +254,19 @@ public class WheelUserBizmpl implements WheelUserBiz {
      */
     @Override
     public CheckTicketRes checkTicket(CheckTicketReq checkTicket) {
+        log.info("=================进入请求车轮验证票据接口=================");
+        log.info("打印验证参数:" + GSON.toJson(checkTicket));
         CheckTicketRes ticketRes = new CheckTicketRes();
-
-        String paramStr = "ts=" + checkTicket.getTs() + "&from=" + checkTicket.getTicket();
+        String paramStr = "ticket="+"=" + checkTicket.getTicket();
         try {
-            String encryptParamStr = new String(Base64.getEncoder()
-                    .encode(JEncryption.encrypt(paramStr.getBytes(), secretKey)
-                            .getBytes()),
-                    "utf-8");
+            String encryptParamStr = JEncryption.encrypt(paramStr.getBytes(), secretKey);
             Map<String, String> requestMap = Maps.newHashMap();
             requestMap.put("param", encryptParamStr);
+            requestMap.put("from",checkTicket.getFrom());
+            requestMap.put("ts",checkTicket.getTs().toString());
+            log.info("打印请求封装车轮请求参数:" + GSON.toJson(requestMap));
             String resultStr = OKHttpHelper.postForm(domain + checkTicKetUrl, requestMap, null);
+            log.info("打印车轮返回结果" + resultStr);
             if (StringUtils.isEmpty(resultStr)) {
                 throw new Exception();
             }
@@ -247,7 +276,7 @@ public class WheelUserBizmpl implements WheelUserBiz {
         } catch (Exception e) {
             ticketRes.setRetcode(ResponseConstant.NET_ERROR);
             ticketRes.setRetmsg("请求验证票据异常");
-            log.info("请求检查车轮ticket异常");
+            log.info("请求检查车轮ticket异常", e);
             return ticketRes;
         }
     }
