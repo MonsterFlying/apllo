@@ -132,14 +132,14 @@ public class FinancePlanBizImpl implements FinancePlanBiz {
         /* 理财计划回购债权转让记录 */
         Transfer transfer = transferService.findByIdLock(transferId);
         //默认zfh为回购人
-        long repurchaseUserId = 22002;
+        long repurchaseUserId = 22002L;
         //回购金额
         long principal = transfer.getPrincipal();
         /* 债权购买记录 */
         TransferBuyLog transferBuyLog = new TransferBuyLog();
         transferBuyLog.setTransferId(transferId);
         transferBuyLog.setState(0);
-        transferBuyLog.setAlreadyInterest(0l);
+        transferBuyLog.setAlreadyInterest(0L);
         transferBuyLog.setBuyMoney(principal);
         transferBuyLog.setValidMoney(principal);
         transferBuyLog.setPrincipal(principal);

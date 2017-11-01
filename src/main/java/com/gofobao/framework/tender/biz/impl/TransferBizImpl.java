@@ -2228,7 +2228,7 @@ public class TransferBizImpl implements TransferBiz {
         Transfer transfer = transferService.findById(transferId);
         Preconditions.checkNotNull(transfer, "债权转让记录不存在!");
         if (transfer.getIsAll() && transfer.getTransferMoneyYes() >= transfer.getTransferMoney() && transfer.getState().intValue() == 2) {
-            //推送队列结束债权转让第三方转让债权
+           /* //推送队列结束债权转让第三方转让债权
             MqConfig mqConfig = new MqConfig();
             mqConfig.setQueue(MqQueueEnum.RABBITMQ_CREDIT);
             mqConfig.setTag(MqTagEnum.END_CREDIT_BY_TRANSFER);
@@ -2241,7 +2241,7 @@ public class TransferBizImpl implements TransferBiz {
                 mqHelper.convertAndSend(mqConfig);
             } catch (Throwable e) {
                 log.error("thirdBatchProvider endPcThirdTransferTender send mq exception", e);
-            }
+            }*/
         }
         return ResponseEntity.ok(VoBaseResp.ok("结束债权转让存管债权成功!"));
     }

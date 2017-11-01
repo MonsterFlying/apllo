@@ -661,7 +661,7 @@ public class TenderBizImpl implements TenderBiz {
             return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "借款未结清不能结束债权!"));
         }
 
-        //推送队列结束债权
+        /*//推送队列结束债权
         MqConfig mqConfig = new MqConfig();
         mqConfig.setQueue(MqQueueEnum.RABBITMQ_CREDIT);
         mqConfig.setTag(MqTagEnum.END_CREDIT);
@@ -675,7 +675,7 @@ public class TenderBizImpl implements TenderBiz {
             mqHelper.convertAndSend(mqConfig);
         } catch (Throwable e) {
             log.error("repaymentBizImpl endThirdTenderAndChangeBorrowStatus send mq exception", e);
-        }
+        }*/
         return ResponseEntity.ok(VoBaseResp.ok("发送结束债权成功!"));
     }
 }
