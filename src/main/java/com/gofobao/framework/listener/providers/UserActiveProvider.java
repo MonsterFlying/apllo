@@ -356,8 +356,7 @@ public class UserActiveProvider {
             return queryJixinOp(seqNo, userThirdAccount, looper - 1);
         }
 
-        if (!ObjectUtils.isEmpty(fundTransQueryResponse)
-                && JixinResultContants.SUCCESS.equalsIgnoreCase(fundTransQueryResponse.getRetCode())) {
+        if (JixinResultContants.SUCCESS.equalsIgnoreCase(fundTransQueryResponse.getRetCode())) {
             return fundTransQueryResponse;
         } else {
             log.error(String.format("[单笔资金查询] 查询失败 %s", seqNo));
