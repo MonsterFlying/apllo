@@ -154,14 +154,15 @@ public class RedPackageBizImpl implements RedPackageBiz {
         }
 
         // 派发红包
-        Gson gson = new Gson();
+         Gson gson = new Gson();
         double doubleMoney = MoneyHelper.divide(money, 100, 2);
         VoucherPayRequest voucherPayRequest = new VoucherPayRequest();
-        voucherPayRequest.setAccountId(redpackAccount.getAccountId()); // 红包账户
+        // 红包账户
+        voucherPayRequest.setAccountId(redpackAccount.getAccountId());
         voucherPayRequest.setTxAmount(doubleMoney + "");
         voucherPayRequest.setForAccountId(userThirdAccount.getAccountId());
         voucherPayRequest.setDesLineFlag(DesLineFlagContant.TURE);
-        voucherPayRequest.setDesLine(sourceId + "");
+        voucherPayRequest.setDesLine( sourceId + "");
         voucherPayRequest.setChannel(ChannelContant.HTML);
         VoucherPayResponse voucherPayResponse = jixinManager.send(JixinTxCodeEnum.SEND_RED_PACKET, voucherPayRequest, VoucherPayResponse.class);
         log.info(String.format("开始派发红包:%s", gson.toJson(voucherPayRequest)));
@@ -179,7 +180,7 @@ public class RedPackageBizImpl implements RedPackageBiz {
             // 红包账户发送红包
             AssetChange redpackPublish = new AssetChange();
             redpackPublish.setMoney(money);
-            redpackPublish.setType(AssetChangeTypeEnum.publishRedpack);  //  扣除红包
+            redpackPublish.setType(AssetChangeTypeEnum.publishRedpack);
             redpackPublish.setUserId(redpackAccountId);
             redpackPublish.setRemark(String.format("平台派发奖励红包 %s元", StringHelper.formatDouble(money / 100D, true)));
             redpackPublish.setGroupSeqNo(onlyNo);
@@ -229,11 +230,13 @@ public class RedPackageBizImpl implements RedPackageBiz {
         voucherPayCancelRequest.setAccountId(redpackAccount.getAccountId());
         voucherPayCancelRequest.setTxAmount(doubleMoney + "");
         voucherPayCancelRequest.setOrgTxDate(voucherPayRequest.getTxDate());
-        voucherPayCancelRequest.setOrgTxTime(voucherPayCancelRequest.getTxTime());
+        voucherPayCancelRequest.setOrgTxTime(voucherPayRequest.getTxTime());
+        voucherPayCancelRequest.setOrgSeqNo(voucherPayRequest.getSeqNo());
+        // 撤销的账号
         voucherPayCancelRequest.setForAccountId(userThirdAccount.getAccountId());
-        voucherPayCancelRequest.setOrgSeqNo(voucherPayCancelRequest.getSeqNo());
         voucherPayCancelRequest.setAcqRes(onlyNo);
         voucherPayCancelRequest.setChannel(ChannelContant.HTML);
+        voucherPayCancelRequest.setAcqRes(onlyNo);
         int looper = 5;
         VoucherPayCancelResponse voucherPayCancelResponse = null;
         do {
