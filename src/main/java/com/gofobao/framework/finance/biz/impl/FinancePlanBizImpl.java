@@ -153,6 +153,11 @@ public class FinancePlanBizImpl implements FinancePlanBiz {
         transferBuyLog.setUpdatedAt(nowDate);
         transferBuyLogService.save(transferBuyLog);
 
+        transfer.setTransferMoneyYes(principal);
+        transfer.setUpdatedAt(nowDate);
+        transfer.setTenderCount(transfer.getTenderCount() + 1);
+        transferService.save(transfer);
+
         //理财计划回购债权转让
         if (transfer.getTransferMoneyYes() >= transfer.getTransferMoney()) {
             ImmutableMap<String, String> body = ImmutableMap
@@ -607,6 +612,7 @@ public class FinancePlanBizImpl implements FinancePlanBiz {
      * @param voFinanceAgainVerifyTransfer
      */
     @Transactional(rollbackFor = Exception.class)
+    @Override
     public ResponseEntity<VoBaseResp> financeAgainVerifyTransfer(VoFinanceAgainVerifyTransfer voFinanceAgainVerifyTransfer) {
         String paramStr = voFinanceAgainVerifyTransfer.getParamStr();
         if (!SecurityHelper.checkSign(voFinanceAgainVerifyTransfer.getSign(), paramStr)) {
@@ -616,6 +622,11 @@ public class FinancePlanBizImpl implements FinancePlanBiz {
         }
         Map<String, String> paramMap = GSON.fromJson(paramStr, TypeTokenContants.MAP_ALL_STRING_TOKEN);
         Long transferId = NumberHelper.toLong(paramMap.get("transferId"));
+        //是否是回购
+        String isRepurchase = paramMap.get("isRepurchase");
+        if (StringUtils.isEmpty(isRepurchase)) {
+            isRepurchase = "false";
+        }
         /* 理财计划债权转让记录 */
         Transfer transfer = transferService.findByIdLock(transferId);
         if (transfer.getTransferMoneyYes() > 0 && transfer.getType().intValue() == 1 && transfer.getState().intValue() == 1) {
@@ -624,7 +635,7 @@ public class FinancePlanBizImpl implements FinancePlanBiz {
             mqConfig.setTag(MqTagEnum.AGAIN_VERIFY_FINANCE_TRANSFER);
             ImmutableMap<String, String> body = ImmutableMap
                     .of(MqConfig.MSG_TRANSFER_ID, StringHelper.toString(transferId),
-                            MqConfig.IS_REPURCHASE, "false",
+                            MqConfig.IS_REPURCHASE, isRepurchase,
                             MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
             mqConfig.setMsg(body);
             log.info(String.format("FinancePlanBizImpl financeAgainVerifyTransfer send mq %s", GSON.toJson(body)));

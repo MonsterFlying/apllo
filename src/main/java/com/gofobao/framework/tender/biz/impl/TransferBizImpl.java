@@ -240,6 +240,7 @@ public class TransferBizImpl implements TransferBiz {
      * @return
      * @throws Exception
      */
+    @Override
     @Transactional(rollbackFor = Exception.class)
     public ResponseEntity<VoBaseResp> endTransfer(VoEndTransfer voEndTransfer) throws Exception {
         long userId = voEndTransfer.getUserId();/* 转让人id */
@@ -2207,42 +2208,5 @@ public class TransferBizImpl implements TransferBiz {
         } catch (Exception e) {
             return null;
         }
-    }
-
-    /**
-     * 结束债权转让第三方转让债权
-     *
-     * @return
-     */
-    public ResponseEntity<VoBaseResp> endPcThirdTransferTender(VoPcEndThirdTransferTender voPcEndThirdTransferTender) {
-        String paramStr = voPcEndThirdTransferTender.getParamStr();
-        if (!SecurityHelper.checkSign(voPcEndThirdTransferTender.getSign(), paramStr)) {
-            return ResponseEntity
-                    .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, "结束债权转让第三方转让债权 签名验证不通过!"));
-        }
-
-        Map<String, String> paramMap = new Gson().fromJson(paramStr, TypeTokenContants.MAP_ALL_STRING_TOKEN);
-        Long transferId = NumberHelper.toLong(paramMap.get("transferId"));
-        /*债权转让记录*/
-        Transfer transfer = transferService.findById(transferId);
-        Preconditions.checkNotNull(transfer, "债权转让记录不存在!");
-        if (transfer.getIsAll() && transfer.getTransferMoneyYes() >= transfer.getTransferMoney() && transfer.getState().intValue() == 2) {
-           /* //推送队列结束债权转让第三方转让债权
-            MqConfig mqConfig = new MqConfig();
-            mqConfig.setQueue(MqQueueEnum.RABBITMQ_CREDIT);
-            mqConfig.setTag(MqTagEnum.END_CREDIT_BY_TRANSFER);
-            mqConfig.setSendTime(DateHelper.addMinutes(new Date(), 1));
-            ImmutableMap<String, String> body = ImmutableMap
-                    .of(MqConfig.MSG_BORROW_ID, StringHelper.toString(transfer.getBorrowId()), MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
-            mqConfig.setMsg(body);
-            try {
-                log.info(String.format("thirdBatchProvider endPcThirdTransferTender send mq %s", GSON.toJson(body)));
-                mqHelper.convertAndSend(mqConfig);
-            } catch (Throwable e) {
-                log.error("thirdBatchProvider endPcThirdTransferTender send mq exception", e);
-            }*/
-        }
-        return ResponseEntity.ok(VoBaseResp.ok("结束债权转让存管债权成功!"));
     }
 }

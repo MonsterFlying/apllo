@@ -37,7 +37,8 @@ public class MqConfig {
     public static final String ACQ_RES = "acq_res";
     public static final String PASSWORD = "password";
     public static final String TYPE = "type";
-    public static final String IS_REPURCHASE = "isRepurchase";/*判断理财计划是否是赎回*/
+    /*判断理财计划是否是赎回*/
+    public static final String IS_REPURCHASE = "isRepurchase";
 
 
     private MqQueueEnum queue;
