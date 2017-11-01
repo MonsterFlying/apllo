@@ -18,6 +18,6 @@ public class VoIntegralTakeReq extends VoBaseReq{
 
     @NotNull
     @ApiModelProperty("待兑换积分")
-    private Integer integer;
+    private Integer integer = 0;
 
 }

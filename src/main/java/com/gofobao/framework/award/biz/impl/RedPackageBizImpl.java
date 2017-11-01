@@ -165,10 +165,12 @@ public class RedPackageBizImpl implements RedPackageBiz {
         voucherPayRequest.setChannel(ChannelContant.HTML);
         VoucherPayResponse voucherPayResponse = jixinManager.send(JixinTxCodeEnum.SEND_RED_PACKET, voucherPayRequest, VoucherPayResponse.class);
         log.info(String.format("开始派发红包:%s", gson.toJson(voucherPayRequest)));
-        if ((ObjectUtils.isEmpty(voucherPayResponse)) || (!JixinResultContants.SUCCESS.equals(voucherPayResponse.getRetCode()))) {
+        if ((ObjectUtils.isEmpty(voucherPayResponse))
+                || (!JixinResultContants.SUCCESS.equals(voucherPayResponse.getRetCode()))) {
             String msg = ObjectUtils.isEmpty(voucherPayResponse) ? "当前网络不稳定，请稍候重试" : voucherPayResponse.getRetMsg();
             log.error(String.format("派发红包异常, 主动撤回: %s", msg));
             cancelOpenRedpack(onlyNo, userThirdAccount, redpackAccount, doubleMoney, voucherPayRequest);
+            return false;
         }
         log.info(String.format("结束派发红包:%s", gson.toJson(voucherPayResponse)));
 
@@ -202,37 +204,27 @@ public class RedPackageBizImpl implements RedPackageBiz {
             assetChangeProvider.commonAssetChange(redpackR);
             return true;
         } catch (Exception e) {
-            log.error("红包开启本地资金变动异常", e);
-            String msg = ObjectUtils.isEmpty(voucherPayResponse) ? "当前网络不稳定，请稍候重试" : voucherPayResponse.getRetMsg();
-            log.error(String.format("派发红包异常, 主动撤回: %s", msg));
-            VoucherPayCancelRequest voucherPayCancelRequest = new VoucherPayCancelRequest();
-            voucherPayCancelRequest.setAccountId(redpackAccount.getAccountId());
-            voucherPayCancelRequest.setTxAmount(doubleMoney + "");
-            voucherPayCancelRequest.setOrgTxDate(voucherPayRequest.getTxDate());
-            voucherPayCancelRequest.setOrgTxTime(voucherPayCancelRequest.getTxTime());
-            voucherPayCancelRequest.setForAccountId(userThirdAccount.getAccountId());
-            voucherPayCancelRequest.setOrgSeqNo(voucherPayCancelRequest.getSeqNo());
-            voucherPayCancelRequest.setAcqRes(onlyNo);
-            voucherPayCancelRequest.setChannel(ChannelContant.HTML);
-            VoucherPayCancelResponse voucherPayCancelResponse = jixinManager.send(JixinTxCodeEnum.UNSEND_RED_PACKET, voucherPayCancelRequest, VoucherPayCancelResponse.class);
-            log.info("由资金变动异常,进行红包撤回: %s", gson.toJson(voucherPayCancelRequest));
-            if ((ObjectUtils.isEmpty(voucherPayCancelResponse)) || (!JixinResultContants.SUCCESS.equals(voucherPayCancelResponse.getRetCode()))) {
-                msg = ObjectUtils.isEmpty(voucherPayCancelResponse) ? "当前网络出现异常, 请稍后尝试！" : voucherPayCancelResponse.getRetMsg();
-                log.error(String.format("由资金变动异常, 撤销红包异常 %s", msg));
-            }
-            throw new Exception("派发红包失败");
+            log.error("本地资金变动失败, 进行红包回撤", e);
+            cancelOpenRedpack(onlyNo, userThirdAccount, redpackAccount, doubleMoney, voucherPayRequest);
+            throw new Exception("打开红包, 本地资金变动失败!");
         }
     }
 
     /**
      * 取消红包
-     * @param onlyNo 唯一的派发红包
-     * @param userThirdAccount 
-     * @param redpackAccount
-     * @param doubleMoney
-     * @param voucherPayRequest
+     *
+     * @param onlyNo            唯一的派发红包
+     * @param userThirdAccount  用户开户信息
+     * @param redpackAccount    红包账户
+     * @param doubleMoney       派发金额
+     * @param voucherPayRequest 派发红包请求类
      */
-    private void cancelOpenRedpack(String onlyNo, UserThirdAccount userThirdAccount, UserThirdAccount redpackAccount, double doubleMoney, VoucherPayRequest voucherPayRequest) {
+    private void cancelOpenRedpack(String onlyNo,
+                                   UserThirdAccount userThirdAccount,
+                                   UserThirdAccount redpackAccount,
+                                   double doubleMoney,
+                                   VoucherPayRequest voucherPayRequest) {
+        log.info("[红包取消] 红包取消开始");
         VoucherPayCancelRequest voucherPayCancelRequest = new VoucherPayCancelRequest();
         voucherPayCancelRequest.setAccountId(redpackAccount.getAccountId());
         voucherPayCancelRequest.setTxAmount(doubleMoney + "");
@@ -266,6 +258,8 @@ public class RedPackageBizImpl implements RedPackageBiz {
                 break;
             }
         } while (looper > 0);
+
+        log.info("[红包取消] 红包取消结束");
     }
 
 
