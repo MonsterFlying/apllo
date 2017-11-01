@@ -40,15 +40,20 @@ public class UserActiveListener {
             String tag = body.get(MqConfig.MSG_TAG).toString();
             Map<String, String> msg = (Map<String, String>)body.get(MqConfig.MSG_BODY) ;
             boolean result = false;
-            if(tag.equals(MqTagEnum.USER_ACTIVE_REGISTER.getValue())){  // 用户注册
+            if(tag.equals(MqTagEnum.USER_ACTIVE_REGISTER.getValue())){
+                // 用户注册
                 result = userActiveProvider.registerActive(msg) ;
-            }else if(tag.equalsIgnoreCase(MqTagEnum.RECHARGE.getValue())){ // 充值
+            }else if(tag.equalsIgnoreCase(MqTagEnum.RECHARGE.getValue())){
+                // 充值
                 result = userActiveProvider.recharge(msg) ;
-            }else if(tag.equalsIgnoreCase(MqTagEnum.LOGIN.getValue())){ // 登录
+            }else if(tag.equalsIgnoreCase(MqTagEnum.LOGIN.getValue())){
+                // 登录
                 result = userActiveProvider.userLogin(msg) ;
-            }else if(tag.equalsIgnoreCase(MqTagEnum.OP_JIXIN_QUERY.getValue())){ // 即信确认查询
+            }else if(tag.equalsIgnoreCase(MqTagEnum.OP_JIXIN_QUERY.getValue())){
+                // 即信确认查询
                 result = userActiveProvider.jixinOpQuery(msg) ;
-            }else if(tag.equalsIgnoreCase(MqTagEnum.RECHARGE_CALLBACK.getValue())){  // 充值回调确认
+            }else if(tag.equalsIgnoreCase(MqTagEnum.RECHARGE_CALLBACK.getValue())){
+                // 充值回调确认
                 result = userActiveProvider.offlineRechargeCallback(msg) ;
             }
 
