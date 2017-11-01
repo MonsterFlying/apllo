@@ -915,7 +915,7 @@ public class TransferBizImpl implements TransferBiz {
                 sumCollectionInterest += interest;
                 //最后一个购买债权转让的最后一期回款，需要把转让溢出的利息补给新的回款记录
                 //排除理财计划转让，因为理财计划没有回款利息
-                if ((j == childTenderList.size() - 1) && (i == repayDetailList.size() - 1) && transfer.getType() != 1) {
+                if ((j == childTenderList.size() - 1) && (i == repayDetailList.size() - 1) && transfer.getType().intValue() != 1) {
                     /* 新的回款利息添加溢出的利息 */
                     interest += transferInterest - sumCollectionInterest;
                 }
