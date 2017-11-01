@@ -68,7 +68,7 @@ public class RechargeDetailLogSerivceImpl implements RechargeDetailLogService {
 
             Specification specification = Specifications.<RechargeDetailLog>and()
                     .eq("userId", rechargeReq.getUserId())
-                    .eq(!StringUtils.isEmpty( rechargeReq.getState()),"state",rechargeReq.getState())
+                    .eq(!StringUtils.isEmpty(rechargeReq.getState()), "state", rechargeReq.getState())
                     .between("createTime", new Range<>(beginAt, endAt))
                     .build();
             Page<RechargeDetailLog> logPage = rechargeDetailLogRepository.findAll(specification,
@@ -108,6 +108,7 @@ public class RechargeDetailLogSerivceImpl implements RechargeDetailLogService {
 
     /**
      * 充值记录导出excel
+     *
      * @param rechargeReq
      * @return
      */
@@ -115,14 +116,18 @@ public class RechargeDetailLogSerivceImpl implements RechargeDetailLogService {
     public List<RechargeLogs> toExcel(VoPcRechargeReq rechargeReq) {
         Specification specification = Specifications.<RechargeDetailLog>and()
                 .eq("userId", rechargeReq.getUserId())
+                .eq("state", rechargeReq.getState())
+                .between("createTime",
+                        new Range<>(DateHelper.stringToDate(rechargeReq.getBeginAt(),DateHelper.DATE_FORMAT_YMD),
+                                DateHelper.stringToDate(rechargeReq.getEndAt(),DateHelper.DATE_FORMAT_YMD)))
                 .build();
-        List<RechargeDetailLog> rechargeDetailLogs=rechargeDetailLogRepository.findAll(specification);
-        List<RechargeLogs> rechargeLogsList= Lists.newArrayList();
-        rechargeDetailLogs.forEach(p->{
-            RechargeLogs rechargeLogs=new RechargeLogs();
+        List<RechargeDetailLog> rechargeDetailLogs = rechargeDetailLogRepository.findAll(specification);
+        List<RechargeLogs> rechargeLogsList = Lists.newArrayList();
+        rechargeDetailLogs.forEach(p -> {
+            RechargeLogs rechargeLogs = new RechargeLogs();
             rechargeLogs.setCreateAt(DateHelper.dateToString(p.getCreateTime()));
             rechargeLogs.setRemark(p.getRemark());
-            rechargeLogs.setMoney(StringHelper.toString(p.getMoney()/100D));
+            rechargeLogs.setMoney(StringHelper.toString(p.getMoney() / 100D));
             rechargeLogs.setChannel(p.getRechargeChannel());
             rechargeLogs.setStatus(p.getState());
             rechargeLogsList.add(rechargeLogs);
@@ -132,7 +137,7 @@ public class RechargeDetailLogSerivceImpl implements RechargeDetailLogService {
 
     @Override
     public List<RechargeDetailLog> findAll(Specification<RechargeDetailLog> rechargeDetailLogSpecification) {
-        return rechargeDetailLogRepository.findAll(rechargeDetailLogSpecification) ;
+        return rechargeDetailLogRepository.findAll(rechargeDetailLogSpecification);
     }
 
 }
