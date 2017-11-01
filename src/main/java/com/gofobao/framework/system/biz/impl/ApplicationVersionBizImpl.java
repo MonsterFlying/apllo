@@ -1,19 +1,17 @@
 package com.gofobao.framework.system.biz.impl;
 
+import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.system.biz.ApplicationVersionBiz;
-import com.gofobao.framework.system.contants.VersionContants;
-import com.gofobao.framework.system.entity.Application;
 import com.gofobao.framework.system.entity.ApplicationVersion;
-import com.gofobao.framework.system.entity.SysVersion;
-import com.gofobao.framework.system.service.ApplicationService;
 import com.gofobao.framework.system.service.ApplicationVersionService;
-import com.gofobao.framework.system.vo.response.VoSysVersion;
+import com.gofobao.framework.system.vo.response.VoSysVersion2;
 import com.google.common.collect.Maps;
 import com.google.gson.Gson;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Example;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
@@ -33,14 +31,8 @@ public class ApplicationVersionBizImpl implements ApplicationVersionBiz {
     private ApplicationVersionService applicationVersionService;
 
     @Override
-    public void recheckVersion(Integer applicationId, Integer versionId, HttpServletResponse response) {
-
-        response.setCharacterEncoding("utf-8");
-        response.setContentType("text/html; charset=utf-8");
-        PrintWriter printWriter = null;
-        Map<String, Object> resultMap = Maps.newHashMap();
-        Map<String, Object> statusMap = Maps.newHashMap();
-        Map<String, Object> statusMaps = Maps.newHashMap();
+    public ResponseEntity<VoSysVersion2> recheckVersion(Integer applicationId, Integer versionId, HttpServletResponse response) {
+        VoSysVersion2 voSysVersion = VoBaseResp.ok("查询成功", VoSysVersion2.class);
         try {
             //比较版本
             ApplicationVersion applicationVersion = new ApplicationVersion();
@@ -53,35 +45,23 @@ public class ApplicationVersionBizImpl implements ApplicationVersionBiz {
             }
             ApplicationVersion sysVersion = applicationVersions.get(0);
             boolean flag = sysVersion.getVersionId() > applicationVersion.getVersionId();
-            VoSysVersion voSysVersion = new VoSysVersion();
             // 需要
             if (flag) {
-                voSysVersion.setIsEquls(VersionContants.EQULSNO);
-                voSysVersion.setIsNew(true);
+                voSysVersion.setUpgrade(true);
                 voSysVersion.setViewVersion(sysVersion.getViewVersion());
                 voSysVersion.setDetails(sysVersion.getDescription());
                 voSysVersion.setForce(sysVersion.getForce());
                 voSysVersion.setUrl(sysVersion.getApplicationUrl());
                 /* 不需要 */
             } else {
-                voSysVersion.setIsEquls(VersionContants.EQULSOK);
                 voSysVersion.setViewVersion(sysVersion.getViewVersion());
                 voSysVersion.setDetails(sysVersion.getDescription());
                 voSysVersion.setForce(sysVersion.getForce());
-                voSysVersion.setIsNew(false);
+                voSysVersion.setUpgrade(false);
             }
-            statusMaps.put("code", 0);
-            statusMaps.put("msg", "查询成功");
-            statusMaps.put("time", DateHelper.dateToString(new Date()));
-            resultMap.put("voSysVersion", voSysVersion);
-            resultMap.put("state", statusMaps);
-            printWriter.print(new Gson().toJson(resultMap));
+            return ResponseEntity.ok(voSysVersion);
         } catch (Exception e) {
-            statusMaps.put("code", 1);
-            statusMaps.put("msg", "非法访问");
-            statusMaps.put("time", DateHelper.dateToString(new Date()));
-            resultMap.put("state", statusMaps);
-            printWriter.print(new Gson().toJson(statusMap));
+            return ResponseEntity.badRequest().body(voSysVersion);
         }
 
     }

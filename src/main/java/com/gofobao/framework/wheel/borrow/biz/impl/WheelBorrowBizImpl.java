@@ -1,43 +1,81 @@
 package com.gofobao.framework.wheel.borrow.biz.impl;
 
 import com.github.wenhao.jpa.Specifications;
+import com.gofobao.framework.asset.entity.Asset;
+import com.gofobao.framework.asset.service.AssetService;
 import com.gofobao.framework.borrow.contants.BorrowContants;
 import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.borrow.service.BorrowService;
+import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.helper.NumberHelper;
 import com.gofobao.framework.helper.OKHttpHelper;
 import com.gofobao.framework.helper.StringHelper;
+import com.gofobao.framework.member.entity.UserCache;
+import com.gofobao.framework.member.entity.Users;
+import com.gofobao.framework.member.service.UserCacheService;
+import com.gofobao.framework.member.service.UserService;
+import com.gofobao.framework.repayment.entity.BorrowRepayment;
+import com.gofobao.framework.repayment.service.BorrowRepaymentService;
+import com.gofobao.framework.tender.contants.TenderConstans;
+import com.gofobao.framework.tender.entity.Tender;
 import com.gofobao.framework.wheel.borrow.biz.WheelBorrowBiz;
 import com.gofobao.framework.wheel.borrow.vo.request.BorrowsReq;
-import com.gofobao.framework.wheel.borrow.vo.response.BorrowUpdateRes;
+import com.gofobao.framework.wheel.borrow.vo.request.InvestNoticeReq;
 import com.gofobao.framework.wheel.borrow.vo.response.BorrowsRes;
+import com.gofobao.framework.wheel.common.BaseResponse;
 import com.gofobao.framework.wheel.common.ResponseConstant;
+import com.gofobao.framework.wheel.util.JEncryption;
+import com.google.common.collect.Maps;
+import com.google.common.reflect.TypeToken;
+import com.google.gson.Gson;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author master
  * @date 2017/10/27
  */
+@Slf4j
+@Service
 public class WheelBorrowBizImpl implements WheelBorrowBiz {
-
-    @Autowired
-    private BorrowService borrowService;
 
     @Value("${wheel.domain}")
     private String wheelDomain;
 
-
     @Value("${wheel.short-name}")
     private String shortName;
 
+    @Value("${wheel.secret-key}")
+    private String secretKey;
+
+    @Autowired
+    private Gson GSON;
+
+    @Autowired
+    private UserService userService;
+
+    @Autowired
+    private AssetService assetService;
+
+    @Autowired
+    private UserCacheService userCacheService;
+
+    @Autowired
+    private BorrowService borrowService;
+
+    @Autowired
+    private BorrowRepaymentService borrowRepaymentService;
 
     /**
      * 5.1标的查询接口
@@ -78,23 +116,50 @@ public class WheelBorrowBizImpl implements WheelBorrowBiz {
         }
     }
 
-
     /**
      * 4.2 标的变化接口通知接口
      *
      * @return
      */
     @Override
-    public BorrowUpdateRes borrowUpdateNotice(Borrow borrow) {
-        String borrowUpdateNoiticeUrl = "/financial/ps_target_notice";
+    public void borrowUpdateNotice(Borrow borrow) {
+        String borrowUpdateNoticeUrl = "/financial/ps_target_notice";
         BorrowsRes.BorrowInfo borrowInfo = commonHandle(borrow);
+        Map<String, String> paramMaps = GSON.fromJson(GSON.toJson(borrowInfo),
+                new TypeToken<Map<String, String>>() {
+                }.getType());
+        String paramStr = "";
+        for (String keyStr : paramMaps.keySet()) {
+            paramStr += paramMaps.get(keyStr) + "&";
+        }
+        String requestParamStr = paramStr.substring(0, paramStr.lastIndexOf("&"));
+        try {
+            String bizParamStr = JEncryption.encrypt(requestParamStr.getBytes(), secretKey);
+            Map<String, String> paramMap = Maps.newHashMap();
+            paramMap.put("param", bizParamStr);
+            paramMap.put("from", shortName);
+            String resultStr = OKHttpHelper.postForm(wheelDomain + borrowUpdateNoticeUrl, paramMap, null);
+            if (StringUtils.isEmpty(resultStr)) {
+                log.info("请求车轮异常");
+                return;
+            }
+            BaseResponse baseResponse = GSON.fromJson(GSON.toJson(resultStr),
+                    new TypeToken<BaseResponse>() {
+                    }.getType());
 
-        //     OKHttpHelper.postForm(wheelDomain+borrowUpdateNoiticeUrl,);
-        return null;
-
+            log.info(baseResponse.getRetcode().equals(ResponseConstant.SUCCESS)
+                    ? "标的变化通知车轮成功" : baseResponse.getRetmsg());
+        } catch (Exception e) {
+            log.info("请求车轮异常", e);
+        }
     }
 
-
+    /**
+     * 公共处理方法
+     *
+     * @param tempBorrow
+     * @return
+     */
     private BorrowsRes.BorrowInfo commonHandle(Borrow tempBorrow) {
         BorrowsRes borrowsRes = new BorrowsRes();
         BorrowsRes.BorrowInfo borrowInfo = borrowsRes.new BorrowInfo();
@@ -131,5 +196,106 @@ public class WheelBorrowBizImpl implements WheelBorrowBiz {
         return borrowInfo;
     }
 
+    /**
+     * @param tender
+     */
+    @Override
+    public void investNotice(Tender tender) {
+        log.info("=======================================");
+        log.info("===========进入通知车轮理财接口==========");
+        log.info("=======================================");
+        Users user = userService.findById(tender.getUserId());
+        if (StringUtils.isEmpty(user.getWheelId())) {
+            log.info("当前用户不是车轮用户");
+            return;
+        }
+        Borrow borrow = borrowService.findById(tender.getBorrowId());
+        Long userId = user.getId();
+        InvestNoticeReq investNotice = new InvestNoticeReq();
+        investNotice.setPf_user_id(userId.toString());
+        Asset asset = assetService.findByUserId(userId);
+        Long noUseMoney = asset.getNoUseMoney();
+        Long useMoney = asset.getUseMoney();
+        Long collection = asset.getCollection();
+        investNotice.setAll_balance(StringHelper.formatDouble(useMoney + noUseMoney + collection, 100, false));
+        investNotice.setAvailable_balance(StringHelper.formatDouble(useMoney, 100, false));
+        investNotice.setFrozen_money(StringHelper.formatDouble(noUseMoney, 100, false));
+        investNotice.setReward("0");
+        UserCache userCache = userCacheService.findById(userId);
+        Long waitCollectionPrincipal = userCache.getWaitCollectionPrincipal();
+        Long waitCollectionInterest = userCache.getWaitCollectionInterest();
+        investNotice.setInvesting_interest(StringHelper.formatDouble(waitCollectionInterest, 100, false));
+        investNotice.setInvesting_principal(StringHelper.formatDouble(waitCollectionPrincipal, 100, false));
+        investNotice.setEarned_interest(StringHelper.formatDouble(userCache.getIncomeTotal(), 100, false));
+        investNotice.setCurrent_money(StringHelper.formatDouble(0, false));
+        investNotice.setInterest_time(DateHelper.dateToString(tender.getCreatedAt()));
+        investNotice.setInvest_record_id(tender.getId().toString());
+        investNotice.setProject_title(borrow.getName());
+        investNotice.setProject_id(borrow.getId().toString());
+        investNotice.setProject_url("/#/borrow/" + borrow.getId());
+        investNotice.setProject_rate(StringHelper.formatDouble(borrow.getApr(), 100, false) + BorrowContants.PERCENT);
+        investNotice.setProject_progress(StringHelper.formatDouble(borrow.getMoney() - borrow.getMoneyYes(), 100, false));
+        Integer repayFashion = borrow.getRepayFashion();
+        investNotice.setProject_timelimit(repayFashion.equals(BorrowContants.REPAY_FASHION_ONCE)
+                ? borrow.getTimeLimit()
+                : borrow.getTimeLimit() * 30);
+        investNotice.setProject_timelimit_desc(repayFashion.equals(BorrowContants.REPAY_FASHION_ONCE)
+                ? borrow.getTimeLimit() + BorrowContants.DAY
+                : borrow.getTimeLimit() + BorrowContants.MONTH);
 
+        investNotice.setPayback_way(repayFashion.equals(BorrowContants.REPAY_FASHION_ONCE)
+                ? "一次性还本付息"
+                : repayFashion.equals(BorrowContants.REPAY_FASHION_MONTH)
+                ? "等额本息"
+                : "按月付息");
+
+        if (StringUtils.isEmpty(borrow.getRecheckAt())
+                && BorrowContants.PASS.equals(borrow.getStatus())) {
+            Specification<BorrowRepayment> specification = Specifications.<BorrowRepayment>and()
+                    .eq("borrowId", borrow.getId())
+                    .build();
+            List<BorrowRepayment> borrowRepayments = borrowRepaymentService.findList(specification);
+            BorrowRepayment borrowRepayment = borrowRepayments.get(0);
+            investNotice.setMonthly_back_date(DateHelper.getDay(borrow.getReleaseAt()));
+            investNotice.setNext_back_date(DateHelper.dateToString(borrowRepayment.getRepayAt(), DateHelper.DATE_FORMAT_YMD));
+            investNotice.setNext_back_money(StringHelper.formatDouble(borrowRepayment.getRepayMoney(), 100, false));
+            investNotice.setNext_back_interest(StringHelper.formatDouble(borrowRepayment.getInterest(), 100, false));
+            investNotice.setNext_back_principal(StringHelper.formatDouble(borrowRepayment.getPrincipal(), 100, false));
+        }
+        Integer transferFlag = tender.getTransferFlag();
+        if (transferFlag.equals(TenderConstans.TRANSFER_PART_YES) || transferFlag.equals(TenderConstans.TRANSFER_YES)) {
+            investNotice.setAttorn_state(1);
+            investNotice.setAttorn_time(DateHelper.dateToString(tender.getUpdatedAt()));
+        }
+        String investNoticeUrl = "/financial/ps_invest_notice";
+
+        Map<String, String> paramMap = GSON.fromJson(GSON.toJson(investNotice),
+                new TypeToken<Map<String, String>>() {
+                }.getType());
+
+        String paramStr = "";
+        for (String keyStr : paramMap.keySet()) {
+            paramStr = paramMap.get(keyStr) + "&";
+        }
+        String tempRequestParamStr = paramStr.substring(0, paramStr.lastIndexOf("&"));
+        try {
+            String bizParamStr = new String(Base64.getEncoder().encode(JEncryption.encrypt(tempRequestParamStr.getBytes(), secretKey).getBytes()));
+            Map<String, String> requestMap = Maps.newHashMap();
+            requestMap.put("from", shortName);
+            requestMap.put("param", bizParamStr);
+            String resultStr = OKHttpHelper.postForm(wheelDomain + investNoticeUrl, requestMap, null);
+            if (StringUtils.isEmpty(resultStr)) {
+                log.info("请求车轮异常");
+                return;
+            }
+            BaseResponse baseResponse = GSON.fromJson(GSON.toJson(resultStr),
+                    new TypeToken<BaseResponse>() {
+                    }.getType());
+
+            log.info(baseResponse.getRetcode().equals(ResponseConstant.SUCCESS)
+                    ? "标的变化通知车轮成功" : baseResponse.getRetmsg());
+        } catch (Exception e) {
+            log.info("标的变化通知车轮失败", e);
+        }
+    }
 }

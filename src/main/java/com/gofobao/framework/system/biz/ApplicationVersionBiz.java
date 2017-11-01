@@ -1,5 +1,8 @@
 package com.gofobao.framework.system.biz;
 
+import com.gofobao.framework.system.vo.response.VoSysVersion2;
+import org.springframework.http.ResponseEntity;
+
 import javax.servlet.http.HttpServletResponse;
 
 /**
@@ -7,6 +10,6 @@ import javax.servlet.http.HttpServletResponse;
  */
 public interface ApplicationVersionBiz {
 
-    void recheckVersion(Integer aliasName,Integer versionId ,HttpServletResponse response);
+    ResponseEntity<VoSysVersion2> recheckVersion(Integer aliasName, Integer versionId , HttpServletResponse response);
 
 }

@@ -112,16 +112,18 @@ public class BorrowCollectionServiceImpl implements BorrowCollectionService {
     public Map<String, Object> pcOrderList(OrderListReq orderListReq) {
         Map<String, Object> resultMaps = Maps.newHashMap();
         //总记录数
-        String totalSql = "select count(b.id) from BorrowCollection AS b where b.userId=:userId and b.status=0  GROUP BY date_format(b.collectionAt,'%Y%m%d') ";
+        String totalSql = "select count(b.id) from BorrowCollection AS b where b.userId=:userId and b.transferFlag=:transferFlag and b.status=0  GROUP BY date_format(b.collectionAt,'%Y%m%d') ";
         Query totalEm = entityManager.createQuery(totalSql, Long.class);
         totalEm.setParameter("userId", orderListReq.getUserId());
+        totalEm.setParameter("transferFlag",BorrowCollectionContants.TRANSFER_FLAG_NO);
         List<Long> totalResult = totalEm.getResultList();
         Integer totalCount = totalResult.size();
         resultMaps.put("totalCount", totalCount);
         //分页
-        String sql = "select date_format(b.collectionAt,'%Y-%m-%d'),sum(b.collectionMoney),sum(b.principal),sum(b.interest),count(b.id) from BorrowCollection AS b where b.userId=:userId  and b.status=0 GROUP BY date_format(b.collectionAt,'%Y-%m-%d') ORDER BY  b.collectionAt ASC";
+        String sql = "select date_format(b.collectionAt,'%Y-%m-%d'),sum(b.collectionMoney),sum(b.principal),sum(b.interest),count(b.id) from BorrowCollection AS b where b.userId=:userId and b.transferFlag=:transferFlag and b.status=0 GROUP BY date_format(b.collectionAt,'%Y-%m-%d') ORDER BY  b.collectionAt ASC";
         Query query = entityManager.createQuery(sql);
         query.setParameter("userId", orderListReq.getUserId());
+        query.setParameter("transferFlag",BorrowCollectionContants.TRANSFER_FLAG_NO);
         query.setFirstResult(orderListReq.getPageIndex() * orderListReq.getPageSize());
         query.setMaxResults(orderListReq.getPageSize());
         List resultList = query.getResultList();
