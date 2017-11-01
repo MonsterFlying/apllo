@@ -13,4 +13,5 @@ public interface ApplicationVersionService {
 
 
     List<ApplicationVersion> list(Example example,Sort sort);
+
 }

@@ -25,4 +25,6 @@ public class ApplicationVersionServiceImpl implements ApplicationVersionService 
     public List<ApplicationVersion> list(Example example, Sort sort) {
         return applicationVersionRepository.findAll(example, sort);
     }
+
+
 }

@@ -42,16 +42,20 @@ public class ApplicationVersionBizImpl implements ApplicationVersionBiz {
         Map<String, Object> statusMap = Maps.newHashMap();
         Map<String, Object> statusMaps = Maps.newHashMap();
         try {
+            printWriter= response.getWriter();
             //比较版本
             ApplicationVersion applicationVersion = new ApplicationVersion();
             applicationVersion.setApplicationId(applicationId);
+
             Example<ApplicationVersion> versionExample = Example.of(applicationVersion);
             List<ApplicationVersion> applicationVersions = applicationVersionService.list(versionExample,
                     new Sort(Sort.Direction.DESC, "versionId"));
+
             if (CollectionUtils.isEmpty(applicationVersions)) {
                 throw new Exception();
             }
-            ApplicationVersion sysVersion = applicationVersions.get(0);
+            ApplicationVersion sysVersion=applicationVersions.get(0);
+            applicationVersion.setVersionId(versionId);
             boolean flag = sysVersion.getVersionId() > applicationVersion.getVersionId();
             VoSysVersion voSysVersion = new VoSysVersion();
             // 需要

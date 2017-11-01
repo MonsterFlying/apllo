@@ -10,7 +10,6 @@ import org.springframework.web.bind.annotation.PathVariable;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-
 @Api(description = "开户模块")
 @Controller
 public class OpenAccountController {
