@@ -122,7 +122,8 @@ public class TenderBizImpl implements TenderBiz {
         Preconditions.checkNotNull(borrow, "投标: 标的信息为空!");
         if (!ObjectUtils.isEmpty(borrow.getLendId()) && borrow.getLendId() > 0) {
             Lend lend = lendService.findByIdLock(borrow.getLendId());
-            if (voCreateTenderReq.getUserId().intValue() != lend.getUserId().intValue()) { // 对待有草出借,只能是出草人投
+            // 对待有草出借,只能是出草人投
+            if (voCreateTenderReq.getUserId().intValue() != lend.getUserId().intValue()) {
                 return ResponseEntity
                         .badRequest()
                         .body(VoBaseResp.error(VoBaseResp.ERROR, "非常抱歉, 当前标的为有草出借标的, 只有出草人才能投!"));
@@ -197,32 +198,16 @@ public class TenderBizImpl implements TenderBiz {
                 borrowService.save(borrow);
             }
 
-            //判断是否是理财计划借款
-            if (borrow.getIsFinance()) {
-                //复审
-                MqConfig mqConfig = new MqConfig();
-                mqConfig.setQueue(MqQueueEnum.RABBITMQ_BORROW);
-                mqConfig.setTag(MqTagEnum.AGAIN_VERIFY_FINANCE);
-                mqConfig.setSendTime(DateHelper.addSeconds(nowDate, 1));
-                ImmutableMap<String, String> body = ImmutableMap
-                        .of(MqConfig.MSG_BORROW_ID, StringHelper.toString(borrow.getId()), MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
-                mqConfig.setMsg(body);
-                log.info(String.format("tenderBizImpl tender send mq %s", GSON.toJson(body)));
-                mqHelper.convertAndSend(mqConfig);
-            } else {
-
-                //复审
-                MqConfig mqConfig = new MqConfig();
-                mqConfig.setQueue(MqQueueEnum.RABBITMQ_BORROW);
-                mqConfig.setTag(MqTagEnum.AGAIN_VERIFY);
-                mqConfig.setSendTime(DateHelper.addSeconds(nowDate, 1));
-                ImmutableMap<String, String> body = ImmutableMap
-                        .of(MqConfig.MSG_BORROW_ID, StringHelper.toString(borrow.getId()), MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
-                mqConfig.setMsg(body);
-                log.info(String.format("tenderBizImpl tender send mq %s", GSON.toJson(body)));
-                mqHelper.convertAndSend(mqConfig);
-
-            }
+            //复审
+            MqConfig mqConfig = new MqConfig();
+            mqConfig.setQueue(MqQueueEnum.RABBITMQ_BORROW);
+            mqConfig.setTag(MqTagEnum.AGAIN_VERIFY);
+            mqConfig.setSendTime(DateHelper.addSeconds(nowDate, 1));
+            ImmutableMap<String, String> body = ImmutableMap
+                    .of(MqConfig.MSG_BORROW_ID, StringHelper.toString(borrow.getId()), MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
+            mqConfig.setMsg(body);
+            log.info(String.format("tenderBizImpl tender send mq %s", GSON.toJson(body)));
+            mqHelper.convertAndSend(mqConfig);
         }
 
         //如果当前用户是风车理财用户
@@ -475,6 +460,16 @@ public class TenderBizImpl implements TenderBiz {
 
         if (borrow.getIsNovice()) {  // 新手
             releaseAt = DateHelper.max(DateHelper.addHours(DateHelper.beginOfDate(releaseAt), 20), borrow.getReleaseAt());
+        }
+
+        //判断是否是理财计划专用借款
+        long financeTenderUserId = 22002L;
+        if (borrow.getIsFinance()) {
+            //判断投标用户是否是22002
+            if (user.getId().longValue() != financeTenderUserId) {
+                errerMessage.add("此标的暂时无法投递!");
+                return false;
+            }
         }
 
         UserCache userCache = userCacheService.findById(user.getId());

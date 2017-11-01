@@ -1681,6 +1681,7 @@ public class AssetBizImpl implements AssetBiz {
     }
 
     @Transactional(rollbackFor = Exception.class)
+    @Override
     public void doAssetChangeByCurrentInterest(NewAleve eve, UserThirdAccount userThirdAccount, String money) throws Exception {
         Date nowDate = new Date();
         long currMoney = MoneyHelper.yuanToFen(money);  // 元转分

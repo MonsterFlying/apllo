@@ -1,7 +1,7 @@
 package com.gofobao.framework.financial.controller;
 
-import com.gofobao.framework.as.bix.RechargeStatementBiz;
-import com.gofobao.framework.as.bix.impl.RechargeStatementBizImpl;
+import com.gofobao.framework.as.biz.RechargeStatementBiz;
+import com.gofobao.framework.as.biz.impl.RechargeStatementBizImpl;
 import com.gofobao.framework.common.constans.TypeTokenContants;
 import com.gofobao.framework.common.qiniu.util.StringUtils;
 import com.gofobao.framework.core.vo.VoBaseResp;

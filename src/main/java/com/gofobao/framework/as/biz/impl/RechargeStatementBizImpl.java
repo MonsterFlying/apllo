@@ -1,4 +1,4 @@
-package com.gofobao.framework.as.bix.impl;
+package com.gofobao.framework.as.biz.impl;
 
 import com.github.wenhao.jpa.Specifications;
 import com.gofobao.framework.api.contants.JixinResultContants;
@@ -8,7 +8,7 @@ import com.gofobao.framework.api.helper.JixinTxDateHelper;
 import com.gofobao.framework.api.model.account_details_query.AccountDetailsQueryItem;
 import com.gofobao.framework.api.model.account_details_query.AccountDetailsQueryRequest;
 import com.gofobao.framework.api.model.account_details_query.AccountDetailsQueryResponse;
-import com.gofobao.framework.as.bix.RechargeStatementBiz;
+import com.gofobao.framework.as.biz.RechargeStatementBiz;
 import com.gofobao.framework.asset.entity.RechargeDetailLog;
 import com.gofobao.framework.asset.service.RechargeDetailLogService;
 import com.gofobao.framework.common.assets.AssetChange;
@@ -22,8 +22,8 @@ import com.gofobao.framework.financial.entity.NewEve;
 import com.gofobao.framework.financial.service.NewAleveService;
 import com.gofobao.framework.financial.service.NewEveService;
 import com.gofobao.framework.helper.*;
+import com.gofobao.framework.helper.project.QueryThirdRecordHelper;
 import com.gofobao.framework.member.entity.UserThirdAccount;
-import com.gofobao.framework.member.service.UserService;
 import com.gofobao.framework.member.service.UserThirdAccountService;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
@@ -75,6 +75,9 @@ public class RechargeStatementBizImpl implements RechargeStatementBiz {
     @Autowired
     MqHelper mqHelper;
 
+    @Autowired
+    QueryThirdRecordHelper queryThirdRecordHelper ;
+
     /**
      * 离线匹配账单
      * 只能匹配昨天以后的账目
@@ -90,8 +93,8 @@ public class RechargeStatementBizImpl implements RechargeStatementBiz {
         Preconditions.checkNotNull(date, "date is null");
         List<NewEve> thirdRechargeRecords = null;
         try {
-            String type = rechargeType.getType();
-            thirdRechargeRecords = newEveService.findAllByTranTypeAndDateAndUserId(type, userId, date) ;
+            String type = rechargeType.getLocalType();
+            thirdRechargeRecords = newEveService.findAllByTranTypeAndDateAndAccountId(type, userThirdAccount.getAccountId(), date);
         } catch (Exception e) {
             log.warn("对账: 查询线下充值记录异常", e);
             return false;
@@ -127,9 +130,9 @@ public class RechargeStatementBizImpl implements RechargeStatementBiz {
         List<AccountDetailsQueryItem> thirdRechargeRecordList = null;
         try {
             log.info("[实时对账] 实时查询即信流水记录");
-            thirdRechargeRecordList = findOnlineThirdRecord(userThirdAccount, date, rechargeType);
+            thirdRechargeRecordList = queryThirdRecordHelper.queryThirdRecord(userThirdAccount.getAccountId(), date, rechargeType.getLocalType()) ;
         } catch (Exception e) {
-            log.error("[实时对账] 实时查询充值记录出现补单异常", e);
+            return false ;
         }
 
         List<RechargeDetailLog> localRechargeRecordList = findLocalRechargeRecord(userThirdAccount, date, rechargeType);
@@ -524,7 +527,7 @@ public class RechargeStatementBizImpl implements RechargeStatementBiz {
         entity.setSourceId(rechargeDetailLog.getId());
         if (rechargeDetailLog.getRechargeType() == 0) {
             entity.setType(AssetChangeTypeEnum.onlineRecharge);
-        } else{
+        } else {
             entity.setType(AssetChangeTypeEnum.offlineRecharge);
         }
         assetChangeProvider.commonAssetChange(entity);
@@ -639,7 +642,7 @@ public class RechargeStatementBizImpl implements RechargeStatementBiz {
             accountDetailsQueryRequest.setStartDate(DateHelper.dateToString(date, DateHelper.DATE_FORMAT_YMD_NUM));
             accountDetailsQueryRequest.setEndDate(DateHelper.dateToString(date, DateHelper.DATE_FORMAT_YMD_NUM));
             accountDetailsQueryRequest.setType("9");
-            accountDetailsQueryRequest.setTranType(rechargeType.getType());
+            accountDetailsQueryRequest.setTranType(rechargeType.getLocalType());
             accountDetailsQueryRequest.setAccountId(userThirdAccount.getAccountId());
             AccountDetailsQueryResponse accountDetailsQueryResponse = jixinManager.send(JixinTxCodeEnum.ACCOUNT_DETAILS_QUERY,
                     accountDetailsQueryRequest,
@@ -675,23 +678,22 @@ public class RechargeStatementBizImpl implements RechargeStatementBiz {
          */
         onlineRecharge("7822");
 
-        RechargeType(String type) {
-            this.type = type;
+        RechargeType(String localType) {
+            this.localType = localType;
         }
 
-        private String type;
+        private String localType;
 
-        public String getType() {
-            return type;
+        public String getLocalType() {
+            return localType;
         }
 
-        public void setType(String type) {
-            this.type = type;
+        public void setLocalType(String localType) {
+            this.localType = localType;
         }
     }
 
     private final static Gson GSON = new Gson();
-
 
 
 }

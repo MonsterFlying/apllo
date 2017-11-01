@@ -1,7 +1,9 @@
 package com.gofobao.framework;
 
-import com.gofobao.framework.as.bix.RechargeStatementBiz;
-import com.gofobao.framework.as.bix.impl.RechargeStatementBizImpl;
+import com.gofobao.framework.as.biz.CashStatementBiz;
+import com.gofobao.framework.as.biz.RechargeStatementBiz;
+import com.gofobao.framework.as.biz.impl.CashStatementBizImpl;
+import com.gofobao.framework.as.biz.impl.RechargeStatementBizImpl;
 import com.gofobao.framework.helper.DateHelper;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Test;
@@ -20,6 +22,8 @@ public class StatementTest {
     @Autowired
     private RechargeStatementBiz rechargeStatementBiz;
 
+    @Autowired
+    private CashStatementBiz cashStatementBiz;
 
     @Test
     public void testOfflineRecharge() {
@@ -39,5 +43,25 @@ public class StatementTest {
         } catch (Exception e) {
             log.error("实时在线同步", e);
         }
+    }
+
+
+    @Test
+    public void testOfflineCash() {
+        Long userId = 1699L;
+        String statementDate = "2017-10-07 00:00:00";
+        Date date = DateHelper.stringToDate(statementDate);
+        boolean result = false;
+        try {
+            result = cashStatementBiz.offlineStatement(userId, date, CashStatementBizImpl.CashType.smallCash);
+            if (result) {
+                log.info("同步成功");
+            } else {
+                log.error("同步失败");
+            }
+        } catch (Exception e) {
+            log.error("实时在线同步", e);
+        }
+
     }
 }

@@ -21,18 +21,22 @@ public class AssetServiceImpl implements AssetService {
     @Autowired
     private AssetRepository assetRepository;
 
+    @Override
     public List<Asset> findList(Specification<Asset> specification) {
         return assetRepository.findAll(specification);
     }
 
+    @Override
     public List<Asset> findList(Specification<Asset> specification, Pageable pageable) {
         return assetRepository.findAll(specification, pageable).getContent();
     }
 
+    @Override
     public List<Asset> findList(Specification<Asset> specification, Sort sort) {
         return assetRepository.findAll(specification, sort);
     }
 
+    @Override
     public long count(Specification<Asset> specification) {
         return assetRepository.count(specification);
     }
@@ -43,18 +47,22 @@ public class AssetServiceImpl implements AssetService {
      * @param id
      * @return
      */
+    @Override
     public Asset findByUserId(Long id) {
         return assetRepository.findOne(id);
     }
 
+    @Override
     public Asset findByUserIdLock(Long id) {
         return assetRepository.findByUserId(id);
     }
 
+    @Override
     public Asset save(Asset asset) {
         return assetRepository.save(asset);
     }
 
+    @Override
     public Asset updateById(Asset asset) {
         if (ObjectUtils.isEmpty(asset) || ObjectUtils.isEmpty(asset.getUserId())) {
             return null;

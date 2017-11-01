@@ -653,6 +653,21 @@ public class FinancePlanBizImpl implements FinancePlanBiz {
         double transferFeeRadio = MoneyHelper.divide(validMoney, transfer.getTransferMoney());
         long alreadyInterest = new Double(MoneyHelper.multiply(transferFeeRadio, transfer.getAlreadyInterest())).longValue();/* 当期应计利息 */
         long principal = validMoney - alreadyInterest;/* 债权份额 */
+        Specification<TransferBuyLog> tbls = Specifications
+                .<TransferBuyLog>and()
+                .in("state", 0, 1)
+                .eq("transferId", transferId)
+                .build();
+        List<TransferBuyLog> transferBuyLogList = transferBuyLogService.findList(tbls);
+        /*已购买金额*/
+        long boughtPrincipal = transferBuyLogList.stream().mapToLong(TransferBuyLog::getPrincipal).sum();
+        /*剩余可购买金额*/
+        long leftPrincipal = transfer.getPrincipal() - boughtPrincipal;
+        //如果检测到最后一个购买金额本金溢出，则重新计算本金与利息
+        if (principal > leftPrincipal) {
+            principal = leftPrincipal;
+            alreadyInterest = validMoney - principal;
+        }
         /* 债权购买记录 */
         TransferBuyLog transferBuyLog = new TransferBuyLog();
         transferBuyLog.setTransferId(transferId);

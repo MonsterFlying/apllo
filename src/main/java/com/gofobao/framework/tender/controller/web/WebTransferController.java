@@ -154,4 +154,20 @@ public class WebTransferController {
     public ResponseEntity<VoBaseResp> endPcThirdTransferTender(@ModelAttribute VoPcEndThirdTransferTender voPcEndThirdTransferTender){
         return transferBiz.endPcThirdTransferTender(voPcEndThirdTransferTender);
     }
+
+
+    /**
+     * pc购买债权转让
+     */
+    @ApiOperation("购买债权转让")
+    @PostMapping("transfer/v2/new/transfer/buy")
+    public ResponseEntity<VoBaseResp> buyTransfer(@Valid @ModelAttribute VoBuyTransfer voBuyTransfer, @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
+        try {
+            voBuyTransfer.setUserId(userId);
+            return transferBiz.buyTransfer(voBuyTransfer);
+        } catch (Exception e) {
+            log.error("购买债权转让异常：", e);
+            return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "系统开小差了，请稍后重试!"));
+        }
+    }
 }

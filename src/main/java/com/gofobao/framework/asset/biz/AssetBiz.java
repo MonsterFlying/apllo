@@ -267,6 +267,13 @@ public interface AssetBiz {
     ResponseEntity<VoBaseResp> changeLocalAsset(VoLocalAssetChangeReq voLocalAssetChangeReq) throws Exception;
 
 
+    /**
+     * 派发活期收益
+     * @param eve
+     * @param userThirdAccount
+     * @param money
+     * @throws Exception
+     */
     void doAssetChangeByCurrentInterest(NewAleve eve, UserThirdAccount userThirdAccount, String money) throws Exception ;
 
 }

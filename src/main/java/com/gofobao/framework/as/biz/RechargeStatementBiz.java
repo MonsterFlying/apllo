@@ -1,6 +1,6 @@
-package com.gofobao.framework.as.bix;
+package com.gofobao.framework.as.biz;
 
-import com.gofobao.framework.as.bix.impl.RechargeStatementBizImpl;
+import com.gofobao.framework.as.biz.impl.RechargeStatementBizImpl;
 
 import java.util.Date;
 

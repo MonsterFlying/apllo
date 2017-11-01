@@ -188,6 +188,94 @@ public class TestController {
     @Autowired
     private TransferBuyLogService transferBuyLogService;
 
+    @RequestMapping("/pub/test/repair/repay")
+    @Transactional(rollbackFor = Exception.class)
+    public void repairRepay() {
+        //官标默认zfh作为还款人
+        UserThirdAccount repayUserThirdAccount = userThirdAccountService.findByUserId(22002L);
+
+        /* 还款orderId */
+        String orderId = JixinHelper.getOrderId(JixinHelper.REPAY_PREFIX);
+
+        List<Repay> repayList = new ArrayList<>();
+        Repay repay = new Repay();
+        repay.setAccountId(repayUserThirdAccount.getAccountId());
+        repay.setOrderId(orderId);
+        repay.setTxAmount("0");
+        repay.setIntAmount("0.01");
+        //收款手续费 向投资人收取
+        //多付的92.26元利息 加上0.01利息
+        repay.setTxFeeIn("92.27");
+        repay.setTxFeeOut("0");
+        repay.setProductId("169825");
+        repay.setAuthCode("20171025210049806377");
+        //苏德仁
+        UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(153356L);
+        Preconditions.checkNotNull(userThirdAccount, "投资人未开户!");
+        repay.setForAccountId(userThirdAccount.getAccountId());
+        repayList.add(repay);
+
+
+        /* 还款orderId */
+        orderId = JixinHelper.getOrderId(JixinHelper.REPAY_PREFIX);
+
+        repay = new Repay();
+        repay.setAccountId(repayUserThirdAccount.getAccountId());
+        repay.setOrderId(orderId);
+        repay.setTxAmount("0");
+        repay.setIntAmount("0.01");
+        //收款手续费 向投资人收取
+        //多付的181.45元利息 加上0.01利息
+        repay.setTxFeeIn("181.46");
+        repay.setTxFeeOut("0");
+        repay.setProductId("169825");
+        repay.setAuthCode("20171025210049806436");
+        //陈惠卿
+        userThirdAccount = userThirdAccountService.findByUserId(153434L);
+        Preconditions.checkNotNull(userThirdAccount, "投资人未开户!");
+        repay.setForAccountId(userThirdAccount.getAccountId());
+        repayList.add(repay);
+
+        //还款批次号
+        String batchNo = JixinHelper.getBatchNo();
+        //批次还款操作
+        BatchRepayReq request = new BatchRepayReq();
+        request.setBatchNo(batchNo);
+        request.setTxAmount("0");
+        request.setRetNotifyURL(javaDomain + "/pub/test/call");
+        request.setNotifyURL(javaDomain + "/pub/test/call");
+        request.setSubPacks(GSON.toJson(repayList));
+        request.setChannel(ChannelContant.HTML);
+        request.setTxCounts(StringHelper.toString(repayList.size()));
+        BatchRepayResp response = jixinManager.send(JixinTxCodeEnum.BATCH_REPAY, request, BatchRepayResp.class);
+        if ((ObjectUtils.isEmpty(response)) || (!JixinResultContants.BATCH_SUCCESS.equalsIgnoreCase(response.getReceived()))) {
+            BatchCancelReq batchCancelReq = new BatchCancelReq();
+            batchCancelReq.setBatchNo(batchNo);
+            batchCancelReq.setTxAmount("0");
+            batchCancelReq.setTxCounts(StringHelper.toString(repayList.size()));
+            batchCancelReq.setChannel(ChannelContant.HTML);
+            BatchCancelResp batchCancelResp = jixinManager.send(JixinTxCodeEnum.BATCH_CANCEL, batchCancelReq, BatchCancelResp.class);
+            if ((ObjectUtils.isEmpty(batchCancelResp)) || (!ObjectUtils.isEmpty(batchCancelResp.getRetCode()))) {
+                log.error("即信批次撤销失败!");
+            }
+            log.error(response.getRetMsg());
+        }
+
+        //记录日志
+        ThirdBatchLog thirdBatchLog = new ThirdBatchLog();
+        thirdBatchLog.setBatchNo(batchNo);
+        thirdBatchLog.setCreateAt(new Date());
+        thirdBatchLog.setState(3);
+        thirdBatchLog.setUpdateAt(new Date());
+        thirdBatchLog.setTxDate(request.getTxDate());
+        thirdBatchLog.setTxTime(request.getTxTime());
+        thirdBatchLog.setSeqNo(request.getSeqNo());
+        thirdBatchLog.setSourceId(0L);
+        thirdBatchLog.setType(ThirdBatchLogContants.BATCH_REPAY);
+        thirdBatchLog.setRemark("即信批次还款.(修复)");
+        thirdBatchLog.setAcqRes(GSON.toJson(new HashMap<>()));
+        thirdBatchLogService.save(thirdBatchLog);
+    }
 
     @RequestMapping("/pub/test/asset/change")
     @Transactional(rollbackFor = Exception.class)
@@ -196,14 +284,14 @@ public class TestController {
         try {
             batchAssetChangeHelper.batchAssetChangeAndCollection(NumberHelper.toLong(sourceId), String.valueOf(batchNo), NumberHelper.toInt(type));
         } catch (Exception e) {
-            log.error("变动异常：",e);
+            log.error("变动异常：", e);
         }
     }
 
 
     @ApiOperation("获取自动投标列表")
     @RequestMapping("/pub/batch/deal")
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public void batchDeal(@RequestParam("sourceId") Object sourceId, @RequestParam("batchNo") Object batchNo) {
         Specification<ThirdBatchLog> tbls = Specifications
                 .<ThirdBatchLog>and()
@@ -218,7 +306,7 @@ public class TestController {
 
     @ApiOperation("获取自动投标列表")
     @RequestMapping("/pub/credit/invest/query")
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public void creditInvestQuery(@RequestParam("accountId") Object accountId, @RequestParam("orgOrderId") Object orgOrderId) {
         CreditInvestQueryReq request = new CreditInvestQueryReq();
         request.setChannel(ChannelContant.HTML);
@@ -234,14 +322,14 @@ public class TestController {
 
     @ApiOperation("获取自动投标列表")
     @RequestMapping("/pub/test/call")
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public ResponseEntity<String> batchDeal() {
         return ResponseEntity.ok("success");
     }
 
     @ApiOperation("资产查询")
     @RequestMapping("/pub/asset/find")
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public void findAsset(@RequestParam("sourceId") Object sourceId, @RequestParam("startDate") Object startDate,
                           @RequestParam("endDate") Object endDate, @RequestParam("pageIndex") Object pageIndex,
                           @RequestParam("pageSize") Object pageSize) {
@@ -272,7 +360,7 @@ public class TestController {
 
     @ApiOperation("解除冻结")
     @RequestMapping("/pub/unfreeze")
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public void unfreeze(@RequestParam("freezeMoney") Object freezeMoney
             , @RequestParam("accountId") Object accountId
             , @RequestParam("freezeOrderId") Object freezeOrderId
@@ -310,7 +398,7 @@ public class TestController {
 
     @ApiOperation("冻结查询")
     @RequestMapping("/pub/freeze/find")
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public void findFreeze(@RequestParam("accountId") Object accountId, @RequestParam("startDate") Object startDate,
                            @RequestParam("endDate") Object endDate) {
         FreezeDetailsQueryRequest freezeDetailsQueryRequest = new FreezeDetailsQueryRequest();
@@ -330,7 +418,7 @@ public class TestController {
 
     @ApiOperation("用户债权列表查询")
     @RequestMapping("/pub/bid/find/all")
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public void findBidList(@RequestParam("accountId") Object accountId, @RequestParam("startDate") Object startDate, @RequestParam("productId") Object productId) {
         CreditDetailsQueryRequest creditDetailsQueryRequest = new CreditDetailsQueryRequest();
         creditDetailsQueryRequest.setAccountId(String.valueOf(accountId));
@@ -353,7 +441,7 @@ public class TestController {
 
     @ApiOperation("用户债权列表查询")
     @RequestMapping("/pub/bid/seed/credit")
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public void testCredit(@RequestParam("transferId") Object transferId) {
         MqConfig mqConfig = new MqConfig();
         mqConfig.setQueue(MqQueueEnum.RABBITMQ_TRANSFER);
@@ -367,7 +455,7 @@ public class TestController {
 
     @ApiOperation("结束债权转让债权")
     @RequestMapping("/pub/bid/end/credit")
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public void endTransfer(@RequestParam("transferId") Object transferId) {
         Transfer transfer = transferService.findById(NumberHelper.toLong(transferId));
         //推送队列结束债权转让第三方转让债权
@@ -388,7 +476,7 @@ public class TestController {
 
     @ApiOperation("用户债权列表查询")
     @RequestMapping("/pub/test/batch/cancel")
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public void cancelBatch(@RequestParam("batchNo") Object batchNo, @RequestParam("txAmount") Object txAmount, @RequestParam("count") Object count) {
         BatchCancelReq batchCancelReq = new BatchCancelReq();
         batchCancelReq.setBatchNo(String.valueOf(batchNo));
@@ -408,7 +496,7 @@ public class TestController {
 
     @ApiOperation("批次查询")
     @RequestMapping("/pub/batch/find")
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public void findBatch(@RequestParam("txDate") Object txDate, @RequestParam("batchNo") Object batchNo) {
         BatchQueryReq req = new BatchQueryReq();
         req.setChannel(ChannelContant.HTML);
@@ -436,7 +524,7 @@ public class TestController {
 
     @ApiOperation("投标申请查询")
     @RequestMapping("/pub/bid/find")
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public void bidApplyQuery(@RequestParam("orderId") Object orderId, @RequestParam("accountId") Object accountId) {
         BidApplyQueryRequest request = new BidApplyQueryRequest();
         request.setAccountId(String.valueOf(accountId));

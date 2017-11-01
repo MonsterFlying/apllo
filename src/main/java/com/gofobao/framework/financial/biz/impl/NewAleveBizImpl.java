@@ -4,21 +4,16 @@ import com.github.wenhao.jpa.Specifications;
 import com.gofobao.framework.api.helper.JixinFileManager;
 import com.gofobao.framework.api.helper.JixinTxDateHelper;
 import com.gofobao.framework.asset.biz.AssetBiz;
-import com.gofobao.framework.asset.entity.CurrentIncomeLog;
 import com.gofobao.framework.asset.service.CurrentIncomeLogService;
-import com.gofobao.framework.common.assets.AssetChange;
 import com.gofobao.framework.common.assets.AssetChangeProvider;
-import com.gofobao.framework.common.assets.AssetChangeTypeEnum;
 import com.gofobao.framework.financial.biz.NewAleveBiz;
 import com.gofobao.framework.financial.entity.NewAleve;
-import com.gofobao.framework.financial.entity.NewEve;
 import com.gofobao.framework.financial.service.NewAleveService;
 import com.gofobao.framework.helper.*;
 import com.gofobao.framework.member.entity.UserThirdAccount;
 import com.gofobao.framework.member.service.UserService;
 import com.gofobao.framework.member.service.UserThirdAccountService;
 import com.gofobao.framework.migrate.FormatHelper;
-import com.google.common.base.Preconditions;
 import com.google.common.io.Files;
 import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;
@@ -30,8 +25,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 
@@ -284,7 +277,7 @@ public class NewAleveBizImpl implements NewAleveBiz {
             pageIndexTotal = count.intValue() % pageSize == 0 ? pageIndexTotal : pageIndexTotal + 1;
 
             for (; pageIndex < pageIndexTotal; pageIndex++) {
-                log.info("执行积分派发" + pageIndex) ;
+                log.info("执行积分派发" + pageIndex);
                 Pageable pageable = new PageRequest(pageIndex, pageSize, new Sort(new Sort.Order(Sort.Direction.DESC, "id")));
                 Page<NewAleve> newAleves = newAleveService.findAll(specification, pageable);
                 List<NewAleve> data = newAleves.getContent();
@@ -305,14 +298,6 @@ public class NewAleveBizImpl implements NewAleveBiz {
                         continue;
                     }
 
-                    // 判断是否允许派发
-                    if(NO_PUBLISH_ID.contains(userThirdAccount.getUserId())){
-                        log.error("=================================================");
-                        log.error("系统不允许派发" + userThirdAccount.getUserId());
-                        log.error("=================================================");
-                        continue;
-                    }
-
                     try {
                         log.info("派发活期" + new Gson().toJson(item));
                         assetBiz.doAssetChangeByCurrentInterest(item, userThirdAccount, money);
@@ -330,74 +315,6 @@ public class NewAleveBizImpl implements NewAleveBiz {
         }
     }
 
-
-    public static List<Long> NO_PUBLISH_ID = new ArrayList<>(100) ;
-
-    static {
-        NO_PUBLISH_ID.add(22L);
-        NO_PUBLISH_ID.add(1L);
-        NO_PUBLISH_ID.add(197L);
-        NO_PUBLISH_ID.add(375L);
-        NO_PUBLISH_ID.add(544L);
-        NO_PUBLISH_ID.add(901L);
-        NO_PUBLISH_ID.add(1190L);
-        NO_PUBLISH_ID.add(1297L);
-        NO_PUBLISH_ID.add(1309L);
-        NO_PUBLISH_ID.add(1766L);
-        NO_PUBLISH_ID.add(1947L);
-        NO_PUBLISH_ID.add(2330L);
-        NO_PUBLISH_ID.add(2375L);
-        NO_PUBLISH_ID.add(2552L);
-        NO_PUBLISH_ID.add(2623L);
-        NO_PUBLISH_ID.add(3083L);
-        NO_PUBLISH_ID.add(3449L);
-        NO_PUBLISH_ID.add(3460L);
-        NO_PUBLISH_ID.add(3612L);
-        NO_PUBLISH_ID.add(3850L);
-        NO_PUBLISH_ID.add(3851L);
-        NO_PUBLISH_ID.add(4022L);
-        NO_PUBLISH_ID.add(4213L);
-        NO_PUBLISH_ID.add(4632L);
-        NO_PUBLISH_ID.add(4811L);
-        NO_PUBLISH_ID.add(5930L);
-        NO_PUBLISH_ID.add(5948L);
-        NO_PUBLISH_ID.add(8628L);
-        NO_PUBLISH_ID.add(8663L);
-        NO_PUBLISH_ID.add(9769L);
-        NO_PUBLISH_ID.add(9789L);
-        NO_PUBLISH_ID.add(10513L);
-        NO_PUBLISH_ID.add(12489L);
-        NO_PUBLISH_ID.add(13345L);
-        NO_PUBLISH_ID.add(13378L);
-        NO_PUBLISH_ID.add(22002L);
-        NO_PUBLISH_ID.add(24313L);
-        NO_PUBLISH_ID.add(26622L);
-        NO_PUBLISH_ID.add(31323L);
-        NO_PUBLISH_ID.add(41231L);
-        NO_PUBLISH_ID.add(41737L);
-        NO_PUBLISH_ID.add(42334L);
-        NO_PUBLISH_ID.add(46908L);
-        NO_PUBLISH_ID.add(49824L);
-        NO_PUBLISH_ID.add(50692L);
-        NO_PUBLISH_ID.add(51450L);
-        NO_PUBLISH_ID.add(59087L);
-        NO_PUBLISH_ID.add(60002L);
-        NO_PUBLISH_ID.add(62654L);
-        NO_PUBLISH_ID.add(62844L);
-        NO_PUBLISH_ID.add(62959L);
-        NO_PUBLISH_ID.add(63588L);
-        NO_PUBLISH_ID.add(26108L);
-        NO_PUBLISH_ID.add(87134L);
-        NO_PUBLISH_ID.add(92571L);
-        NO_PUBLISH_ID.add(96632L);
-        NO_PUBLISH_ID.add(63469L);
-        NO_PUBLISH_ID.add(108377L);
-        NO_PUBLISH_ID.add(110825L);
-        NO_PUBLISH_ID.add(110866L);
-        NO_PUBLISH_ID.add(110907L);
-    }
-
-
     @Override
     public void simpleDownload(String date) {
         String fileName = String.format("%s-ALEVE%s-%s", bankNo, productNo, date);
@@ -409,9 +326,4 @@ public class NewAleveBizImpl implements NewAleveBiz {
             log.error("ALEVE文件下载失败");
         }
     }
-
-
-
-
-
 }

@@ -10,6 +10,8 @@ import com.gofobao.framework.api.model.batch_cancel.BatchCancelResp;
 import com.gofobao.framework.api.model.batch_credit_end.BatchCreditEndReq;
 import com.gofobao.framework.api.model.batch_credit_end.BatchCreditEndResp;
 import com.gofobao.framework.api.model.batch_credit_end.CreditEnd;
+import com.gofobao.framework.api.model.credit_invest_query.CreditInvestQueryReq;
+import com.gofobao.framework.api.model.credit_invest_query.CreditInvestQueryResp;
 import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.borrow.service.BorrowService;
 import com.gofobao.framework.collection.service.BorrowCollectionService;
@@ -247,20 +249,26 @@ public class CreditProvider {
             }
             Map<Long, Transfer> transferMap = transferList.stream().collect(Collectors.toMap(Transfer::getTenderId, Function.identity()));
 
+            //存管授权码集合
+            Set<String> authCodeSet = new HashSet<>();
             //筛选出已转让的投资记录
             tenderList.stream().filter(p -> p.getTransferFlag() == 2).forEach(tender -> {
                 Transfer transfer = transferMap.get(tender.getId());
                 //判断是否成功转让
-                if (transfer.getState() == 2) {
-                    CreditEnd creditEnd = new CreditEnd();
+                if (transfer.getState() == 2 && chackTenderIsOver(tender)) {
+                    //结束债权订单号
                     String orderId = JixinHelper.getOrderId(JixinHelper.END_CREDIT_PREFIX);
-                    UserThirdAccount tenderUserThirdAccount = userThirdAccountService.findByUserId(tender.getUserId());
-                    creditEnd.setAccountId(borrowUserThirdAccountId);
-                    creditEnd.setOrderId(orderId);
-                    creditEnd.setAuthCode(tender.getAuthCode());
-                    creditEnd.setForAccountId(tenderUserThirdAccount.getAccountId());
-                    creditEnd.setProductId(productId);
-                    creditEndList.add(creditEnd);
+                    if (!authCodeSet.contains(tender.getAuthCode())) {
+                        CreditEnd creditEnd = new CreditEnd();
+                        UserThirdAccount tenderUserThirdAccount = userThirdAccountService.findByUserId(tender.getUserId());
+                        creditEnd.setAccountId(borrowUserThirdAccountId);
+                        creditEnd.setOrderId(orderId);
+                        creditEnd.setAuthCode(tender.getAuthCode());
+                        creditEnd.setForAccountId(tenderUserThirdAccount.getAccountId());
+                        creditEnd.setProductId(productId);
+                        creditEndList.add(creditEnd);
+                        authCodeSet.add(tender.getAuthCode());
+                    }
                     //保存结束债权id
                     tender.setThirdCreditEndOrderId(orderId);
                     tender.setThirdCreditEndFlag(false);
@@ -269,6 +277,17 @@ public class CreditProvider {
             });
 
         } while (false);
+    }
+
+    /**
+     * 检查债权是否结束
+     *
+     * @param tender 用户债权
+     * @// TODO: 2017/10/30 存管暂时没有开发相关接口给平台
+     */
+    private boolean chackTenderIsOver(Tender tender) {
+
+        return true;
     }
 
     /**
@@ -310,18 +329,20 @@ public class CreditProvider {
 
             //排除已经在存管登记结束债权的投标记录
             tenderList.stream().filter(tender -> (BooleanHelper.isFalse(tender.getThirdCreditEndFlag()))).forEach(tender -> {
-                CreditEnd creditEnd = new CreditEnd();
-                String orderId = JixinHelper.getOrderId(JixinHelper.END_CREDIT_PREFIX);
+                if (chackTenderIsOver(tender)) {
+                    CreditEnd creditEnd = new CreditEnd();
+                    String orderId = JixinHelper.getOrderId(JixinHelper.END_CREDIT_PREFIX);
 
-                UserThirdAccount tenderUserThirdAccount = userThirdAccountService.findByUserId(tender.getUserId());
-                creditEnd.setAccountId(borrowUserThirdAccountId);
-                creditEnd.setOrderId(orderId);
-                creditEnd.setAuthCode(tender.getAuthCode());
-                creditEnd.setForAccountId(tenderUserThirdAccount.getAccountId());
-                creditEnd.setProductId(productId);
-                creditEndList.add(creditEnd);
+                    UserThirdAccount tenderUserThirdAccount = userThirdAccountService.findByUserId(tender.getUserId());
+                    creditEnd.setAccountId(borrowUserThirdAccountId);
+                    creditEnd.setOrderId(orderId);
+                    creditEnd.setAuthCode(tender.getAuthCode());
+                    creditEnd.setForAccountId(tenderUserThirdAccount.getAccountId());
+                    creditEnd.setProductId(productId);
+                    creditEndList.add(creditEnd);
 
-                tender.setThirdCreditEndOrderId(orderId);
+                    tender.setThirdCreditEndOrderId(orderId);
+                }
             });
             tenderService.save(tenderList);
 

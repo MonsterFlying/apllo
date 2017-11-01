@@ -398,7 +398,6 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
             if (bigCashState) {
                 cashDetailLog.setCompanyBankNo(voCashReq.getBankAps()); // 联行卡号
             }
-            cashDetailLog.setCompanyBankNo(voCashReq.getBankAps());
             cashDetailLog.setFee(fee);
             cashDetailLog.setCreateTime(nowDate);
             cashDetailLog.setMoney(new Double(cashMoney).longValue());

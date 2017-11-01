@@ -206,7 +206,7 @@ public class FinancePlanProvider {
         batchAssetChangeItem.setBatchAssetChangeId(batchAssetChangeId);
         batchAssetChangeItem.setState(0);
         //理财计划债权转让是否是赎回债权
-        long transferPrincipal = transferBuyLogList.stream().filter(transferBuyLog -> transferBuyLog.getState() == 1).mapToLong(TransferBuyLog::getPrincipal).sum();
+        long transferPrincipal = transferBuyLogList.stream().filter(transferBuyLog -> transferBuyLog.getState() == 0).mapToLong(TransferBuyLog::getPrincipal).sum();
         if (repurchaseFlag) {
             batchAssetChangeItem.setType(AssetChangeTypeEnum.InvestorsFinanceBatchSellBonds.getLocalType());  // 理财计划购买人出售债权
             batchAssetChangeItem.setAssetType(AssetTypeContants.finance);
