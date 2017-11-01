@@ -320,14 +320,13 @@ public class UserActiveProvider {
      */
     private FundTransQueryResponse queryJixinOp(String seqNo, UserThirdAccount userThirdAccount, int looper) {
         if (looper <= 0) {
-            log.warn(String.format("[单笔资金查询] 查询stack over flow ", seqNo));
+            log.warn(String.format("[单笔资金查询] 查询stack over flow, %s", seqNo));
             return null;
         }
 
         String orgTxDate = seqNo.substring(0, 8);  // 原始日期
         String orgTxTime = seqNo.substring(8, 14);  // 原始时间
         String orgSeqNo = seqNo.substring(14);  // 原始序列号
-
         FundTransQueryRequest fundTransQueryRequest = new FundTransQueryRequest();
         fundTransQueryRequest.setAccountId(userThirdAccount.getAccountId());
         fundTransQueryRequest.setOrgSeqNo(orgSeqNo);
@@ -357,11 +356,11 @@ public class UserActiveProvider {
             return queryJixinOp(seqNo, userThirdAccount, looper - 1);
         }
 
-        if (ObjectUtils.isEmpty(fundTransQueryResponse)
-                || !JixinResultContants.SUCCESS.equalsIgnoreCase(fundTransQueryResponse.getRetCode())) {
+        if (!ObjectUtils.isEmpty(fundTransQueryResponse)
+                && JixinResultContants.SUCCESS.equalsIgnoreCase(fundTransQueryResponse.getRetCode())) {
             return fundTransQueryResponse;
         } else {
-            log.error(String.format("[单笔资金查询] 查询失败 %s", seqNo ));
+            log.error(String.format("[单笔资金查询] 查询失败 %s", seqNo));
             return queryJixinOp(seqNo, userThirdAccount, looper - 1);
         }
     }

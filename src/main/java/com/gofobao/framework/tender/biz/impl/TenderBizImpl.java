@@ -305,6 +305,7 @@ public class TenderBizImpl implements TenderBiz {
             voCreateThirdTenderReq.setProductId(borrow.getProductId());
             voCreateThirdTenderReq.setOrderId(orderId);
             voCreateThirdTenderReq.setFrzFlag(FrzFlagContant.FREEZE);
+            voCreateThirdTenderReq.setAcqRes(borrowTender.getId() + "");
             ResponseEntity<VoBaseResp> resp = tenderThirdBiz.createThirdTender(voCreateThirdTenderReq);
             if (resp.getBody().getState().getCode() == VoBaseResp.ERROR) {
                 log.info("马上投资: 投资报备失败");
