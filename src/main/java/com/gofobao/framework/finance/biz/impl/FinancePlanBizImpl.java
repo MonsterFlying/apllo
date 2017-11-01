@@ -116,10 +116,13 @@ public class FinancePlanBizImpl implements FinancePlanBiz {
      * @return
      * @throws Exception
      */
+    @Transactional(rollbackFor = Exception.class)
+    @Override
     public ResponseEntity<VoBaseResp> financeRepurchase(VoFinanceRepurchase voFinanceRepurchase) throws Exception {
         Date nowDate = new Date();
         //获取paramStr参数、校验参数有效性
-        String paramStr = voFinanceRepurchase.getParamStr();/* 理财计划投标 */
+        /* 理财计划投标 */
+        String paramStr = voFinanceRepurchase.getParamStr();
         if (!SecurityHelper.checkSign(voFinanceRepurchase.getSign(), paramStr)) {
             return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "理财计划回购 签名验证不通过!"));
         }
