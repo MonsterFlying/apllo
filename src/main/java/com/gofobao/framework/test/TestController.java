@@ -453,26 +453,6 @@ public class TestController {
         mqHelper.convertAndSend(mqConfig);
     }
 
-    @ApiOperation("结束债权转让债权")
-    @RequestMapping("/pub/bid/end/credit")
-    @Transactional(rollbackFor = Exception.class)
-    public void endTransfer(@RequestParam("transferId") Object transferId) {
-        Transfer transfer = transferService.findById(NumberHelper.toLong(transferId));
-        //推送队列结束债权转让第三方转让债权
-        MqConfig mqConfig = new MqConfig();
-        mqConfig.setQueue(MqQueueEnum.RABBITMQ_CREDIT);
-        mqConfig.setTag(MqTagEnum.END_CREDIT_BY_TRANSFER);
-        mqConfig.setSendTime(DateHelper.addMinutes(new Date(), 1));
-        ImmutableMap<String, String> body = ImmutableMap
-                .of(MqConfig.MSG_BORROW_ID, StringHelper.toString(transfer.getBorrowId()), MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
-        mqConfig.setMsg(body);
-        try {
-            log.info(String.format("thirdBatchProvider endPcThirdTransferTender send mq %s", GSON.toJson(body)));
-            mqHelper.convertAndSend(mqConfig);
-        } catch (Throwable e) {
-            log.error("thirdBatchProvider endPcThirdTransferTender send mq exception", e);
-        }
-    }
 
     @ApiOperation("用户债权列表查询")
     @RequestMapping("/pub/test/batch/cancel")

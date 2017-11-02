@@ -92,6 +92,7 @@ import com.gofobao.framework.tender.entity.TransferBuyLog;
 import com.gofobao.framework.tender.service.TenderService;
 import com.gofobao.framework.tender.service.TransferBuyLogService;
 import com.gofobao.framework.tender.service.TransferService;
+import com.gofobao.framework.tender.vo.response.web.TransferBuy;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -583,7 +584,9 @@ public class AplloApplicationTests {
 
 
     @Test
+    @Transactional
     public void test() {
+
         //购买债权转让有效金额 本金
 
 

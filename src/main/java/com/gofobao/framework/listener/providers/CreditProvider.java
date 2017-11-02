@@ -89,6 +89,11 @@ public class CreditProvider {
      * @throws Exception
      */
     public boolean endThirdCredit(Map<String, String> msg, String tag) throws Exception {
+        if (true) {
+            log.error("=============================================================================");
+            log.error("说明：结束债权改版，自动结束债权改为手动结束债权，请针对单个用户进行结束债权操作！");
+            log.error("=============================================================================");
+        }
         Long borrowId = NumberHelper.toLong(StringHelper.toString(msg.get(MqConfig.MSG_BORROW_ID)));
         Borrow borrow = borrowService.findById(borrowId);
         Preconditions.checkNotNull(borrow, "creditProvider endThirdCredit: 借款不能为空!");

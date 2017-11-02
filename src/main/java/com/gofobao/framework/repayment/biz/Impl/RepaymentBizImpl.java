@@ -1426,7 +1426,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
      * @param borrowRepayment
      */
     private void endThirdTenderAndChangeBorrowStatus(Borrow parentBorrow, BorrowRepayment borrowRepayment) {
-        // 结束债权：最后一期还款时
+        /*// 结束债权：最后一期还款时
         if (borrowRepayment.getOrder().intValue() == (parentBorrow.getTotalOrder() - 1)) {
             parentBorrow.setCloseAt(borrowRepayment.getRepayAtYes());
             //推送队列结束债权
@@ -1446,7 +1446,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
             }
             parentBorrow.setUpdatedAt(new Date());
             borrowService.updateById(parentBorrow);
-        }
+        }*/
     }
 
     /**

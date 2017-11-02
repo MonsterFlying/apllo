@@ -9,6 +9,7 @@ import com.gofobao.framework.asset.service.NewAssetLogService;
 import com.gofobao.framework.asset.vo.request.VoAssetLogReq;
 import com.gofobao.framework.asset.vo.response.VoViewAssetLogRes;
 import com.gofobao.framework.asset.vo.response.pc.AssetLogs;
+import com.gofobao.framework.common.assets.AssetChangeTypeEnum;
 import com.gofobao.framework.common.capital.CapitalChangeEnum;
 import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.helper.StringHelper;
@@ -32,7 +33,7 @@ import java.util.*;
 public class AssetLogServiceImpl implements AssetLogService {
 
     @Autowired
-    private    AssetLogRepository assetLogRepository;
+    private AssetLogRepository assetLogRepository;
     private static Set<String> subList = new HashSet<>(Arrays.asList("cash", "tender", "manager", "fee", "repayment", "overdue", "interest_manager", "virtual_tender", "expenditure_other"));
     private static Set<String> addList = new HashSet<>(Arrays.asList("recharge", "award", "borrow", "income_repayment", "income_overdue", "integral_cash", "bonus", "award_virtual_money", "income_other", "red_package"));
 
@@ -57,7 +58,7 @@ public class AssetLogServiceImpl implements AssetLogService {
             viewAssetLogRes.setTypeName(getAssetTypeStr(p.getType()));
             viewAssetLogRes.setCreatedAt(DateHelper.dateToString(p.getCreatedAt()));
             String type = p.getType();
-            viewAssetLogRes.setShowMoney((subList.contains(type) ? ("-") : (addList.contains(type) ? "+" : "")) + StringHelper.formatDouble(p.getMoney(), 100,true));
+            viewAssetLogRes.setShowMoney((subList.contains(type) ? ("-") : (addList.contains(type) ? "+" : "")) + StringHelper.formatDouble(p.getMoney(), 100, true));
             voViewAssetLogRes.add(viewAssetLogRes);
         });
         List<VoViewAssetLogRes> result = Optional.ofNullable(voViewAssetLogRes).orElse(Collections.EMPTY_LIST);
@@ -126,25 +127,39 @@ public class AssetLogServiceImpl implements AssetLogService {
 
     /**
      * pc：资金流水导出到excel
+     *
      * @param voAssetLogReq
      * @return
      */
     @Override
     public List<NewAssetLog> pcToExcel(VoAssetLogReq voAssetLogReq) {
-
         Sort sort = new Sort(
-                new Sort.Order(Sort.Direction.DESC, "createTime"));
-
+                new Sort.Order(Sort.Direction.DESC, "id"));
+        List<String> types = Arrays.asList(AssetChangeTypeEnum.collectionAdd.getLocalType(),
+                AssetChangeTypeEnum.collectionSub.getLocalType(),
+                AssetChangeTypeEnum.paymentSub.getLocalType(),
+                AssetChangeTypeEnum.paymentAdd.getLocalType(),
+                AssetChangeTypeEnum.InvestorsFinanceBatchBuyClaims.getLocalType(),
+                AssetChangeTypeEnum.InvestorsFinanceBatchSellBonds.getLocalType(),
+                AssetChangeTypeEnum.financePlanUnFreeze.getLocalType());
         Date startTime = DateHelper.beginOfDate(DateHelper.stringToDate(voAssetLogReq.getStartTime(), DateHelper.DATE_FORMAT_YMD));
         Date endTime = DateHelper.endOfDate(DateHelper.stringToDate(voAssetLogReq.getEndTime(), DateHelper.DATE_FORMAT_YMD));
+        //gfb_new_asset_log 的 receivedPayments compensatoryReceivedPayments
+        Specification<NewAssetLog> nals1 = Specifications.<NewAssetLog>or()
+                .in("localType", AssetChangeTypeEnum.compensatoryReceivedPayments.getLocalType(), AssetChangeTypeEnum.receivedPayments.getLocalType())
+                .notIn("type", 1)
+                .build();
         Specification<NewAssetLog> specification = Specifications.<NewAssetLog>and()
                 .between("createTime",
                         new Range<>(
                                 DateHelper.beginOfDate(startTime),
                                 DateHelper.endOfDate(endTime)))
                 .eq("userId", voAssetLogReq.getUserId())
+                .eq("del", 0)
+                .notIn("localType", types.toArray())
+                .predicate(nals1)
                 .build();
-        return newAssetLogService.findAll(specification,sort);
+        return newAssetLogService.findAll(specification, sort);
     }
 
     @Override
