@@ -1080,7 +1080,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
         financePlanService.save(financePlanList);
         //存在理财计划时通知后台
         if (flag) {
-            String resultStr = OKHttpHelper.postForm(adminDomain + "/api/open/finance-plan/auto-match", new HashMap<>(), null);
+            String resultStr = OKHttpHelper.postJson(adminDomain + "/api/open/finance-plan/auto-match", GSON.toJson(new HashMap<>()), null);
             log.info(" 理财计划债权转让复审 url:" + adminDomain + "/api/open/finance-plan/auto-match");
             log.info(" 理财计划债权转让复审 调用后台返回响应:" + resultStr);
         }
