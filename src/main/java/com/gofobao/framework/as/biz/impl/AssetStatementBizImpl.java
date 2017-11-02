@@ -118,6 +118,58 @@ public class AssetStatementBizImpl implements AssetStatementBiz {
         } while (pageIndex < pageIndexTatol);
         return true;
     }
+
+
+    @Override
+    public boolean checkUpAccountForAll() {
+        long batchNo = System.currentTimeMillis();
+        int pageSize = 100, pageIndex = 0;
+        int pageIndexTatol = 0;
+
+        Specification<UserThirdAccount> userThirdAccountSpecificationForCount = Specifications
+                .<UserThirdAccount>and()
+                .build();
+        Long count = userThirdAccountService.count(userThirdAccountSpecificationForCount);
+        if (count == 0) {
+            log.warn("[用户资金记录查询] 待查询记录为零");
+            return false;
+        }
+        pageIndexTatol = count.intValue() / pageSize;
+        pageIndexTatol = count.intValue() % pageSize == 0 ? pageIndexTatol : pageIndexTatol + 1;
+        log.info(String.format("[用户资金记录查询] 待检测总数: %s", pageIndexTatol));
+        do {
+            Pageable pageable = new PageRequest(pageIndex, pageSize, new Sort(new Sort.Order(Sort.Direction.DESC, "id")));
+            Specification<UserThirdAccount> userThirdAccountSpecification = Specifications
+                    .<UserThirdAccount>and()
+                    .build();
+            List<UserThirdAccount> userThirdAccountList = userThirdAccountService.findList(userThirdAccountSpecification, pageable);
+            Preconditions.checkNotNull(userThirdAccountList, "userThirdAccountList record is empty");
+            pageIndex++;
+
+            Set<Long> userIds = userThirdAccountList.stream().map(userThirdAccount -> userThirdAccount.getUserId()).collect(Collectors.toSet());
+            if (CollectionUtils.isEmpty(userIds)) {
+                log.warn("[用户资金记录查询] userIds集合为空!");
+                break;
+            }
+
+            Specification<Asset> assetSpecification = Specifications
+                    .<Asset>and()
+                    .in("userId", userIds.toArray())
+                    .build();
+            List<Asset> assetList = assetService.findList(assetSpecification);
+            Preconditions.checkNotNull(assetList, "assetList reocrd is empty");
+            Map<Long, Asset> assetMap = assetList.stream().collect(Collectors.toMap(Asset::getUserId, Function.identity()));
+            Long userId = null;
+
+            for (UserThirdAccount userThirdAccount : userThirdAccountList) {
+                userId = userThirdAccount.getUserId();
+                Asset asset = assetMap.get(userId);
+                threadPoolTaskExecutor.execute(new SearcheThred(jixinManager, asset, userThirdAccount, realtimeAssetService, batchNo));
+            }
+
+        } while (pageIndex < pageIndexTatol);
+        return true;
+    }
 }
 
 @Data

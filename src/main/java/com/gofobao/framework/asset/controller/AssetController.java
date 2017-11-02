@@ -9,8 +9,10 @@ import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.helper.project.SecurityHelper;
 import com.gofobao.framework.security.contants.SecurityContants;
+import com.gofobao.framework.tender.vo.request.VoCommonReq;
 import com.gofobao.framework.tender.vo.request.VoLocalAssetChangeReq;
 import com.google.common.base.Preconditions;
+import com.google.gson.Gson;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,11 +34,16 @@ public class AssetController {
     @Autowired
     AssetStatementBiz assetStatementBiz;
 
-    @GetMapping("pub/asset/check-up-account/{date}")
-    public ResponseEntity<VoBaseResp> checkUpAccount(@PathVariable() String date) throws Exception {
-        Preconditions.checkNotNull(date, "AssetController date is null");
-        Date checkUpDate = DateHelper.stringToDate(date);
-        assetStatementBiz.checkUpAccount(checkUpDate);
+    @GetMapping("pub/asset/check-up-account")
+    public ResponseEntity<VoBaseResp> checkUpAccount(@ModelAttribute VoCommonReq voCommonReq) {
+        String paramStr = voCommonReq.getParamStr();
+        if (!SecurityHelper.checkSign(voCommonReq.getSign(), paramStr)) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "本地记录修改异常!"));
+        }
+
+        assetStatementBiz.checkUpAccountForAll();
         return ResponseEntity.ok(VoBaseResp.ok("成功"));
     }
 
