@@ -55,6 +55,8 @@ public class UserCache {
 
     private Long expenditureInterestManage;
 
+    private Long waitExpenditureInterestManage;
+
     private Long expenditureManage;
 
     private Long expenditureFee;
@@ -113,8 +115,8 @@ public class UserCache {
      *
      * @return
      */
-    public int getWaitExpenditureInterestManageFee() {
-        return (int) ((this.tjWaitCollectionInterest + this.qdWaitCollectionInterest) * 0.1);
+    public long getWaitExpenditureInterestManageFee() {
+        return this.getWaitExpenditureInterestManage() < 0 ? 0 : this.getWaitExpenditureInterestManage();
     }
 
     /**

@@ -1625,11 +1625,13 @@ public class RepaymentBizImpl implements RepaymentBiz {
         batchAssetChangeItem.setGroupSeqNo(groupSeqNo);
         batchAssetChangeItemService.save(batchAssetChangeItem);
 
-        if (lateInterest > 0) { // 扣除借款人还款滞纳金
+        // 扣除借款人还款滞纳金
+        if (lateInterest > 0) {
             batchAssetChangeItem = new BatchAssetChangeItem();
             batchAssetChangeItem.setBatchAssetChangeId(batchAssetChangeId);
             batchAssetChangeItem.setState(0);
-            batchAssetChangeItem.setType(AssetChangeTypeEnum.repayMentPenaltyFee.getLocalType());  // 扣除借款人还款滞纳金
+            // 扣除借款人还款滞纳金
+            batchAssetChangeItem.setType(AssetChangeTypeEnum.repayMentPenaltyFee.getLocalType());
             batchAssetChangeItem.setUserId(repayUserId);
             batchAssetChangeItem.setMoney(lateInterest);
             batchAssetChangeItem.setRemark(String.format("借款[%s]的逾期罚息", borrow.getName()));
@@ -1934,10 +1936,6 @@ public class RepaymentBizImpl implements RepaymentBiz {
 
         long availBal = MoneyHelper.yuanToFen(NumberHelper.toDouble(balanceQueryResponse.getAvailBal()));
         long useMoney = repayAsset.getUseMoney().longValue();
-        /*if (availBal < useMoney) {
-            log.error(String.format("资金账户未同步:本地:%s 即信:%s", useMoney, availBal));
-            return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "资金账户未同步，请先在个人中心进行资金同步操作!"));
-        }*/
         if (availBal < repayMoney || useMoney < repayMoney) {
             return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "立即还款：可用余额不足，请充值后再试!"));
         }
@@ -1974,18 +1972,20 @@ public class RepaymentBizImpl implements RepaymentBiz {
                 .stream()
                 .collect(Collectors.toMap(UserThirdAccount::getUserId, Function.identity()));
 
+        // 通过回款计划的利息获取回款总利息
         long sumCollectionInterest = borrowCollectionList.stream()
                 .filter(borrowCollection -> tenderMaps.get(borrowCollection.getTenderId()).getTransferFlag() != 2)
-                .mapToLong(BorrowCollection::getInterest).sum();  // 通过回款计划的利息获取回款总利息
+                .mapToLong(BorrowCollection::getInterest).sum();
 
-
-        long lateInterest = calculateLateInterest(lateDays, borrowRepayment, borrow);     // 计算逾期产生的总费用
+        // 计算逾期产生的总费用
+        long lateInterest = calculateLateInterest(lateDays, borrowRepayment, borrow);
         for (Tender tender : tenderList) {
             long inIn = 0; // 出借人的利息
             long inPr = 0; // 出借人的本金
             int inFee = 0; // 出借人利息费用
             int outFee = 0; // 借款人管理费
-            BorrowCollection borrowCollection = borrowCollectionMap.get(tender.getId());  // 还款计划
+            // 还款计划
+            BorrowCollection borrowCollection = borrowCollectionMap.get(tender.getId());
             // 标的转让中时, 需要取消出让信息
             if (tender.getTransferFlag() == 1) {
                 transferBiz.cancelTransferByTenderId(tender.getId());
@@ -1999,9 +1999,11 @@ public class RepaymentBizImpl implements RepaymentBiz {
             repayAssetChanges.add(repayAssetChange);
             double inInDouble = MoneyHelper.multiply(borrowCollection.getInterest(), interestPercent, 0);
             if (tender.getType() != 1) {
-                inIn = MoneyHelper.doubleToLong(inInDouble);  // 还款利息
+                // 还款利息
+                inIn = MoneyHelper.doubleToLong(inInDouble);
             }
-            inPr = borrowCollection.getPrincipal(); // 还款本金
+            // 还款本金
+            inPr = borrowCollection.getPrincipal();
             repayAssetChange.setUserId(tender.getUserId());
             repayAssetChange.setInterest(inIn);
             repayAssetChange.setPrincipal(inPr);
@@ -2010,7 +2012,6 @@ public class RepaymentBizImpl implements RepaymentBiz {
             //借款类型集合
             ImmutableSet<Integer> borrowTypeSet = ImmutableSet.of(0, 4);
             //用户来源集合
-            /*            ImmutableSet<Integer> userSourceSet = ImmutableSet.of(12);*/
             // 车贷标和渠道标利息管理费，风车理财不收
             // 满标复审在2017-11-1号之前收取利息管理费
             if (borrowTypeSet.contains(borrow.getType()) &&
@@ -2026,24 +2027,21 @@ public class RepaymentBizImpl implements RepaymentBiz {
                 if ((stockholder.contains(tender.getUserId())) && (between)) {
                     inFee += 0;
                 } else {
-                    /*Long userId = tender.getUserId();
-                    Users user = userService.findById(userId);
-                    if (!StringUtils.isEmpty(user.getWindmillId())) { // 风车理财用户不收管理费
-                        log.info(String.format("风车理财：%s", user));
-                        inFee += 0;
-                    } else {*/
                     // 利息管理费
-                    inFee += MoneyHelper.doubleToint(MoneyHelper.multiply(inIn, 0.1D, 0));  // 利息问题
-/*                    }*/
+                    inFee += MoneyHelper.doubleToint(MoneyHelper.multiply(inIn, 0.1D, 0));
                 }
             }
 
-            repayAssetChange.setInterestFee(inFee);  // 利息管理费
+            // 利息管理费
+            repayAssetChange.setInterestFee(inFee);
             long overdueFee = 0;
             long platformOverdueFee = 0;
-            if ((lateDays > 0) && (lateInterest > 0) && tender.getType().intValue() != 1) {  //借款人逾期罚息,理财计划不需要算逾期费
-                double preve = MoneyHelper.divide(borrowCollection.getInterest(), sumCollectionInterest);  // 逾期收益百分比
-                double overdueFeeDouble = MoneyHelper.multiply(MoneyHelper.multiply(preve, lateInterest), 0.5, 0);// 出借人逾期手续费
+            //借款人逾期罚息,理财计划不需要算逾期费
+            if ((lateDays > 0) && (lateInterest > 0) && tender.getType().intValue() != 1) {
+                // 逾期收益百分比
+                double preve = MoneyHelper.divide(borrowCollection.getInterest(), sumCollectionInterest);
+                // 出借人逾期手续费
+                double overdueFeeDouble = MoneyHelper.multiply(MoneyHelper.multiply(preve, lateInterest), 0.5, 0);
                 overdueFee = MoneyHelper.doubleToLong(overdueFeeDouble);
                 repayAssetChange.setOverdueFee(overdueFee);
                 inIn += overdueFee;
@@ -2126,10 +2124,11 @@ public class RepaymentBizImpl implements RepaymentBiz {
             batchAssetChangeItemService.save(batchAssetChangeItem);
             // 扣除利息管理费
             if (repayAssetChange.getInterestFee() > 0) {
+                // 扣除投资人利息管理费
                 batchAssetChangeItem = new BatchAssetChangeItem();
                 batchAssetChangeItem.setBatchAssetChangeId(batchAssetChangeId);
                 batchAssetChangeItem.setState(0);
-                batchAssetChangeItem.setType(AssetChangeTypeEnum.interestManagementFee.getLocalType());  // 扣除投资人利息管理费
+                batchAssetChangeItem.setType(AssetChangeTypeEnum.interestManagementFee.getLocalType());
                 if (tender.getType().intValue() == 1) {
                     batchAssetChangeItem.setAssetType(AssetTypeContants.finance);
                 }
@@ -2148,7 +2147,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
                 batchAssetChangeItem = new BatchAssetChangeItem();
                 batchAssetChangeItem.setBatchAssetChangeId(batchAssetChangeId);
                 batchAssetChangeItem.setState(0);
-                batchAssetChangeItem.setType(AssetChangeTypeEnum.platformInterestManagementFee.getLocalType());  // 收费账户添加利息管理费用
+                batchAssetChangeItem.setType(AssetChangeTypeEnum.platformInterestManagementFee.getLocalType());
                 if (tender.getType().intValue() == 1) {
                     batchAssetChangeItem.setAssetType(AssetTypeContants.finance);
                 }
@@ -2170,7 +2169,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
                 batchAssetChangeItem = new BatchAssetChangeItem();
                 batchAssetChangeItem.setBatchAssetChangeId(batchAssetChangeId);
                 batchAssetChangeItem.setState(0);
-                batchAssetChangeItem.setType(AssetChangeTypeEnum.platformRepayMentPenaltyFee.getLocalType());  // 收取逾期滞纳金
+                batchAssetChangeItem.setType(AssetChangeTypeEnum.platformRepayMentPenaltyFee.getLocalType());
                 if (tender.getType().intValue() == 1) {
                     batchAssetChangeItem.setAssetType(AssetTypeContants.finance);
                 }
@@ -2189,7 +2188,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
                 batchAssetChangeItem = new BatchAssetChangeItem();
                 batchAssetChangeItem.setBatchAssetChangeId(batchAssetChangeId);
                 batchAssetChangeItem.setState(0);
-                batchAssetChangeItem.setType(AssetChangeTypeEnum.receivedPaymentsPenalty.getLocalType());  // 收取逾期滞纳金
+                batchAssetChangeItem.setType(AssetChangeTypeEnum.receivedPaymentsPenalty.getLocalType());
                 if (tender.getType().intValue() == 1) {
                     batchAssetChangeItem.setAssetType(AssetTypeContants.finance);
                 }
@@ -2207,10 +2206,11 @@ public class RepaymentBizImpl implements RepaymentBiz {
 
             //扣除投资人待收
             if (tender.getType().intValue() != 1) {
+                //  扣除投资人待收
                 batchAssetChangeItem = new BatchAssetChangeItem();
                 batchAssetChangeItem.setBatchAssetChangeId(batchAssetChangeId);
                 batchAssetChangeItem.setState(0);
-                batchAssetChangeItem.setType(AssetChangeTypeEnum.collectionSub.getLocalType());  //  扣除投资人待收
+                batchAssetChangeItem.setType(AssetChangeTypeEnum.collectionSub.getLocalType());
                 if (tender.getType().intValue() == 1) {
                     batchAssetChangeItem.setAssetType(AssetTypeContants.finance);
                 }
@@ -3305,7 +3305,27 @@ public class RepaymentBizImpl implements RepaymentBiz {
             List<Tender> childTenderList = transferBiz.addChildTender(nowDate, transfer, parentTender, transferBuyLogs);
             // 生成子级债权回款记录，标注老债权回款已经转出
             try {
-                transferBiz.addChildTenderCollection(nowDate, transfer, parentBorrow, childTenderList);
+                //部分转让id
+                String borrowCollectionIds = transfer.getBorrowCollectionIds();
+                Specification<BorrowCollection> bcs = null;
+                if (transfer.getIsAll()) {
+                    bcs = Specifications
+                            .<BorrowCollection>and()
+                            .eq("tenderId", transfer.getTenderId())
+                            .eq("status", 0)
+                            .build();
+                } else {
+                    bcs = Specifications
+                            .<BorrowCollection>and()
+                            .eq("tenderId", transfer.getTenderId())
+                            .eq("id", borrowCollectionIds.split(","))
+                            .eq("status", 0)
+                            .build();
+                }
+                /* 债权转让原投资回款记录 */
+                List<BorrowCollection> oldBorrowCollectionList = borrowCollectionService.findList(bcs);
+                //生成新的转出记录
+                transferBiz.addChildTenderCollection(nowDate, transfer, parentBorrow, childTenderList, oldBorrowCollectionList);
             } catch (Exception e) {
                 log.error("repaymentBizImpl updateTransferTenderByAdvance error", e);
             }

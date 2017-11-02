@@ -1,5 +1,6 @@
 package com.gofobao.framework.tender.biz.impl;
 
+import com.github.wenhao.jpa.Specifications;
 import com.gofobao.framework.api.contants.ChannelContant;
 import com.gofobao.framework.api.contants.FrzFlagContant;
 import com.gofobao.framework.api.contants.JixinResultContants;
@@ -7,8 +8,12 @@ import com.gofobao.framework.api.helper.JixinManager;
 import com.gofobao.framework.api.helper.JixinTxCodeEnum;
 import com.gofobao.framework.api.model.balance_query.BalanceQueryRequest;
 import com.gofobao.framework.api.model.balance_query.BalanceQueryResponse;
+import com.gofobao.framework.api.model.batch_credit_end.CreditEnd;
 import com.gofobao.framework.api.model.bid_cancel.BidCancelReq;
 import com.gofobao.framework.api.model.bid_cancel.BidCancelResp;
+import com.gofobao.framework.api.model.credit_details_query.CreditDetailsQueryItem;
+import com.gofobao.framework.api.model.credit_details_query.CreditDetailsQueryRequest;
+import com.gofobao.framework.api.model.credit_details_query.CreditDetailsQueryResponse;
 import com.gofobao.framework.asset.entity.Asset;
 import com.gofobao.framework.asset.service.AssetService;
 import com.gofobao.framework.borrow.biz.BorrowBiz;
@@ -16,6 +21,8 @@ import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.borrow.service.BorrowService;
 import com.gofobao.framework.borrow.vo.request.VoCancelBorrow;
 import com.gofobao.framework.borrow.vo.response.VoBorrowTenderUserRes;
+import com.gofobao.framework.collection.entity.BorrowCollection;
+import com.gofobao.framework.collection.service.BorrowCollectionService;
 import com.gofobao.framework.common.assets.AssetChange;
 import com.gofobao.framework.common.assets.AssetChangeProvider;
 import com.gofobao.framework.common.assets.AssetChangeTypeEnum;
@@ -39,6 +46,7 @@ import com.gofobao.framework.member.entity.Users;
 import com.gofobao.framework.member.service.UserCacheService;
 import com.gofobao.framework.member.service.UserService;
 import com.gofobao.framework.member.service.UserThirdAccountService;
+import com.gofobao.framework.repayment.entity.BorrowRepayment;
 import com.gofobao.framework.repayment.service.BorrowRepaymentService;
 import com.gofobao.framework.tender.biz.TenderBiz;
 import com.gofobao.framework.tender.biz.TenderThirdBiz;
@@ -52,10 +60,12 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.HashMultiset;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Multiset;
+import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -103,6 +113,8 @@ public class TenderBizImpl implements TenderBiz {
     private JixinTenderRecordHelper jixinTenderRecordHelper;
     @Autowired
     private BorrowRepaymentService borrowRepaymentService;
+    @Autowired
+    private BorrowCollectionService borrowCollectionService;
 
 
     /**
@@ -112,6 +124,7 @@ public class TenderBizImpl implements TenderBiz {
      * @return
      * @throws Exception
      */
+    @Override
     public ResponseEntity<VoBaseResp> createTender(VoCreateTenderReq voCreateTenderReq) throws Exception {
         Gson gson = new Gson();
         log.info(String.format("马上投资: 起步: %s", gson.toJson(voCreateTenderReq)));
@@ -554,6 +567,7 @@ public class TenderBizImpl implements TenderBiz {
      * @return
      */
     @Transactional(rollbackFor = Exception.class)
+    @Override
     public ResponseEntity<VoBaseResp> tender(VoCreateTenderReq voCreateTenderReq) throws Exception {
         //投标撤回集合
         String borrowId = String.valueOf(voCreateTenderReq.getBorrowId());
@@ -663,8 +677,9 @@ public class TenderBizImpl implements TenderBiz {
         Asset asset = assetService.findByUserIdLock(userId);
         Preconditions.checkNotNull(asset, "结束第三方债权 用户资金记录不存在!");
         //3.校验用户即信资金账户
-        // 查询存管系统资金
+        /*用户存管记录*/
         UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(userId);
+        // 查询存管系统资金
         BalanceQueryRequest balanceQueryRequest = new BalanceQueryRequest();
         balanceQueryRequest.setChannel(ChannelContant.HTML);
         balanceQueryRequest.setAccountId(userThirdAccount.getAccountId());
@@ -699,11 +714,69 @@ public class TenderBizImpl implements TenderBiz {
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "资金账户还存在待还/待收金额，请清0后重试!"));
         }
-
         //4.校验用户本地债权
-
+        //判断是否有未回未转让债权
+        Specification<BorrowCollection> bcs = Specifications
+                .<BorrowCollection>and()
+                .eq("status", 0)
+                .eq("transferFlag", 0)
+                .eq("userId", userId)
+                .build();
+        long count = borrowCollectionService.count(bcs);
+        if (count > 0) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "账户还存在未回款债权，暂无法结束债权!"));
+        }
+        //判断是否有未还债权
+        Specification<BorrowRepayment> brs = Specifications
+                .<BorrowRepayment>and()
+                .eq("status", 0)
+                .eq("userId", userId)
+                .build();
+        count = borrowRepaymentService.count(brs);
+        if (count > 0) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "账户还存在未还款债权，暂无法结束债权!"));
+        }
         //5.通过即信的债权反查本地债权，然后统一结束
+        int max = 20, index = 1, totalItems = 0;
+        /*结束债权集合*/
+        List<CreditEnd> creditEndList = new ArrayList<>();
 
+        CreditDetailsQueryRequest creditDetailsQueryRequest = new CreditDetailsQueryRequest();
+        creditDetailsQueryRequest.setAccountId(String.valueOf(userThirdAccount.getAccountId()));
+        creditDetailsQueryRequest.setStartDate("2017-08-01");
+        creditDetailsQueryRequest.setEndDate(DateHelper.dateToString(new Date(), DateHelper.DATE_FORMAT_YMD_NUM));
+        creditDetailsQueryRequest.setState("0");
+        do {
+            creditDetailsQueryRequest.setPageNum(String.valueOf(index));
+            creditDetailsQueryRequest.setPageSize(String.valueOf(max));
+            CreditDetailsQueryResponse creditDetailsQueryResponse = jixinManager.send(JixinTxCodeEnum.CREDIT_DETAILS_QUERY,
+                    creditDetailsQueryRequest,
+                    CreditDetailsQueryResponse.class);
+            if ((ObjectUtils.isEmpty(creditDetailsQueryResponse)) || !creditDetailsQueryResponse.getRetCode().equals(JixinResultContants.SUCCESS)) {
+                return ResponseEntity
+                        .badRequest()
+                        .body(VoBaseResp.error(VoBaseResp.ERROR, String.format("当前网络不稳定,请稍后重试! %s", creditDetailsQueryResponse.getRetMsg())));
+            }
+
+            /*查询得到的总记录数量*/
+            totalItems = NumberHelper.toInt(creditDetailsQueryResponse.getTotalItems());
+            if (totalItems == 0) {
+                break;
+            }
+            /*查询债权的结果*/
+            List<CreditDetailsQueryItem> queryItems = GSON.fromJson(creditDetailsQueryResponse.getSubPacks(), new TypeToken(CreditDetailsQueryItem.class) {
+            }.getType());
+            queryItems.stream().forEach(creditDetailsQueryItem -> {
+
+            });
+
+            //查询页码叠加
+            index++;
+        } while (totalItems >= max);
         return ResponseEntity.ok(VoBaseResp.ok("结束申请成功!"));
     }
 }

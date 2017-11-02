@@ -1085,23 +1085,6 @@ public class ThirdBatchDealBizImpl implements ThirdBatchDealBiz {
             if (resp.getBody().getState().getCode() == VoBaseResp.OK) {
                 //更新批次状态
                 thirdBatchLogBiz.updateBatchLogState(String.valueOf(batchNo), transferId, 3, ThirdBatchLogContants.BATCH_CREDIT_INVEST);
-
-                /*Transfer transfer = transferService.findById(transferId);
-                //推送队列结束债权
-                MqConfig mqConfig = new MqConfig();
-                mqConfig.setQueue(MqQueueEnum.RABBITMQ_CREDIT);
-                mqConfig.setTag(MqTagEnum.END_CREDIT_BY_TRANSFER);
-                mqConfig.setSendTime(DateHelper.addMinutes(new Date(), 1));
-                ImmutableMap<String, String> body = ImmutableMap
-                        .of(MqConfig.MSG_BORROW_ID, StringHelper.toString(transfer.getBorrowId()), MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
-                mqConfig.setMsg(body);
-                try {
-                    log.info(String.format("thirdBatchProvider creditInvestDeal send mq %s", GSON.toJson(body)));
-                    mqHelper.convertAndSend(mqConfig);
-                } catch (Throwable e) {
-                    log.error("thirdBatchProvider creditInvestDeal send mq exception", e);
-                }*/
-
                 log.info("批量债权转让复审: 成功");
             } else {
                 log.error("批量债权转让复审: 失败");
