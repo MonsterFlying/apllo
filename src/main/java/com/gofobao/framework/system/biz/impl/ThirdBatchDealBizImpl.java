@@ -108,8 +108,6 @@ public class ThirdBatchDealBizImpl implements ThirdBatchDealBiz {
     @Autowired
     private TransferBiz transferBiz;
     @Autowired
-    private ThirdErrorRemarkService thirdErrorRemarkService;
-    @Autowired
     MqHelper mqHelper;
     @Autowired
     private BorrowRepaymentService borrowRepaymentService;
@@ -184,10 +182,13 @@ public class ThirdBatchDealBizImpl implements ThirdBatchDealBiz {
 
         //筛选失败批次
         Preconditions.checkState(!CollectionUtils.isEmpty(detailsQueryRespList), String.format("批处理回调: 查询批次详细异常!batchNo:%s", batchNo));
-        List<String> failureOrderIds = new ArrayList<>(); // 失败orderId
-        List<String> successOrderIds = new ArrayList<>(); // 成功orderId
+        // 失败orderId
+        List<String> failureOrderIds = new ArrayList<>();
+        // 成功orderId
+        List<String> successOrderIds = new ArrayList<>();
         List<String> failureErrorMsgList = new ArrayList<>();
-        List<String> otherOrderIds = new ArrayList<>();//其它状态orderId
+        //其它状态orderId
+        List<String> otherOrderIds = new ArrayList<>();
         detailsQueryRespList.forEach(obj -> {
             if ("F".equalsIgnoreCase(obj.getTxState())) {
                 Set<String> allowOrderSet = ImmutableSet.of("GFBLR_1509092581849851604141", "GFBLR_1509093387392347016546", "GFBLR_1509093387389569383511");
@@ -209,7 +210,8 @@ public class ThirdBatchDealBizImpl implements ThirdBatchDealBiz {
         //不存在失败批次进行后续操作
         try {
             switch (thirdBatchLog.getType()) {
-                case ThirdBatchLogContants.BATCH_CREDIT_INVEST: // 投资人批次购买债权
+                // 投资人批次购买债权
+                case ThirdBatchLogContants.BATCH_CREDIT_INVEST:
                     // 批次债权转让结果处理
                     newCreditInvestDeal(batchNo, sourceId, failureOrderIds, successOrderIds);
                     break;
@@ -217,7 +219,8 @@ public class ThirdBatchDealBizImpl implements ThirdBatchDealBiz {
                     //理财计划批次债权转让结果处理
                     financeCreditInvestDeal(batchNo, sourceId, failureOrderIds, successOrderIds, acqRes);
                     break;
-                case ThirdBatchLogContants.BATCH_LEND_REPAY: // 即信批次放款
+                // 即信批次放款
+                case ThirdBatchLogContants.BATCH_LEND_REPAY:
                     // 即信批次放款结果处理
                     lendRepayDeal(batchNo, sourceId, failureOrderIds, successOrderIds);
                     break;
@@ -225,19 +228,23 @@ public class ThirdBatchDealBizImpl implements ThirdBatchDealBiz {
                     // 即信批次放款结果处理
                     financeLendRepayDeal(batchNo, sourceId, failureOrderIds, successOrderIds);
                     break;
-                case ThirdBatchLogContants.BATCH_REPAY: //即信批次还款
+                //即信批次还款
+                case ThirdBatchLogContants.BATCH_REPAY:
                     // 即信批次还款结果处理
                     repayDeal(batchNo, sourceId, failureOrderIds, successOrderIds);
                     break;
-                case ThirdBatchLogContants.BATCH_BAIL_REPAY: //名义借款人垫付
+                //名义借款人垫付
+                case ThirdBatchLogContants.BATCH_BAIL_REPAY:
                     // 即信批次名义借款人垫付处理
                     bailRepayDeal(batchNo, sourceId, failureOrderIds, successOrderIds);
                     break;
-                case ThirdBatchLogContants.BATCH_CREDIT_END: //批次结束债权
+                //批次结束债权
+                case ThirdBatchLogContants.BATCH_CREDIT_END:
                     // 批次结束债权
                     creditEndDeal(batchNo, sourceId, failureOrderIds, successOrderIds);
                     break;
-                case ThirdBatchLogContants.BATCH_REPAY_ALL: //提前结清批次还款
+                //提前结清批次还款
+                case ThirdBatchLogContants.BATCH_REPAY_ALL:
                     // 提前结清批次还款
                     repayAllDeal(batchNo, sourceId, failureOrderIds, successOrderIds);
                     break;
