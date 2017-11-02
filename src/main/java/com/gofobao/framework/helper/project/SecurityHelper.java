@@ -44,4 +44,10 @@ public class SecurityHelper {
         result.add("paramStr", dataStr);
         return result;
     }
+
+    public static void main(String[] args) {
+        System.out.print(getSign("{terminal:1}"));
+
+
+    }
 }
