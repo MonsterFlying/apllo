@@ -780,6 +780,7 @@ public class TenderBizImpl implements TenderBiz {
                             .body(VoBaseResp.error(VoBaseResp.ERROR, String.format("即信存在投标中的债权，请确认后重试! productId->%s ,orderId->%s",
                                     queryItem.getProductId(), queryItem.getOrderId())));
                 }
+                //2.计息中是考虑债权迁移
                 if (ImmutableSet.of("2","4").contains(queryItemState)){
 
                 }
