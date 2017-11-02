@@ -1,5 +1,6 @@
 package com.gofobao.framework;
 
+import com.gofobao.framework.as.biz.AssetStatementBiz;
 import com.gofobao.framework.as.biz.CashStatementBiz;
 import com.gofobao.framework.as.biz.RechargeStatementBiz;
 import com.gofobao.framework.as.biz.impl.CashStatementBizImpl;
@@ -62,6 +63,14 @@ public class StatementTest {
         } catch (Exception e) {
             log.error("实时在线同步", e);
         }
+    }
 
+    @Autowired
+    AssetStatementBiz assetStatementBiz ;
+
+    @Test
+    public void testAssetChange(){
+        Date date = DateHelper.stringToDate("2017-09-28 00:00:00");
+        assetStatementBiz.checkUpAccount(date) ;
     }
 }

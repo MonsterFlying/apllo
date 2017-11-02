@@ -1,19 +1,24 @@
 package com.gofobao.framework.asset.controller;
 
+import com.gofobao.framework.as.biz.AssetStatementBiz;
 import com.gofobao.framework.asset.biz.AssetBiz;
 import com.gofobao.framework.asset.vo.request.VoSynAssetsRep;
 import com.gofobao.framework.asset.vo.response.*;
 import com.gofobao.framework.borrow.vo.request.VoDoAgainVerifyReq;
 import com.gofobao.framework.core.vo.VoBaseResp;
+import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.helper.project.SecurityHelper;
 import com.gofobao.framework.security.contants.SecurityContants;
 import com.gofobao.framework.tender.vo.request.VoLocalAssetChangeReq;
+import com.google.common.base.Preconditions;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import springfox.documentation.annotations.ApiIgnore;
+
+import java.util.Date;
 
 /**
  * Created by Zeke on 2017/5/19.
@@ -24,6 +29,16 @@ public class AssetController {
     @Autowired
     private AssetBiz assetBiz;
 
+    @Autowired
+    AssetStatementBiz assetStatementBiz;
+
+    @GetMapping("pub/asset/check-up-account/{date}")
+    public ResponseEntity<VoBaseResp> checkUpAccount(@PathVariable() String date) throws Exception {
+        Preconditions.checkNotNull(date, "AssetController date is null");
+        Date checkUpDate = DateHelper.stringToDate(date);
+        assetStatementBiz.checkUpAccount(checkUpDate);
+        return ResponseEntity.ok(VoBaseResp.ok("成功"));
+    }
 
     @PostMapping("pub/asset/changeRecord")
     public ResponseEntity<VoBaseResp> insertLocalRecord(@ModelAttribute VoLocalAssetChangeReq voLocalAssetChangeReq) throws Exception {
@@ -34,7 +49,7 @@ public class AssetController {
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "本地记录修改异常!"));
         }
 
-        return assetBiz.changeLocalAsset(voLocalAssetChangeReq) ;
+        return assetBiz.changeLocalAsset(voLocalAssetChangeReq);
     }
 
     @ApiOperation("获取用户资产信息")
@@ -47,46 +62,46 @@ public class AssetController {
     @ApiOperation("投标中心资金同步问题")
     @PostMapping("/asset/v2/synOffLineRecharge")
     public ResponseEntity<VoUserAssetInfoResp> synOffLineRecharge(@ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) throws Exception {
-        return assetBiz.synOffLineRecharge(userId) ;
+        return assetBiz.synOffLineRecharge(userId);
     }
 
 
     @ApiOperation("资产中心资金同步问题")
     @PostMapping("/home/v2/synHome")
     public ResponseEntity<VoAssetIndexResp> synHome(@ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) throws Exception {
-        return assetBiz.synHome(userId) ;
+        return assetBiz.synHome(userId);
     }
 
     @ApiOperation("资金同步问题")
     @PostMapping("/pub/asset/v2/adminSynOffLineRecharge")
     public ResponseEntity<VoUserAssetInfoResp> adminSynOffLineRecharge(@ModelAttribute VoSynAssetsRep voSynAssetsRep) throws Exception {
-        return assetBiz.adminSynOffLineRecharge(voSynAssetsRep) ;
+        return assetBiz.adminSynOffLineRecharge(voSynAssetsRep);
     }
 
 
     @ApiOperation("资产中心数据")
     @GetMapping("/asset/v2/index")
-    public ResponseEntity<VoAssetIndexResp> asset(@ApiIgnore  @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
-        return assetBiz.asset(userId) ;
+    public ResponseEntity<VoAssetIndexResp> asset(@ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
+        return assetBiz.asset(userId);
     }
 
     @ApiOperation("累计收益详情")
     @GetMapping("/asset/v2/accruedMoney")
     public ResponseEntity<VoAccruedMoneyResp> accruedMoney(@ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
-        return assetBiz.accruedMoney(userId) ;
+        return assetBiz.accruedMoney(userId);
     }
 
 
     @ApiOperation("账户余额")
     @GetMapping("/asset/v2/accountMoney")
     public ResponseEntity<VoAvailableAssetInfoResp> accountMoney(@ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
-        return assetBiz.accountMoney(userId) ;
+        return assetBiz.accountMoney(userId);
     }
 
     @ApiOperation("待收总额")
     @GetMapping("/asset/v2/collectionMoney")
     public ResponseEntity<VoCollectionResp> collectionMoney(@ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
-        return assetBiz.collectionMoney(userId) ;
+        return assetBiz.collectionMoney(userId);
     }
 
 

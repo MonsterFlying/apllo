@@ -43,4 +43,8 @@ public interface NewAssetLogService {
     long count(Specification<NewAssetLog> assetLogSpecification);
 
     NewAssetLog findById(long id);
+
+    Long countByDate(String beginDate, String endDate);
+
+    List<NewAssetLog> findByDate(String beginDate, String endDate, Pageable pageable);
 }
