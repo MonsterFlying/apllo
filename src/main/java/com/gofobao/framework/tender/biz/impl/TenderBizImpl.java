@@ -59,6 +59,7 @@ import com.gofobao.framework.windmill.borrow.biz.WindmillTenderBiz;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.HashMultiset;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Multiset;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
@@ -767,13 +768,22 @@ public class TenderBizImpl implements TenderBiz {
             if (totalItems == 0) {
                 break;
             }
-            /*查询债权的结果*/
+            /*查询债权的结果 1-投标中 2-计息中 4-本息已返回 9-已撤销 不需要关注 :8-审核中*/
             List<CreditDetailsQueryItem> queryItems = GSON.fromJson(creditDetailsQueryResponse.getSubPacks(), new TypeToken(CreditDetailsQueryItem.class) {
             }.getType());
-            queryItems.stream().forEach(creditDetailsQueryItem -> {
+            for (CreditDetailsQueryItem queryItem : queryItems) {
+                String queryItemState = queryItem.getState();
+                //存在投标中债权
+                if ("1".equals(queryItemState)) {
+                    return ResponseEntity
+                            .badRequest()
+                            .body(VoBaseResp.error(VoBaseResp.ERROR, String.format("即信存在投标中的债权，请确认后重试! productId->%s ,orderId->%s",
+                                    queryItem.getProductId(), queryItem.getOrderId())));
+                }
+                if (ImmutableSet.of("2","4").contains(queryItemState)){
 
-            });
-
+                }
+            }
             //查询页码叠加
             index++;
         } while (totalItems >= max);
