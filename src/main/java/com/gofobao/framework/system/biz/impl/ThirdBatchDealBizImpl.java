@@ -261,11 +261,11 @@ public class ThirdBatchDealBizImpl implements ThirdBatchDealBiz {
     /**
      * 批次结束债权处理
      *
-     * @param borrowId
+     * @param userId
      * @param failureThirdCreditEndOrderIds
      * @param successThirdCreditEndOrderIds
      */
-    private void creditEndDeal(String batchNo, long borrowId, List<String> failureThirdCreditEndOrderIds, List<String> successThirdCreditEndOrderIds) {
+    private void creditEndDeal(String batchNo, long userId, List<String> failureThirdCreditEndOrderIds, List<String> successThirdCreditEndOrderIds) {
         if (CollectionUtils.isEmpty(failureThirdCreditEndOrderIds)) {
             log.info("================================================================================");
             log.info("即信批次还款查询：未发现失败批次！");
@@ -287,7 +287,7 @@ public class ThirdBatchDealBizImpl implements ThirdBatchDealBiz {
 
         if (CollectionUtils.isEmpty(failureThirdCreditEndOrderIds)) {
             //更新批次日志状态
-            thirdBatchLogBiz.updateBatchLogState(String.valueOf(batchNo), borrowId, 3, ThirdBatchLogContants.BATCH_CREDIT_END);
+            thirdBatchLogBiz.updateBatchLogState(String.valueOf(batchNo), userId, 3, ThirdBatchLogContants.BATCH_CREDIT_END);
         }
     }
 
