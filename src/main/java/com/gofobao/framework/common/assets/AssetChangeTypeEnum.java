@@ -291,7 +291,7 @@ public enum AssetChangeTypeEnum {
     /**
      * 利息管理费
      */
-    interestManagementFee("利息管理费", "interestManagementFee", "9781", "sub@useMoney", "add@expenditureInterestManage", "C"),
+    interestManagementFee("利息管理费", "interestManagementFee", "9781", "sub@useMoney", "add@expenditureInterestManage,sub@waitExpenditureInterestManage", "C"),
 
 
     /**
