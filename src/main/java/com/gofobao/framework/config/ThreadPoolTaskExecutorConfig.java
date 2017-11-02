@@ -18,8 +18,8 @@ public class ThreadPoolTaskExecutorConfig {
     @Bean
     public ThreadPoolTaskExecutor threadPoolTaskExecutor() {
         ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
-        executor.setCorePoolSize(5);
-        executor.setMaxPoolSize(10);
+        executor.setCorePoolSize(20);
+        executor.setMaxPoolSize(40);
         executor.setQueueCapacity(1000);
         executor.setRejectedExecutionHandler(new ThreadPoolExecutor.AbortPolicy());
         return executor;

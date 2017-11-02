@@ -921,3 +921,21 @@ CREATE TABLE `gfb_application_version` (
 
 ALTER TABLE gfb_users ADD wheel_id VARCHAR(50) NULL;
 ALTER TABLE gfb_users ADD bind_wheel_date DATETIME NULL;
+
+
+
+CREATE TABLE `gfb_realtime_asset` (
+  `id` INT NOT NULL AUTO_INCREMENT,
+  `user_id` INT NULL COMMENT '用户ID',
+  `account_id` INT NULL COMMENT '存管账户ID',
+  `username` VARCHAR(45) NULL COMMENT '用户昵称',
+  `phone` VARCHAR(45) NULL COMMENT '手机',
+  `jixin_total_amount` DECIMAL(16,2) NULL COMMENT '存管账户总额',
+  `local_total_amount` DECIMAL(16,2) NULL COMMENT '本地总金额',
+  `jixin_use_amount` DECIMAL(16,2) NULL COMMENT '存管可用金额',
+  `local_use_amount` DECIMAL(16,2) NULL COMMENT '本地可用金额',
+  `inteval_money` DECIMAL(16,2) NULL COMMENT '相差金额(存管账户总额-本地总金额)',
+  `create_time` DATETIME NULL COMMENT '查询时间',
+  `batch_no` BIGINT NULL COMMENT '查询批次(每一次调用资金比对, 生成最新批次)',
+  PRIMARY KEY (`id`))
+  COMMENT = '实时查询存管金额记录表' , charset="utf8";
