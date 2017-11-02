@@ -18,20 +18,20 @@ import java.util.Date;
 public class NewAssetLog {
     @Id
     @GeneratedValue
-    private long id;
+    private Long id;
     private Integer type;
     private String opName;
-    private long opMoney;
-    private long useMoney;
-    private long noUseMoney;
-    private long userId;
-    private long forUserId;
+    private Long opMoney;
+    private Long useMoney;
+    private Long noUseMoney;
+    private Long userId;
+    private Long forUserId;
     private String platformType;
     private String localType;
     private String txFlag;
     private String localSeqNo;
-    private long currMoney;
-    private long sourceId;
+    private Long currMoney;
+    private Long sourceId;
     private Date createTime;
     private String remark;
     private String groupOpSeqNo;
