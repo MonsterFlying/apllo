@@ -1,6 +1,6 @@
-package com.gofobao.framework.system.controller.finance;
+package com.gofobao.framework.system.cache;
 
-import com.gofobao.framework.helper.project.SecurityHelper;
+import com.gofobao.framework.borrow.vo.request.VoDoAgainVerifyReq;
 import com.gofobao.framework.system.biz.BannerBiz;
 import com.gofobao.framework.system.biz.HomeBiz;
 import com.gofobao.framework.system.biz.StatisticBiz;
@@ -12,16 +12,17 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-
-import java.security.Security;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 /**
  * Created by admin on 2017/6/14.
  */
 @RestController
 @Api(description = "首页")
-public class FinanceIndexController {
+public class BanerController {
 
     @Autowired
     private StatisticBiz statisticBiz;
@@ -32,20 +33,12 @@ public class FinanceIndexController {
     @Autowired
     private HomeBiz homeBiz;
 
-    @GetMapping("/index/finance/v2/statistic")
-    public ResponseEntity<VoViewIndexStatisticsWarpRes> statistic() {
-        return statisticBiz.query();
-    }
-
-    @GetMapping("/index/finance/v2/banner/list")
-    public ResponseEntity<VoIndexResp> index() {
-        return bannerBiz.index("mobile");
-    }
-
-    @ApiOperation("首页")
-    @GetMapping("/pub/finance/index/v2/home")
-    public ResponseEntity<VoFinanceIndexResp> home() {
-        return homeBiz.financeHome() ;
+    /**
+     * 清除banner缓存
+     */
+    @PostMapping("/index/banner/cache/clear")
+    public ResponseEntity<BanerCache> clearCache(VoDoAgainVerifyReq voDoAgainVerifyReq) {
+        return bannerBiz.clear(voDoAgainVerifyReq);
     }
 
 

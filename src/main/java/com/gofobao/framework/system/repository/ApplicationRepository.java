@@ -11,4 +11,5 @@ import org.springframework.stereotype.Repository;
 public interface ApplicationRepository extends JpaRepository<Application, Integer> {
 
 
+    Application findTopByAliasName(String aliasName);
 }

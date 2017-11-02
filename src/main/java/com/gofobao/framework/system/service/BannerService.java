@@ -10,4 +10,10 @@ import java.util.List;
 public interface BannerService {
 
     List<IndexBanner> index(String terminal);
+
+    /**
+     * 清除缓存
+     * @param terminal
+     */
+    void clear(String terminal);
 }

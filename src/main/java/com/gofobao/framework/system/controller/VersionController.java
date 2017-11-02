@@ -11,10 +11,7 @@ import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.StringUtils;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestHeader;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletResponse;
 
@@ -55,11 +52,11 @@ public class VersionController {
     }
 
     @ApiOperation("版本检查 params: 版本号 versionId:1 ,应用编号 applicationId：１")
-    @PostMapping("application/version/checkVersion")
+    @GetMapping("application/version/checkVersion/{aliasName}/{versionId}")
     public ResponseEntity<VoSysVersion2> recheckVersion(HttpServletResponse response,
-                                                        @RequestHeader("applicationId") Integer applicationId,
-                                                        @RequestHeader("versionId") Integer versionId) {
-        return applicationVersionBiz.recheckVersion(applicationId, versionId, response);
+                                                        @PathVariable("aliasName") String aliasName,
+                                                        @PathVariable("versionId") Integer versionId) {
+        return applicationVersionBiz.recheckVersion(aliasName, versionId, response);
     }
 
 }
