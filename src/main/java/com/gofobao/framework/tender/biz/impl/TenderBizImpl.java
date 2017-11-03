@@ -180,10 +180,11 @@ public class TenderBizImpl implements TenderBiz {
         Multiset<String> extendMessage = HashMultiset.create();
         boolean state = verifyBorrowInfo4Borrow(borrow, user, voCreateTenderReq, extendMessage);  // 标的判断
         if (!state) {
-            log.error("标判断不通过");
             Set<String> errorSet = extendMessage.elementSet();
             Iterator<String> iterator = errorSet.iterator();
-            return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, iterator.next()));
+            String msg =  iterator.next();
+            log.error("标判断不通过"+msg);
+            return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, msg));
         }
 
         state = verifyUserInfo4Borrow(user, borrow, asset, voCreateTenderReq, extendMessage); // 借款用户资产判断
