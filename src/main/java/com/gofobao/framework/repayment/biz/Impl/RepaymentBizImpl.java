@@ -2258,7 +2258,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
         }
 
         // 现用户
-        double oneDayOverPricipal = MoneyHelper.multiply(overPrincipal, 0.004);  // 每天逾期费
+        double oneDayOverPricipal = MoneyHelper.multiply(overPrincipal, 0.002);  // 每天逾期费
         double allDayOverPricipal = MoneyHelper.multiply(oneDayOverPricipal, lateDays);  // 总共逾期费
         // return new Double(MoneyHelper.round(overPrincipal * 0.002 * lateDays, 2)).intValue();
         return MoneyHelper.doubleToLong(MoneyHelper.round(allDayOverPricipal, 0));  //不会四舍五入
