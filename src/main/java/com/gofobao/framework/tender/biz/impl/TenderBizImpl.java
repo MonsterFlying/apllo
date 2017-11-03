@@ -68,9 +68,9 @@ import com.google.common.collect.HashMultiset;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Multiset;
-import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.reflect.TypeToken;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -93,8 +93,6 @@ import java.util.stream.Collectors;
 @Service
 @Slf4j
 public class TenderBizImpl implements TenderBiz {
-
-    static final Gson GSON = new Gson();
 
     @Autowired
     private UserService userService;
@@ -233,7 +231,7 @@ public class TenderBizImpl implements TenderBiz {
             ImmutableMap<String, String> body = ImmutableMap
                     .of(MqConfig.MSG_BORROW_ID, StringHelper.toString(borrow.getId()), MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
             mqConfig.setMsg(body);
-            log.info(String.format("tenderBizImpl tender send mq %s", GSON.toJson(body)));
+            log.info(String.format("tenderBizImpl tender send mq %s", gson.toJson(body)));
             mqHelper.convertAndSend(mqConfig);
         }
 
@@ -518,7 +516,7 @@ public class TenderBizImpl implements TenderBiz {
         if (endDate.getTime() < nowDate.getTime()) {
             // 流标
             log.info("==========================================");
-            log.info(String.format("标的流标操作: %s", GSON.toJson(borrow)));
+            log.info(String.format("标的流标操作: %s", gson.toJson(borrow)));
             log.info("==========================================");
             VoCancelBorrow voCancelBorrow = new VoCancelBorrow();
             voCancelBorrow.setBorrowId(borrow.getId());
@@ -635,7 +633,7 @@ public class TenderBizImpl implements TenderBiz {
             log.error("BorrowBizImpl doAgainVerify error：自动车标不成功");
         }
 
-        Map<String, String> paramMap = GSON.fromJson(paramStr, new com.google.gson.reflect.TypeToken<Map<String, String>>() {
+        Map<String, String> paramMap = gson.fromJson(paramStr, new TypeToken<Map<String, String>>() {
         }.getType());
 
 
@@ -684,7 +682,6 @@ public class TenderBizImpl implements TenderBiz {
     }
 
     /**
-     *
      * @param userId
      * @return
      * @throws Exception
@@ -776,7 +773,7 @@ public class TenderBizImpl implements TenderBiz {
 
         CreditDetailsQueryRequest creditDetailsQueryRequest = new CreditDetailsQueryRequest();
         creditDetailsQueryRequest.setAccountId(String.valueOf(userThirdAccount.getAccountId()));
-        creditDetailsQueryRequest.setStartDate("2017-08-01");
+        creditDetailsQueryRequest.setStartDate("20170801");
         creditDetailsQueryRequest.setEndDate(DateHelper.dateToString(new Date(), DateHelper.DATE_FORMAT_YMD_NUM));
         creditDetailsQueryRequest.setState("0");
         do {
@@ -797,7 +794,7 @@ public class TenderBizImpl implements TenderBiz {
                 break;
             }
             /*查询债权的结果 1-投标中 2-计息中 4-本息已返回 9-已撤销 不需要关注 :8-审核中*/
-            List<CreditDetailsQueryItem> queryItems = GSON.fromJson(creditDetailsQueryResponse.getSubPacks(), new TypeToken(CreditDetailsQueryItem.class) {
+            List<CreditDetailsQueryItem> queryItems = gson.fromJson(creditDetailsQueryResponse.getSubPacks(), new TypeToken<List<CreditDetailsQueryItem>>() {
             }.getType());
             /*投标记录集合*/
             List<Tender> tenderList = new ArrayList<>();
@@ -848,9 +845,9 @@ public class TenderBizImpl implements TenderBiz {
             //2.未转出去的则查询当前的借款是否全部结清
             for (Tender tender : tenderList) {
                 //已全部转让债权
-                if (tender.getTransferFlag() == 2) {
+                if (tender.getTransferFlag().intValue() == 2) {
 
-                } else if (tender.getState() == 1 && tender.getTransferFlag() == 0) {
+                } else if (tender.getStatus().intValue() == 1 && tender.getTransferFlag().intValue() == 0) {
                     //未转让债权再次单独查询
                     brs = Specifications
                             .<BorrowRepayment>and()
