@@ -1,6 +1,7 @@
 package com.gofobao.framework.tender.service.impl;
 
 import com.github.wenhao.jpa.Specifications;
+import com.gofobao.framework.borrow.contants.BorrowContants;
 import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.borrow.repository.BorrowRepository;
 import com.gofobao.framework.borrow.vo.response.VoBorrowTenderUserRes;
@@ -31,6 +32,7 @@ import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Created by admin on 2017/5/19.
@@ -206,21 +208,31 @@ public class TenderServiceImpl implements TenderService {
     public Map<String, Long> statistic() {
         Date todayAt = new Date();
         Date yesterdayAt = DateHelper.subDays(todayAt, 1);
-        Specification todaySpecificati = Specifications.<Tender>and()
-                .between("createdAt", new Range<>(DateHelper.beginOfDate(todayAt), DateHelper.endOfDate(todayAt)))
-                .eq("status", TenderConstans.SUCCESS)
+        Date todayBeginOfDate = DateHelper.beginOfDate(todayAt);
+        Specification<Borrow> borrowSpecification = Specifications.<Borrow>and()
+                .eq("status", BorrowContants.PASS)
+                .between("successAt", new Range<>(DateHelper.beginOfDate(yesterdayAt), todayAt))
                 .build();
-        Specification yesterdaySpecificati = Specifications.<Tender>and()
-                .between("createdAt", new Range<>(DateHelper.beginOfDate(yesterdayAt), DateHelper.endOfDate(yesterdayAt)))
-                .eq("status", TenderConstans.SUCCESS)
-                .build();
-        List<Tender> todayTender = tenderRepository.findAll(todaySpecificati);
-        List<Tender> yesterdayTender = tenderRepository.findAll(yesterdaySpecificati);
-
+        List<Borrow> borrows = borrowRepository.findAll(borrowSpecification);
+        List<Borrow> yesterdayBorrow = borrows.stream()
+                .filter(borrow ->
+                        borrow.getSuccessAt().getTime() < todayBeginOfDate.getTime())
+                .collect(Collectors.toList());
+        List<Borrow> todayBorrow = borrows.stream()
+                .filter(borrow ->
+                        borrow.getSuccessAt().getTime() > todayBeginOfDate.getTime())
+                .collect(Collectors.toList());
         Map<String, Long> statistic = Maps.newHashMap();
-        statistic.put("todayTender", CollectionUtils.isEmpty(todayTender) ? 0 : todayTender.stream().mapToLong(p -> p.getValidMoney()).sum());
-        statistic.put("yesterdayTender", CollectionUtils.isEmpty(yesterdayTender) ? 0 : yesterdayTender.stream().mapToLong(p -> p.getValidMoney()).sum());
-
+        statistic.put("todayTender", CollectionUtils.isEmpty(todayBorrow)
+                ? 0
+                : todayBorrow.stream()
+                .mapToLong(p -> p.getMoneyYes())
+                .sum());
+        statistic.put("yesterdayTender", CollectionUtils.isEmpty(yesterdayBorrow)
+                ? 0
+                : yesterdayBorrow.stream()
+                .mapToLong(p -> p.getMoneyYes())
+                .sum());
         return statistic;
     }
 }
