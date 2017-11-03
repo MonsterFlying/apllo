@@ -9,4 +9,6 @@ import org.springframework.stereotype.Repository;
  */
 @Repository
 public interface ApplicationVersionRepository extends JpaRepository<ApplicationVersion, Integer> {
+    ApplicationVersion findTopByApplicationIdOrderByIdDesc(Integer applicationId);
+
 }

@@ -108,8 +108,6 @@ public class ThirdBatchDealBizImpl implements ThirdBatchDealBiz {
     @Autowired
     private TransferBiz transferBiz;
     @Autowired
-    private ThirdErrorRemarkService thirdErrorRemarkService;
-    @Autowired
     MqHelper mqHelper;
     @Autowired
     private BorrowRepaymentService borrowRepaymentService;
@@ -184,10 +182,13 @@ public class ThirdBatchDealBizImpl implements ThirdBatchDealBiz {
 
         //筛选失败批次
         Preconditions.checkState(!CollectionUtils.isEmpty(detailsQueryRespList), String.format("批处理回调: 查询批次详细异常!batchNo:%s", batchNo));
-        List<String> failureOrderIds = new ArrayList<>(); // 失败orderId
-        List<String> successOrderIds = new ArrayList<>(); // 成功orderId
+        // 失败orderId
+        List<String> failureOrderIds = new ArrayList<>();
+        // 成功orderId
+        List<String> successOrderIds = new ArrayList<>();
         List<String> failureErrorMsgList = new ArrayList<>();
-        List<String> otherOrderIds = new ArrayList<>();//其它状态orderId
+        //其它状态orderId
+        List<String> otherOrderIds = new ArrayList<>();
         detailsQueryRespList.forEach(obj -> {
             if ("F".equalsIgnoreCase(obj.getTxState())) {
                 Set<String> allowOrderSet = ImmutableSet.of("GFBLR_1509092581849851604141", "GFBLR_1509093387392347016546", "GFBLR_1509093387389569383511");
@@ -209,7 +210,8 @@ public class ThirdBatchDealBizImpl implements ThirdBatchDealBiz {
         //不存在失败批次进行后续操作
         try {
             switch (thirdBatchLog.getType()) {
-                case ThirdBatchLogContants.BATCH_CREDIT_INVEST: // 投资人批次购买债权
+                // 投资人批次购买债权
+                case ThirdBatchLogContants.BATCH_CREDIT_INVEST:
                     // 批次债权转让结果处理
                     newCreditInvestDeal(batchNo, sourceId, failureOrderIds, successOrderIds);
                     break;
@@ -217,7 +219,8 @@ public class ThirdBatchDealBizImpl implements ThirdBatchDealBiz {
                     //理财计划批次债权转让结果处理
                     financeCreditInvestDeal(batchNo, sourceId, failureOrderIds, successOrderIds, acqRes);
                     break;
-                case ThirdBatchLogContants.BATCH_LEND_REPAY: // 即信批次放款
+                // 即信批次放款
+                case ThirdBatchLogContants.BATCH_LEND_REPAY:
                     // 即信批次放款结果处理
                     lendRepayDeal(batchNo, sourceId, failureOrderIds, successOrderIds);
                     break;
@@ -225,19 +228,23 @@ public class ThirdBatchDealBizImpl implements ThirdBatchDealBiz {
                     // 即信批次放款结果处理
                     financeLendRepayDeal(batchNo, sourceId, failureOrderIds, successOrderIds);
                     break;
-                case ThirdBatchLogContants.BATCH_REPAY: //即信批次还款
+                //即信批次还款
+                case ThirdBatchLogContants.BATCH_REPAY:
                     // 即信批次还款结果处理
                     repayDeal(batchNo, sourceId, failureOrderIds, successOrderIds);
                     break;
-                case ThirdBatchLogContants.BATCH_BAIL_REPAY: //名义借款人垫付
+                //名义借款人垫付
+                case ThirdBatchLogContants.BATCH_BAIL_REPAY:
                     // 即信批次名义借款人垫付处理
                     bailRepayDeal(batchNo, sourceId, failureOrderIds, successOrderIds);
                     break;
-                case ThirdBatchLogContants.BATCH_CREDIT_END: //批次结束债权
+                //批次结束债权
+                case ThirdBatchLogContants.BATCH_CREDIT_END:
                     // 批次结束债权
                     creditEndDeal(batchNo, sourceId, failureOrderIds, successOrderIds);
                     break;
-                case ThirdBatchLogContants.BATCH_REPAY_ALL: //提前结清批次还款
+                //提前结清批次还款
+                case ThirdBatchLogContants.BATCH_REPAY_ALL:
                     // 提前结清批次还款
                     repayAllDeal(batchNo, sourceId, failureOrderIds, successOrderIds);
                     break;
@@ -254,11 +261,11 @@ public class ThirdBatchDealBizImpl implements ThirdBatchDealBiz {
     /**
      * 批次结束债权处理
      *
-     * @param borrowId
+     * @param userId
      * @param failureThirdCreditEndOrderIds
      * @param successThirdCreditEndOrderIds
      */
-    private void creditEndDeal(String batchNo, long borrowId, List<String> failureThirdCreditEndOrderIds, List<String> successThirdCreditEndOrderIds) {
+    private void creditEndDeal(String batchNo, long userId, List<String> failureThirdCreditEndOrderIds, List<String> successThirdCreditEndOrderIds) {
         if (CollectionUtils.isEmpty(failureThirdCreditEndOrderIds)) {
             log.info("================================================================================");
             log.info("即信批次还款查询：未发现失败批次！");
@@ -280,7 +287,7 @@ public class ThirdBatchDealBizImpl implements ThirdBatchDealBiz {
 
         if (CollectionUtils.isEmpty(failureThirdCreditEndOrderIds)) {
             //更新批次日志状态
-            thirdBatchLogBiz.updateBatchLogState(String.valueOf(batchNo), borrowId, 3, ThirdBatchLogContants.BATCH_CREDIT_END);
+            thirdBatchLogBiz.updateBatchLogState(String.valueOf(batchNo), userId, 3, ThirdBatchLogContants.BATCH_CREDIT_END);
         }
     }
 
@@ -1078,23 +1085,6 @@ public class ThirdBatchDealBizImpl implements ThirdBatchDealBiz {
             if (resp.getBody().getState().getCode() == VoBaseResp.OK) {
                 //更新批次状态
                 thirdBatchLogBiz.updateBatchLogState(String.valueOf(batchNo), transferId, 3, ThirdBatchLogContants.BATCH_CREDIT_INVEST);
-
-                /*Transfer transfer = transferService.findById(transferId);
-                //推送队列结束债权
-                MqConfig mqConfig = new MqConfig();
-                mqConfig.setQueue(MqQueueEnum.RABBITMQ_CREDIT);
-                mqConfig.setTag(MqTagEnum.END_CREDIT_BY_TRANSFER);
-                mqConfig.setSendTime(DateHelper.addMinutes(new Date(), 1));
-                ImmutableMap<String, String> body = ImmutableMap
-                        .of(MqConfig.MSG_BORROW_ID, StringHelper.toString(transfer.getBorrowId()), MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
-                mqConfig.setMsg(body);
-                try {
-                    log.info(String.format("thirdBatchProvider creditInvestDeal send mq %s", GSON.toJson(body)));
-                    mqHelper.convertAndSend(mqConfig);
-                } catch (Throwable e) {
-                    log.error("thirdBatchProvider creditInvestDeal send mq exception", e);
-                }*/
-
                 log.info("批量债权转让复审: 成功");
             } else {
                 log.error("批量债权转让复审: 失败");

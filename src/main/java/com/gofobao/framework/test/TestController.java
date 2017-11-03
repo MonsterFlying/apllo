@@ -86,6 +86,7 @@ import com.gofobao.framework.system.contants.ThirdBatchLogContants;
 import com.gofobao.framework.system.entity.ThirdBatchLog;
 import com.gofobao.framework.system.service.ThirdBatchLogService;
 import com.gofobao.framework.tender.biz.AutoTenderBiz;
+import com.gofobao.framework.tender.biz.TenderBiz;
 import com.gofobao.framework.tender.biz.TransferBiz;
 import com.gofobao.framework.tender.entity.Tender;
 import com.gofobao.framework.tender.entity.Transfer;
@@ -302,6 +303,23 @@ public class TestController {
         if (CollectionUtils.isEmpty(thirdBatchLogList)) {
             return;
         }
+    }
+
+    @Autowired
+    TenderBiz tenderBiz;
+
+    @ApiOperation("结束第三方债权")
+    @RequestMapping("/pub/test/end/third")
+    @Transactional(rollbackFor = Exception.class)
+    public void endThird(@RequestParam("userId") Object userId) {
+        ResponseEntity<VoBaseResp> responseEntity = null;
+        try {
+            responseEntity = tenderBiz.endThirdTender(NumberHelper.toLong(userId));
+        } catch (Exception e) {
+            log.error("异常：", e);
+            e.printStackTrace();
+        }
+        log.info(responseEntity.getBody().getState().getMsg());
     }
 
     @ApiOperation("获取自动投标列表")

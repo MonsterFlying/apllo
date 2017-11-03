@@ -491,7 +491,7 @@ public class TransferProvider {
         transferBuyLogService.save(transferBuyLogList);
 
         //批次号
-        String batchNo = jixinHelper.getBatchNo();
+        String batchNo = JixinHelper.getBatchNo();
         //请求保留参数
         Map<String, Object> acqResMap = new HashMap<>();
         acqResMap.put("transferId", transfer.getId());

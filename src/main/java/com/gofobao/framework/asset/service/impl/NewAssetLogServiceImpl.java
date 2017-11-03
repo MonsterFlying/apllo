@@ -5,6 +5,7 @@ import com.gofobao.framework.asset.repository.NewAssetLogRepository;
 import com.gofobao.framework.asset.service.NewAssetLogService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
@@ -36,6 +37,7 @@ public class NewAssetLogServiceImpl implements NewAssetLogService {
     public List<NewAssetLog> findAll(Specification<NewAssetLog> specification) {
         return newAssetLogRepository.findAll(specification);
     }
+
     @Override
     public long count(Specification<NewAssetLog> assetLogSpecification) {
         return newAssetLogRepository.count(assetLogSpecification);
@@ -43,7 +45,16 @@ public class NewAssetLogServiceImpl implements NewAssetLogService {
 
     @Override
     public NewAssetLog findById(long id) {
+        return newAssetLogRepository.findById(id);
+    }
 
-        return newAssetLogRepository.findById(id) ;
+    @Override
+    public Long countByDate(String beginDate, String endDate) {
+        return newAssetLogRepository.countByDate(beginDate, endDate);
+    }
+
+    @Override
+    public List<NewAssetLog> findByDate(String beginDate, String endDate, Pageable pageable) {
+        return newAssetLogRepository.findByDate(beginDate, endDate, pageable);
     }
 }

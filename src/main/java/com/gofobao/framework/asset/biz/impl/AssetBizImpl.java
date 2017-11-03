@@ -507,7 +507,8 @@ public class AssetBizImpl implements AssetBiz {
                 log.info(String.format("充值成功: %s", gson.toJson(directRechargeOnlineResponse)));
                 state = 1;
                 msg = directRechargeOnlineResponse.getRetMsg();
-            } else if (JixinResultContants.toBeConfirm(directRechargeOnlineResponse)) { // 需要确认
+            } else if (JixinResultContants.toBeConfirm(directRechargeOnlineResponse)) {
+                // 需要确认
                 log.info(String.format("充值待确认: %s", gson.toJson(directRechargeOnlineResponse)));
                 state = 2; // 充值失败
                 msg = "非常抱歉, 当前充值状态不明确, 系统需要在10分钟后确认是否充值成功!";
@@ -545,20 +546,26 @@ public class AssetBizImpl implements AssetBiz {
 
             if (state == 1) {
                 try {
-                    doAssetChangeByRecharge(voRechargeReq, users, directRechargeOnlineResponse, now);
+                    // 资金变动
+                    doAssetChangeByRecharge(voRechargeReq, users, rechargeDetailLog, now);
                 } catch (Exception e) {
                     exceptionEmailHelper.sendErrorMessage("充值成功, 资金变动异常", gson.toJson(saveRechargeDetailLog));
                     rechargeAndCashAndRedpackQueryHelper.save(RechargeAndCashAndRedpackQueryHelper.QueryType.QUERY_RECHARGE, users.getId(), saveRechargeDetailLog.getId(), false);
                 }
 
-                MqConfig mqConfig = new MqConfig();
-                mqConfig.setTag(MqTagEnum.RECHARGE);
-                mqConfig.setQueue(MqQueueEnum.RABBITMQ_USER_ACTIVE);
-                mqConfig.setSendTime(DateHelper.addSeconds(now, 10));
-                ImmutableMap<String, String> body = ImmutableMap.of(MqConfig.MSG_ID, rechargeDetailLog.getId().toString());
-                mqConfig.setMsg(body);
-                mqHelper.convertAndSend(mqConfig);
-                log.info("触发充值记录调度");
+                try {
+                    log.info("触发充值记录调度");
+                    MqConfig mqConfig = new MqConfig();
+                    mqConfig.setTag(MqTagEnum.RECHARGE);
+                    mqConfig.setQueue(MqQueueEnum.RABBITMQ_USER_ACTIVE);
+                    mqConfig.setSendTime(DateHelper.addSeconds(now, 10));
+                    ImmutableMap<String, String> body = ImmutableMap.of(MqConfig.MSG_ID, rechargeDetailLog.getId().toString());
+                    mqConfig.setMsg(body);
+                    mqHelper.convertAndSend(mqConfig);
+                } catch (Exception e) {
+                    log.error("发送充值记录异常", e);
+                }
+                
                 return ResponseEntity.ok(VoBaseResp.ok("充值成功"));
             } else {
                 return ResponseEntity
@@ -576,16 +583,16 @@ public class AssetBizImpl implements AssetBiz {
     }
 
     @Transactional(rollbackFor = Exception.class)
-    public void doAssetChangeByRecharge(VoRechargeReq voRechargeReq, Users users, DirectRechargeOnlineResponse directRechargeOnlineResponse, Date now) throws Exception {
+    public void doAssetChangeByRecharge(VoRechargeReq voRechargeReq, Users users, RechargeDetailLog rechargeDetailLog, Date now) throws Exception {
         AssetChange entity = new AssetChange();
         String groupSeqNo = assetChangeProvider.getGroupSeqNo();
-        String seqNo = String.format("%s%s%s", directRechargeOnlineResponse.getTxDate(), directRechargeOnlineResponse.getTxTime(), directRechargeOnlineResponse.getSeqNo());
         entity.setGroupSeqNo(groupSeqNo);
         entity.setMoney(new Double(voRechargeReq.getMoney() * 100).longValue());
-        entity.setSeqNo(seqNo);
+        entity.setSeqNo(rechargeDetailLog.getSeqNo());
         entity.setUserId(users.getId());
         entity.setRemark(String.format("你在 %s 成功充值%s元", DateHelper.dateToString(now), voRechargeReq.getMoney()));
         entity.setType(AssetChangeTypeEnum.onlineRecharge);
+        entity.setSourceId(rechargeDetailLog.getId());  // 资金变动来源
         assetChangeProvider.commonAssetChange(entity);
     }
 

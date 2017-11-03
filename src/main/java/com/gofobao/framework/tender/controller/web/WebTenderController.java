@@ -6,6 +6,7 @@ import com.gofobao.framework.security.helper.JwtTokenHelper;
 import com.gofobao.framework.tender.biz.TenderBiz;
 import com.gofobao.framework.tender.vo.request.TenderUserReq;
 import com.gofobao.framework.tender.vo.request.VoCreateTenderReq;
+import com.gofobao.framework.tender.vo.request.VoPcEndThirdTender;
 import com.gofobao.framework.tender.vo.response.VoBorrowTenderUserWarpListRes;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -69,4 +70,12 @@ public class WebTenderController {
         voCreateTenderReq.setUserId(userId);
         return tenderBiz.tender(voCreateTenderReq);
     }
+
+    @ApiOperation("结束用户债权转让")
+    @PostMapping("/pub/tender/pc/v2/third/end")
+    public ResponseEntity<VoBaseResp> pcTender(@ModelAttribute @Valid VoPcEndThirdTender voPcEndThirdTender) throws Exception {
+        return tenderBiz.pcEndThirdTender(voPcEndThirdTender);
+    }
+
+
 }

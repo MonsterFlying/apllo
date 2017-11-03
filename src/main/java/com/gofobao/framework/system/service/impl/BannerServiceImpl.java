@@ -64,5 +64,13 @@ public class BannerServiceImpl implements BannerService {
         }
     }
 
+    @Override
+    public void clear(String terminal) {
+        //刷新缓存
+        //bannerCache.refresh(terminal);
+        //清除缓存
+        bannerCache.invalidate(terminal);
+    }
+
 
 }

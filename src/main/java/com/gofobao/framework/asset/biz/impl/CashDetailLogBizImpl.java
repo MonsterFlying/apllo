@@ -164,12 +164,6 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
     @Transactional(rollbackFor = Exception.class)
     public ResponseEntity<VoPreCashResp> preCash(Long userId, HttpServletRequest httpServletRequest) {
         //同步资金
-       /* try {
-            assetBiz.synOffLineRecharge(userId);
-        } catch (Exception e) {
-            log.error("获取可提现额失败", e);
-        }*/
-
         Users users = userService.findByIdLock(userId);
         Preconditions.checkNotNull(users, "当前用户不存在");
         if (users.getIsLock()) {

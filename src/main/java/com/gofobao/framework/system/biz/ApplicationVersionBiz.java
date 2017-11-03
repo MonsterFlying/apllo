@@ -10,6 +10,6 @@ import javax.servlet.http.HttpServletResponse;
  */
 public interface ApplicationVersionBiz {
 
-    ResponseEntity<VoSysVersion2> recheckVersion(Integer aliasName, Integer versionId , HttpServletResponse response);
+    ResponseEntity<VoSysVersion2> recheckVersion(String aliasName, Integer versionId , HttpServletResponse response);
 
 }

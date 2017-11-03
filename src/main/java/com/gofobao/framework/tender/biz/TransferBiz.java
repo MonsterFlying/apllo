@@ -178,7 +178,7 @@ public interface TransferBiz {
      * @param parentBorrow
      * @param childTenderList
      */
-    List<BorrowCollection> addChildTenderCollection(Date nowDate, Transfer transfer, Borrow parentBorrow, List<Tender> childTenderList) throws Exception;
+    List<BorrowCollection> addChildTenderCollection(Date nowDate, Transfer transfer, Borrow parentBorrow, List<Tender> childTenderList, List<BorrowCollection> oldBorrowCollectionList) throws Exception;
 
     /**
      * 投标合同

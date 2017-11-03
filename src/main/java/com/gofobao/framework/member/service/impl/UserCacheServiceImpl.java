@@ -286,7 +286,7 @@ public class UserCacheServiceImpl implements UserCacheService {
         Long expenditureOther = userCache.getExpenditureOther();
         Long expenditureOverdue = userCache.getExpenditureOverdue();
         Long waitRepayInterest = userCache.getWaitRepayInterest();
-        Double waitExpenditureInterestManage = (userCache.getTjWaitCollectionInterest() + userCache.getQdWaitCollectionInterest()) * 0.1;
+        long waitExpenditureInterestManage = userCache.getWaitExpenditureInterestManageFee();
         //已付利息管理费
         expenditureDetail.setInterestManageFee(StringHelper.formatMon(expenditureInterestManage / 100D));
         //其他支出
@@ -302,7 +302,7 @@ public class UserCacheServiceImpl implements UserCacheService {
         //待付利息
         expenditureDetail.setWaitExpendInterest(StringHelper.formatMon(waitRepayInterest / 100D));
         //待付利息管理费
-        expenditureDetail.setWaitExpendInterestManageFee(StringHelper.formatMon(userCache.getWaitExpenditureInterestManageFee() / 100D));
+        expenditureDetail.setWaitExpendInterestManageFee(StringHelper.formatMon(waitExpenditureInterestManage / 100D));
         //待付支出
         expenditureDetail.setWaitExpendTotal(StringHelper.formatMon((waitExpenditureInterestManage + waitRepayInterest) / 100D));
         //已支出总额

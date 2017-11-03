@@ -1,5 +1,6 @@
 package com.gofobao.framework.tender.biz.impl;
 
+import com.github.wenhao.jpa.Specifications;
 import com.gofobao.framework.api.contants.ChannelContant;
 import com.gofobao.framework.api.contants.FrzFlagContant;
 import com.gofobao.framework.api.contants.JixinResultContants;
@@ -7,8 +8,16 @@ import com.gofobao.framework.api.helper.JixinManager;
 import com.gofobao.framework.api.helper.JixinTxCodeEnum;
 import com.gofobao.framework.api.model.balance_query.BalanceQueryRequest;
 import com.gofobao.framework.api.model.balance_query.BalanceQueryResponse;
+import com.gofobao.framework.api.model.batch_cancel.BatchCancelReq;
+import com.gofobao.framework.api.model.batch_cancel.BatchCancelResp;
+import com.gofobao.framework.api.model.batch_credit_end.BatchCreditEndReq;
+import com.gofobao.framework.api.model.batch_credit_end.BatchCreditEndResp;
+import com.gofobao.framework.api.model.batch_credit_end.CreditEnd;
 import com.gofobao.framework.api.model.bid_cancel.BidCancelReq;
 import com.gofobao.framework.api.model.bid_cancel.BidCancelResp;
+import com.gofobao.framework.api.model.credit_details_query.CreditDetailsQueryItem;
+import com.gofobao.framework.api.model.credit_details_query.CreditDetailsQueryRequest;
+import com.gofobao.framework.api.model.credit_details_query.CreditDetailsQueryResponse;
 import com.gofobao.framework.asset.entity.Asset;
 import com.gofobao.framework.asset.service.AssetService;
 import com.gofobao.framework.borrow.biz.BorrowBiz;
@@ -16,6 +25,8 @@ import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.borrow.service.BorrowService;
 import com.gofobao.framework.borrow.vo.request.VoCancelBorrow;
 import com.gofobao.framework.borrow.vo.response.VoBorrowTenderUserRes;
+import com.gofobao.framework.collection.entity.BorrowCollection;
+import com.gofobao.framework.collection.service.BorrowCollectionService;
 import com.gofobao.framework.common.assets.AssetChange;
 import com.gofobao.framework.common.assets.AssetChangeProvider;
 import com.gofobao.framework.common.assets.AssetChangeTypeEnum;
@@ -39,7 +50,11 @@ import com.gofobao.framework.member.entity.Users;
 import com.gofobao.framework.member.service.UserCacheService;
 import com.gofobao.framework.member.service.UserService;
 import com.gofobao.framework.member.service.UserThirdAccountService;
+import com.gofobao.framework.repayment.entity.BorrowRepayment;
 import com.gofobao.framework.repayment.service.BorrowRepaymentService;
+import com.gofobao.framework.system.contants.ThirdBatchLogContants;
+import com.gofobao.framework.system.entity.ThirdBatchLog;
+import com.gofobao.framework.system.service.ThirdBatchLogService;
 import com.gofobao.framework.tender.biz.TenderBiz;
 import com.gofobao.framework.tender.biz.TenderThirdBiz;
 import com.gofobao.framework.tender.entity.Tender;
@@ -51,18 +66,26 @@ import com.gofobao.framework.windmill.borrow.biz.WindmillTenderBiz;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.HashMultiset;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Multiset;
+import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 
 import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * Created by Zeke on 2017/5/31.
@@ -103,7 +126,13 @@ public class TenderBizImpl implements TenderBiz {
     private JixinTenderRecordHelper jixinTenderRecordHelper;
     @Autowired
     private BorrowRepaymentService borrowRepaymentService;
-
+    @Autowired
+    private BorrowCollectionService borrowCollectionService;
+    @Autowired
+    private ThirdBatchLogService thirdBatchLogService;
+    @Value("${gofobao.javaDomain}")
+    String javaDomain;
+    private static Gson gson = new GsonBuilder().create();
 
     /**
      * 新版投标
@@ -112,6 +141,7 @@ public class TenderBizImpl implements TenderBiz {
      * @return
      * @throws Exception
      */
+    @Override
     public ResponseEntity<VoBaseResp> createTender(VoCreateTenderReq voCreateTenderReq) throws Exception {
         Gson gson = new Gson();
         log.info(String.format("马上投资: 起步: %s", gson.toJson(voCreateTenderReq)));
@@ -554,6 +584,7 @@ public class TenderBizImpl implements TenderBiz {
      * @return
      */
     @Transactional(rollbackFor = Exception.class)
+    @Override
     public ResponseEntity<VoBaseResp> tender(VoCreateTenderReq voCreateTenderReq) throws Exception {
         //投标撤回集合
         String borrowId = String.valueOf(voCreateTenderReq.getBorrowId());
@@ -638,8 +669,7 @@ public class TenderBizImpl implements TenderBiz {
      * @return
      */
     @Override
-    @Transactional(rollbackFor = Exception.class)
-    public ResponseEntity<VoBaseResp> pcEndThirdTender(VoPcEndThirdTender voPcEndThirdTender) {
+    public ResponseEntity<VoBaseResp> pcEndThirdTender(VoPcEndThirdTender voPcEndThirdTender) throws Exception {
         String paramStr = voPcEndThirdTender.getParamStr();
         if (!SecurityHelper.checkSign(voPcEndThirdTender.getSign(), paramStr)) {
             return ResponseEntity
@@ -649,6 +679,19 @@ public class TenderBizImpl implements TenderBiz {
         Map<String, String> paramMap = new Gson().fromJson(paramStr, TypeTokenContants.MAP_ALL_STRING_TOKEN);
         /*用户id*/
         long userId = NumberHelper.toLong(paramMap.get("userId"));
+        return endThirdTender(userId);
+
+    }
+
+    /**
+     *
+     * @param userId
+     * @return
+     * @throws Exception
+     */
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public ResponseEntity<VoBaseResp> endThirdTender(long userId) throws Exception {
         //1.用户本地前置校验（例如是否锁定什么的）
         /*用户对象*/
         Users users = userService.findByIdLock(userId);
@@ -663,8 +706,9 @@ public class TenderBizImpl implements TenderBiz {
         Asset asset = assetService.findByUserIdLock(userId);
         Preconditions.checkNotNull(asset, "结束第三方债权 用户资金记录不存在!");
         //3.校验用户即信资金账户
-        // 查询存管系统资金
+        /*用户存管记录*/
         UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(userId);
+        // 查询存管系统资金
         BalanceQueryRequest balanceQueryRequest = new BalanceQueryRequest();
         balanceQueryRequest.setChannel(ChannelContant.HTML);
         balanceQueryRequest.setAccountId(userThirdAccount.getAccountId());
@@ -699,11 +743,203 @@ public class TenderBizImpl implements TenderBiz {
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "资金账户还存在待还/待收金额，请清0后重试!"));
         }
-
         //4.校验用户本地债权
-
+        //判断是否有未回未转让债权
+        Specification<BorrowCollection> bcs = Specifications
+                .<BorrowCollection>and()
+                .eq("status", 0)
+                .eq("transferFlag", 0)
+                .eq("userId", userId)
+                .build();
+        long count = borrowCollectionService.count(bcs);
+        if (count > 0) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "账户还存在未回款债权，暂无法结束债权!"));
+        }
+        //判断是否有未还债权
+        Specification<BorrowRepayment> brs = Specifications
+                .<BorrowRepayment>and()
+                .eq("status", 0)
+                .eq("userId", userId)
+                .build();
+        count = borrowRepaymentService.count(brs);
+        if (count > 0) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "账户还存在未还款债权，暂无法结束债权!"));
+        }
         //5.通过即信的债权反查本地债权，然后统一结束
+        int max = 20, index = 1, totalItems = 0;
+        /*结束债权集合*/
+        List<CreditEnd> creditEndList = new ArrayList<>();
 
+        CreditDetailsQueryRequest creditDetailsQueryRequest = new CreditDetailsQueryRequest();
+        creditDetailsQueryRequest.setAccountId(String.valueOf(userThirdAccount.getAccountId()));
+        creditDetailsQueryRequest.setStartDate("2017-08-01");
+        creditDetailsQueryRequest.setEndDate(DateHelper.dateToString(new Date(), DateHelper.DATE_FORMAT_YMD_NUM));
+        creditDetailsQueryRequest.setState("0");
+        do {
+            creditDetailsQueryRequest.setPageNum(String.valueOf(index));
+            creditDetailsQueryRequest.setPageSize(String.valueOf(max));
+            CreditDetailsQueryResponse creditDetailsQueryResponse = jixinManager.send(JixinTxCodeEnum.CREDIT_DETAILS_QUERY,
+                    creditDetailsQueryRequest,
+                    CreditDetailsQueryResponse.class);
+            if ((ObjectUtils.isEmpty(creditDetailsQueryResponse)) || !creditDetailsQueryResponse.getRetCode().equals(JixinResultContants.SUCCESS)) {
+                return ResponseEntity
+                        .badRequest()
+                        .body(VoBaseResp.error(VoBaseResp.ERROR, String.format("当前网络不稳定,请稍后重试! %s", creditDetailsQueryResponse.getRetMsg())));
+            }
+
+            /*查询得到的总记录数量*/
+            totalItems = NumberHelper.toInt(creditDetailsQueryResponse.getTotalItems());
+            if (totalItems == 0) {
+                break;
+            }
+            /*查询债权的结果 1-投标中 2-计息中 4-本息已返回 9-已撤销 不需要关注 :8-审核中*/
+            List<CreditDetailsQueryItem> queryItems = GSON.fromJson(creditDetailsQueryResponse.getSubPacks(), new TypeToken(CreditDetailsQueryItem.class) {
+            }.getType());
+            /*投标记录集合*/
+            List<Tender> tenderList = new ArrayList<>();
+            for (CreditDetailsQueryItem queryItem : queryItems) {
+                /*债权状态 1-投标中 2-计息中 4-本息已返回 9-已撤销 不需要关注 :8-审核中*/
+                String queryItemState = queryItem.getState();
+                //存在投标中债权
+                if ("1".equals(queryItemState)) {
+                    return ResponseEntity
+                            .badRequest()
+                            .body(VoBaseResp.error(VoBaseResp.ERROR, String.format("即信存在投标中的债权，请确认后重试! productId->%s ,orderId->%s",
+                                    queryItem.getProductId(), queryItem.getOrderId())));
+                }
+                /*借款id*/
+                String productId = queryItem.getProductId();
+                /*债权订单id*/
+                String orderId = queryItem.getOrderId();
+                //2.计息中是考虑债权迁移
+                if (ImmutableSet.of("2", "4").contains(queryItemState)) {
+                    Specification<Tender> ts = Specifications
+                            .<Tender>and()
+                            .eq("thirdTenderOrderId", orderId)
+                            .eq("borrowId", productId)
+                            .eq("userId", userId)
+                            .build();
+                    List<Tender> aloneTenderList = tenderService.findList(ts);
+                    tenderList.addAll(aloneTenderList);
+                }
+            }
+            //结束债权条件
+            /*借款id集合*/
+            Set<Long> borrowIds = tenderList.stream().map(Tender::getBorrowId).collect(Collectors.toSet());
+            Specification<Borrow> bs = Specifications
+                    .<Borrow>and()
+                    .in("id", borrowIds.toArray())
+                    .build();
+            List<Borrow> borrowList = borrowService.findList(bs);
+            Map<Long, Borrow> borrowMap = borrowList.stream().collect(Collectors.toMap(Borrow::getId, Function.identity()));
+            /*借款人用户id集合*/
+            Set<Long> borrowUserIds = borrowList.stream().map(Borrow::getUserId).collect(Collectors.toSet());
+            Specification<UserThirdAccount> utas = Specifications
+                    .<UserThirdAccount>and()
+                    .in("userId", borrowUserIds.toArray())
+                    .build();
+            List<UserThirdAccount> userThirdAccountList = userThirdAccountService.findList(utas);
+            Map<Long, UserThirdAccount> userThirdAccountMap = userThirdAccountList.stream().collect(Collectors.toMap(UserThirdAccount::getUserId, Function.identity()));
+            //1.已经转让出去
+            //2.未转出去的则查询当前的借款是否全部结清
+            for (Tender tender : tenderList) {
+                //已全部转让债权
+                if (tender.getTransferFlag() == 2) {
+
+                } else if (tender.getState() == 1 && tender.getTransferFlag() == 0) {
+                    //未转让债权再次单独查询
+                    brs = Specifications
+                            .<BorrowRepayment>and()
+                            .eq("borrowId", tender.getBorrowId())
+                            .eq("status", 0)
+                            .build();
+                    count = borrowRepaymentService.count(brs);
+                    if (count > 0) {
+                        return ResponseEntity
+                                .badRequest()
+                                .body(VoBaseResp.error(VoBaseResp.ERROR, String.format("查询到未还款债权记录! borrowId -> %s", tender.getBorrowId())));
+                    }
+                } else {
+                    continue;
+                }
+                /*借款记录*/
+                Borrow borrow = borrowMap.get(tender.getBorrowId());
+                /*借款用户存管记录*/
+                UserThirdAccount borrowUserThirdAccount = userThirdAccountMap.get(borrow.getUserId());
+                /* 结束债权orderId */
+                String orderId = JixinHelper.getOrderId(JixinHelper.END_CREDIT_PREFIX);
+                /* 结束债权 */
+                CreditEnd creditEnd = new CreditEnd();
+                creditEnd.setAccountId(borrowUserThirdAccount.getAccountId());
+                creditEnd.setOrderId(orderId);
+                creditEnd.setAuthCode(tender.getAuthCode());
+                creditEnd.setForAccountId(userThirdAccount.getAccountId());
+                creditEnd.setProductId(borrow.getProductId());
+                creditEndList.add(creditEnd);
+
+                //保存orderId
+                tender.setThirdCreditEndOrderId(orderId);
+            }
+            tenderService.save(tenderList);
+
+            //查询页码叠加
+            index++;
+        } while (totalItems >= max);
+
+        //判断结束债权不为空
+        if (CollectionUtils.isEmpty(creditEndList)) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "结束债权集合为空!"));
+        }
+
+        //发送批次结束债权
+        Date nowDate = new Date();
+
+        //批次号
+        String batchNo = JixinHelper.getBatchNo();
+        //请求保留参数
+        Map<String, Object> acqResMap = new HashMap<>();
+        acqResMap.put("userId", userId);
+
+        BatchCreditEndReq request = new BatchCreditEndReq();
+        request.setBatchNo(batchNo);
+        request.setTxCounts(String.valueOf(creditEndList.size()));
+        request.setNotifyURL(javaDomain + "/pub/tender/v2/third/batch/creditend/check");
+        request.setRetNotifyURL(javaDomain + "/pub/tender/v2/third/batch/creditend/run");
+        request.setAcqRes(gson.toJson(acqResMap));
+        request.setSubPacks(gson.toJson(creditEndList));
+
+        BatchCreditEndResp creditEndResp = jixinManager.send(JixinTxCodeEnum.BATCH_CREDIT_END, request, BatchCreditEndResp.class);
+        if ((ObjectUtils.isEmpty(creditEndResp)) || (!JixinResultContants.BATCH_SUCCESS.equalsIgnoreCase(creditEndResp.getReceived()))) {
+            BatchCancelReq batchCancelReq = new BatchCancelReq();
+            batchCancelReq.setBatchNo(batchNo);
+            batchCancelReq.setTxAmount(StringHelper.formatDouble(0, 100, false));
+            batchCancelReq.setTxCounts(StringHelper.toString(creditEndList.size()));
+            batchCancelReq.setChannel(ChannelContant.HTML);
+            BatchCancelResp batchCancelResp = jixinManager.send(JixinTxCodeEnum.BATCH_CANCEL, batchCancelReq, BatchCancelResp.class);
+            if ((ObjectUtils.isEmpty(batchCancelResp)) || (!ObjectUtils.isEmpty(batchCancelResp.getRetCode()))) {
+                throw new Exception("即信批次撤销失败!");
+            }
+        }
+
+        //记录日志
+        ThirdBatchLog thirdBatchLog = new ThirdBatchLog();
+        thirdBatchLog.setBatchNo(batchNo);
+        thirdBatchLog.setCreateAt(nowDate);
+        thirdBatchLog.setUpdateAt(nowDate);
+        thirdBatchLog.setTxDate(request.getTxDate());
+        thirdBatchLog.setTxTime(request.getTxTime());
+        thirdBatchLog.setSeqNo(request.getSeqNo());
+        thirdBatchLog.setSourceId(userId);
+        thirdBatchLog.setType(ThirdBatchLogContants.BATCH_CREDIT_END);
+        thirdBatchLog.setAcqRes(gson.toJson(acqResMap));
+        thirdBatchLog.setRemark("即信批次结束债权");
+        thirdBatchLogService.save(thirdBatchLog);
         return ResponseEntity.ok(VoBaseResp.ok("结束申请成功!"));
     }
 }
