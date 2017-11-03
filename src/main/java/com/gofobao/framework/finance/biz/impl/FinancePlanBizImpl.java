@@ -732,13 +732,14 @@ public class FinancePlanBizImpl implements FinancePlanBiz {
                 .notIn("status", statusArray.toArray())
                 .eq("type", 0)
                 .build();
-        List<FinancePlan> financePlans = financePlanService.findList(specification, new PageRequest(page.getPageIndex(), page.getPageSize(),
-                new Sort(Sort.Direction.DESC, "id")));
+        List<FinancePlan> financePlans = financePlanService.findList(specification,
+                new PageRequest(page.getPageIndex(), page.getPageSize(),
+                        new Sort(Sort.Direction.ASC, "status")));
 
         if (CollectionUtils.isEmpty(financePlans)) {
             return ResponseEntity.ok(warpRes);
         }
-        List<PlanList> planLists = new ArrayList<>();
+        List<PlanList> planLists = new ArrayList<>(financePlans.size());
         //装配结果集
         financePlans.stream().forEach(p -> {
             PlanList plan = new PlanList();
