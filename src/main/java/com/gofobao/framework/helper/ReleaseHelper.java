@@ -20,7 +20,7 @@ public class ReleaseHelper {
      * @param data 数据
      * @return
      */
-    public static boolean sendMsg(String url, Map<String, String> data) {
+    public static boolean sendMsgByPost(String url, Map<String, String> data) {
         try {
             MultiValueMap<String, String> stringStringMap = SecurityHelper.doSign(data);
             RestTemplate restTemplate = new RestTemplate();
@@ -29,6 +29,27 @@ public class ReleaseHelper {
             headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
             HttpEntity<MultiValueMap<String, String>> entity = new HttpEntity<>(stringStringMap, headers);
             ResponseEntity<Map> response = restTemplate.exchange(url, HttpMethod.POST, entity, Map.class);
+            log.info("========================================");
+            log.info("发送结果:" + new Gson().toJson(response));
+            log.info("========================================");
+            return true;
+        } catch (Exception e) {
+            log.error("发送通信失败", e);
+            return false;
+        }
+
+    }
+
+
+    public static boolean sendMsgByGet(String url, Map<String, String> data) {
+        try {
+            MultiValueMap<String, String> stringStringMap = SecurityHelper.doSign(data);
+            RestTemplate restTemplate = new RestTemplate();
+            HttpHeaders headers = new HttpHeaders();
+            //  请勿轻易改变此提交方式，大部分的情况下，提交方式都是表单提交
+            headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
+            HttpEntity<MultiValueMap<String, String>> entity = new HttpEntity<>(stringStringMap, headers);
+            ResponseEntity<Map> response = restTemplate.exchange(url, HttpMethod.GET, entity, Map.class);
             log.info("========================================");
             log.info("发送结果:" + new Gson().toJson(response));
             log.info("========================================");
