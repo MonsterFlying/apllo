@@ -1,5 +1,6 @@
 package com.gofobao.framework;
 
+import com.gofobao.framework.as.biz.AssetStatementBiz;
 import com.gofobao.framework.asset.biz.AssetSynBiz;
 import com.gofobao.framework.financial.biz.NewAleveBiz;
 import com.gofobao.framework.financial.biz.NewEveBiz;
@@ -32,6 +33,9 @@ import java.util.Map;
 public class AssetTests {
 
     final Gson GSON = new GsonBuilder().create();
+
+    @Autowired
+    AssetStatementBiz assetStatementBiz;
 
 
     @Autowired
@@ -110,11 +114,4 @@ public class AssetTests {
             }
         }
     }
-
-    @Test
-    public void test05() throws Exception {
-        String date = "20171001";
-        newEveBiz.audit(date);
-    }
-
 }

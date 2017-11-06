@@ -42,6 +42,9 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+/**
+ * @author Administrator
+ */
 @Component
 @Slf4j
 public class AssetStatementBizImpl implements AssetStatementBiz {
@@ -182,6 +185,7 @@ public class AssetStatementBizImpl implements AssetStatementBiz {
         } while (pageIndex < pageIndexTatol);
         return true;
     }
+
 }
 
 @Data
