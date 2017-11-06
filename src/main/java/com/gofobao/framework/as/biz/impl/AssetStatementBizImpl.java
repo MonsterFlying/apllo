@@ -1,5 +1,6 @@
 package com.gofobao.framework.as.biz.impl;
 
+import com.github.wenhao.jpa.PredicateBuilder;
 import com.github.wenhao.jpa.Specifications;
 import com.gofobao.framework.api.contants.ChannelContant;
 import com.gofobao.framework.api.contants.JixinResultContants;
@@ -73,7 +74,7 @@ public class AssetStatementBizImpl implements AssetStatementBiz {
     JixinTxDateHelper jixinTxDateHelper;
 
     @Override
-    public boolean checkUpAccount() {
+    public boolean checkUpAccountForChange() {
         log.info("============================");
         log.info("根据开户信息查询开户记录");
         log.info("============================");
@@ -136,13 +137,21 @@ public class AssetStatementBizImpl implements AssetStatementBiz {
         log.info("============================");
         log.info("根据开户信息查询开户记录");
         log.info("============================");
+        return doCheckUpAccount(false);
+    }
+
+    private boolean doCheckUpAccount(boolean activeState) {
         long batchNo = System.currentTimeMillis();
         int pageSize = 100, pageIndex = 0;
         int pageIndexTatol = 0;
+        PredicateBuilder<UserThirdAccount> predicateBuilder = Specifications.<UserThirdAccount>and();
+        if (activeState) {
+            // 查询活跃用户
+            predicateBuilder.eq("activeState", 1);
+        }
 
-        Specification<UserThirdAccount> userThirdAccountSpecificationForCount = Specifications
-                .<UserThirdAccount>and()
-                .build();
+        Specification<UserThirdAccount> userThirdAccountSpecificationForCount =
+                predicateBuilder.build();
         Long count = userThirdAccountService.count(userThirdAccountSpecificationForCount);
         if (count == 0) {
             log.warn("[用户资金记录查询] 待查询记录为零");
@@ -153,7 +162,7 @@ public class AssetStatementBizImpl implements AssetStatementBiz {
         log.info(String.format("[用户资金记录查询] 待检测总数: %s", pageIndexTatol));
         do {
             log.info("================================");
-            log.info("账户查询进度" + ( MoneyHelper.divide(pageIndex, pageIndexTatol, 2) * 100 )+ "%");
+            log.info("账户查询进度" + (MoneyHelper.multiply(MoneyHelper.divide(pageIndex, pageIndexTatol, 4), 100, 2)) + "%");
             log.info("================================");
             Pageable pageable = new PageRequest(pageIndex, pageSize, new Sort(new Sort.Order(Sort.Direction.DESC, "id")));
             Specification<UserThirdAccount> userThirdAccountSpecification = Specifications
@@ -187,6 +196,15 @@ public class AssetStatementBizImpl implements AssetStatementBiz {
 
         } while (pageIndex < pageIndexTatol);
         return true;
+    }
+
+    @Override
+    public boolean checkUpAccountForActiveState() {
+        log.info("============================");
+        log.info("根据用户活跃度查询账户资金");
+        log.info("============================");
+        doCheckUpAccount(true) ;
+        return false;
     }
 
 }

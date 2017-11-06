@@ -941,6 +941,12 @@ CREATE TABLE `gfb_realtime_asset` (
   COMMENT = '实时查询存管金额记录表' , charset="utf8";
 
 
+# 账户中添加用户活跃状态
+ALTER TABLE `gfb_user_third_account`
+  ADD COLUMN `active_state` int(11) NULL DEFAULT 0 COMMENT '用户活跃状态: 1.活跃账户, 0, 僵尸用户' AFTER `bank_logo`;
+
+
+
 ALTER TABLE gfb_user_cache
   ADD wait_expenditure_interest_manage INT(10) UNSIGNED NOT NULL DEFAULT 0
 COMMENT '待付利息管理费'
