@@ -8,7 +8,9 @@ import lombok.Data;
 import java.util.List;
 
 /**
- * Created by Zeke on 2017/7/11.
+ *
+ * @author Zeke
+ * @date 2017/7/11
  */
 @ApiModel("回款详情")
 @Data
@@ -20,6 +22,8 @@ public class CollectionDetail {
     private String interest;
     private String earnings;
     private String collectionAt;
+    @ApiModelProperty("借款用户名")
+    private String borrowUserName;
     @ApiModelProperty("还款状态")
     private List<VoFindRepayStatus> voFindRepayStatusList;
 }

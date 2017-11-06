@@ -40,5 +40,8 @@ public class VoViewSettleRes {
 
     private Long borrowId;
 
+    @ApiModelProperty("借款用户名")
+    private String borrowUserName;
+
 
 }

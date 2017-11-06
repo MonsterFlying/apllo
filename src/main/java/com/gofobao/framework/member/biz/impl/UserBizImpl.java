@@ -191,8 +191,17 @@ public class UserBizImpl implements UserBiz {
 
         long parentId = 0;
         if (!StringUtils.isEmpty(voRegisterReq.getInviteCode())) {
+            String inviteCode = voRegisterReq.getInviteCode();
+            //注册码可能是手机号，可能是用户名，可能是邀请码
+            Specification<Users> us = Specifications
+                    .<Users>or()
+                    .eq("inviteCode", inviteCode)
+                    .eq("phone", inviteCode)
+                    .eq("username", inviteCode)
+                    .build();
             // 3.推荐人处理
-            Users invitedUser = userService.findByInviteCode(voRegisterReq.getInviteCode());
+            List<Users> usersList = userService.findList(us);
+            Users invitedUser = usersList.get(0);
             if (ObjectUtils.isEmpty(invitedUser)) {
                 return ResponseEntity
                         .badRequest()
@@ -231,9 +240,9 @@ public class UserBizImpl implements UserBiz {
         users.setPayPassword("");
         users.setRealname("");
         //如果是
-        if(voRegisterReq.getSourceType().equals(UsersContants.TYPE_SOURCE_FINANCE)){
+        if (voRegisterReq.getSourceType().equals(UsersContants.TYPE_SOURCE_FINANCE)) {
             users.setType(UsersContants.FINANCE);
-        }else{
+        } else {
             users.setType(voRegisterReq.getType());
         }
         users.setBranch(0);

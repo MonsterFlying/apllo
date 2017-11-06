@@ -937,7 +937,7 @@ public class BorrowBizImpl implements BorrowBiz {
         long count = batchAssetChangeService.count(bacs);
         if (count > 0) {
             //1.处理借款人资产变动
-            batchAssetChangeHelper.batchAssetChangeAndCollection(borrow.getId(), batchNo, BatchAssetChangeContants.BATCH_LEND_REPAY);
+            batchAssetChangeHelper.batchAssetChangeDeal(borrow.getId(), batchNo, BatchAssetChangeContants.BATCH_LEND_REPAY);
             //2.新增待还记录
             addLendRepayPayment(borrow, borrowRepaymentList, groupSeqNo);
         } else {
@@ -999,7 +999,7 @@ public class BorrowBizImpl implements BorrowBiz {
         long count = batchAssetChangeService.count(bacs);
         if (count > 0) {
             //1.处理借款人资产变动
-            batchAssetChangeHelper.batchAssetChangeAndCollection(borrow.getId(), batchNo, BatchAssetChangeContants.BATCH_LEND_REPAY);
+            batchAssetChangeHelper.batchAssetChangeDeal(borrow.getId(), batchNo, BatchAssetChangeContants.BATCH_LEND_REPAY);
             //2.新增待还记录
             addLendRepayPayment(borrow, borrowRepaymentList, groupSeqNo);
         } else {
