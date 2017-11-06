@@ -139,7 +139,7 @@ public class BorrowServiceImpl implements BorrowService {
         if (type.intValue() == -1) {
             type = null;
         }
-        StringBuilder condtionSql = new StringBuilder(" SELECT b.* FROM gfb_borrow  b   WHERE 1 = 1  ");
+        StringBuilder condtionSql = new StringBuilder(" SELECT b.* FROM gfb_borrow  b   WHERE 1 = 1 AND is_finance = 0  ");
         if (!StringUtils.isEmpty(type)) { // 标的状态
             condtionSql.append(" AND b.type = " + type + " AND  b.status NOT IN(:statusArray)  ");
         } else {  // 全部
@@ -287,10 +287,10 @@ public class BorrowServiceImpl implements BorrowService {
         }
         StringBuilder pageSb = new StringBuilder(" SELECT b FROM Borrow b WHERE 1=1  AND b.productId IS NOT NULL ");
         StringBuilder countSb = new StringBuilder(" SELECT COUNT(id) FROM Borrow b WHERE 1=1 AND b.productId IS NOT NULL ");
-        StringBuilder condtionSql = new StringBuilder("");
+        StringBuilder condtionSql = new StringBuilder(" AND is_finance = 0 ");
 
         if (StringUtils.isEmpty(type)) {  // 全部
-            condtionSql.append("AND b.successAt is null AND  b.moneyYes <> b.money AND  b.status=:statusArray ");  // 可投
+            condtionSql.append(" AND b.successAt is null AND  b.moneyYes <> b.money AND  b.status=:statusArray ");  // 可投
         } else {
             condtionSql.append(" AND b.closeAt is null AND b.status NOT IN(:statusArray ) AND  b.type=" + type);  //
         }
