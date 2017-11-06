@@ -34,8 +34,8 @@ public class AssetController {
     @Autowired
     AssetStatementBiz assetStatementBiz;
 
-    @GetMapping("pub/asset/check-up-account")
-    public ResponseEntity<VoBaseResp> checkUpAccount(@ModelAttribute VoCommonReq voCommonReq) {
+    @PostMapping("pub/asset/check-up-all-account")
+    public ResponseEntity<VoBaseResp> checkUpAllAccount(@ModelAttribute VoCommonReq voCommonReq) {
         String paramStr = voCommonReq.getParamStr();
         if (!SecurityHelper.checkSign(voCommonReq.getSign(), paramStr)) {
             return ResponseEntity
@@ -44,6 +44,19 @@ public class AssetController {
         }
 
         assetStatementBiz.checkUpAccountForAll();
+        return ResponseEntity.ok(VoBaseResp.ok("成功"));
+    }
+
+    @PostMapping("pub/asset/check-up-partial-account")
+    public ResponseEntity<VoBaseResp> checkUpPartialAccount(@ModelAttribute VoCommonReq voCommonReq) {
+        String paramStr = voCommonReq.getParamStr();
+        if (!SecurityHelper.checkSign(voCommonReq.getSign(), paramStr)) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "本地记录修改异常!"));
+        }
+
+        assetStatementBiz.checkUpAccount();
         return ResponseEntity.ok(VoBaseResp.ok("成功"));
     }
 

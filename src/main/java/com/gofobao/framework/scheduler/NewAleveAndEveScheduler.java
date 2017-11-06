@@ -78,8 +78,8 @@ public class NewAleveAndEveScheduler {
         log.info("====================================");
         log.info("实时资金查询");
         log.info("====================================");
-        Date subDate = jixinTxDateHelper.getSubDate(1);
-        assetStatementBiz.checkUpAccount(subDate);
+
+        assetStatementBiz.checkUpAccount();
     }
 
 }

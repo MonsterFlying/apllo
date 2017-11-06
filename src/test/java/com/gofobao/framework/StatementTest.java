@@ -71,6 +71,6 @@ public class StatementTest {
     @Test
     public void testAssetChange(){
         Date date = DateHelper.stringToDate("2017-09-28 00:00:00");
-        assetStatementBiz.checkUpAccount(date) ;
+        assetStatementBiz.checkUpAccount() ;
     }
 }

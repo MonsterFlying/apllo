@@ -587,7 +587,7 @@ public class AssetBizImpl implements AssetBiz {
         AssetChange entity = new AssetChange();
         String groupSeqNo = assetChangeProvider.getGroupSeqNo();
         entity.setGroupSeqNo(groupSeqNo);
-        entity.setMoney(new Double(voRechargeReq.getMoney() * 100).longValue());
+        entity.setMoney(rechargeDetailLog.getMoney());
         entity.setSeqNo(rechargeDetailLog.getSeqNo());
         entity.setUserId(users.getId());
         entity.setRemark(String.format("你在 %s 成功充值%s元", DateHelper.dateToString(now), voRechargeReq.getMoney()));
