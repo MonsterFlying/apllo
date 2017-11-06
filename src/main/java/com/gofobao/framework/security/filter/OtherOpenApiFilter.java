@@ -35,9 +35,9 @@ public class OtherOpenApiFilter implements Filter {
         String starfire = "starfire";
         String windmill = "windmill";
         String wheel = "wheel";
-/*
+
         String passUrl = config.getInitParameter("passUrl");
-        if (requestUrl.contains(starfire)) {
+      /*  if (requestUrl.contains(starfire)) {
 
             log.info("=============进入过滤器中==============");
             log.info("===========访问进入星火接口==============");
