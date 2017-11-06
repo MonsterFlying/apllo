@@ -203,8 +203,7 @@ public class AssetStatementBizImpl implements AssetStatementBiz {
         log.info("============================");
         log.info("根据用户活跃度查询账户资金");
         log.info("============================");
-        doCheckUpAccount(true) ;
-        return false;
+        return doCheckUpAccount(true) ;
     }
 
 }
