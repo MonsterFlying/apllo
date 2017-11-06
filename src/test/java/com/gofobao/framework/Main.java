@@ -8,7 +8,7 @@ import java.util.concurrent.ExecutionException;
 
 public class Main {
     public static void main(String[] args) throws ExecutionException, InterruptedException {
-        checkUpAccountPartial();
+        checkUpAccountAll();
     }
 
 
@@ -52,7 +52,8 @@ public class Main {
 
 
     public static boolean checkUpAccountAll() {
-        String url = "https://api.gofobao.com/pub/asset/pub/asset/check-up-all-account";
+        // String url = "https://api.gofobao.com/pub/asset/check-up-all-account";
+        String url = "http://127.0.0.1:8080/pub/asset/check-up-all-account";
         Map<String, String> data = new HashMap<>();
         data.put("id", "59310");
         ReleaseHelper.sendMsgByPost(url, data);
