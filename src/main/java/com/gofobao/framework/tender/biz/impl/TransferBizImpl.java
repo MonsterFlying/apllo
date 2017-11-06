@@ -401,7 +401,7 @@ public class TransferBizImpl implements TransferBiz {
 
         // 发放债权转让资金
         log.info("赎回理财计划债权转让，发放债权转让金开始！");
-        batchAssetChangeHelper.batchAssetChangeAndCollection(transferId, batchNo, BatchAssetChangeContants.BATCH_FINANCE_CREDIT_INVEST);
+        batchAssetChangeHelper.batchAssetChangeDeal(transferId, batchNo, BatchAssetChangeContants.BATCH_FINANCE_CREDIT_INVEST);
         log.info("赎回理财计划债权转让，发放债权转让金结束！");
         //理财计划债权转让是否是赎回
         if (repurchaseFlag) {
@@ -680,7 +680,7 @@ public class TransferBizImpl implements TransferBiz {
         List<BorrowCollection> childBorrowCollectionList = addChildTenderCollection(nowDate, transfer, parentBorrow, childTenderList,oldBorrowCollectionList);
 
         // 发放债权转让资金
-        batchAssetChangeHelper.batchAssetChangeAndCollection(transferId, batchNo, BatchAssetChangeContants.BATCH_CREDIT_INVEST);
+        batchAssetChangeHelper.batchAssetChangeDeal(transferId, batchNo, BatchAssetChangeContants.BATCH_CREDIT_INVEST);
 
         // 发送投资成功站内信
         sendNoticsByBuyTransfer(transfer, childTenderList);

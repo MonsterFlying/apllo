@@ -105,7 +105,6 @@ import com.gofobao.framework.tender.service.TransferService;
 import com.gofobao.framework.windmill.borrow.biz.WindmillTenderBiz;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
 import com.google.gson.Gson;
@@ -294,7 +293,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
         Set<Long> tenderIds = tenderList.stream().map(tender -> tender.getId()).collect(Collectors.toSet());
         Map<Long, Tender> tenderMap = tenderList.stream().collect(Collectors.toMap(Tender::getId, Function.identity()));
         //3.处理资金还款人、收款人资金变动
-        batchAssetChangeHelper.batchAssetChangeAndCollection(borrowId, batchNo, BatchAssetChangeContants.BATCH_REPAY_ALL);
+        batchAssetChangeHelper.batchAssetChangeDeal(borrowId, batchNo, BatchAssetChangeContants.BATCH_REPAY_ALL);
         //迭代还款集合,逐期还款
         for (BorrowRepayment borrowRepayment : borrowRepaymentList) {
             /* 是否垫付 */
@@ -1006,7 +1005,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
         /* 是否垫付 */
         boolean advance = !ObjectUtils.isEmpty(borrowRepayment.getAdvanceAtYes());
         //2.处理资金还款人、收款人资金变动
-        batchAssetChangeHelper.batchAssetChangeAndCollection(repaymentId, batchNo, BatchAssetChangeContants.BATCH_REPAY);
+        batchAssetChangeHelper.batchAssetChangeDeal(repaymentId, batchNo, BatchAssetChangeContants.BATCH_REPAY);
         //4.还款成功后变更改还款状态
         changeRepaymentAndRepayStatus(parentBorrow, tenderList, borrowRepayment, borrowCollectionList, advance);
         //5.结束第三方债权并更新借款状态（还款最后一期的时候）
@@ -3240,7 +3239,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
         /* 是否垫付 */
         boolean advance = !ObjectUtils.isEmpty(borrowRepayment.getAdvanceAtYes());
         //2.处理资金还款人、收款人资金变动
-        batchAssetChangeHelper.batchAssetChangeAndCollection(repaymentId, batchNo, BatchAssetChangeContants.BATCH_BAIL_REPAY);
+        batchAssetChangeHelper.batchAssetChangeDeal(repaymentId, batchNo, BatchAssetChangeContants.BATCH_BAIL_REPAY);
         /* 逾期天数 */
         int lateDays = getLateDays(borrowRepayment);
         long lateInterest = new Double(calculateLateInterest(lateDays, borrowRepayment, parentBorrow) / 2D).longValue();/* 获取逾期利息的一半*/
