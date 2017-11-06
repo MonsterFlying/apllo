@@ -71,7 +71,7 @@ public interface UserService {
      * @param inviteCode 推荐码
      * @return
      */
-    Users findByInviteCode(String inviteCode);
+    Users findByInviteCodeOrPhoneOrUsername(String inviteCode);
 
     /**
      * 保存/更新用户
