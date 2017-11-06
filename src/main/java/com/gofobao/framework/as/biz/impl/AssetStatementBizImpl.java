@@ -31,6 +31,7 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
+import org.springframework.util.ObjectUtils;
 
 import javax.validation.constraints.NotNull;
 import java.math.BigDecimal;
@@ -66,8 +67,9 @@ public class AssetStatementBizImpl implements AssetStatementBiz {
     RealtimeAssetService realtimeAssetService;
 
     @Override
-    public boolean checkUpAccount(@NotNull Date date) {
+    public boolean checkUpAccount() {
         long batchNo = System.currentTimeMillis();
+        Date date = new Date() ;
         String beginDate = DateHelper.dateToString(DateHelper.endOfDate(DateHelper.subDays(date, 1)));
         String endDate = DateHelper.dateToString(DateHelper.beginOfDate(DateHelper.addDays(date, 1)));
 
@@ -164,6 +166,7 @@ public class AssetStatementBizImpl implements AssetStatementBiz {
             for (UserThirdAccount userThirdAccount : userThirdAccountList) {
                 userId = userThirdAccount.getUserId();
                 Asset asset = assetMap.get(userId);
+                Preconditions.checkNotNull(asset, "asset record is empty");
                 threadPoolTaskExecutor.execute(new SearcheThred(jixinManager, asset, userThirdAccount, realtimeAssetService, batchNo));
             }
 
@@ -216,16 +219,18 @@ class SearcheThred implements Runnable {
                     || JixinResultContants.isNetWordError(balanceQueryResponse)) {
                 continue;
             }
-            if (JixinResultContants.SUCCESS.equals(balanceQueryResponse.getRetCode())) {
+
+            // 查询成功
+            if (!ObjectUtils.isEmpty(balanceQueryResponse)
+                    && JixinResultContants.SUCCESS.equals(balanceQueryResponse.getRetCode())) {
                 // 账户总额
                 String currBal = balanceQueryResponse.getCurrBal();
                 // 账户可用
                 String availBal = balanceQueryResponse.getAvailBal();
                 long currBarFen = MoneyHelper.yuanToFen(currBal);
-                long availBalFen = MoneyHelper.yuanToFen(availBal);
                 long intavalMoney = currBarFen - (asset.getNoUseMoney() + asset.getUseMoney());
+
                 if (intavalMoney != 0) {
-                    // 直接写入数据库
                     RealtimeAsset realtimeAsset = new RealtimeAsset();
                     realtimeAsset.setAccountId(userThirdAccount.getId());
                     realtimeAsset.setBatchNo(batchNo);
