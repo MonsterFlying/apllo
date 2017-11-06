@@ -72,10 +72,6 @@ public class AssetController {
     }
 
 
-
-
-
-
     @PostMapping("pub/asset/changeRecord")
     public ResponseEntity<VoBaseResp> insertLocalRecord(@ModelAttribute VoLocalAssetChangeReq voLocalAssetChangeReq) throws Exception {
         String paramStr = voLocalAssetChangeReq.getParamStr();

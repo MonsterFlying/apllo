@@ -456,8 +456,8 @@ public class UserThirdBizImpl implements UserThirdBiz {
                         .between("publishTime", new Range<>(DateHelper.beginOfDate(nowDate), DateHelper.endOfDate(nowDate)))
                         .build();
                 long count = marketingRedpackRecordService.count(specifications);
-                if (count >= 20) {
-                    // 触发一天超过20个邀请用户
+                if (count >= 10) {
+                    // 触发一天超过10个邀请用户
                     // 冻结他的父类和被邀请的子类
 
                     // 冻结父类
