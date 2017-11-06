@@ -152,6 +152,9 @@ public class AssetStatementBizImpl implements AssetStatementBiz {
         pageIndexTatol = count.intValue() % pageSize == 0 ? pageIndexTatol : pageIndexTatol + 1;
         log.info(String.format("[用户资金记录查询] 待检测总数: %s", pageIndexTatol));
         do {
+            log.info("================================");
+            log.info("账户查询进度" + ( MoneyHelper.divide(pageIndex, pageIndexTatol, 2) * 100 )+ "%");
+            log.info("================================");
             Pageable pageable = new PageRequest(pageIndex, pageSize, new Sort(new Sort.Order(Sort.Direction.DESC, "id")));
             Specification<UserThirdAccount> userThirdAccountSpecification = Specifications
                     .<UserThirdAccount>and()
