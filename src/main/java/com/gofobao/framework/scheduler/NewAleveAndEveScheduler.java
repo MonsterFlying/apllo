@@ -74,9 +74,8 @@ public class NewAleveAndEveScheduler {
         }
 
         log.info("====================================");
-        log.info("实时资金查询");
+        log.info("核对昨日资金变动是否正确?");
         log.info("====================================");
-
         assetStatementBiz.checkUpAccountForChange();
     }
 

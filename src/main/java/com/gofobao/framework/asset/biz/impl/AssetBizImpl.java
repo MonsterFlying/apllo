@@ -535,10 +535,13 @@ public class AssetBizImpl implements AssetBiz {
             Double recordRecharge = MoneyHelper.multiply(voRechargeReq.getMoney(), 100D, 0);
             rechargeDetailLog.setMoney(recordRecharge.longValue());
             rechargeDetailLog.setRechargeChannel(0);
-            rechargeDetailLog.setState(state); // 充值未确认
+            rechargeDetailLog.setState(state);
             rechargeDetailLog.setSeqNo(directRechargeOnlineRequest.getTxDate() + directRechargeOnlineRequest.getTxTime() + directRechargeOnlineRequest.getSeqNo());
-            rechargeDetailLog.setResponseMessage(gson.toJson(directRechargeOnlineResponse));  // 响应吗
+            rechargeDetailLog.setResponseMessage(gson.toJson(directRechargeOnlineResponse));
+            // 充值备注
+            rechargeDetailLog.setRemark(directRechargeOnlineResponse.getRetMsg());
             RechargeDetailLog saveRechargeDetailLog = rechargeDetailLogService.save(rechargeDetailLog);
+
 
             // 触发资金变动确认
             if (toBeConform) {

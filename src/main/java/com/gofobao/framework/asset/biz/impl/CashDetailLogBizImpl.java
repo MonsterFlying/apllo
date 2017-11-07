@@ -577,6 +577,7 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
         entity.setSeqNo(seqNo);
         entity.setUserId(users.getId());
         entity.setRemark(String.format("你在 %s 成功提现%s元", DateHelper.dateToString(nowDate), StringHelper.formatDouble(realCashMoney / 100D, true)));
+        entity.setSourceId(cashDetailLog.getId());
         if (cashDetailLog.getCashType() == 0) { // 小额提现
             entity.setType(AssetChangeTypeEnum.smallCash);
         } else {
@@ -594,6 +595,7 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
             entity.setUserId(users.getId());
             entity.setForUserId(feeAccountId);
             entity.setRemark(String.format("你在 %s 成功扣除提现手续费%s元", DateHelper.dateToString(nowDate), StringHelper.formatDouble(cashDetailLog.getFee() / 100D, true)));
+            entity.setSourceId(cashDetailLog.getId());
             if (cashDetailLog.getCashType() == 0) { // 小额提现
                 entity.setType(AssetChangeTypeEnum.smallCashFee);
             } else {
@@ -609,6 +611,7 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
             entity.setUserId(feeAccountId);
             entity.setForUserId(users.getId());
             entity.setRemark(String.format("你在 %s 成功收取提现手续费%s元", DateHelper.dateToString(nowDate), StringHelper.formatDouble(cashDetailLog.getFee() / 100D, true)));
+            entity.setSourceId(cashDetailLog.getId());
             if (cashDetailLog.getCashType() == 0) {
                 entity.setType(AssetChangeTypeEnum.platformSmallCashFee);
             } else {
