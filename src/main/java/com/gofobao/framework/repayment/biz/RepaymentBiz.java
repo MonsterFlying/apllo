@@ -24,6 +24,7 @@ import javax.servlet.http.HttpServletResponse;
 public interface RepaymentBiz {
 
     public void test01();
+
     /**
      * 获取用户逾期费用
      * 逾期规则: 未还款本金之和 * 0.4$ 的费用, 平台收取 0.2%, 出借人 0.2%
@@ -139,9 +140,10 @@ public interface RepaymentBiz {
      * 获取逾期天数
      *
      * @param borrowRepayment
+     * @param advance         是否是垫付
      * @return
      */
-    int getLateDays(BorrowRepayment borrowRepayment);
+    int getLateDays(BorrowRepayment borrowRepayment, boolean advance);
 
     /**
      * 当前应还款日期
