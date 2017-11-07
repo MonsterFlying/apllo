@@ -32,5 +32,4 @@ public class MarketingRedpackRecord {
     private Integer del;
     private String remark;
 
-
 }

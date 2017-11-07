@@ -14,6 +14,7 @@ public interface AssetStatementBiz {
      */
     boolean checkUpAccountForChange();
 
+
     /**
      * 查询全部开户账号
      *
