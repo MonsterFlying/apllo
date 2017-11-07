@@ -433,6 +433,16 @@ public class AssetBizImpl implements AssetBiz {
                         .badRequest()
                         .body(VoBaseResp.error(VoBaseResp.ERROR_INIT_BANK_PASSWORD, "请初始化江西银行存管账户密码！"));
             }
+            // ====================================
+            // 针对中国银行不能快捷充值进行特殊处理
+            // ====================================
+            if("中国银行".equals(userThirdAccount.getBankName())){
+                log.warn("中国银行快捷充值, 系统主动拒绝充值!");
+                return ResponseEntity
+                        .badRequest()
+                        .body(VoBaseResp.error(VoBaseResp.ERROR_INIT_BANK_PASSWORD,
+                                "非常抱歉, 存管系统暂不支持中国银行的快捷充值, 建议你使用支付宝/网银转账"));
+            }
 
             String smsSeq = null;
             try {

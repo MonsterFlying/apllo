@@ -6,6 +6,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Lock;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import javax.persistence.LockModeType;
@@ -29,4 +30,14 @@ public interface MarketingRedpackRecordRepository extends JpaRepository<Marketin
     MarketingRedpackRecord findById(long id);
 
     List<MarketingRedpackRecord> findByUserIdAndStateAndDel(Long userId, Integer status, int i, Pageable pageable);
+
+    @Query(value = "SELECT  " +
+            "    SUM(money) " +
+            "FROM " +
+            "    gfb_marketing_redpack_record " +
+            "WHERE " +
+            "    user_id = ?1 AND publish_time > ?2 " +
+            "        AND publish_time < ?3 " +
+            "        AND state = 1 ", nativeQuery = true)
+    Long countByUserIdAndDate(Long userId, Date beginDate, Date nowDate);
 }
