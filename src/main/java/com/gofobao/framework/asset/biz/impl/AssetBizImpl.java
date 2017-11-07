@@ -579,7 +579,7 @@ public class AssetBizImpl implements AssetBiz {
                 } catch (Exception e) {
                     log.error("发送充值记录异常", e);
                 }
-                
+
                 return ResponseEntity.ok(VoBaseResp.ok("充值成功"));
             } else {
                 return ResponseEntity
@@ -1280,7 +1280,8 @@ public class AssetBizImpl implements AssetBiz {
         Date endTime = DateHelper.endOfDate(DateHelper.stringToDate(voAssetLogReq.getEndTime(), DateHelper.DATE_FORMAT_YMD));
         //gfb_new_asset_log 的 receivedPayments compensatoryReceivedPayments
         Specification<NewAssetLog> nals1 = Specifications.<NewAssetLog>or()
-                .in("localType", AssetChangeTypeEnum.compensatoryReceivedPayments.getLocalType(), AssetChangeTypeEnum.receivedPayments.getLocalType())
+                .in("localType", AssetChangeTypeEnum.compensatoryReceivedPaymentsPrincipal.getLocalType(), AssetChangeTypeEnum.compensatoryReceivedPaymentsInterest.getLocalType(),
+                        AssetChangeTypeEnum.receivedPaymentsPrincipal.getLocalType(), AssetChangeTypeEnum.receivedPaymentsInterest.getLocalType())
                 .notIn("type", 1)
                 .build();
 
