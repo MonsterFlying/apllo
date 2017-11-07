@@ -77,6 +77,7 @@ import com.gofobao.framework.tender.vo.response.web.TransferBuy;
 import com.gofobao.framework.tender.vo.response.web.VoViewTransferBuyWarpRes;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.gson.Gson;
@@ -377,7 +378,7 @@ public class TransferBizImpl implements TransferBiz {
         if (repurchaseFlag) {
             // 赎回理财计划债权转让，生成子级债权回款记录，标注老债权回款已经转出
             log.info("赎回理财计划赎回债权转让，生成子级债权回款记录开始！");
-            borrowCollectionList = addChildTenderCollection(nowDate, transfer, parentBorrow, childTenderList,oldBorrowCollectionList);
+            borrowCollectionList = addChildTenderCollection(nowDate, transfer, parentBorrow, childTenderList, oldBorrowCollectionList);
             log.info("赎回理财计划赎回债权转让，生成子级债权回款记录结束！");
         } else {
             log.info("理财计划债权匹配购买，生成子级债权回款记录开始！");
@@ -394,7 +395,7 @@ public class TransferBizImpl implements TransferBiz {
             updateUserAssetByBuyTransfer(childTenderList, transfer, borrowCollectionList);
         } else {
             //更新债权转让人用户缓存记录
-            updateUserCacheByTransfer(parentBorrow, transfer,borrowCollectionList);
+            updateUserCacheByTransfer(parentBorrow, transfer, borrowCollectionList);
             //更新购买债权人用户缓存
             updateUserAssetByTransfer(transfer, borrowCollectionList);
         }
@@ -677,7 +678,7 @@ public class TransferBizImpl implements TransferBiz {
         List<Tender> childTenderList = addChildTender(nowDate, transfer, parentTender, transferBuyLogList);
 
         // 生成子级债权回款记录，标注老债权回款已经转出
-        List<BorrowCollection> childBorrowCollectionList = addChildTenderCollection(nowDate, transfer, parentBorrow, childTenderList,oldBorrowCollectionList);
+        List<BorrowCollection> childBorrowCollectionList = addChildTenderCollection(nowDate, transfer, parentBorrow, childTenderList, oldBorrowCollectionList);
 
         // 发放债权转让资金
         batchAssetChangeHelper.batchAssetChangeDeal(transferId, batchNo, BatchAssetChangeContants.BATCH_CREDIT_INVEST);
@@ -787,7 +788,7 @@ public class TransferBizImpl implements TransferBiz {
                 userCache.setQdWaitCollectionInterest(userCache.getQdWaitCollectionInterest() + countInterest);
             }
             //更新待支出利息管理费
-            if (parentBorrow.getRecheckAt().getTime() < DateHelper.stringToDate("2017-11-01 00:00:00").getTime()) {
+            if (parentBorrow.getRecheckAt().getTime() < DateHelper.stringToDate("2017-11-01 00:00:00").getTime() && ImmutableSet.of(0, 4).contains(parentBorrow.getType())) {
                 userCache.setWaitExpenditureInterestManage(userCache.getWaitExpenditureInterestManage() + new Double(MoneyHelper.round(MoneyHelper.divide(countInterest, 0.1), 0)).longValue());
             }
             userCacheService.save(userCache);
@@ -879,7 +880,7 @@ public class TransferBizImpl implements TransferBiz {
             userCache.setQdWaitCollectionInterest(userCache.getQdWaitCollectionInterest() - countInterest);
         }
         //更新待支出利息管理费
-        if (parentBorrow.getRecheckAt().getTime() < DateHelper.stringToDate("2017-11-01 00:00:00").getTime()) {
+        if (parentBorrow.getRecheckAt().getTime() < DateHelper.stringToDate("2017-11-01 00:00:00").getTime() && ImmutableSet.of(0, 4).contains(parentBorrow.getType())) {
             userCache.setWaitExpenditureInterestManage(userCache.getWaitExpenditureInterestManage() - new Double(MoneyHelper.round(MoneyHelper.divide(countInterest, 0.1), 0)).longValue());
         }
         userCacheService.save(userCache);
@@ -913,7 +914,7 @@ public class TransferBizImpl implements TransferBiz {
      * @param childTenderList
      */
     @Override
-    public List<BorrowCollection> addChildTenderCollection(Date nowDate, Transfer transfer, Borrow parentBorrow, List<Tender> childTenderList,List<BorrowCollection> oldBorrowCollectionList) throws Exception {
+    public List<BorrowCollection> addChildTenderCollection(Date nowDate, Transfer transfer, Borrow parentBorrow, List<Tender> childTenderList, List<BorrowCollection> oldBorrowCollectionList) throws Exception {
         List<BorrowCollection> childTenderCollectionList = new ArrayList<>();/* 债权子记录回款记录 */
         //生成子级债权回款记录，标注老债权回款已经转出
         /* 债权转让总利息 */
