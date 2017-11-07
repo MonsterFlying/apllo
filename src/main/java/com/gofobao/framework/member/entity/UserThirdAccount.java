@@ -72,6 +72,8 @@ public class UserThirdAccount {
 
     private String bankLogo;
 
+    private Integer activeState ;
+
     public String getIdNo() {
         if (!StringUtils.isNullOrEmpty(idNo)) {
             return idNo.toUpperCase();

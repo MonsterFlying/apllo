@@ -8,16 +8,23 @@ package com.gofobao.framework.as.biz;
 public interface AssetStatementBiz {
 
     /**
-     * 核对账目
+     * 根据昨日变动查询
      *
      * @return
      */
-    boolean checkUpAccount();
+    boolean checkUpAccountForChange();
 
     /**
-     * 查询全部即信流水
+     * 查询全部开户账号
      *
      * @return
      */
     boolean checkUpAccountForAll();
+
+
+    /**
+     * 根据活跃用户对账账户
+     * @return
+     */
+    boolean checkUpAccountForActiveState() ;
 }

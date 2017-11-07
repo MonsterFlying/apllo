@@ -6,21 +6,16 @@ import com.gofobao.framework.asset.vo.request.VoSynAssetsRep;
 import com.gofobao.framework.asset.vo.response.*;
 import com.gofobao.framework.borrow.vo.request.VoDoAgainVerifyReq;
 import com.gofobao.framework.core.vo.VoBaseResp;
-import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.helper.project.SecurityHelper;
 import com.gofobao.framework.security.contants.SecurityContants;
 import com.gofobao.framework.tender.vo.request.VoCommonReq;
 import com.gofobao.framework.tender.vo.request.VoLocalAssetChangeReq;
-import com.google.common.base.Preconditions;
-import com.google.gson.Gson;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import springfox.documentation.annotations.ApiIgnore;
-
-import java.util.Date;
 
 /**
  * Created by Zeke on 2017/5/19.
@@ -47,6 +42,22 @@ public class AssetController {
         return ResponseEntity.ok(VoBaseResp.ok("成功"));
     }
 
+    @PostMapping("pub/asset/check-up-active-account")
+    public ResponseEntity<VoBaseResp> checkUpActiveAccount(@ModelAttribute VoCommonReq voCommonReq) {
+        String paramStr = voCommonReq.getParamStr();
+        if (!SecurityHelper.checkSign(voCommonReq.getSign(), paramStr)) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "本地记录修改异常!"));
+        }
+
+        assetStatementBiz.checkUpAccountForActiveState();
+        return ResponseEntity.ok(VoBaseResp.ok("成功"));
+    }
+
+
+
+
     @PostMapping("pub/asset/check-up-partial-account")
     public ResponseEntity<VoBaseResp> checkUpPartialAccount(@ModelAttribute VoCommonReq voCommonReq) {
         String paramStr = voCommonReq.getParamStr();
@@ -56,9 +67,10 @@ public class AssetController {
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "本地记录修改异常!"));
         }
 
-        assetStatementBiz.checkUpAccount();
+        assetStatementBiz.checkUpAccountForChange();
         return ResponseEntity.ok(VoBaseResp.ok("成功"));
     }
+
 
     @PostMapping("pub/asset/changeRecord")
     public ResponseEntity<VoBaseResp> insertLocalRecord(@ModelAttribute VoLocalAssetChangeReq voLocalAssetChangeReq) throws Exception {

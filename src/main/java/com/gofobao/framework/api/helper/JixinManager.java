@@ -237,6 +237,14 @@ public class JixinManager {
         return t;
     }
 
+    /**
+     * 网络502
+     */
+    private static  final String HTTP_CODE_502 = "502" ;
+    /**
+     * 网络504
+     */
+    private static  final String HTTP_CODE_504 = "504" ;
 
     /**
      * 特殊回调
@@ -334,12 +342,12 @@ public class JixinManager {
 
             // 针对 500以上代码特殊处理
             if (e instanceof HttpServerErrorException) {
-                if (e.getMessage().contains("502")) {
+                if (e.getMessage().contains(HTTP_CODE_502)) {
                     s.setRetCode(JixinResultContants.ERROR_502);
-                    s.setRetMsg("请求即信502");
-                } else if (e.getMessage().contains("504")) {
-                    s.setRetCode(JixinResultContants.ERROR_502);
-                    s.setRetMsg("请求即信504");
+                    s.setRetMsg("请求存管系统, 网络返回502");
+                } else if (e.getMessage().contains(HTTP_CODE_504)) {
+                    s.setRetCode(JixinResultContants.ERROR_504);
+                    s.setRetMsg("请求存管系统, 网络返回504");
                 }
                 return s;
             }

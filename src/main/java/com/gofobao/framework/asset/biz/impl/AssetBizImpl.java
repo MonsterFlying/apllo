@@ -518,7 +518,8 @@ public class AssetBizImpl implements AssetBiz {
                 state = 2;
                 msg = directRechargeOnlineResponse.getRetMsg();
             }
-
+            // 将该账户设置为活跃用户
+            updateAcountToActive(userThirdAccount, now);
             // 插入充值记录
             RechargeDetailLog rechargeDetailLog = new RechargeDetailLog();
             rechargeDetailLog.setRechargeType(0);
@@ -534,10 +535,13 @@ public class AssetBizImpl implements AssetBiz {
             Double recordRecharge = MoneyHelper.multiply(voRechargeReq.getMoney(), 100D, 0);
             rechargeDetailLog.setMoney(recordRecharge.longValue());
             rechargeDetailLog.setRechargeChannel(0);
-            rechargeDetailLog.setState(state); // 充值未确认
+            rechargeDetailLog.setState(state);
             rechargeDetailLog.setSeqNo(directRechargeOnlineRequest.getTxDate() + directRechargeOnlineRequest.getTxTime() + directRechargeOnlineRequest.getSeqNo());
-            rechargeDetailLog.setResponseMessage(gson.toJson(directRechargeOnlineResponse));  // 响应吗
+            rechargeDetailLog.setResponseMessage(gson.toJson(directRechargeOnlineResponse));
+            // 充值备注
+            rechargeDetailLog.setRemark(directRechargeOnlineResponse.getRetMsg());
             RechargeDetailLog saveRechargeDetailLog = rechargeDetailLogService.save(rechargeDetailLog);
+
 
             // 触发资金变动确认
             if (toBeConform) {
@@ -580,6 +584,21 @@ public class AssetBizImpl implements AssetBiz {
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "充值失败, 请及时联系平台客服!"));
         }
 
+    }
+
+    /**
+     * 更新用户为活跃用户
+     * @param userThirdAccount
+     * @param now
+     */
+    private void updateAcountToActive(UserThirdAccount userThirdAccount, Date now) {
+        try {
+            userThirdAccount.setActiveState(1);
+            userThirdAccount.setUpdateAt(now);
+            userThirdAccountService.save(userThirdAccount) ;
+        }catch (Exception e){
+            log.error("更新用户为活跃用户异常", e);
+        }
     }
 
     @Transactional(rollbackFor = Exception.class)
