@@ -194,17 +194,17 @@ public class TenderBizImpl implements TenderBiz {
         state = verifyUserInfo4Borrow(user, borrow, asset, voCreateTenderReq, extendMessage); // 借款用户资产判断
         Set<String> errorSet = extendMessage.elementSet();
         Iterator<String> iterator = errorSet.iterator();
-        //投资有效金额
-        long validateMoney = Long.parseLong(iterator.next());
-        String msg = iterator.next();
+
         if (!state) {
             log.error("标的判断资产不通过");
             return ResponseEntity
                     .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, msg));
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, iterator.next()));
         }
 
         Date nowDate = new Date();
+        //投资有效金额
+        long validateMoney = Long.parseLong(iterator.next());
         Tender borrowTender = createBorrowTenderRecord(voCreateTenderReq, user, nowDate, validateMoney);    // 生成投标记录
         borrowTender = registerJixinTenderRecord(borrow, borrowTender);  // 投标的存管报备
         if (ObjectUtils.isEmpty(borrowTender)) {
@@ -281,7 +281,7 @@ public class TenderBizImpl implements TenderBiz {
         } catch (Exception e) {
             log.error("触发派发失败新手红包失败", e);
         }
-        return ResponseEntity.ok(VoBaseResp.ok(StringUtils.isEmpty(msg) ? "投资成功" : msg));
+        return ResponseEntity.ok(VoBaseResp.ok( "投资成功" ));
     }
 
     /**
@@ -444,7 +444,6 @@ public class TenderBizImpl implements TenderBiz {
             long most = borrow.getMost();
             if (most > 0 && invaildataMoney > most) {
                 invaildataMoney = Math.min(most, invaildataMoney);
-                extendMessage.add(String.format("投资金额超过单笔投标限额%s元,超出部分资金返回账户可用余额!", StringHelper.formatDouble(most, 100, true)));
             }
         }
 
