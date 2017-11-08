@@ -42,7 +42,8 @@ public class UserHelper {
     public long getNetWorthQuota(long userId) {
         Asset asset = assetService.findByUserId(userId);
         UserCache userCache = userCacheService.findById(userId);
-        /* 总资产 */
+
+        /* 总资产 = 可用金额 + 待回款本金 + 在即信复审本金*/
         long assets = asset.getUseMoney() + userCache.getWaitCollectionPrincipal();
         /* 净值额度 */
         long netWorthQuota = new Double(MoneyHelper.multiply(assets, 0.8)).longValue() - asset.getPayment();

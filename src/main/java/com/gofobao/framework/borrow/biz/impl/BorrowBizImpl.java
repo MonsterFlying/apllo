@@ -668,6 +668,7 @@ public class BorrowBizImpl implements BorrowBiz {
      * @return
      */
     @Transactional(rollbackFor = Exception.class)
+    @Override
     public ResponseEntity<VoBaseResp> cancelBorrow(VoCancelBorrow voCancelBorrow) throws Exception {
         Long borrowId = voCancelBorrow.getBorrowId();
         Date nowDate = new Date();
