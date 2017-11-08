@@ -1214,7 +1214,7 @@ public class BorrowBizImpl implements BorrowBiz {
             }
             //每日统计记录
             IncrStatistic incrStatistic = new IncrStatistic();
-            incrStatistic.setCashSum(0l);
+            incrStatistic.setCashSum(0L);
             incrStatistic.setJzSumPublish(0);
             incrStatistic.setJzSumRepay(0);
             if ((!BooleanUtils.toBoolean(userCache.getTenderTransfer())) && (!BooleanUtils.toBoolean(userCache.getTenderTuijian()))

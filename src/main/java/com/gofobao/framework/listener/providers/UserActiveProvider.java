@@ -259,6 +259,7 @@ public class UserActiveProvider {
                 && "0".equalsIgnoreCase(fundTransQueryResponse.getOrFlag())) {  // 进行增加用户资金操作
             rechargeDetailLog.setState(1);
             rechargeDetailLog.setCallbackTime(nowDate);
+            rechargeDetailLog.setRemark(fundTransQueryResponse.getRetMsg());
             rechargeDetailLogService.save(rechargeDetailLog);
 
             AssetChange entity = new AssetChange();
@@ -273,13 +274,17 @@ public class UserActiveProvider {
             assetChangeProvider.commonAssetChange(entity);
 
             // 触发用户充值
-            MqConfig mqConfig = new MqConfig();
-            mqConfig.setTag(MqTagEnum.RECHARGE);
-            mqConfig.setQueue(MqQueueEnum.RABBITMQ_USER_ACTIVE);
-            mqConfig.setSendTime(DateHelper.addSeconds(nowDate, 10));
-            ImmutableMap<String, String> body = ImmutableMap.of(MqConfig.MSG_ID, rechargeDetailLog.getId().toString());
-            mqConfig.setMsg(body);
-            mqHelper.convertAndSend(mqConfig);
+            try {
+                MqConfig mqConfig = new MqConfig();
+                mqConfig.setTag(MqTagEnum.RECHARGE);
+                mqConfig.setQueue(MqQueueEnum.RABBITMQ_USER_ACTIVE);
+                mqConfig.setSendTime(DateHelper.addSeconds(nowDate, 10));
+                ImmutableMap<String, String> body = ImmutableMap.of(MqConfig.MSG_ID, rechargeDetailLog.getId().toString());
+                mqConfig.setMsg(body);
+                mqHelper.convertAndSend(mqConfig);
+            }catch (Exception e){
+                log.error("UserActiveProvider doRechargeOpQuery send mq exception", e);
+            }
         } else {  // 失败发送用户, 通知
             exceptionEmailHelper.sendErrorMessage("充值单笔资金查询失败!", String.format("充值Id: %s", sourceId));
             String titel = "充值失败";
@@ -545,6 +550,7 @@ public class UserActiveProvider {
             rechargeDetailLog.setSeqNo(seqNo);
             rechargeDetailLog.setCreateTime(synDate);
             rechargeDetailLog.setUpdateTime(nowDate);
+            rechargeDetailLog.setRemark("成功");
             rechargeDetailLogService.save(rechargeDetailLog);
 
             AssetChange assetChange = new AssetChange();

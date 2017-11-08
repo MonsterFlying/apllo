@@ -457,10 +457,10 @@ public class UserThirdBizImpl implements UserThirdBiz {
                         .build();
                 long count = marketingRedpackRecordService.count(specifications);
                 if (count >= 10) {
-                    // 触发一天超过10个邀请用户
+                    // 触发一天超过个邀请用户
                     // 冻结他的父类和被邀请的子类
-
-                    // 冻结父类
+                    log.info("当天邀请注册数量超过10");
+                    /*// 冻结父类
                     parentUser.setIsLock(true);
                     parentUser.setUpdatedAt(nowDate);
                     userService.save(parentUser);
@@ -469,7 +469,7 @@ public class UserThirdBizImpl implements UserThirdBiz {
                     user.setIsLock(true);
                     user.setUpdatedAt(nowDate);
                     userService.save(user);
-                    log.error("此用户每天邀请好友过20, 系统拒绝执行");
+                    log.error("此用户每天邀请好友过20, 系统拒绝执行");*/
                     return;
                 }
             }

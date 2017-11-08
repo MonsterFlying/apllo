@@ -433,6 +433,16 @@ public class AssetBizImpl implements AssetBiz {
                         .badRequest()
                         .body(VoBaseResp.error(VoBaseResp.ERROR_INIT_BANK_PASSWORD, "请初始化江西银行存管账户密码！"));
             }
+            // ====================================
+            // 针对中国银行不能快捷充值进行特殊处理
+            // ====================================
+            if("中国银行".equals(userThirdAccount.getBankName())){
+                log.warn("中国银行快捷充值, 系统主动拒绝充值!");
+                return ResponseEntity
+                        .badRequest()
+                        .body(VoBaseResp.error(VoBaseResp.ERROR_INIT_BANK_PASSWORD,
+                                "非常抱歉, 存管系统暂不支持中国银行的快捷充值, 建议你使用支付宝/网银转账"));
+            }
 
             String smsSeq = null;
             try {
@@ -535,10 +545,13 @@ public class AssetBizImpl implements AssetBiz {
             Double recordRecharge = MoneyHelper.multiply(voRechargeReq.getMoney(), 100D, 0);
             rechargeDetailLog.setMoney(recordRecharge.longValue());
             rechargeDetailLog.setRechargeChannel(0);
-            rechargeDetailLog.setState(state); // 充值未确认
+            rechargeDetailLog.setState(state);
             rechargeDetailLog.setSeqNo(directRechargeOnlineRequest.getTxDate() + directRechargeOnlineRequest.getTxTime() + directRechargeOnlineRequest.getSeqNo());
-            rechargeDetailLog.setResponseMessage(gson.toJson(directRechargeOnlineResponse));  // 响应吗
+            rechargeDetailLog.setResponseMessage(gson.toJson(directRechargeOnlineResponse));
+            // 充值备注
+            rechargeDetailLog.setRemark(directRechargeOnlineResponse.getRetMsg());
             RechargeDetailLog saveRechargeDetailLog = rechargeDetailLogService.save(rechargeDetailLog);
+
 
             // 触发资金变动确认
             if (toBeConform) {
@@ -566,7 +579,7 @@ public class AssetBizImpl implements AssetBiz {
                 } catch (Exception e) {
                     log.error("发送充值记录异常", e);
                 }
-                
+
                 return ResponseEntity.ok(VoBaseResp.ok("充值成功"));
             } else {
                 return ResponseEntity
@@ -1267,7 +1280,8 @@ public class AssetBizImpl implements AssetBiz {
         Date endTime = DateHelper.endOfDate(DateHelper.stringToDate(voAssetLogReq.getEndTime(), DateHelper.DATE_FORMAT_YMD));
         //gfb_new_asset_log 的 receivedPayments compensatoryReceivedPayments
         Specification<NewAssetLog> nals1 = Specifications.<NewAssetLog>or()
-                .in("localType", AssetChangeTypeEnum.compensatoryReceivedPayments.getLocalType(), AssetChangeTypeEnum.receivedPayments.getLocalType())
+                .in("localType", AssetChangeTypeEnum.compensatoryReceivedPaymentsPrincipal.getLocalType(), AssetChangeTypeEnum.compensatoryReceivedPaymentsInterest.getLocalType(),
+                        AssetChangeTypeEnum.receivedPaymentsPrincipal.getLocalType(), AssetChangeTypeEnum.receivedPaymentsInterest.getLocalType())
                 .notIn("type", 1)
                 .build();
 
