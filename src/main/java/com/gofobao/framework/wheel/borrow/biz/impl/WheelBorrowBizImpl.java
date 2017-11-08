@@ -123,16 +123,17 @@ public class WheelBorrowBizImpl implements WheelBorrowBiz {
     @Override
     public void borrowUpdateNotice(Borrow borrow) {
         String borrowUpdateNoticeUrl = "/financial/ps_target_notice";
-        BorrowsRes.BorrowInfo borrowInfo = commonHandle(borrow);
-        Map<String, String> paramMaps = GSON.fromJson(GSON.toJson(borrowInfo),
-                new TypeToken<Map<String, String>>() {
-                }.getType());
-        String paramStr = "";
-        for (String keyStr : paramMaps.keySet()) {
-            paramStr += keyStr + "=" + paramMaps.get(keyStr) + "&";
-        }
-        String requestParamStr = paramStr.substring(0, paramStr.lastIndexOf("&"));
         try {
+            BorrowsRes.BorrowInfo borrowInfo = commonHandle(borrow);
+            Map<String, String> paramMaps = GSON.fromJson(GSON.toJson(borrowInfo),
+                    new TypeToken<Map<String, String>>() {
+                    }.getType());
+            String paramStr = "";
+            for (String keyStr : paramMaps.keySet()) {
+                paramStr += keyStr + "=" + paramMaps.get(keyStr) + "&";
+            }
+            String requestParamStr = paramStr.substring(0, paramStr.lastIndexOf("&"));
+
             String bizParamStr = JEncryption.encrypt(requestParamStr.getBytes("utf-8"), secretKey);
             String param = "?param=" + URLEncoder.encode(bizParamStr, "utf-8") + "&from=" + shortName;
             log.info("打印请求车轮参数：" + param);
@@ -164,7 +165,7 @@ public class WheelBorrowBizImpl implements WheelBorrowBiz {
         BorrowsRes borrowsRes = new BorrowsRes();
         BorrowsRes.BorrowInfo borrowInfo = borrowsRes.new BorrowInfo();
         borrowInfo.setInvest_id(tempBorrow.getId());
-        borrowInfo.setInvest_time(tempBorrow.getName());
+        borrowInfo.setInvest_title(tempBorrow.getName());
         borrowInfo.setBuy_unit(StringHelper.formatDouble(tempBorrow.getLowest() / 100, false));
         borrowInfo.setBuy_limit(StringHelper.formatDouble(tempBorrow.getMost() / 100, false));
         borrowInfo.setInvest_url("/#/borrow/" + tempBorrow.getId());
@@ -280,6 +281,7 @@ public class WheelBorrowBizImpl implements WheelBorrowBiz {
             investNotice.setInterest_time(DateHelper.dateToString(borrow.getRecheckAt()));
         }
         investNotice.setInvest_time(DateHelper.dateToString(tender.getCreatedAt()));
+        investNotice.setInvest_title(borrow.getName());
         String investNoticeUrl = "/financial/ps_invest_notice";
         Map<String, String> paramMap = GSON.fromJson(GSON.toJson(investNotice),
                 new TypeToken<HashMap<String, String>>() {

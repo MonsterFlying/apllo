@@ -37,6 +37,7 @@ import org.springframework.util.StringUtils;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.net.URLDecoder;
+import java.net.URLEncoder;
 import java.util.Base64;
 import java.util.Date;
 import java.util.Map;
@@ -260,13 +261,14 @@ public class WheelUserBizmpl implements WheelUserBiz {
         CheckTicketRes ticketRes = new CheckTicketRes();
         try {
             String paramStr = "ticket=" + checkTicket.getTicket();
-            String encryptParamStr = JEncryption.encrypt(paramStr.getBytes(), secretKey);
-            Map<String, String> requestMap = Maps.newHashMap();
-            requestMap.put("param", encryptParamStr);
-            requestMap.put("from", checkTicket.getFrom());
-            requestMap.put("ts", checkTicket.getTs().toString());
-            log.info("打印请求封装车轮请求参数:" + GSON.toJson(requestMap));
-            String resultStr = OKHttpHelper.postForm(domain + checkTicKetUrl, requestMap, null);
+            String encryptParamStr = JEncryption.encrypt(paramStr.getBytes("utf-8"), secretKey);
+            log.info("打印票据加密后："+encryptParamStr);
+            String paramsStr = "?param=" +URLEncoder.encode(encryptParamStr, "utf-8")
+                    + "&from=" + checkTicket.getFrom()
+                    + "&ts=" + checkTicket.getTs();
+            log.info("打印请求封装车轮请求参数:" + paramsStr);
+            log.info("打印请求车轮请求链接："+domain + checkTicKetUrl + paramsStr);
+            String resultStr = OKHttpHelper.get(domain + checkTicKetUrl + paramsStr, null, null);
             log.info("打印车轮返回结果" + resultStr);
             if (StringUtils.isEmpty(resultStr)) {
                 throw new Exception();
