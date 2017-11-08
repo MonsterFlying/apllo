@@ -5,6 +5,7 @@ import com.gofobao.framework.asset.repository.AssetRepository;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.helper.MoneyHelper;
 import com.gofobao.framework.helper.StringHelper;
+import com.gofobao.framework.helper.project.UserHelper;
 import com.gofobao.framework.member.entity.UserCache;
 import com.gofobao.framework.member.entity.Users;
 import com.gofobao.framework.member.repository.UserCacheRepository;
@@ -28,9 +29,10 @@ public class UserCacheServiceImpl implements UserCacheService {
 
     @Autowired
     private UserCacheRepository userCacheRepository;
-
     @Autowired
     private AssetRepository assetRepository;
+    @Autowired
+    private UserHelper userHelper;
 
     /**
      * 根据id查询UserCache
@@ -38,6 +40,7 @@ public class UserCacheServiceImpl implements UserCacheService {
      * @param id
      * @return
      */
+    @Override
     public UserCache findById(Long id) {
         return userCacheRepository.findOne(id);
     }
@@ -179,7 +182,7 @@ public class UserCacheServiceImpl implements UserCacheService {
         /**
          * 待付支出总额
          */
-        Double sumWaitExpend = new Double( waitRepayInterest + waitExpenditureInterestManageFee);
+        Double sumWaitExpend = new Double(waitRepayInterest + waitExpenditureInterestManageFee);
         /**
          * 未实现净收益总额 = 未实现收入总额 - 待付支出总额
          * @return array
@@ -201,9 +204,8 @@ public class UserCacheServiceImpl implements UserCacheService {
             statistic.setSumNetProceeds(StringHelper.formatDouble(sumJingshou, 100D, true));
         }
         //净值额度
-        Double netWorthQuota = new Double((asset.getUseMoney() + waitCollectionPrincipal) * 0.8 - payment);
+        long netWorthQuota = userHelper.getNetWorthQuota(userId);
         statistic.setNetWorthLimit(StringHelper.formatMon(netWorthQuota / 100D));
-
         //净资产
         statistic.setAssetTotal(StringHelper.formatDouble((asset.getUseMoney()
                 + asset.getNoUseMoney()

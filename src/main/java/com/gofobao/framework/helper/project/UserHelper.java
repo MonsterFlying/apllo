@@ -1,8 +1,15 @@
 package com.gofobao.framework.helper.project;
 
+import com.gofobao.framework.asset.entity.Asset;
+import com.gofobao.framework.asset.service.AssetService;
 import com.gofobao.framework.common.capital.CapitalChangeEnum;
 import com.gofobao.framework.helper.DateHelper;
+import com.gofobao.framework.helper.MoneyHelper;
+import com.gofobao.framework.member.entity.UserCache;
 import com.gofobao.framework.member.entity.Users;
+import com.gofobao.framework.member.service.UserCacheService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 
@@ -12,6 +19,7 @@ import java.util.Date;
  * 用户模块 工具类
  * created by max on 2017/2/24.
  */
+@Component
 public class UserHelper {
     public static final int EMAIL_NUM = 1;//邮箱标识
     public static final int REALNAME_NUM = 2;//真实姓名标识
@@ -19,6 +27,28 @@ public class UserHelper {
     public static final int CARD_ID_NUM = 4;//身份证标识
     public static final int BANK_ACCOUNT_NUM = 5;//银行账户标识
     public static final int USERNAME_NUM = 6;//用户名标识
+
+    @Autowired
+    private AssetService assetService;
+    @Autowired
+    private UserCacheService userCacheService;
+
+    /**
+     * 计算净值额度
+     *
+     * @param userId
+     * @return
+     */
+    public long getNetWorthQuota(long userId) {
+        Asset asset = assetService.findByUserId(userId);
+        UserCache userCache = userCacheService.findById(userId);
+
+        /* 总资产 = 可用金额 + 待回款本金 + 在即信复审本金*/
+        long assets = asset.getUseMoney() + userCache.getWaitCollectionPrincipal();
+        /* 净值额度 */
+        long netWorthQuota = new Double(MoneyHelper.multiply(assets, 0.8)).longValue() - asset.getPayment();
+        return netWorthQuota > 0 ? netWorthQuota : 0;
+    }
 
     /**
      * 讲字符串根据规则进行隐藏字符
@@ -31,7 +61,7 @@ public class UserHelper {
         StringBuffer rs = new StringBuffer();
         do {
             str = StringUtils.trimAllWhitespace(str);
-            if ( (ObjectUtils.isEmpty(str)) || ObjectUtils.isEmpty(type)) {
+            if ((ObjectUtils.isEmpty(str)) || ObjectUtils.isEmpty(type)) {
                 break;
             }
 
@@ -86,18 +116,19 @@ public class UserHelper {
 
     /**
      * 根据身份证号码获取生日  年份  月日
-     * @param type 0.年份  1.月日
+     *
+     * @param type   0.年份  1.月日
      * @param cardId
      * @return
      */
-    public static String getBirthDayByCardId(String cardId,int type){
+    public static String getBirthDayByCardId(String cardId, int type) {
         Date birthDay = null;
-        if (cardId.length() == 18){
-            birthDay = DateHelper.stringToDate(cardId.substring(6,10));
-            birthDay = DateHelper.stringToDate(cardId.substring(10,14));
-        }else if (cardId.length() == 15){
-            birthDay = DateHelper.stringToDate(cardId.substring(6,10));
-            birthDay = DateHelper.stringToDate(cardId.substring(10,14));
+        if (cardId.length() == 18) {
+            birthDay = DateHelper.stringToDate(cardId.substring(6, 10));
+            birthDay = DateHelper.stringToDate(cardId.substring(10, 14));
+        } else if (cardId.length() == 15) {
+            birthDay = DateHelper.stringToDate(cardId.substring(6, 10));
+            birthDay = DateHelper.stringToDate(cardId.substring(10, 14));
 
         }
         return null;
