@@ -176,6 +176,7 @@ public class StarFireUserBizImpl implements StarFireUserBiz {
                 //已注册，已绑定星火智投的引流用户(通过星火智投新注册平台的用户)
                 if (!StringUtils.isEmpty(user.getStarFireRegisterToken())) {
                     registerQueryRes.setRegister_token(user.getStarFireRegisterToken());
+                    registerQueryRes.setPlatform_uid(AES.encrypt(key, initVector, String.valueOf(user.getId())));
                     registerQueryRes.setResult(ResultCodeEnum.getCode(CodeTypeConstant.EXIST_AND_BIND_STAR_FIRE));
                     log.info("已注册，已绑定星火智投的引流用户(通过星火智投新注册平台的用户)");
                     break;
@@ -248,7 +249,7 @@ public class StarFireUserBizImpl implements StarFireUserBiz {
             starFireUser.setPhone(mobile);
             starFireUser.setCardId(identity);
             PassWordCreate pwc = new PassWordCreate();
-            String password =  RandomHelper.generateNumberCode(6);
+            String password = RandomHelper.generateNumberCode(6);
             starFireUser.setPassword(PasswordHelper.encodingPassword(password)); // 设置密码
             starFireUser.setPayPassword("");
             starFireUser.setRealname(trueName);
@@ -526,8 +527,8 @@ public class StarFireUserBizImpl implements StarFireUserBiz {
                 loginTokenRes.setResult(code);
                 loginTokenRes.setErr_msg(ResultCodeMsgEnum.getResultMsg(code));
                 return loginTokenRes;
-            }else if(StringUtils.isEmpty(users.getStarFireUserId())
-                    ||StringUtils.isEmpty(users.getStarFireRegisterToken())){
+            } else if (StringUtils.isEmpty(users.getStarFireUserId())
+                    || StringUtils.isEmpty(users.getStarFireRegisterToken())) {
                 users.setStarFireUserId(starFireUserId);
                 users.setStarFireRegisterToken(registerToken);
                 users.setStarFireBindAt(new Date());
@@ -686,7 +687,7 @@ public class StarFireUserBizImpl implements StarFireUserBiz {
             if (StringUtils.isEmpty(userIdStr)) {
                 Specification<Users> usersSpecification = Specifications.<Users>and()
                         .ne("starFireUserId", null)
-                        .ne("starFireRegisterToken",null)
+                        .ne("starFireRegisterToken", null)
                         .eq("isLock", false)
                         .build();
                 List<Users> usersList = userService.findList(usersSpecification);

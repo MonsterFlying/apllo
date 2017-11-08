@@ -62,6 +62,7 @@ import com.gofobao.framework.tender.service.TenderService;
 import com.gofobao.framework.tender.vo.VoSaveThirdTender;
 import com.gofobao.framework.tender.vo.request.*;
 import com.gofobao.framework.tender.vo.response.VoBorrowTenderUserWarpListRes;
+import com.gofobao.framework.wheel.borrow.biz.WheelBorrowBiz;
 import com.gofobao.framework.windmill.borrow.biz.WindmillTenderBiz;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.HashMultiset;
@@ -131,6 +132,9 @@ public class TenderBizImpl implements TenderBiz {
     @Value("${gofobao.javaDomain}")
     String javaDomain;
     private static Gson gson = new GsonBuilder().create();
+
+    @Autowired
+    private WheelBorrowBiz wheelBorrowBiz;
 
     /**
      * 新版投标
@@ -244,7 +248,12 @@ public class TenderBizImpl implements TenderBiz {
                 log.error("推送风车理财异常", e);
             }
         }
-
+        if (!StringUtils.isEmpty(user.getWheelId())) {
+            wheelBorrowBiz.investNotice(borrowTender);
+        }
+        if (borrow.getIsWindmill()) {
+            wheelBorrowBiz.borrowUpdateNotice(borrow);
+        }
         try {
             // 触发新手标活动派发
             if (borrow.getIsNovice() && userCache.isNovice() && (!borrow.getIsFinance())) {
