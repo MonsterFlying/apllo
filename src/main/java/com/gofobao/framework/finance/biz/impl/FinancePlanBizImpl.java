@@ -730,6 +730,7 @@ public class FinancePlanBizImpl implements FinancePlanBiz {
 
         Specification<FinancePlan> specification = Specifications.<FinancePlan>and()
                 .eq("status",FinannceContants.PURCJASE)
+                .eq("successAt",null)
                 .eq("type", 0)
                 .build();
         List<FinancePlan> financePlans = financePlanService.findList(specification,
@@ -770,6 +771,7 @@ public class FinancePlanBizImpl implements FinancePlanBiz {
         Specification<FinancePlan> specification = Specifications.<FinancePlan>and()
                 .notIn("status", FinannceContants.PURCJASE)
                 .eq("type", 1)
+                .eq("successAt",null)
                 .eq("status", 1)
                 .build();
         List<FinancePlan> financePlans = financePlanService.findList(specification, new PageRequest(page.getPageIndex(), page.getPageSize(), new Sort(Sort.Direction.DESC, "id")));

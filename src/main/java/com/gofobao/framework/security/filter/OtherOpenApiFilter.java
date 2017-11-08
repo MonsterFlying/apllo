@@ -35,7 +35,8 @@ public class OtherOpenApiFilter implements Filter {
         String starfire = "starfire";
         String windmill = "windmill";
         String wheel = "wheel";
-
+        log.info("=============进入过滤中============");
+        log.info("打印当前请求ip地址："+requestIp);
         String passUrl = config.getInitParameter("passUrl");
       /*  if (requestUrl.contains(starfire)) {
 
@@ -62,7 +63,8 @@ public class OtherOpenApiFilter implements Filter {
                     return;
                 }
             }
-        } else*/ if (requestUrl.contains(wheel)) {
+        } else*/
+        if (requestUrl.contains(wheel)) {
             log.info("=============进入过滤器中==============");
             log.info("===========访问进入车轮接口==============");
             String params = servletRequest.getParameter("param");
