@@ -951,3 +951,22 @@ ALTER TABLE gfb_user_cache
   ADD wait_expenditure_interest_manage INT(10) UNSIGNED NOT NULL DEFAULT 0
 COMMENT '待付利息管理费'
   AFTER expenditure_interest_manage;
+
+
+DROP TABLE IF EXISTS `gfb_user_address`;
+CREATE TABLE `gfb_user_address` (
+  `id` int(11) NOT NULL AUTO_INCREMENT COMMENT '主键id',
+  `type` int(11) DEFAULT '0' COMMENT '地址类型：0.收货地址',
+  `name` varchar(255) DEFAULT NULL COMMENT '收件人姓名',
+  `phone` varchar(25) DEFAULT NULL COMMENT '收货号码',
+  `country` varchar(255) DEFAULT NULL COMMENT '国家',
+  `province` varchar(255) DEFAULT NULL COMMENT '身份',
+  `city` varchar(255) DEFAULT NULL COMMENT '城市',
+  `district` varchar(255) DEFAULT NULL COMMENT '地区（市区/县）',
+  `detailed_address` varchar(1024) DEFAULT NULL COMMENT '详细地址',
+  `default` int(11) DEFAULT '0' COMMENT '是否默认地址：0否，1是',
+  `del` int(11) DEFAULT '0' COMMENT '是否删除 0否 1是',
+  `create_at` datetime DEFAULT NULL COMMENT '创建时间',
+  `update_at` datetime DEFAULT NULL COMMENT '更新时间',
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
