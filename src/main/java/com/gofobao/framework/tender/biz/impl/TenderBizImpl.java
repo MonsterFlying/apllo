@@ -74,6 +74,7 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.hibernate.mapping.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.jpa.domain.Specification;
@@ -85,6 +86,9 @@ import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 
 import java.util.*;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -191,22 +195,25 @@ public class TenderBizImpl implements TenderBiz {
             return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, msg));
         }
 
-        state = verifyUserInfo4Borrow(user, borrow, asset, voCreateTenderReq, extendMessage); // 借款用户资产判断
-        Set<String> errorSet = extendMessage.elementSet();
-        Iterator<String> iterator = errorSet.iterator();
-
+        Map<String, Object> resultMap = new HashMap<>();
+        // 借款用户资产判断
+        state = verifyUserInfo4Borrow(user, borrow, asset, voCreateTenderReq, resultMap);
+        String msg = String.valueOf(resultMap.get("msg"));
         if (!state) {
             log.error("标的判断资产不通过");
             return ResponseEntity
+
                     .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, iterator.next()));
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, msg));
         }
 
         Date nowDate = new Date();
         //投资有效金额
-        long validateMoney = Long.parseLong(iterator.next());
-        Tender borrowTender = createBorrowTenderRecord(voCreateTenderReq, user, nowDate, validateMoney);    // 生成投标记录
-        borrowTender = registerJixinTenderRecord(borrow, borrowTender);  // 投标的存管报备
+        long validateMoney = NumberHelper.toLong(resultMap.get("invaildataMoney"));
+        // 生成投标记录
+        Tender borrowTender = createBorrowTenderRecord(voCreateTenderReq, user, nowDate, validateMoney);
+        // 投标的存管报备
+        borrowTender = registerJixinTenderRecord(borrow, borrowTender);
         if (ObjectUtils.isEmpty(borrowTender)) {
             log.error("标的报备失败");
             return ResponseEntity
@@ -281,7 +288,7 @@ public class TenderBizImpl implements TenderBiz {
         } catch (Exception e) {
             log.error("触发派发失败新手红包失败", e);
         }
-        return ResponseEntity.ok(VoBaseResp.ok( "投资成功" ));
+        return ResponseEntity.ok(VoBaseResp.ok(StringUtils.isEmpty(msg) ? "投资成功" : msg));
     }
 
     /**
@@ -402,12 +409,14 @@ public class TenderBizImpl implements TenderBiz {
      * @param borrow
      * @param asset
      * @param voCreateTenderReq
-     * @param extendMessage     @return
+     * @param resultMap         @return
      */
-    private boolean verifyUserInfo4Borrow(Users user, Borrow borrow, Asset asset, VoCreateTenderReq voCreateTenderReq, Multiset<String> extendMessage) {
+    private boolean verifyUserInfo4Borrow(Users user, Borrow borrow, Asset asset, VoCreateTenderReq voCreateTenderReq, Map<String, Object> resultMap) {
         // 判断用户是否已经锁定
+        String msg = null;
         if (user.getIsLock()) {
-            extendMessage.add("当前用户属于锁定状态, 如有问题请联系客服!");
+            msg = "当前用户属于锁定状态, 如有问题请联系客服!";
+            resultMap.put("msg", msg);
             log.error("当前用户属于锁定状态, 如有问题请联系客服!");
             return false;
         }
@@ -420,7 +429,8 @@ public class TenderBizImpl implements TenderBiz {
         // 获取最小投标金额
         long realMiniTenderMoney = Math.min(realTenderMoney, minLimitTenderMoney);
         if (realMiniTenderMoney > voCreateTenderReq.getTenderMoney()) {
-            extendMessage.add("小于标的最小投标金额!");
+            msg = "小于标的最小投标金额!";
+            resultMap.put("msg", msg);
             log.error("小于标的最小投标金额!");
             return false;
         }
@@ -434,7 +444,8 @@ public class TenderBizImpl implements TenderBiz {
             }
 
             if ((invaildataMoney <= 0) || (invaildataMoney < minLimitTenderMoney)) {
-                extendMessage.add("该借款已达到自投限额!");
+                msg = "该借款已达到自投限额!";
+                resultMap.put("msg", msg);
                 log.error("该借款已达到自投限额!");
                 return false;
             }
@@ -444,11 +455,14 @@ public class TenderBizImpl implements TenderBiz {
             long most = borrow.getMost();
             if (most > 0 && invaildataMoney > most) {
                 invaildataMoney = Math.min(most, invaildataMoney);
+                msg = String.format("投资金额超过单笔投标限额%s元,超出部分资金返回账户可用余额!", StringHelper.formatDouble(most, 100, true));
+                resultMap.put("msg", msg);
             }
         }
 
         if (invaildataMoney > asset.getUseMoney()) {
-            extendMessage.add("您的账户可用余额不足,请先充值!");
+            msg = "您的账户可用余额不足,请先充值!";
+            resultMap.put("msg", msg);
             log.error("您的账户可用余额不足,请先充值!");
             return false;
         }
@@ -460,7 +474,8 @@ public class TenderBizImpl implements TenderBiz {
         balanceQueryRequest.setAccountId(userThirdAccount.getAccountId());
         BalanceQueryResponse balanceQueryResponse = jixinManager.send(JixinTxCodeEnum.BALANCE_QUERY, balanceQueryRequest, BalanceQueryResponse.class);
         if ((ObjectUtils.isEmpty(balanceQueryResponse)) || !balanceQueryResponse.getRetCode().equals(JixinResultContants.SUCCESS)) {
-            extendMessage.add("当前网络不稳定,请稍后重试!");
+            msg = "当前网络不稳定,请稍后重试!";
+            resultMap.put("msg", msg);
             log.error("当前网络不稳定,请稍后重试!");
             return false;
         }
@@ -471,11 +486,12 @@ public class TenderBizImpl implements TenderBiz {
         long useMoney = asset.getUseMoney().longValue();
         if (availBal < useMoney) {
             log.error(String.format("资金账户未同步userId:%s:本地:%s 即信:%s", user.getId(), useMoney, availBal));
-            extendMessage.add("资金账户未同步，请先在个人中心进行资金同步操作!");
+            msg = "资金账户未同步，请先在个人中心进行资金同步操作!";
+            resultMap.put("msg", msg);
             return false;
         }
 
-        extendMessage.add(String.valueOf(invaildataMoney));
+        resultMap.put("invaildataMoney", invaildataMoney);
         return true;
     }
 
@@ -611,7 +627,7 @@ public class TenderBizImpl implements TenderBiz {
         try {
             ResponseEntity<VoBaseResp> voBaseRespResponseEntity = createTender(voCreateTenderReq);
             if (voBaseRespResponseEntity.getStatusCode().equals(HttpStatus.OK)) {
-                return ResponseEntity.ok(VoBaseResp.ok("投标成功!"));
+                return voBaseRespResponseEntity;
             } else {
                 return voBaseRespResponseEntity;
             }
