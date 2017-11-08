@@ -1,12 +1,14 @@
 package com.gofobao.framework.tender.service;
 
 import com.gofobao.framework.borrow.vo.response.VoBorrowTenderUserRes;
+import com.gofobao.framework.helper.NumberHelper;
 import com.gofobao.framework.tender.entity.Tender;
 import com.gofobao.framework.tender.vo.request.TenderUserReq;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 
+import javax.persistence.Query;
 import java.util.List;
 import java.util.Map;
 
@@ -45,7 +47,16 @@ public interface TenderService {
     Tender findByAuthCode(String authCode);
 
     /**
+     * 查询投标复审金额
+     *
+     * @param userId
+     * @return
+     */
+    long findTenderAgainVerifyMoney(long userId);
+
+    /**
      * 昨日 今日 成交统计
+     *
      * @return
      */
     Map<String, Long> statistic();

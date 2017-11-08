@@ -1,19 +1,30 @@
 package com.gofobao.framework.helper.project;
 
+import com.github.wenhao.jpa.Specifications;
 import com.gofobao.framework.asset.entity.Asset;
 import com.gofobao.framework.asset.service.AssetService;
+import com.gofobao.framework.borrow.entity.Borrow;
+import com.gofobao.framework.borrow.service.BorrowService;
 import com.gofobao.framework.common.capital.CapitalChangeEnum;
 import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.helper.MoneyHelper;
+import com.gofobao.framework.helper.NumberHelper;
+import com.gofobao.framework.helper.StringHelper;
 import com.gofobao.framework.member.entity.UserCache;
 import com.gofobao.framework.member.entity.Users;
 import com.gofobao.framework.member.service.UserCacheService;
+import com.gofobao.framework.repayment.entity.BorrowRepayment;
+import com.gofobao.framework.tender.service.TenderService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Component;
 import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 
 import java.util.Date;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * 用户模块 工具类
@@ -32,6 +43,10 @@ public class UserHelper {
     private AssetService assetService;
     @Autowired
     private UserCacheService userCacheService;
+    @Autowired
+    private TenderService tenderService;
+    @Autowired
+    private BorrowService borrowService;
 
     /**
      * 计算净值额度
@@ -42,11 +57,33 @@ public class UserHelper {
     public long getNetWorthQuota(long userId) {
         Asset asset = assetService.findByUserId(userId);
         UserCache userCache = userCacheService.findById(userId);
-
+        /* 投标复审中的金额 */
+        long tenderAgainVerifyMoney = tenderService.findTenderAgainVerifyMoney(userId);
         /* 总资产 = 可用金额 + 待回款本金 + 在即信复审本金*/
-        long assets = asset.getUseMoney() + userCache.getWaitCollectionPrincipal();
-        /* 净值额度 */
-        long netWorthQuota = new Double(MoneyHelper.multiply(assets, 0.8)).longValue() - asset.getPayment();
+        long assets = asset.getUseMoney() + userCache.getWaitCollectionPrincipal() + tenderAgainVerifyMoney;
+        /* 净值标借款金额 */
+        Specification<Borrow> bs = Specifications
+                .<Borrow>and()
+                .eq("userId", userId)
+                .eq("status", 1)
+                .build();
+        List<Borrow> borrowList = borrowService.findList(bs);
+        long sumRepayTotal = 0;
+        //筛选已复审借款集合
+        borrowList = borrowList.stream().filter(borrow -> (borrow.getMoney().longValue() == borrow.getMoneyYes().longValue())
+                && (!ObjectUtils.isEmpty(borrow.getSuccessAt()))).collect(Collectors.toList());
+        for (Borrow borrow : borrowList) {
+            BorrowCalculatorHelper borrowCalculatorHelper = new BorrowCalculatorHelper(NumberHelper.toDouble(StringHelper.toString(borrow.getMoney())),
+                    NumberHelper.toDouble(StringHelper.toString(borrow.getApr())), borrow.getTimeLimit(), borrow.getRecheckAt());
+            Map<String, Object> rsMap = borrowCalculatorHelper.simpleCount(borrow.getRepayFashion());
+            /*总偿还*/
+            long repayTotal = NumberHelper.toLong(rsMap.get("repayTotal"));
+            //累加总偿还
+            sumRepayTotal = sumRepayTotal + repayTotal;
+        }
+
+            /* 净值额度 总资产*0.8 - 待还  - 复审中待还*/
+        long netWorthQuota = new Double(MoneyHelper.multiply(assets, 0.8)).longValue() - asset.getPayment() - sumRepayTotal;
         return netWorthQuota > 0 ? netWorthQuota : 0;
     }
 
@@ -57,6 +94,7 @@ public class UserHelper {
      * @param type 字符串类型
      * @return 空字符串  处理后的字符串
      */
+
     public static String hideChar(String str, Integer type) {
         StringBuffer rs = new StringBuffer();
         do {
