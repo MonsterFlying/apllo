@@ -43,7 +43,7 @@ public class LendInfo {
     private String equityLimit;
 
     @ApiModelProperty("净值额度隐藏")
-    private Integer equityLimitHide;
+    private Long equityLimitHide;
 
     @ApiModelProperty("状态（0、可借；1、结束）")
     private Integer status;

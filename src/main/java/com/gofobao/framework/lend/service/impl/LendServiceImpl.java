@@ -71,6 +71,8 @@ public class LendServiceImpl implements LendService {
 
     @Autowired
     private UsersRepository usersRepository;
+    @Autowired
+    private UserHelper userHelper;
 
 
     @Value("${gofobao.javaDomain}")
@@ -148,7 +150,7 @@ public class LendServiceImpl implements LendService {
             lend.setAvatar(StringUtils.isEmpty(user.getAvatarPath()) ? javaDomain + "/images/user/default_avatar.jpg" : user.getAvatarPath());
             lend.setReleaseAt(DateHelper.dateToString(p.getCreatedAt()));
             lend.setCollectionAt(DateHelper.dateToString(p.getRepayAt()));
-            double spend = NumberHelper.floorDouble((p.getMoneyYes()/ p.getMoney()) * 100, 2);
+            double spend = NumberHelper.floorDouble((p.getMoneyYes() / p.getMoney()) * 100, 2);
             lend.setSpend(spend);
             lend.setLimit(p.getTimeLimit());
             lend.setStartMoney(StringHelper.formatMon(p.getLowest() / 100D));
@@ -200,10 +202,7 @@ public class LendServiceImpl implements LendService {
         }
         lendInfo.setRepayAtYes(StringUtils.isEmpty(lend.getRepayAt()) ? "----" : DateHelper.dateToString(lend.getRepayAt()));
         lendInfo.setStatus(lend.getStatus());
-        Long useMoney = asset.getUseMoney();
-        Long waitCollectionPrincipal = userCache.getWaitCollectionPrincipal();
-        Long payment = asset.getPayment();
-        int netWorthQuota = new Double((useMoney + waitCollectionPrincipal) * 0.8 - payment).intValue();//计算净值额度
+        long netWorthQuota = userHelper.getNetWorthQuota(userId);//计算净值额度
         lendInfo.setEquityLimit(StringHelper.formatMon(netWorthQuota / 100D));
         lendInfo.setEquityLimitHide(netWorthQuota);
         return lendInfo;

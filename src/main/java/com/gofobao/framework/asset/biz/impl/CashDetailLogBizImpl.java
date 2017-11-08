@@ -43,6 +43,7 @@ import com.gofobao.framework.core.helper.RandomHelper;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.helper.*;
 import com.gofobao.framework.helper.project.SecurityHelper;
+import com.gofobao.framework.helper.project.UserHelper;
 import com.gofobao.framework.marketing.entity.MarketingRedpackRecord;
 import com.gofobao.framework.marketing.service.MarketingRedpackRecordService;
 import com.gofobao.framework.member.entity.UserCache;
@@ -100,35 +101,26 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
 
     @Autowired
     RechargeAndCashAndRedpackQueryHelper rechargeAndCashAndRedpackQueryHelper;
-
     @Autowired
     AssetService assetService;
-
     @Autowired
     UserService userService;
-
     @Autowired
     CashDetailLogService cashDetailLogService;
-
     @Autowired
     UserThirdAccountService userThirdAccountService;
-
     @Autowired
     RechargeDetailLogService rechargeDetailLogService;
-
     @Autowired
     JixinManager jixinManager;
-
     @Autowired
     BankAccountBizImpl bankAccountBiz;
-
     @Autowired
     AssetChangeProvider assetChangeProvider;
     @Autowired
-    private AssetBiz assetBiz;
-
-    @Autowired
     UserCacheService userCacheService;
+    @Autowired
+    UserHelper userHelper;
 
     @Value("${gofobao.javaDomain}")
     String javaDomain;
@@ -923,7 +915,8 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
         UserCache userCache = userCacheService.findByUserIdLock(userId);
         Double money = 0D;
         if (asset.getPayment() > 0) {
-            money = Math.min((((asset.getUseMoney() + userCache.getWaitCollectionPrincipal()) * 0.8 - asset.getPayment())), asset.getUseMoney());
+            long netWorthQuota = userHelper.getNetWorthQuota(userId);
+            money = Math.min(new Double(netWorthQuota), asset.getUseMoney());
         } else {
             money = asset.getUseMoney() * 1D;
         }

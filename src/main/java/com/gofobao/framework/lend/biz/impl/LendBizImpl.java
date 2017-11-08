@@ -65,9 +65,6 @@ public class LendBizImpl implements LendBiz {
     final Gson GSON = new Gson();
 
     @Autowired
-    private BorrowBiz borrowBiz;
-
-    @Autowired
     private LendService lendService;
     @Autowired
     private AssetService assetService;
@@ -85,9 +82,10 @@ public class LendBizImpl implements LendBiz {
     private UsersRepository usersRepository;
     @Autowired
     private UserThirdAccountService userThirdAccountService;
-
     @Autowired
     private LendBlacklistRepository lendBlacklistRepository;
+    @Autowired
+    private UserHelper userHelper;
 
     /**
      * 出借列表
@@ -174,14 +172,17 @@ public class LendBizImpl implements LendBiz {
      * @return
      */
     @Transactional(rollbackFor = Exception.class)
+    @Override
     public ResponseEntity<VoBaseResp> create(VoCreateLend voCreateLend) {
-        Double money = voCreateLend.getMoney();//借款金额（元）
+        //借款金额（元）
+        Double money = voCreateLend.getMoney();
         Double lowest = voCreateLend.getLowest();
         Integer timeLimit = voCreateLend.getTimeLimit();
         Date repayAt = DateHelper.stringToDate(voCreateLend.getRepayAt());
         Date nowDate = new Date();
         Long userId = voCreateLend.getUserId();
-        Integer apr = voCreateLend.getApr(); //年利率 2450
+        //年利率 2450
+        Integer apr = voCreateLend.getApr();
 
         if (lowest > money) {
             return ResponseEntity
@@ -189,8 +190,10 @@ public class LendBizImpl implements LendBiz {
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "借款金额小于起借金额"));
         }
 
-        Date countRepayDate = DateHelper.addDays(new Date(), timeLimit);//计算截止时间
-        if (!DateHelper.isSameDay(repayAt, countRepayDate)) {//比较截止日期与还款期限是否是同一天
+        //计算截止时间
+        Date countRepayDate = DateHelper.addDays(new Date(), timeLimit);
+        //比较截止日期与还款期限是否是同一天
+        if (!DateHelper.isSameDay(repayAt, countRepayDate)) {
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "借款还款时间不能是今天或今天以前的时间"));
@@ -242,6 +245,7 @@ public class LendBizImpl implements LendBiz {
      * @param voEndLend
      * @return
      */
+    @Override
     @Transactional(rollbackFor = Exception.class)
     public ResponseEntity<VoBaseResp> end(VoEndLend voEndLend) {
         long userId = voEndLend.getUserId();
@@ -273,6 +277,7 @@ public class LendBizImpl implements LendBiz {
      * @param voLend
      * @return
      */
+    @Override
     @Transactional(rollbackFor = Exception.class)
     public ResponseEntity<VoBaseResp> lend(VoLend voLend) throws Exception {
         UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(voLend.getUserId());
@@ -285,13 +290,15 @@ public class LendBizImpl implements LendBiz {
         Double money = voLend.getMoney();
         Lend lend = lendService.findByIdLock(voLend.getLendId());
         Preconditions.checkNotNull(lend, "摘草: 有草出借记录为空");
-        ResponseEntity<VoBaseResp> lendCondiitionCheckResponse = lendCondiitionCheck(userId, money, lend);  // 有草出借前期判断
+        // 有草出借前期判断
+        ResponseEntity<VoBaseResp> lendCondiitionCheckResponse = lendCondiitionCheck(userId, money, lend);
         if (!lendCondiitionCheckResponse.getStatusCode().equals(HttpStatus.OK)) {
             return lendCondiitionCheckResponse;
         }
 
         long lendUserId = lend.getUserId();
-        Asset landAsset = assetService.findByUserIdLock(lendUserId);  // 出借人资金记录
+        // 出借人资金记录
+        Asset landAsset = assetService.findByUserIdLock(lendUserId);
         Preconditions.checkNotNull(landAsset, "摘草: 有草出借发起人资产记录为空!");
         Users user = userService.findById(userId);
         Preconditions.checkNotNull(user, "摘草: 用户记录为空!");
@@ -302,15 +309,8 @@ public class LendBizImpl implements LendBiz {
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "账户已被锁定，请联系客服人员!"));
         }
 
-        UserCache userCache = userCacheService.findById(userId);
-        Preconditions.checkNotNull(lend, "摘草: 用户缓存记录获取失败!");
-        Asset userAsset = assetService.findByUserIdLock(userId);
-        Preconditions.checkNotNull(lend, "摘草: 用户资产记录获取失败!");
-
-        /* 总资产 */
-        long assets = userAsset.getUseMoney() + userCache.getWaitCollectionPrincipal();
         /* 净值额度 */
-        long totalMoney = new Double(MoneyHelper.multiply(assets, 0.8)).longValue() - userAsset.getPayment();
+        long totalMoney = userHelper.getNetWorthQuota(userId);
         if (money > totalMoney) {
             return ResponseEntity
                     .badRequest()
@@ -326,7 +326,8 @@ public class LendBizImpl implements LendBiz {
         if (((lend.getMoney() - lend.getMoneyYes()) < lend.getLowest())
                 || (landAsset.getUseMoney() < money)
                 || (nowDate.getTime() > endDate.getTime())) {
-            lend.setStatus(1);  // 已经结束
+            // 已经结束
+            lend.setStatus(1);
             lendService.updateById(lend);
 
             return ResponseEntity
@@ -445,6 +446,7 @@ public class LendBizImpl implements LendBiz {
      * @return
      * @throws Exception
      */
+    @Override
     public ResponseEntity<VoViewLendBlacklists> getLendBlacklists(VoGetLendBlacklists voGetLendBlacklists) {
         VoViewLendBlacklists voViewLendBlacklists = new VoViewLendBlacklists();
         List<VoLendBlacklist> voLendBlacklists = new ArrayList<>();
@@ -492,6 +494,7 @@ public class LendBizImpl implements LendBiz {
      * @return
      * @throws Exception
      */
+    @Override
     public ResponseEntity<VoBaseResp> addLendBlacklist(VoAddLendBlacklist voAddLendBlacklist) {
         LendBlacklist lendBlacklist = new LendBlacklist();
 
@@ -518,6 +521,7 @@ public class LendBizImpl implements LendBiz {
      * @return
      * @throws Exception
      */
+    @Override
     public ResponseEntity<VoBaseResp> delLendBlacklist(VoDelLendBlacklist voDelLendBlacklist) {
         Specification<LendBlacklist> lbs = Specifications
                 .<LendBlacklist>and()
