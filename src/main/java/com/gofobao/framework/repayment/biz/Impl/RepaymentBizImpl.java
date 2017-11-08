@@ -210,6 +210,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
      * @throws Exception
      */
     @Transactional(rollbackFor = Exception.class)
+    @Override
     public ResponseEntity<VoBaseResp> pcInstantly(VoPcRepay voPcRepay) throws Exception {
         String paramStr = voPcRepay.getParamStr();/* pc还款 */
         if (!SecurityHelper.checkSign(voPcRepay.getSign(), paramStr)) {
@@ -1071,8 +1072,10 @@ public class RepaymentBizImpl implements RepaymentBiz {
                 long principal = borrowCollection.getPrincipal();
                 financePlanBuyer.setLeftMoney(financePlanBuyer.getLeftMoney() + principal);
                 financePlanBuyer.setRightMoney(financePlanBuyer.getRightMoney() - principal);
+                financePlanBuyer.setUpdatedAt(new Date());
                 financePlan.setLeftMoney(financePlan.getLeftMoney() + principal);
                 financePlan.setRightMoney(financePlan.getRightMoney() - principal);
+                financePlan.setUpdatedAt(new Date());
                 if (!flag) {
                     flag = true;
                 }

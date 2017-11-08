@@ -14,6 +14,10 @@ public enum AssetChangeTypeEnum {
      */
     financeReceivedPaymentsInterest("理财计划到期收回利息", "financeReceivedPayments", "7781", "add@financePlanMoney", "", "D"),
 
+    /**
+     * 理财计划到期收回本息
+     */
+    financeReceivedPayments("理财计划回款", "financeReceivedPayments", "7781", "add@financePlanMoney", "", "D"),
 
     /**
      * 投资人到期收回本息
@@ -152,6 +156,11 @@ public enum AssetChangeTypeEnum {
     receivedPaymentsInterest("正常利息回款", "receivedPaymentsInterest", "7781", "add@useMoney", "add@incomeInterest#interest", "D"),
 
     /**
+     * 投资人到期收回本息
+     */
+    receivedPayments("正常回款", "receivedPayments", "7781", "add@useMoney", "add@incomeInterest#interest", "D"),
+
+    /**
      * 借款人扣除还款违约金
      */
     repayPaymentsViolation("扣除还款违约金", "repayPaymentsViolation", "7781", "sub@useMoney", "add@expenditureOther", "D"),
@@ -170,12 +179,17 @@ public enum AssetChangeTypeEnum {
     /**
      * 垫付账户收回垫付本金
      */
-    compensatoryReceivedPaymentsPrincipal("垫付账户收回垫付本金", "compensatoryReceivedPayments", "7788", "add@useMoney", "", "D"),
+    compensatoryReceivedPaymentsPrincipal("垫付账户收回垫付本金", "compensatoryReceivedPayments", "7781", "add@useMoney", "", "D"),
 
     /**
      * 垫付账户收回垫付利息
      */
-    compensatoryReceivedPaymentsInterest("垫付账户收回垫付利息", "compensatoryReceivedPayments", "7788", "add@useMoney", "add@incomeInterest#interest", "D"),
+    compensatoryReceivedPaymentsInterest("垫付账户收回垫付利息", "compensatoryReceivedPayments", "7781", "add@useMoney", "add@incomeInterest#interest", "D"),
+
+    /**
+     * 垫付账户收回垫付本息
+     */
+    compensatoryReceivedPayments("垫付账户垫付本息回款", "compensatoryReceivedPayments", "7788", "add@useMoney", "add@incomeInterest#interest", "D"),
 
     /**
      * 平台派发收益红包

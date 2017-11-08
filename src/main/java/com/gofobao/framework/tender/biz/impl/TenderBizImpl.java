@@ -182,23 +182,25 @@ public class TenderBizImpl implements TenderBiz {
         if (!state) {
             Set<String> errorSet = extendMessage.elementSet();
             Iterator<String> iterator = errorSet.iterator();
-            String msg =  iterator.next();
-            log.error("标判断不通过"+msg);
+            String msg = iterator.next();
+            log.error("标判断不通过" + msg);
             return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, msg));
         }
 
         state = verifyUserInfo4Borrow(user, borrow, asset, voCreateTenderReq, extendMessage); // 借款用户资产判断
         Set<String> errorSet = extendMessage.elementSet();
         Iterator<String> iterator = errorSet.iterator();
+        //投资有效金额
+        long validateMoney = Long.parseLong(iterator.next());
+        String msg = iterator.next();
         if (!state) {
             log.error("标的判断资产不通过");
             return ResponseEntity
                     .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, iterator.next()));
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, msg));
         }
 
         Date nowDate = new Date();
-        long validateMoney = Long.parseLong(iterator.next());
         Tender borrowTender = createBorrowTenderRecord(voCreateTenderReq, user, nowDate, validateMoney);    // 生成投标记录
         borrowTender = registerJixinTenderRecord(borrow, borrowTender);  // 投标的存管报备
         if (ObjectUtils.isEmpty(borrowTender)) {
@@ -270,7 +272,7 @@ public class TenderBizImpl implements TenderBiz {
         } catch (Exception e) {
             log.error("触发派发失败新手红包失败", e);
         }
-        return ResponseEntity.ok(VoBaseResp.ok("投资成功"));
+        return ResponseEntity.ok(VoBaseResp.ok(StringUtils.isEmpty(msg) ? "投资成功" : msg));
     }
 
     /**
@@ -402,9 +404,12 @@ public class TenderBizImpl implements TenderBiz {
         }
 
         // 判断最小投标金额
-        long realTenderMoney = borrow.getMoney() - borrow.getMoneyYes();  // 剩余金额
-        int minLimitTenderMoney = ObjectUtils.isEmpty(borrow.getLowest()) ? 50 * 100 : borrow.getLowest();  // 最小投标金额
-        long realMiniTenderMoney = Math.min(realTenderMoney, minLimitTenderMoney);  // 获取最小投标金额
+        // 剩余金额
+        long realTenderMoney = borrow.getMoney() - borrow.getMoneyYes();
+        // 最小投标金额
+        int minLimitTenderMoney = ObjectUtils.isEmpty(borrow.getLowest()) ? 50 * 100 : borrow.getLowest();
+        // 获取最小投标金额
+        long realMiniTenderMoney = Math.min(realTenderMoney, minLimitTenderMoney);
         if (realMiniTenderMoney > voCreateTenderReq.getTenderMoney()) {
             extendMessage.add("小于标的最小投标金额!");
             log.error("小于标的最小投标金额!");
@@ -423,6 +428,14 @@ public class TenderBizImpl implements TenderBiz {
                 extendMessage.add("该借款已达到自投限额!");
                 log.error("该借款已达到自投限额!");
                 return false;
+            }
+        } else {
+            //手动限额
+            //投标单次限额
+            long most = borrow.getMost();
+            if (most > 0 && invaildataMoney > most) {
+                invaildataMoney = Math.min(most, invaildataMoney);
+                extendMessage.add(String.format("投资金额超过单笔投标限额%s元,超出部分资金返回账户可用余额!", StringHelper.formatDouble(most, 100, true)));
             }
         }
 
@@ -532,7 +545,7 @@ public class TenderBizImpl implements TenderBiz {
         }
 
         // 判断投标频繁
-        if (tenderService.checkTenderNimiety(borrow.getId(), user.getId())) {
+        if (tenderService.checkTenderNimiety(borrow.getId(), user.getId()) && !borrow.getIsNovice()) {
             errerMessage.add("投标间隔不能小于一分钟!");
             return false;
         }
