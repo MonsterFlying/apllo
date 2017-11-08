@@ -36,7 +36,7 @@ public class OtherOpenApiFilter implements Filter {
         String windmill = "windmill";
         String wheel = "wheel";
         log.info("=============进入过滤中============");
-        log.info("打印当前请求ip地址：" + IpHelper.getIpAddress(httpServletRequest));
+        log.info("打印当前请求ip地址："+requestIp);
         String passUrl = config.getInitParameter("passUrl");
       /*  if (requestUrl.contains(starfire)) {
 
