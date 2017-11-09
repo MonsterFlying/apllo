@@ -745,7 +745,7 @@ public class UserBizImpl implements UserBiz {
             try {
                 //删除用户在七牛云上的用户头像
                 userAvatar = userAvatar.substring(userAvatar.lastIndexOf("/") + 1);
-                bucketManager.delete(bucketname, "avatar/" + userAvatar);
+                bucketManager.delete(bucketname, "/avatar/" + userAvatar);
             } catch (QiniuException e) {
                 //捕获异常信息
                 Response r = e.response;

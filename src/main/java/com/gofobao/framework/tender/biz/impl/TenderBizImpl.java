@@ -336,6 +336,7 @@ public class TenderBizImpl implements TenderBiz {
             voCreateThirdTenderReq.setAcqRes(borrowTender.getId() + "");
             ResponseEntity<VoBaseResp> resp = tenderThirdBiz.createThirdTender(voCreateThirdTenderReq);
             if (resp.getBody().getState().getCode() == VoBaseResp.ERROR) {
+                log.error(resp.getBody().getState().getMsg());
                 log.info("马上投资: 投资报备失败");
                 return null;
             } else { // 保存即信投标申请到redis

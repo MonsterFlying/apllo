@@ -725,12 +725,12 @@ public class FinancePlanBizImpl implements FinancePlanBiz {
      */
     @Override
     public ResponseEntity<PlanListWarpRes> list(Page page) {
-
+        page.setPageSize(10);
         PlanListWarpRes warpRes = VoBaseResp.ok("查询成功", PlanListWarpRes.class);
 
         Specification<FinancePlan> specification = Specifications.<FinancePlan>and()
                 .eq("status",FinannceContants.PURCJASE)
-                .eq("successAt",null)
+             /*   .eq("successAt",null)*/
                 .eq("type", 0)
                 .build();
         List<FinancePlan> financePlans = financePlanService.findList(specification,
@@ -765,13 +765,13 @@ public class FinancePlanBizImpl implements FinancePlanBiz {
      */
     @Override
     public ResponseEntity<VoViewFinanceServerPlanResp> financeServerlist(Page page) {
-
+        page.setPageSize(10);
         VoViewFinanceServerPlanResp warpRes = VoBaseResp.ok("查询成功", VoViewFinanceServerPlanResp.class);
 
         Specification<FinancePlan> specification = Specifications.<FinancePlan>and()
                 .notIn("status", FinannceContants.PURCJASE)
                 .eq("type", 1)
-                .eq("successAt",null)
+    /*            .eq("successAt",null)*/
                 .eq("status", 1)
                 .build();
         List<FinancePlan> financePlans = financePlanService.findList(specification, new PageRequest(page.getPageIndex(), page.getPageSize(), new Sort(Sort.Direction.DESC, "id")));

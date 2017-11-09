@@ -14,6 +14,7 @@ import com.gofobao.framework.member.entity.UserCache;
 import com.gofobao.framework.member.entity.Users;
 import com.gofobao.framework.member.service.UserCacheService;
 import com.gofobao.framework.member.service.UserService;
+import com.gofobao.framework.repayment.contants.RepaymentContants;
 import com.gofobao.framework.repayment.entity.BorrowRepayment;
 import com.gofobao.framework.repayment.service.BorrowRepaymentService;
 import com.gofobao.framework.tender.contants.TenderConstans;
@@ -25,12 +26,14 @@ import com.gofobao.framework.wheel.borrow.vo.response.BorrowsRes;
 import com.gofobao.framework.wheel.common.BaseResponse;
 import com.gofobao.framework.wheel.common.ResponseConstant;
 import com.gofobao.framework.wheel.util.JEncryption;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
@@ -39,6 +42,8 @@ import org.springframework.util.StringUtils;
 
 import java.net.URLEncoder;
 import java.util.*;
+import java.util.stream.Collector;
+import java.util.stream.Collectors;
 
 /**
  * @author master
@@ -88,7 +93,7 @@ public class WheelBorrowBizImpl implements WheelBorrowBiz {
             List<Borrow> borrows;
             if (ObjectUtils.isEmpty(borrow) || StringUtils.isEmpty(borrow.getInvest_id())) {
                 Specification<Borrow> borrowSpecification = Specifications.<Borrow>and()
-                        .eq("status", BorrowContants.BIDDING)
+                        .in("status", Lists.newArrayList(BorrowContants.BIDDING,BorrowContants.PENDING).toArray())
                         .eq("successAt", null)
                         .eq("isWindmill", true)
                         .build();
@@ -255,13 +260,18 @@ public class WheelBorrowBizImpl implements WheelBorrowBiz {
                 ? "等额本息"
                 : "按月付息");
         investNotice.setInvest_money(StringHelper.formatDouble(tender.getValidMoney(), 100, false));
-        if (StringUtils.isEmpty(borrow.getRecheckAt())
-                && BorrowContants.PASS.equals(borrow.getStatus())) {
+        if (!StringUtils.isEmpty(borrow.getRecheckAt())
+                && BorrowContants.PASS.equals(borrow.getStatus())
+                && StringUtils.isEmpty(borrow.getCloseAt())) {
             Specification<BorrowRepayment> specification = Specifications.<BorrowRepayment>and()
                     .eq("borrowId", borrow.getId())
                     .build();
-            List<BorrowRepayment> borrowRepayments = borrowRepaymentService.findList(specification);
-            BorrowRepayment borrowRepayment = borrowRepayments.get(0);
+            List<BorrowRepayment> borrowRepayments = borrowRepaymentService.findList(specification,
+                    new Sort(Sort.Direction.ASC, "order"));
+            BorrowRepayment borrowRepayment = borrowRepayments.stream()
+                    .filter(p -> p.getStatus().equals(RepaymentContants.STATUS_NO))
+                    .collect(Collectors.toList())
+                    .get(0);
             investNotice.setMonthly_back_date(DateHelper.getDay(borrow.getReleaseAt()));
             investNotice.setNext_back_date(DateHelper.dateToString(borrowRepayment.getRepayAt(), DateHelper.DATE_FORMAT_YMD));
             investNotice.setNext_back_money(StringHelper.formatDouble(borrowRepayment.getRepayMoney(), 100, false));
