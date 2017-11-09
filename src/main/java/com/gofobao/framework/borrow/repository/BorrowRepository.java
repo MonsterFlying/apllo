@@ -3,9 +3,7 @@ package com.gofobao.framework.borrow.repository;
 import com.gofobao.framework.borrow.entity.Borrow;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
-import org.springframework.data.jpa.repository.Lock;
+import org.springframework.data.jpa.repository.*;
 import org.springframework.stereotype.Repository;
 
 import javax.persistence.LockModeType;
@@ -52,7 +50,13 @@ public interface BorrowRepository extends JpaRepository<Borrow, Long>, JpaSpecif
 
     Borrow findByProductId(String productId);
 
-
-
+    /**
+     * 修改投标记录数
+     * @param borrowId
+     */
+    @Modifying
+    @Query(value = "update gfb_borrow set tender_count=?1 where id=?2",nativeQuery = true)
+    //@Query("update Borrow b set b.tenderCount=?1 where b.id=?2")
+    void updateTenderCount(Integer count,Long borrowId);
 
 }

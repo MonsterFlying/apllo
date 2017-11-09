@@ -52,6 +52,8 @@ public class TenderServiceImpl implements TenderService {
     @Autowired
     private UserService userService;
 
+    public static final Long SHOW_LIMIT=10000L;
+
 
     /**
      * 投标用户列表
@@ -61,7 +63,9 @@ public class TenderServiceImpl implements TenderService {
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @SuppressWarnings("all")
     public List<VoBorrowTenderUserRes> findBorrowTenderUser(TenderUserReq tenderUserReq) {
+        final long[] tenderCount = {0};
         Long borrowId = tenderUserReq.getBorrowId();
         Borrow borrow = borrowRepository.findOne(borrowId);
         if (ObjectUtils.isEmpty(borrow)) {
@@ -83,6 +87,7 @@ public class TenderServiceImpl implements TenderService {
         if (CollectionUtils.isEmpty(tenderList)) {
             return Collections.EMPTY_LIST;
         }
+
         Users sendUser = usersRepository.findOne(tenderUserReq.getUserId());
         //获取当前用户类型
         String userType = "";
@@ -97,7 +102,7 @@ public class TenderServiceImpl implements TenderService {
         String finalUserType = userType;
         tenderList.stream().forEach(item -> {
             VoBorrowTenderUserRes tenderUserRes = new VoBorrowTenderUserRes();
-            tenderUserRes.setValidMoney(StringHelper.formatMon(item.getValidMoney() / 100d) + MoneyConstans.RMB);
+            tenderUserRes.setValidMoney(StringHelper.formatMon(item.getValidMoney()/100D ) + MoneyConstans.RMB);
             tenderUserRes.setDate(DateHelper.dateToString(item.getCreatedAt(), DateHelper.DATE_FORMAT_YMDHMS));
             // 此处进行优化
             if (item.getIsAuto()) {
@@ -124,14 +129,73 @@ public class TenderServiceImpl implements TenderService {
                 tenderUserRes.setType(tenderPlatform);
             }
 
+
             Users user = usersRepository.findOne(new Long(item.getUserId()));
             //如果当前用户是管理员或者本人 用户名可见
             tenderUserRes.setUserName(finalUserType.equals("manager")
                     ? user.getPhone()
                     : UserHelper.hideChar(user.getPhone(), UserHelper.PHONE_NUM)
             );
-            tenderUserResList.add(tenderUserRes);
+
+            //判断是否是新手标
+            if(!borrow.getIsNovice()){
+                tenderUserResList.add(tenderUserRes);
+                return ;
+            }
+            if(item.getValidMoney()/100<=SHOW_LIMIT){
+                tenderCount[0] = tenderCount[0] +1;
+                tenderUserResList.add(tenderUserRes);
+                return;
+            }
+            long count=0;
+            long more = item.getValidMoney()/100%SHOW_LIMIT;
+            if (item.getValidMoney()/100%SHOW_LIMIT == 0){
+                count = item.getValidMoney()/100/SHOW_LIMIT;
+                for(int i=0;i<count;i++) {
+                    VoBorrowTenderUserRes tenderUserRes1 = new VoBorrowTenderUserRes();
+                    tenderUserRes1.setValidMoney(StringHelper.formatMon(SHOW_LIMIT) + MoneyConstans.RMB);
+                    tenderUserRes1.setType(tenderUserRes.getType());
+                    tenderUserRes1.setUserName(tenderUserRes.getUserName());
+                    Calendar calendar=Calendar.getInstance();
+                    calendar.setTime(item.getCreatedAt());
+
+                    tenderUserRes1.setDate(DateHelper.dateToString(new Date(calendar.getTimeInMillis()+600*i),DateHelper.DATE_FORMAT_YMDHMS));
+                    tenderUserResList.add(tenderUserRes1);
+                }
+                tenderCount[0] = tenderCount[0] +count;
+            } else if (item.getValidMoney()/100<SHOW_LIMIT) {
+              tenderUserResList.add(tenderUserRes);
+              return;
+            } else {
+                count = item.getValidMoney() /100/ SHOW_LIMIT + 1;
+                for(int i=0;i<count-1;i++) {
+                    VoBorrowTenderUserRes tenderUserRes1 = new VoBorrowTenderUserRes();
+                    tenderUserRes1.setValidMoney(StringHelper.formatMon(SHOW_LIMIT ) + MoneyConstans.RMB);
+                    tenderUserRes1.setType(tenderUserRes.getType());
+                    tenderUserRes1.setUserName(tenderUserRes.getUserName());
+                    Calendar calendar=Calendar.getInstance();
+                    calendar.setTime(item.getCreatedAt());
+
+                    tenderUserRes1.setDate(DateHelper.dateToString(new Date(calendar.getTimeInMillis()+600*i),DateHelper.DATE_FORMAT_YMDHMS));
+                    tenderUserResList.add(tenderUserRes1);
+                }
+                tenderCount[0] = tenderCount[0] +count;
+
+            }
+            VoBorrowTenderUserRes tenderUserRes1 = new VoBorrowTenderUserRes();
+            tenderUserRes1.setValidMoney(StringHelper.formatMon(more) + MoneyConstans.RMB);
+            tenderUserRes1.setType(tenderUserRes.getType());
+            tenderUserRes1.setUserName(tenderUserRes.getUserName());
+            Calendar calendar=Calendar.getInstance();
+            calendar.setTime(item.getCreatedAt());
+            tenderUserRes1.setDate(DateHelper.dateToString(new Date(calendar.getTimeInMillis()+count*600),DateHelper.DATE_FORMAT_YMDHMS));
+            if (more != 0) {
+                tenderUserResList.add(tenderUserRes1);
+            }
+            //拆分成功后修改表投标数
+            borrowRepository.updateTenderCount((int) tenderCount[0],borrowId);
         });
+        Collections.sort(tenderUserResList,Comparator.comparing(VoBorrowTenderUserRes::getDate).reversed());
         return Optional.empty().ofNullable(tenderUserResList).orElse(Collections.emptyList());
     }
 
