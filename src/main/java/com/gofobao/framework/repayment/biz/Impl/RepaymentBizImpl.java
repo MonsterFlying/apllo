@@ -1431,27 +1431,12 @@ public class RepaymentBizImpl implements RepaymentBiz {
      * @param borrowRepayment
      */
     private void endThirdTenderAndChangeBorrowStatus(Borrow parentBorrow, BorrowRepayment borrowRepayment) {
-        /*// 结束债权：最后一期还款时
+        // 结束债权：最后一期还款时
         if (borrowRepayment.getOrder().intValue() == (parentBorrow.getTotalOrder() - 1)) {
             parentBorrow.setCloseAt(borrowRepayment.getRepayAtYes());
-            //推送队列结束债权
-            MqConfig mqConfig = new MqConfig();
-            mqConfig.setQueue(MqQueueEnum.RABBITMQ_CREDIT);
-            mqConfig.setTag(MqTagEnum.END_CREDIT);
-            mqConfig.setSendTime(DateHelper.addMinutes(new Date(), 1));
-            ImmutableMap<String, String> body = ImmutableMap
-                    .of(MqConfig.MSG_BORROW_ID, StringHelper.toString(parentBorrow.getId()),
-                            MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
-            mqConfig.setMsg(body);
-            try {
-                log.info(String.format("repaymentBizImpl endThirdTenderAndChangeBorrowStatus send mq %s", GSON.toJson(body)));
-                mqHelper.convertAndSend(mqConfig);
-            } catch (Throwable e) {
-                log.error("repaymentBizImpl endThirdTenderAndChangeBorrowStatus send mq exception", e);
-            }
             parentBorrow.setUpdatedAt(new Date());
             borrowService.updateById(parentBorrow);
-        }*/
+        }
     }
 
     /**
