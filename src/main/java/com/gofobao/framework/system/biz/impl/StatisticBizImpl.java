@@ -164,7 +164,7 @@ public class StatisticBizImpl implements StatisticBiz {
      * @throws Exception
      */
     @Override
-    @Transactional(rollbackFor = Exception.class, propagation = Propagation.REQUIRES_NEW)
+    @Transactional(rollbackFor = Exception.class)
     public boolean caculate(Statistic changeEntity) throws Exception {
         try {
             Preconditions.checkNotNull(changeEntity, "StatisticBizImpl.caculate: changeEntity is empty");

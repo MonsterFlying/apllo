@@ -1,6 +1,7 @@
 package com.gofobao.framework.helper.project;
 
-import com.gofobao.framework.common.qiniu.util.StringUtils;
+
+import com.qiniu.util.StringUtils;
 
 import java.util.HashMap;
 import java.util.Map;

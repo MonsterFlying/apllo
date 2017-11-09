@@ -943,10 +943,12 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
                     .build();
             long redpackCount = marketingRedpackRecordService.count(marketingRedpackRecordSpecification);
             if (redpackCount < 20) {
+                log.info("未进入作弊系统");
                 return money.longValue();
             }
 
             long redPackMoney = marketingRedpackRecordService.countByUserIdAndDate(userId, beginDate, nowDate);
+            log.warn("领取红包金额:" + redPackMoney) ;
             long cahsMoney = money.longValue() - redPackMoney;
             // 提现金额
             return cahsMoney < 0 ? 0 : cahsMoney;
