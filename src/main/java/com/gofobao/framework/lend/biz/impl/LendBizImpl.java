@@ -361,7 +361,7 @@ public class LendBizImpl implements LendBiz {
         tempBorrow.setMoneyYes(0l);
         tempBorrow.setTenderCount(0);
         tempBorrow.setStatus(0);
-        tempBorrow.setIsContinued(false) ;
+        tempBorrow.setIsContinued(false);
         tempBorrow = borrowService.insert(tempBorrow);
         if (ObjectUtils.isEmpty(tempBorrow)
                 || ObjectUtils.isEmpty(tempBorrow.getId())
@@ -394,7 +394,7 @@ public class LendBizImpl implements LendBiz {
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "很抱歉的通知你:摘草失败了！"));
         }
-        return ResponseEntity.ok(VoBaseResp.ok("摘草请求以向存管系统报备, 请留意摘草进度!"));
+        return ResponseEntity.ok(VoBaseResp.ok("摘草成功,借款详情可以在我的借款查询!"));
     }
 
     private ResponseEntity<VoBaseResp> lendCondiitionCheck(long userId, Double money, Lend lend) {
