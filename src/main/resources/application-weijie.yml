@@ -47,10 +47,10 @@ jwt: #JWT 安全配置
     #七牛
 
 qiniu:
-      domain: test.img.gofobao.com
-      bucket: test
-      ak : yevGNMoheNL4EGIencz8E-ohrPzMqLwchW9SvX9e
-      sk : GjGZAJBUpe8UzPoWmKeKBPSi7Kq_IshmuW-UC89o
+  domain: http://test.img.gofobao.com/
+  bucket: test
+  ak: yevGNMoheNL4EGIencz8E-ohrPzMqLwchW9SvX9e
+  sk: GjGZAJBUpe8UzPoWmKeKBPSi7Kq_IshmuW-UC89o
 
 windmill: #风车理财
   des-key: 2l0IYbNnRcShWOM9Q5Ej0A3gCEP07LBS #des加密key值
