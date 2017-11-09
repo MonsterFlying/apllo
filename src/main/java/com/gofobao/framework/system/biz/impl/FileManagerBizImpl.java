@@ -18,12 +18,18 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
+import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.multipart.MultipartHttpServletRequest;
 
+import javax.servlet.http.HttpServletRequest;
+import javax.validation.constraints.NotNull;
 import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -98,6 +104,65 @@ public class FileManagerBizImpl implements FileManagerBiz {
         return ResponseEntity.ok(VoBaseResp.ok("操作成功"));
     }
 
+    @Override
+    public List<String> multiUpload(@NotNull Long userId,
+                                    @NotNull HttpServletRequest httpServletRequest,
+                                    @NotNull String fileName) throws Exception {
+        List<MultipartFile> files = ((MultipartHttpServletRequest) httpServletRequest).getFiles(fileName);
+        MultipartFile file = null;
+        boolean allSuccess = true;
+        List<String> keys = new ArrayList<>(files.size());
+        try {
+            for (int i = 0; i < files.size(); ++i) {
+                file = files.get(i);
+                int looper = 5;
+                boolean itemSuccess = false;
+                do {
+                    looper--;
+                    try {
+                        ResponseEntity<FileUploadResp> uploadRespResponseEntity = upload(userId, file);
+                        if (uploadRespResponseEntity.getBody().getState().getCode() == VoBaseResp.OK) {
+                            // 成功
+                            keys.add(uploadRespResponseEntity.getBody().getKey());
+                            itemSuccess = true;
+                            break;
+                        }
+                    } catch (Exception e) {
+                        log.error("文件上传异常", e);
+                    }
+                } while (looper > 0);
+
+                if (!itemSuccess) {
+                    allSuccess = false;
+                    throw new Exception("个别文件上传异常");
+                }
+            }
+        } finally {
+            if (!allSuccess) {
+                // 全部文件删除
+                if (!CollectionUtils.isEmpty(keys)) {
+                    for (String key : keys) {
+                        int looper = 5;
+                        do {
+                            looper--;
+                            try {
+                                ResponseEntity<VoBaseResp> responseEntity = deleteFile(userId, key);
+                                if (responseEntity.getBody().getState().getCode() == VoBaseResp.OK) {
+                                    break;
+                                }
+                            } catch (Exception e) {
+                                log.error("批处理文件删除:" + key, e);
+                            }
+                        } while (looper > 0);
+                    }
+                }
+            }
+        }
+
+        return keys;
+    }
+
+
     /**
      * 获取七牛用上传管理类
      *
@@ -123,4 +188,7 @@ public class FileManagerBizImpl implements FileManagerBiz {
         String extend = originalFilename.substring(originalFilename.lastIndexOf('.'));
         return ObjectUtils.isEmpty(extend) ? null : extend;
     }
+
 }
+
+
