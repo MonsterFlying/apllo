@@ -729,7 +729,7 @@ public class FinancePlanBizImpl implements FinancePlanBiz {
         PlanListWarpRes warpRes = VoBaseResp.ok("查询成功", PlanListWarpRes.class);
 
         Specification<FinancePlan> specification = Specifications.<FinancePlan>and()
-                .eq("status",FinannceContants.PURCJASE)
+                .notIn("status", statusArray.toArray())
              /*   .eq("successAt",null)*/
                 .eq("type", 0)
                 .build();
@@ -769,7 +769,7 @@ public class FinancePlanBizImpl implements FinancePlanBiz {
         VoViewFinanceServerPlanResp warpRes = VoBaseResp.ok("查询成功", VoViewFinanceServerPlanResp.class);
 
         Specification<FinancePlan> specification = Specifications.<FinancePlan>and()
-                .notIn("status", FinannceContants.PURCJASE)
+                .notIn("status", statusArray.toArray())
                 .eq("type", 1)
     /*            .eq("successAt",null)*/
                 .eq("status", 1)
