@@ -970,3 +970,110 @@ CREATE TABLE `gfb_user_address` (
   `update_at` datetime DEFAULT NULL COMMENT '更新时间',
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+-- 主题类型表
+CREATE TABLE gfb_topic_type (
+  id INT AUTO_INCREMENT COMMENT '主题唯一标识',
+  topic_type_name VARCHAR(32) DEFAULT '未命名' COMMENT '主题类型名称',
+  sort INT NOT NULL DEFAULT 0 COMMENT '排序, 数字越大越靠前',
+  hot_state INT NOT NULL DEFAULT 0 COMMENT '最热标识',
+  new_state INT NOT NULL DEFAULT 0 COMMENT '最新标识',
+  topic_total_num INT NOT NULL DEFAULT 0 COMMENT '帖子总数数量',
+  icon_url VARCHAR(255) NOT NULL DEFAULT '' COMMENT '主题类型icon',
+  create_date DATETIME NULL COMMENT '创建时间',
+  update_date DATETIME NULL COMMENT '更新时间',
+  admin_id INT NOT NULL DEFAULT 0 COMMENT '主题管理员',
+  del INT NOT NULL DEFAULT 0 COMMENT '记录有效状态, 1 .删除',
+  PRIMARY KEY (id)
+)  CHARSET=UTF8MB4 , COMMENT '主题类型表';
+
+
+-- 主题表
+CREATE TABLE gfb_topics (
+  id BIGINT AUTO_INCREMENT COMMENT '主题唯一标识',
+  titel VARCHAR(128) NOT NULL DEFAULT '' COMMENT '标的',
+  topic_type_id INT NOT NULL DEFAULT 0 COMMENT '主题类型Id',
+  user_id INT NOT NULL DEFAULT 0 COMMENT '发帖用户ID',
+  user_name VARCHAR(36) NOT NULL DEFAULT '' COMMENT '用户名-此处冗余',
+  user_icon_url VARCHAR(255) NOT NULL DEFAULT '' COMMENT '用户头像-此处冗余',
+  sort INT NOT NULL DEFAULT 0 COMMENT '(只有设置顶置状态, 此字段才有效果)排序, 数字越大越靠前',
+  fix_state INT NOT NULL DEFAULT 0 COMMENT '是否顶置 1: 为顶置贴',
+  hot_state INT NOT NULL DEFAULT 0 COMMENT '最热标识',
+  new_state INT NOT NULL DEFAULT 0 COMMENT '最新标识',
+  top_total_num INT NOT NULL DEFAULT 0 COMMENT '点赞总数',
+  content_total_num INT NOT NULL DEFAULT 0 COMMENT '评论总数',
+  view_total_num INT NOT NULL DEFAULT 0 COMMENT '浏览人数',
+  del INT NOT NULL DEFAULT 0 COMMENT '记录有效状态, 1 .删除',
+  create_date DATETIME NULL COMMENT '创建时间',
+  update_date DATETIME NULL COMMENT '更新时间',
+  img1 VARCHAR(255) NULL COMMENT '图片1',
+  img2 VARCHAR(255) NULL COMMENT '图片1',
+  img3 VARCHAR(255) NULL COMMENT '图片1',
+  img4 VARCHAR(255) NULL COMMENT '图片1',
+  img5 VARCHAR(255) NULL COMMENT '图片1',
+  img6 VARCHAR(255) NULL COMMENT '图片1',
+  img7 VARCHAR(255) NULL COMMENT '图片1',
+  img8 VARCHAR(255) NULL COMMENT '图片1',
+  img9 VARCHAR(255) NULL COMMENT '图片1',
+  content VARCHAR(1024) NULL COMMENT '主题内容',
+  PRIMARY KEY (id),
+  INDEX (topic_type_id),
+  INDEX (user_id)
+)  CHARSET=UTF8MB4 , COMMENT '主题';
+
+
+-- 评论表
+CREATE TABLE gfb_topics_comment (
+  id BIGINT AUTO_INCREMENT COMMENT '评论唯一标识',
+  topic_id INT NOT NULL DEFAULT 0 COMMENT '主题id',
+  topic_type_id INT NOT NULL DEFAULT 0 COMMENT '主题类型Id',
+  content VARCHAR(255) NOT NULL DEFAULT '无评论' COMMENT '评论内容',
+  user_id INT NOT NULL DEFAULT 0 COMMENT '评论用户ID',
+  user_name VARCHAR(36) NOT NULL DEFAULT '' COMMENT '用户名-此处冗余',
+  user_icon_url VARCHAR(255) NOT NULL DEFAULT '' COMMENT '用户头像-此处冗余',
+  top_total_num INT NOT NULL DEFAULT 0 COMMENT '点赞总数',
+  content_total_num INT NOT NULL DEFAULT 0 COMMENT '回复总数',
+  del INT NOT NULL DEFAULT 0 COMMENT '记录有效状态, 1 .删除',
+  create_date DATETIME NULL COMMENT '创建时间',
+  update_date DATETIME NULL COMMENT '更新时间',
+  PRIMARY KEY (id),
+  INDEX (topic_id),
+  INDEX (user_id)
+)  CHARSET=UTF8MB4 , COMMENT '评论表';
+
+-- 回复表
+CREATE TABLE gfb_topics_reply (
+  id BIGINT AUTO_INCREMENT COMMENT '回复唯一标识',
+  topic_id BIGINT NOT NULL DEFAULT 0 COMMENT '主题id',
+  topic_comment_id BIGINT NOT NULL DEFAULT 0 COMMENT '评论表ID',
+  topic_type_id INT NOT NULL DEFAULT 0 COMMENT '主题类型Id',
+  topic_reply_id BIGINT NOT NULL DEFAULT 0 COMMENT '回复Id',
+  reply_type INT NOT NULL DEFAULT 0 COMMENT '回复类型: 0 评论, 1.回复',
+  content VARCHAR(255) NOT NULL DEFAULT '无评论' COMMENT '评论内容',
+  top_total_num INT NOT NULL DEFAULT 0 COMMENT '点赞总数',
+  user_id INT NOT NULL DEFAULT 0 COMMENT '回复用户ID',
+  user_name VARCHAR(36) NOT NULL DEFAULT '' COMMENT '用户名-此处冗余',
+  user_icon_url VARCHAR(255) NOT NULL DEFAULT '' COMMENT '用户头像-此处冗余',
+  for_user_id INT NOT NULL DEFAULT 0 COMMENT '被@的用户Id , 如果回复类型为评论直接为评论用户ID',
+  for_user_name VARCHAR(36) NOT NULL DEFAULT '' COMMENT '用户名-此处冗余',
+  for_user_icon_url VARCHAR(255) NOT NULL DEFAULT '' COMMENT '用户头像-此处冗余',
+  del INT NOT NULL DEFAULT 0 COMMENT '记录有效状态, 1 .删除',
+  create_date DATETIME NULL COMMENT '创建时间',
+  update_date DATETIME NULL COMMENT '更新时间',
+  PRIMARY KEY (id),
+  INDEX (topic_id),
+  INDEX (topic_comment_id),
+  INDEX (user_id)
+)  CHARSET=UTF8MB4 , COMMENT '评论表';
+
+-- 点赞记录表
+CREATE TABLE gfb_topics_top_record (
+  id BIGINT AUTO_INCREMENT COMMENT '点赞记录唯一标识',
+  user_id INT NOT NULL DEFAULT 0 COMMENT '回复用户ID',
+  source_id BIGINT NOT NULL DEFAULT 0 COMMENT '点赞来源',
+  source_type INT NOT NULL DEFAULT 0 COMMENT '点赞类型 0:主题点赞, 1:评论点赞, 2:回复点赞',
+  create_date DATETIME NULL COMMENT '创建时间',
+  update_date DATETIME NULL COMMENT '更新时间',
+  PRIMARY KEY (id),
+  INDEX (user_id),
+  INDEX (user_id , source_id , source_type)
+)  CHARSET=UTF8MB4 , COMMENT '点赞记录标';

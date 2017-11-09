@@ -1,7 +1,6 @@
 package com.gofobao.framework.finance.vo.request;
 
-import com.gofobao.framework.common.qiniu.util.StringUtils;
-import com.gofobao.framework.helper.MoneyHelper;
+import com.qiniu.util.StringUtils;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
