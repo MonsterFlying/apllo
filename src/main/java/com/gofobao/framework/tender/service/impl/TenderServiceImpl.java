@@ -9,6 +9,7 @@ import com.gofobao.framework.common.constans.MoneyConstans;
 import com.gofobao.framework.common.data.DataObject;
 import com.gofobao.framework.common.data.GeSpecification;
 import com.gofobao.framework.helper.DateHelper;
+import com.gofobao.framework.helper.NumberHelper;
 import com.gofobao.framework.helper.StringHelper;
 import com.gofobao.framework.helper.project.UserHelper;
 import com.gofobao.framework.member.entity.Users;
@@ -31,6 +32,9 @@ import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
+import javax.persistence.Query;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -43,17 +47,12 @@ public class TenderServiceImpl implements TenderService {
 
     @Autowired
     private TenderRepository tenderRepository;
-
-
     @Autowired
     private BorrowRepository borrowRepository;
-
-
     @Autowired
     private UsersRepository usersRepository;
-    @Autowired
-    private UserService userService;
-
+    @PersistenceContext
+    private EntityManager entityManager;
 
     /**
      * 投标用户列表
@@ -80,7 +79,6 @@ public class TenderServiceImpl implements TenderService {
                         TenderConstans.TRANSFER_PART_YES).toArray())
                 .build();
         Page<Tender> tenderPage = tenderRepository.findAll(tenderSpecification, pageRequest);
-        //Optional<List<Tender>> listOptional = Optional.ofNullable(tenderList);
         List<Tender> tenderList = tenderPage.getContent();
         if (CollectionUtils.isEmpty(tenderList)) {
             return Collections.EMPTY_LIST;
@@ -135,6 +133,20 @@ public class TenderServiceImpl implements TenderService {
             tenderUserResList.add(tenderUserRes);
         });
         return Optional.empty().ofNullable(tenderUserResList).orElse(Collections.emptyList());
+    }
+
+    /**
+     * 查询投标复审金额
+     *
+     * @param userId
+     * @return
+     */
+    @Override
+    public long findTenderAgainVerifyMoney(long userId) {
+        StringBuffer sql = new StringBuffer("SELECT sum(t1.`valid_money`)  FROM `gfb_borrow_tender` t1 LEFT JOIN `gfb_borrow`" +
+                " t2 on t1.`borrow_id` = t2.`id` WHERE t2.`status` = 1 and t2.`money_yes` = t2.`money` and t2.`success_at` IS NOT NULL  and t1.`user_id` = " + userId + " ;");
+        Query query = entityManager.createNativeQuery(sql.toString());
+        return NumberHelper.toInt(query.getResultList().get(0));
     }
 
     public Tender save(Tender tender) {

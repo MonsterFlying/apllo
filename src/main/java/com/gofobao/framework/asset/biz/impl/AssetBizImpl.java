@@ -47,6 +47,7 @@ import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.financial.entity.NewAleve;
 import com.gofobao.framework.helper.*;
 import com.gofobao.framework.helper.project.SecurityHelper;
+import com.gofobao.framework.helper.project.UserHelper;
 import com.gofobao.framework.marketing.service.MarketingRedpackRecordService;
 import com.gofobao.framework.member.entity.UserCache;
 import com.gofobao.framework.member.entity.UserThirdAccount;
@@ -114,7 +115,7 @@ public class AssetBizImpl implements AssetBiz {
     @Autowired
     AssetService assetService;
     @Autowired
-    private JixinHelper jixinHelper;
+    UserHelper userHelper;
 
     @Autowired
     AssetLogService assetLogService;
@@ -313,6 +314,7 @@ public class AssetBizImpl implements AssetBiz {
      * @return
      */
     @Transactional(rollbackFor = Exception.class)
+    @Override
     public ResponseEntity<VoUserAssetInfoResp> userAssetInfo(Long userId) {
         Asset asset = assetService.findByUserId(userId); //查询会员资产信息
         if (ObjectUtils.isEmpty(asset)) {
@@ -326,7 +328,8 @@ public class AssetBizImpl implements AssetBiz {
 
         Long useMoney = asset.getUseMoney();
         Long payment = asset.getPayment();
-        long netWorthQuota = new Double((useMoney + userCache.getWaitCollectionPrincipal()) * 0.8 - payment).longValue();//计算净值额度
+        //计算净值额度
+        long netWorthQuota = userHelper.getNetWorthQuota(userId);
         Long netAsset = new Double((asset.getCollection() + asset.getNoUseMoney() + asset.getUseMoney()) - asset.getPayment()).longValue();
         VoUserAssetInfoResp voUserAssetInfoResp = VoBaseResp.ok("成功", VoUserAssetInfoResp.class);
         voUserAssetInfoResp.setHideUserMoney(StringHelper.formatDouble(useMoney / 100D, true));
@@ -334,13 +337,13 @@ public class AssetBizImpl implements AssetBiz {
         voUserAssetInfoResp.setHidePayment(StringHelper.formatDouble(payment / 100D, true));
         voUserAssetInfoResp.setHideCollection(StringHelper.formatDouble(asset.getCollection() / 100D, true));
         voUserAssetInfoResp.setHideVirtualMoney(StringHelper.formatDouble(asset.getVirtualMoney() / 100D, true));
-        voUserAssetInfoResp.setHideNetWorthQuota(StringHelper.formatDouble((netWorthQuota > 0 ? netWorthQuota : 0) / 100D, true));
+        voUserAssetInfoResp.setHideNetWorthQuota(StringHelper.formatDouble(netWorthQuota / 100D, true));
         voUserAssetInfoResp.setUseMoney(useMoney);
         voUserAssetInfoResp.setNoUseMoney(asset.getNoUseMoney());
         voUserAssetInfoResp.setPayment(asset.getPayment());
         voUserAssetInfoResp.setCollection(asset.getCollection());
         voUserAssetInfoResp.setVirtualMoney(asset.getVirtualMoney());
-        voUserAssetInfoResp.setNetWorthQuota(netWorthQuota > 0 ? netWorthQuota : 0);
+        voUserAssetInfoResp.setNetWorthQuota(netWorthQuota);
         voUserAssetInfoResp.setNetAsset(StringHelper.formatMon(netAsset / 100D));
         voUserAssetInfoResp.setIncomeTotal(StringHelper.formatMon(userCache.getIncomeTotal() / 100D));
         voUserAssetInfoResp.setHideIncomeTotal(userCache.getIncomeTotal());
@@ -436,7 +439,7 @@ public class AssetBizImpl implements AssetBiz {
             // ====================================
             // 针对中国银行不能快捷充值进行特殊处理
             // ====================================
-            if("中国银行".equals(userThirdAccount.getBankName())){
+            if ("中国银行".equals(userThirdAccount.getBankName())) {
                 log.warn("中国银行快捷充值, 系统主动拒绝充值!");
                 return ResponseEntity
                         .badRequest()
@@ -598,6 +601,7 @@ public class AssetBizImpl implements AssetBiz {
 
     /**
      * 更新用户为活跃用户
+     *
      * @param userThirdAccount
      * @param now
      */
@@ -605,8 +609,8 @@ public class AssetBizImpl implements AssetBiz {
         try {
             userThirdAccount.setActiveState(1);
             userThirdAccount.setUpdateAt(now);
-            userThirdAccountService.save(userThirdAccount) ;
-        }catch (Exception e){
+            userThirdAccountService.save(userThirdAccount);
+        } catch (Exception e) {
             log.error("更新用户为活跃用户异常", e);
         }
     }

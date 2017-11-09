@@ -190,7 +190,7 @@ public class InvestServiceImpl implements InvestService {
             voViewBiddingRes.setSpend(new Double(StringHelper.formatDouble(aDouble, false)));
             voViewBiddingRes.setCreatedAt(DateHelper.dateToString(p.getCreatedAt()));
             Integer timeLimit = borrow.getTimeLimit();
-            if (borrow.getRepayFashion() == BorrowContants.REPAY_FASHION_ONCE) {
+            if (borrow.getRepayFashion().equals(BorrowContants.REPAY_FASHION_ONCE)) {
                 voViewBiddingRes.setTimeLimit(timeLimit + BorrowContants.DAY);
             } else {
                 voViewBiddingRes.setTimeLimit(timeLimit + BorrowContants.MONTH);
@@ -267,7 +267,7 @@ public class InvestServiceImpl implements InvestService {
             voViewSettleRes.setCloseAt(DateHelper.dateToString(borrow.getCloseAt()));
             List<BorrowCollection> borrowCollectionList = borrowCollectionMaps.get(p.getId());
             List<BorrowCollection> borrowCollections1 = borrowCollectionList.stream()
-                    .filter(w -> w.getStatus() == BorrowCollectionContants.STATUS_YES)
+                    .filter(w -> w.getStatus().equals(BorrowCollectionContants.STATUS_YES))
                     .collect(Collectors.toList());
             long interest = borrowCollections1.stream()
                     .mapToLong(s -> s.getInterest()).sum();
@@ -330,25 +330,25 @@ public class InvestServiceImpl implements InvestService {
         }
         Borrow borrow = borrowRepository.findOne(tender.getBorrowId());
         //还款方式
-        if (borrow.getRepayFashion() == BorrowContants.REPAY_FASHION_MONTH) {
+        if (borrow.getRepayFashion().equals(BorrowContants.REPAY_FASHION_MONTH)) {
             item.setRepayFashion(BorrowContants.REPAY_FASHION_MONTH_STR);
-        } else if (borrow.getRepayFashion() == BorrowContants.REPAY_FASHION_INTEREST_THEN_PRINCIPAL) {
+        } else if (borrow.getRepayFashion().equals(BorrowContants.REPAY_FASHION_INTEREST_THEN_PRINCIPAL)) {
             item.setRepayFashion(BorrowContants.REPAY_FASHION_INTEREST_THEN_PRINCIPAL_STR);
-        } else if (borrow.getRepayFashion() == BorrowContants.REPAY_FASHION_ONCE) {
+        } else if (borrow.getRepayFashion().equals(BorrowContants.REPAY_FASHION_ONCE)) {
             item.setRepayFashion(BorrowContants.REPAY_FASHION_ONCE_STR);
         }
 
         item.setCreatedAt(DateHelper.dateToString(tender.getCreatedAt()));
         item.setBorrowName(borrow.getName());
         //状态
-        if (tender.getState() == TenderConstans.BIDDING) {
+        if (tender.getState().equals(TenderConstans.BIDDING)) {
             item.setStatusStr(TenderConstans.BIDDING_STR);
             item.setSuccessAt("");
         }
-        if (tender.getState() == TenderConstans.BACK_MONEY) {
+        if (tender.getState().equals(TenderConstans.BACK_MONEY)) {
             item.setStatusStr(TenderConstans.BACK_MONEY_STR);
         }
-        if (tender.getState() == TenderConstans.SETTLE) {
+        if (tender.getState().equals(TenderConstans.SETTLE)) {
             item.setStatusStr(TenderConstans.SETTLE_STR);
         }
 
@@ -362,7 +362,7 @@ public class InvestServiceImpl implements InvestService {
             //满标时间
             successAt = borrow.getRecheckAt();
             //期限
-            if (borrow.getRepayFashion() == BorrowContants.REPAY_FASHION_ONCE) {
+            if (borrow.getRepayFashion().equals(BorrowContants.REPAY_FASHION_ONCE)) {
                 item.setRepayFashion(BorrowContants.REPAY_FASHION_ONCE_STR);
                 item.setTimeLimit(timeLimit + BorrowContants.DAY);
             } else {
@@ -389,11 +389,11 @@ public class InvestServiceImpl implements InvestService {
                 successAt = transfer.getRecheckAt();
                 item.setTimeLimit(transfer.getTimeLimit() + BorrowContants.MONTH);
 
-                item.setSuccessAt(transfer.getState() == TransferContants.TRANSFERED ? DateHelper.dateToString(successAt) : "");
+                item.setSuccessAt(transfer.getState().equals(TransferContants.TRANSFERED) ? DateHelper.dateToString(successAt) : "");
             }
             falg = true;
         }
-        if (tender.getState() != TenderConstans.BIDDING) {
+        if (!tender.getState().equals(TenderConstans.BIDDING)) {
             //应收利息
             BorrowCalculatorHelper borrowCalculatorHelper = new BorrowCalculatorHelper(new Double(tender.getValidMoney()), new Double(apr), timeLimit, successAt);
             Map<String, Object> calculatorMap = borrowCalculatorHelper.simpleCount(borrow.getRepayFashion());
@@ -402,19 +402,22 @@ public class InvestServiceImpl implements InvestService {
             List<BorrowCollection> borrowCollectionList = borrowCollectionRepository.findByTenderId(tender.getId());
             //利息
             Long interest = borrowCollectionList.stream()
-                    .filter(w -> w.getStatus() == BorrowCollectionContants.STATUS_YES)
+                    .filter(w -> w.getStatus().equals(BorrowCollectionContants.STATUS_YES))
                     .mapToLong(s -> s.getInterest())
                     .sum();
             //本金
             Long principal = borrowCollectionList.stream()
-                    .filter(w -> w.getStatus() == BorrowCollectionContants.STATUS_YES)
+                    .filter(w -> w.getStatus().equals(BorrowCollectionContants.STATUS_YES))
                     .mapToLong(s -> s.getPrincipal())
                     .sum();
 
             item.setInterest(StringHelper.formatMon(interest / 100D));
             item.setPrincipal(StringHelper.formatMon(principal / 100D));
         }
-
+        Users users = userService.findById(borrow.getUserId());
+        item.setBorrowUserName(StringUtils.isEmpty(users.getUsername())
+                ? users.getPhone()
+                : users.getUsername());
         //年利率
         item.setApr(StringHelper.formatMon(apr / 100D));
         item.setStatus(tender.getState());
@@ -434,7 +437,7 @@ public class InvestServiceImpl implements InvestService {
     @Override
     public VoViewReturnedMoney infoList(VoDetailReq voDetailReq) {
         Tender tender = investRepository.findByIdAndUserId(voDetailReq.getTenderId(), voDetailReq.getUserId());
-        if (ObjectUtils.isEmpty(tender) || tender.getState() == TenderConstans.BIDDING) {
+        if (ObjectUtils.isEmpty(tender) || tender.getState().equals(TenderConstans.BIDDING)) {
             return null;
         }
         //回款中
@@ -462,10 +465,10 @@ public class InvestServiceImpl implements InvestService {
             Date nowDate = DateHelper.endOfDate(new Date());
             Date collectionAt = DateHelper.endOfDate(p.getCollectionAt());
             //已还款或者 未到回款日
-            returnedMoney.setLateDays(p.getStatus() == BorrowCollectionContants.STATUS_YES || collectionAt.getTime() > nowDate.getTime()
+            returnedMoney.setLateDays(p.getStatus().equals(BorrowCollectionContants.STATUS_YES) || collectionAt.getTime() > nowDate.getTime()
                     ? p.getLateDays()
                     : DateHelper.diffInDays(DateHelper.beginOfDate(nowDate), DateHelper.beginOfDate(collectionAt), false));
-            returnedMoney.setCollectionAt(p.getStatus() == BorrowCollectionContants.STATUS_YES ?
+            returnedMoney.setCollectionAt(p.getStatus().equals(BorrowCollectionContants.STATUS_YES) ?
                     DateHelper.dateToString(p.getCollectionAtYes(), DateHelper.DATE_FORMAT_YMD) :
                     DateHelper.dateToString(p.getCollectionAt(), DateHelper.DATE_FORMAT_YMD));
             returnedMoney.setStatus(p.getStatus());

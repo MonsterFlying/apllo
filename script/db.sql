@@ -953,6 +953,23 @@ COMMENT '待付利息管理费'
   AFTER expenditure_interest_manage;
 
 
+DROP TABLE IF EXISTS `gfb_user_address`;
+CREATE TABLE `gfb_user_address` (
+  `id` int(11) NOT NULL AUTO_INCREMENT COMMENT '主键id',
+  `type` int(11) DEFAULT '0' COMMENT '地址类型：0.收货地址',
+  `name` varchar(255) DEFAULT NULL COMMENT '收件人姓名',
+  `phone` varchar(25) DEFAULT NULL COMMENT '收货号码',
+  `country` varchar(255) DEFAULT NULL COMMENT '国家',
+  `province` varchar(255) DEFAULT NULL COMMENT '身份',
+  `city` varchar(255) DEFAULT NULL COMMENT '城市',
+  `district` varchar(255) DEFAULT NULL COMMENT '地区（市区/县）',
+  `detailed_address` varchar(1024) DEFAULT NULL COMMENT '详细地址',
+  `default` int(11) DEFAULT '0' COMMENT '是否默认地址：0否，1是',
+  `del` int(11) DEFAULT '0' COMMENT '是否删除 0否 1是',
+  `create_at` datetime DEFAULT NULL COMMENT '创建时间',
+  `update_at` datetime DEFAULT NULL COMMENT '更新时间',
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 -- 主题类型表
 CREATE TABLE gfb_topic_type (
   id INT AUTO_INCREMENT COMMENT '主题唯一标识',
@@ -967,7 +984,7 @@ CREATE TABLE gfb_topic_type (
   admin_id INT NOT NULL DEFAULT 0 COMMENT '主题管理员',
   del INT NOT NULL DEFAULT 0 COMMENT '记录有效状态, 1 .删除',
   PRIMARY KEY (id)
-)  CHARSET=UTF8 , COMMENT '主题类型表';
+)  CHARSET=UTF8MB4 , COMMENT '主题类型表';
 
 
 -- 主题表
@@ -984,14 +1001,24 @@ CREATE TABLE gfb_topics (
   new_state INT NOT NULL DEFAULT 0 COMMENT '最新标识',
   top_total_num INT NOT NULL DEFAULT 0 COMMENT '点赞总数',
   content_total_num INT NOT NULL DEFAULT 0 COMMENT '评论总数',
+  view_total_num INT NOT NULL DEFAULT 0 COMMENT '浏览人数',
   del INT NOT NULL DEFAULT 0 COMMENT '记录有效状态, 1 .删除',
   create_date DATETIME NULL COMMENT '创建时间',
   update_date DATETIME NULL COMMENT '更新时间',
-  content TEXT NULL COMMENT '主题内容',
+  img1 VARCHAR(255) NULL COMMENT '图片1',
+  img2 VARCHAR(255) NULL COMMENT '图片1',
+  img3 VARCHAR(255) NULL COMMENT '图片1',
+  img4 VARCHAR(255) NULL COMMENT '图片1',
+  img5 VARCHAR(255) NULL COMMENT '图片1',
+  img6 VARCHAR(255) NULL COMMENT '图片1',
+  img7 VARCHAR(255) NULL COMMENT '图片1',
+  img8 VARCHAR(255) NULL COMMENT '图片1',
+  img9 VARCHAR(255) NULL COMMENT '图片1',
+  content VARCHAR(1024) NULL COMMENT '主题内容',
   PRIMARY KEY (id),
   INDEX (topic_type_id),
   INDEX (user_id)
-)  CHARSET=UTF8 , COMMENT '主题';
+)  CHARSET=UTF8MB4 , COMMENT '主题';
 
 
 -- 评论表
@@ -1011,7 +1038,7 @@ CREATE TABLE gfb_topics_comment (
   PRIMARY KEY (id),
   INDEX (topic_id),
   INDEX (user_id)
-)  CHARSET=UTF8 , COMMENT '评论表';
+)  CHARSET=UTF8MB4 , COMMENT '评论表';
 
 -- 回复表
 CREATE TABLE gfb_topics_reply (
@@ -1036,7 +1063,7 @@ CREATE TABLE gfb_topics_reply (
   INDEX (topic_id),
   INDEX (topic_comment_id),
   INDEX (user_id)
-)  CHARSET=UTF8 , COMMENT '评论表';
+)  CHARSET=UTF8MB4 , COMMENT '评论表';
 
 -- 点赞记录表
 CREATE TABLE gfb_topics_top_record (
@@ -1049,4 +1076,4 @@ CREATE TABLE gfb_topics_top_record (
   PRIMARY KEY (id),
   INDEX (user_id),
   INDEX (user_id , source_id , source_type)
-)  CHARSET=UTF8 , COMMENT '点赞记录标';
+)  CHARSET=UTF8MB4 , COMMENT '点赞记录标';

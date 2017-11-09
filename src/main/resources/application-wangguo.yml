@@ -88,7 +88,7 @@ jixin: #银行存管
 gofobao:
   dev: true # 开发环境
   javaDomain: http://7yhsngp.hk1.mofasuidao.cn/
-  h5Domain:  http://ng.hk1.mofasuidao.cn
+  h5Domain:  http://dragon.hk1.mofasuidao.cn
   imageDomain : https://api.gofobao.com
   pcDomain: http://gofobao.oicp.io/
   #adminDomain: http://m7ocvas9.gofobao.com  #管理员后台地址

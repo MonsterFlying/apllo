@@ -20,7 +20,7 @@ public class BorrowsRes extends BaseResponse {
 
         private Long invest_id;
 
-        private String invest_title;
+        private String invest_time;
 
         private String buy_unit;
 
