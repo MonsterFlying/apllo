@@ -498,6 +498,16 @@ public class MarketingProcessBizImpl implements MarketingProcessBiz {
                     }
                     break;
                 case MarketingTypeContants.OPEN_ACCOUNT:
+                    Date openAcountRegisterMinTime = condition.getRegisterMinTime();
+                    if (!ObjectUtils.isEmpty(openAcountRegisterMinTime)) {
+                        Date openAcountCreatedAt = user.getCreatedAt();
+                        if (DateHelper.diffInDays(openAcountCreatedAt, openAcountRegisterMinTime, false) < 0) {
+                            log.info("红包派发[小于注册时间]");
+                            iterator.remove();
+                            continue;
+                        }
+                    }
+
                     Date openAccountMinTime = condition.getOpenAccountMinTime();
                     if (ObjectUtils.isEmpty(openAccountMinTime)) {
                         log.info("红包派发[开户时间未设置]");

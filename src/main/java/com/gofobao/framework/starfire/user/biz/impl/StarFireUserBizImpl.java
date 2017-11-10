@@ -169,13 +169,13 @@ public class StarFireUserBizImpl implements StarFireUserBiz {
                 //已注册，已绑定星火智投的其他渠道用户
                 if (!StringUtils.isEmpty(user.getWindmillId()) && !StringUtils.isEmpty(user.getStarFireRegisterToken())) {
                     registerQueryRes.setResult(ResultCodeEnum.getCode(CodeTypeConstant.OTHER_CHANNEL_FIRE));
-                    registerQueryRes.setRegister_token(user.getStarFireRegisterToken());
+                    registerQueryRes.setRegister_token(AES.encrypt(key,initVector,user.getStarFireRegisterToken()));
                     log.info("已注册，已绑定星火智投的其他渠道用户");
                     break;
                 }
                 //已注册，已绑定星火智投的引流用户(通过星火智投新注册平台的用户)
                 if (!StringUtils.isEmpty(user.getStarFireRegisterToken())) {
-                    registerQueryRes.setRegister_token(user.getStarFireRegisterToken());
+                    registerQueryRes.setRegister_token(AES.encrypt(key,initVector,user.getStarFireRegisterToken()));
                     registerQueryRes.setPlatform_uid(AES.encrypt(key, initVector, String.valueOf(user.getId())));
                     registerQueryRes.setResult(ResultCodeEnum.getCode(CodeTypeConstant.EXIST_AND_BIND_STAR_FIRE));
                     log.info("已注册，已绑定星火智投的引流用户(通过星火智投新注册平台的用户)");

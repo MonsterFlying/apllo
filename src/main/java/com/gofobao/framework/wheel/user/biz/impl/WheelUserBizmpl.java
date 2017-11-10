@@ -241,7 +241,11 @@ public class WheelUserBizmpl implements WheelUserBiz {
                     mqConfig.setMsg(body);
                     mqHelper.convertAndSend(mqConfig);
                 }
-                return h5Domain + URLDecoder.decode(authLogin.getTarget_url(), "utf-8") + "?token=" + tokenStr;
+                String targetUrl = URLDecoder.decode(authLogin.getTarget_url(), "utf-8");
+                targetUrl = targetUrl.contains(h5Domain)
+                        ? targetUrl
+                        : h5Domain + targetUrl;
+                return targetUrl + "?token=" + tokenStr;
             } catch (Exception e) {
                 log.info("平台生成token异常", e);
                 return "load_error";
@@ -262,12 +266,12 @@ public class WheelUserBizmpl implements WheelUserBiz {
         try {
             String paramStr = "ticket=" + checkTicket.getTicket();
             String encryptParamStr = JEncryption.encrypt(paramStr.getBytes("utf-8"), secretKey);
-            log.info("打印票据加密后："+encryptParamStr);
-            String paramsStr = "?param=" +URLEncoder.encode(encryptParamStr, "utf-8")
+            log.info("打印票据加密后：" + encryptParamStr);
+            String paramsStr = "?param=" + URLEncoder.encode(encryptParamStr, "utf-8")
                     + "&from=" + checkTicket.getFrom()
                     + "&ts=" + checkTicket.getTs();
             log.info("打印请求封装车轮请求参数:" + paramsStr);
-            log.info("打印请求车轮请求链接："+domain + checkTicKetUrl + paramsStr);
+            log.info("打印请求车轮请求链接：" + domain + checkTicKetUrl + paramsStr);
             String resultStr = OKHttpHelper.get(domain + checkTicKetUrl + paramsStr, null, null);
             log.info("打印车轮返回结果" + resultStr);
             if (StringUtils.isEmpty(resultStr)) {
