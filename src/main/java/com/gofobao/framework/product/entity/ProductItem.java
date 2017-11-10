@@ -16,9 +16,11 @@ public class ProductItem {
     @Id
     @GeneratedValue
     private Long id;
+    private Long parentId;
     private Long price;
     private Long discountPrice;
     private String afterSalesService;
+    private String imgUrl;
     private String details;
     private Integer inventory;
     private Boolean isDel;

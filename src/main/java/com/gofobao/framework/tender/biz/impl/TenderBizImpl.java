@@ -451,10 +451,31 @@ public class TenderBizImpl implements TenderBiz {
                 return false;
             }
         } else {
+
+            boolean flag = true;
             //手动限额
             //投标单次限额
             long most = borrow.getMost();
-            if (most > 0 && invaildataMoney > most) {
+            //第一次投标限额
+            long firstMost = borrow.getFirstMost();
+            if (firstMost > 0 && invaildataMoney > most) {
+                Specification<Tender> ts = Specifications
+                        .<Tender>and()
+                        .eq("borrowId", borrow.getId())
+                        .eq("userId", user.getId())
+                        .eq("status", 1)
+                        .build();
+                long count = tenderService.count(ts);
+                if (count == 0) {
+                    invaildataMoney = Math.min(most, invaildataMoney);
+                    msg = String.format("投资金额超过首笔投标限额%s元,超出部分资金返回账户可用余额!", StringHelper.formatDouble(most, 100, true));
+                    resultMap.put("msg", msg);
+                    flag = false;
+                }
+            }
+
+            //每笔投标限额
+            if (most > 0 && invaildataMoney > most && flag) {
                 invaildataMoney = Math.min(most, invaildataMoney);
                 msg = String.format("投资金额超过单笔投标限额%s元,超出部分资金返回账户可用余额!", StringHelper.formatDouble(most, 100, true));
                 resultMap.put("msg", msg);
