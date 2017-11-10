@@ -55,6 +55,7 @@ import com.gofobao.framework.tender.service.TransferBuyLogService;
 import com.gofobao.framework.tender.service.TransferService;
 import com.gofobao.framework.tender.vo.request.VoCancelThirdTenderReq;
 import com.gofobao.framework.tender.vo.request.VoEndTransfer;
+import com.gofobao.framework.wheel.borrow.biz.WheelBorrowBiz;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -121,6 +122,9 @@ public class ThirdBatchDealBizImpl implements ThirdBatchDealBiz {
     private UserCacheService userCacheService;
     @Autowired
     private FinancePlanBuyerService financePlanBuyerService;
+
+    @Autowired
+    private WheelBorrowBiz wheelBorrowBiz;
 
     /**
      * 批次处理
@@ -760,6 +764,19 @@ public class ThirdBatchDealBizImpl implements ThirdBatchDealBiz {
             borrow.setLendRepayStatus(ThirdDealStatusContrants.DISPOSED);
             borrow.setRecheckAt(new Date());
             borrowService.save(borrow);
+            //满标复审成功通知车轮
+            if (borrow.getIsWindmill()) {
+                Specification<Tender> tenderSpecification = Specifications.<Tender>and()
+                        .eq("borrowId", borrow.getId())
+                        .build();
+                List<Tender> tenders = tenderService.findList(tenderSpecification);
+                if (!CollectionUtils.isEmpty(tenders)) {
+                    tenders.forEach(tender -> {
+                        wheelBorrowBiz.investNotice(tender);
+                    });
+                }
+                wheelBorrowBiz.borrowUpdateNotice(borrow);
+            }
         } else {
             log.info("非流转标复审失败!");
         }
