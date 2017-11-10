@@ -71,4 +71,6 @@ public class InvestNoticeReq {
     private Integer attorn_state = 0;
 
     private String attorn_time = "";
+
+    private String invest_title;
 }

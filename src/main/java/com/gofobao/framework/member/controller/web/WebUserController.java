@@ -185,7 +185,7 @@ public class WebUserController {
             response.setStatus(HttpStatus.SC_BAD_REQUEST);
         } else if (!StringUtils.isEmpty(upfile)) {
             //循环获取file数组中得文件
-            String imageName = "avatar/" + RandomUtil.getRandomString(20);
+            String imageName = "/avatar/" + RandomUtil.getRandomString(20);
             byte[] fileByte = upfile.getBytes();
             Map<String, Object> result = userBiz.uploadAvatar(fileByte, imageName, users);
             if ((Boolean) result.get("result")) {

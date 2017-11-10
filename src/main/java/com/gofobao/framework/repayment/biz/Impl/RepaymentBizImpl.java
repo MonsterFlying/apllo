@@ -102,6 +102,7 @@ import com.gofobao.framework.tender.entity.TransferBuyLog;
 import com.gofobao.framework.tender.service.TenderService;
 import com.gofobao.framework.tender.service.TransferBuyLogService;
 import com.gofobao.framework.tender.service.TransferService;
+import com.gofobao.framework.wheel.borrow.biz.WheelBorrowBiz;
 import com.gofobao.framework.windmill.borrow.biz.WindmillTenderBiz;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
@@ -202,6 +203,8 @@ public class RepaymentBizImpl implements RepaymentBiz {
     private FinancePlanService financePlanService;
     @Value("${gofobao.adminDomain}")
     private String adminDomain;
+    @Autowired
+    private WheelBorrowBiz wheelBorrowBiz;
 
     /**
      * pc还款
@@ -1431,27 +1434,12 @@ public class RepaymentBizImpl implements RepaymentBiz {
      * @param borrowRepayment
      */
     private void endThirdTenderAndChangeBorrowStatus(Borrow parentBorrow, BorrowRepayment borrowRepayment) {
-        /*// 结束债权：最后一期还款时
+        // 结束债权：最后一期还款时
         if (borrowRepayment.getOrder().intValue() == (parentBorrow.getTotalOrder() - 1)) {
             parentBorrow.setCloseAt(borrowRepayment.getRepayAtYes());
-            //推送队列结束债权
-            MqConfig mqConfig = new MqConfig();
-            mqConfig.setQueue(MqQueueEnum.RABBITMQ_CREDIT);
-            mqConfig.setTag(MqTagEnum.END_CREDIT);
-            mqConfig.setSendTime(DateHelper.addMinutes(new Date(), 1));
-            ImmutableMap<String, String> body = ImmutableMap
-                    .of(MqConfig.MSG_BORROW_ID, StringHelper.toString(parentBorrow.getId()),
-                            MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
-            mqConfig.setMsg(body);
-            try {
-                log.info(String.format("repaymentBizImpl endThirdTenderAndChangeBorrowStatus send mq %s", GSON.toJson(body)));
-                mqHelper.convertAndSend(mqConfig);
-            } catch (Throwable e) {
-                log.error("repaymentBizImpl endThirdTenderAndChangeBorrowStatus send mq exception", e);
-            }
             parentBorrow.setUpdatedAt(new Date());
             borrowService.updateById(parentBorrow);
-        }*/
+        }
     }
 
     /**
@@ -1486,12 +1474,53 @@ public class RepaymentBizImpl implements RepaymentBiz {
             AdvanceLog advanceLog = advanceLogService.findByRepaymentId(borrowRepayment.getId());
             Preconditions.checkNotNull(advanceLog, "RepaymentBizImpl changeRepaymentAndRepayStatus 垫付记录不存在!请联系客服。");
 
+
             //更新垫付记录转状态
             advanceLog.setStatus(1);
             advanceLog.setRepayAtYes(new Date());
             advanceLogService.save(advanceLog);
         }
+        try {
+            //把回款的用户中是否有车轮用户
+            Set<Long> userIds = tenderList.stream()
+                    .map(p -> p.getUserId())
+                    .collect(Collectors.toSet());
+            List<Users> usersList = userService.findByIdIn(new ArrayList<>(userIds));
+            List<Users> tempUserList = usersList.stream()
+                    .filter(p -> !StringUtils.isEmpty(p.getWheelId()))
+                    .collect(Collectors.toList());
+            List<Long> tenderUserIds = tempUserList.stream()
+                    .map(p -> p.getId())
+                    .collect(Collectors.toList());
+            //过滤用户
+            List<Tender> tenders = tenderList.stream()
+                    .filter(tender -> tenderUserIds.contains(tender.getUserId()))
+                    .collect(Collectors.toList());
+            //通知车轮
+            if (!CollectionUtils.isEmpty(tenders)) {
+                tenders.forEach(tender -> {
+                    wheelBorrowBiz.investNotice(tender);
+                });
+            }
+            Set<Long> borrowIds = tenderList.stream()
+                    .map(tender -> tender.getId())
+                    .collect(Collectors.toSet());
+            List<Borrow> borrows = borrowService.findByBorrowIds(new ArrayList<>(borrowIds));
+            if (!CollectionUtils.isEmpty(borrows)) {
+                borrows.forEach(borrow -> {
+                    if (!borrow.getIsWindmill()) {
+                        return;
+                    }
+                    wheelBorrowBiz.borrowUpdateNotice(borrow);
+                });
+            }
+        } catch (Exception e) {
+            log.error("回款通知车轮失败", e);
+
+        }
+
     }
+
 
     /**
      * 新版立即还款

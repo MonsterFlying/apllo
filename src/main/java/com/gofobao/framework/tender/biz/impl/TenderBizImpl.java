@@ -198,13 +198,13 @@ public class TenderBizImpl implements TenderBiz {
         Map<String, Object> resultMap = new HashMap<>();
         // 借款用户资产判断
         state = verifyUserInfo4Borrow(user, borrow, asset, voCreateTenderReq, resultMap);
-        String msg = String.valueOf(resultMap.get("msg"));
+        Object msg = resultMap.get("msg");
         if (!state) {
             log.error("标的判断资产不通过");
             return ResponseEntity
 
                     .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, msg));
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, StringHelper.toString(msg)));
         }
 
         Date nowDate = new Date();
@@ -288,7 +288,7 @@ public class TenderBizImpl implements TenderBiz {
         } catch (Exception e) {
             log.error("触发派发失败新手红包失败", e);
         }
-        return ResponseEntity.ok(VoBaseResp.ok(StringUtils.isEmpty(msg) ? "投资成功" : msg));
+        return ResponseEntity.ok(VoBaseResp.ok(ObjectUtils.isEmpty(msg) ? "投资成功" : String.valueOf(msg)));
     }
 
     /**
@@ -336,6 +336,7 @@ public class TenderBizImpl implements TenderBiz {
             voCreateThirdTenderReq.setAcqRes(borrowTender.getId() + "");
             ResponseEntity<VoBaseResp> resp = tenderThirdBiz.createThirdTender(voCreateThirdTenderReq);
             if (resp.getBody().getState().getCode() == VoBaseResp.ERROR) {
+                log.error(resp.getBody().getState().getMsg());
                 log.info("马上投资: 投资报备失败");
                 return null;
             } else { // 保存即信投标申请到redis
