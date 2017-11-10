@@ -964,10 +964,7 @@ public class BorrowBizImpl implements BorrowBiz {
         // 标的自身设置奖励信息:进行存管红包发放
         awardUserByBorrowTender(borrow, tenderList);
         try {
-            // 老用户投标
-            if (!borrow.getIsNovice()) {
-                userTenderRedPackage(tenderList);
-            }
+            userTenderRedPackage(tenderList);
         } catch (Exception e) {
             log.error("触发老用户投标红包失败", e);
         }
@@ -981,6 +978,7 @@ public class BorrowBizImpl implements BorrowBiz {
                 .in("state", 0, 1)
                 .build();
         long count = batchAssetChangeService.count(bacs);
+
         if (count > 0) {
             //1.处理借款人资产变动
             batchAssetChangeHelper.batchAssetChangeDeal(borrow.getId(), batchNo, BatchAssetChangeContants.BATCH_LEND_REPAY);
