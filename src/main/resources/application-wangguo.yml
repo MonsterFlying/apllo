@@ -63,7 +63,7 @@ starfire: # 星火
   channelCode: gofobao_xhzt   #星火分配渠道简称
   notify_url: http://xh.xeenho.cc/openapi/user_bind/notify/
   ips: 120.76.29.193,120.76.31.153,120.76.204.32,120.77.12.124
-wheel:
+wheel: #车轮
   short-name: gfb
   secret-key: dsDaNZY7
   domain: http://promotion-test.chelun.com
