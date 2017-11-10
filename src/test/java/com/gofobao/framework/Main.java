@@ -8,7 +8,7 @@ import java.util.concurrent.ExecutionException;
 
 public class Main {
     public static void main(String[] args) throws ExecutionException, InterruptedException {
-        checkUpAccountActive();
+        publishRedpack();
     }
 
 
@@ -18,9 +18,9 @@ public class Main {
      * @return
      */
     private static boolean publishRedpack() {
-        String url = "https://api.gofobao.com/pub/publishActivity/red";
+        String url = "https://api.gofobao.com/pub/publishActivity/red/openAccount";
         Map<String, String> data = new HashMap<>();
-        data.put("beginTime", "2017-10-21 17:44:00");
+        data.put("beginTime", "2017-11-10 00:00:00");
         ReleaseHelper.sendMsgByPost(url, data);
         return true;
     }

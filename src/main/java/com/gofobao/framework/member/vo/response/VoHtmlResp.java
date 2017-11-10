@@ -11,6 +11,7 @@ import lombok.Data;
 @ApiModel
 @Data
 public class VoHtmlResp extends VoBaseResp {
+
     @ApiModelProperty(value = "请求表单", dataType = "string")
     private String html;
 }
