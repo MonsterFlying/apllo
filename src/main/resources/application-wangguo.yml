@@ -65,8 +65,8 @@ starfire: # 星火
   ips: 120.76.29.193,120.76.31.153,120.76.204.32,120.77.12.124
 wheel:
   short-name: gfb
-  secret-key: dsDaNZY7
-  domain: http://promotion-test.chelun.com
+  secret-key: ey4a3wca
+  domain: http://promotion.chelun.com
   check_ticket_url: /Financial/ps_check_ticket
 
 jixin: #银行存管
