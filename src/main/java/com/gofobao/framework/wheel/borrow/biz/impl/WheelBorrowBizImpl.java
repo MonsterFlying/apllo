@@ -183,7 +183,7 @@ public class WheelBorrowBizImpl implements WheelBorrowBiz {
                 : tempBorrow.getTimeLimit() + BorrowContants.MONTH);
         borrowInfo.setTotal_amount(StringHelper.formatDouble(tempBorrow.getMoney() / 100d, false));
         borrowInfo.setRate(StringHelper.formatDouble(tempBorrow.getApr() / 100D, false));
-
+        borrowInfo.setStart_time(DateHelper.dateToString(tempBorrow.getReleaseAt()));
         String progress = StringHelper.formatMon(
                 NumberHelper.floorDouble(tempBorrow.getMoneyYes() / tempBorrow.getMoney().doubleValue(),
                         2)
