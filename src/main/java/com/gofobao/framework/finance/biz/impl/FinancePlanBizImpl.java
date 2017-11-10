@@ -725,9 +725,11 @@ public class FinancePlanBizImpl implements FinancePlanBiz {
      */
     @Override
     public ResponseEntity<PlanListWarpRes> list(Page page) {
-        page.setPageSize(10);
         PlanListWarpRes warpRes = VoBaseResp.ok("查询成功", PlanListWarpRes.class);
-
+        if (page.getPageIndex().intValue() == 2) {
+            return ResponseEntity.ok(warpRes);
+        }
+        page.setPageSize(10);
         Specification<FinancePlan> specification = Specifications.<FinancePlan>and()
                 .notIn("status", statusArray.toArray())
              /*   .eq("successAt",null)*/
@@ -736,8 +738,7 @@ public class FinancePlanBizImpl implements FinancePlanBiz {
         List<FinancePlan> financePlans = financePlanService.findList(specification,
                 new PageRequest(page.getPageIndex(), page.getPageSize(),
                         new Sort(Sort.Direction.ASC, "status")));
-        Long totalCount = financePlanService.count(specification);
-        warpRes.setTotalCount(totalCount.intValue());
+        warpRes.setTotalCount(10);
         if (CollectionUtils.isEmpty(financePlans)) {
             return ResponseEntity.ok(warpRes);
         }
@@ -766,9 +767,11 @@ public class FinancePlanBizImpl implements FinancePlanBiz {
      */
     @Override
     public ResponseEntity<VoViewFinanceServerPlanResp> financeServerlist(Page page) {
-        page.setPageSize(10);
         VoViewFinanceServerPlanResp warpRes = VoBaseResp.ok("查询成功", VoViewFinanceServerPlanResp.class);
-
+        if (page.getPageIndex()==2) {
+            return ResponseEntity.ok(warpRes);
+        }
+        page.setPageSize(10);
         Specification<FinancePlan> specification = Specifications.<FinancePlan>and()
                 .notIn("status", statusArray.toArray())
                 .eq("type", 1)
@@ -776,8 +779,7 @@ public class FinancePlanBizImpl implements FinancePlanBiz {
                 .eq("status", 1)
                 .build();
         List<FinancePlan> financePlans = financePlanService.findList(specification, new PageRequest(page.getPageIndex(), page.getPageSize(), new Sort(Sort.Direction.DESC, "id")));
-        Long totalCount = financePlanService.count(specification);
-        warpRes.setTotalCount(totalCount.intValue());
+        warpRes.setTotalCount(10);
         if (CollectionUtils.isEmpty(financePlans)) {
             return ResponseEntity.ok(warpRes);
         }
