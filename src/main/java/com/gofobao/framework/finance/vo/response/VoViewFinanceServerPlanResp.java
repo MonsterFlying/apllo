@@ -16,4 +16,7 @@ import java.util.List;
 public class VoViewFinanceServerPlanResp extends VoBaseResp {
     @ApiModelProperty("金服理财计划集合")
     List<FinanceServerPlan> financeServerPlanList = new ArrayList<>();
+
+    @ApiModelProperty("总条数")
+    private Integer totalCount;
 }

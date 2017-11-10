@@ -736,7 +736,8 @@ public class FinancePlanBizImpl implements FinancePlanBiz {
         List<FinancePlan> financePlans = financePlanService.findList(specification,
                 new PageRequest(page.getPageIndex(), page.getPageSize(),
                         new Sort(Sort.Direction.ASC, "status")));
-
+        Long totalCount = financePlanService.count(specification);
+        warpRes.setTotalCount(totalCount.intValue());
         if (CollectionUtils.isEmpty(financePlans)) {
             return ResponseEntity.ok(warpRes);
         }
@@ -775,7 +776,8 @@ public class FinancePlanBizImpl implements FinancePlanBiz {
                 .eq("status", 1)
                 .build();
         List<FinancePlan> financePlans = financePlanService.findList(specification, new PageRequest(page.getPageIndex(), page.getPageSize(), new Sort(Sort.Direction.DESC, "id")));
-
+        Long totalCount = financePlanService.count(specification);
+        warpRes.setTotalCount(totalCount.intValue());
         if (CollectionUtils.isEmpty(financePlans)) {
             return ResponseEntity.ok(warpRes);
         }
