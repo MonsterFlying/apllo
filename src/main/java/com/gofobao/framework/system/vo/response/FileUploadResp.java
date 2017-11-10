@@ -5,6 +5,9 @@ import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * 活动首页
  * Created by Administrator on 2017/6/20 0020.
@@ -13,9 +16,19 @@ import lombok.Data;
 @ApiModel
 public class FileUploadResp extends VoBaseResp {
 
-    @ApiModelProperty(value = "图片全链接")
-    private String imageUrl ;
+    @Data
+    @ApiModel
+    public static class ImageKey {
+        @ApiModelProperty("图片唯一信息")
+        private String key;
 
-    @ApiModelProperty(value = "图片唯一id, 当用户放弃编辑时, 请该参数调用删除图片接口")
-    private String key ;
+        @ApiModelProperty("图片全路径")
+        private String imagesUrl;
+    }
+
+    @ApiModelProperty("图片上传结果集")
+    List<ImageKey> images = new ArrayList<>();
 }
+
+
+

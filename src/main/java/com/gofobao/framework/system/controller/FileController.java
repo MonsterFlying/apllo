@@ -11,6 +11,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.servlet.http.HttpServletRequest;
+
 /**
  * 文件管理
  */
@@ -22,11 +24,12 @@ public class FileController {
     FileManagerBiz fileManagerBiz;
 
     @ApiOperation(value = "文件上传")
-    @PostMapping("file/upload")
-    public ResponseEntity<FileUploadResp> upload(@RequestAttribute(SecurityContants.USERID_KEY) Long userId,
-                                                 @RequestParam("file") MultipartFile file) throws Exception {
+    @PostMapping("file/upload/{fileName}")
+    public ResponseEntity<FileUploadResp> multiUpload(HttpServletRequest httpServletRequest,
+                                                      @RequestAttribute(SecurityContants.USERID_KEY) Long userId,
+                                                      @PathVariable String fileName) {
         try {
-            return fileManagerBiz.upload(userId, file);
+            return fileManagerBiz.uploadByFileName(userId, httpServletRequest, fileName);
         } catch (Exception e) {
             log.error("文件上传异常", e);
             return ResponseEntity
@@ -38,7 +41,7 @@ public class FileController {
     @ApiOperation(value = "文件上传")
     @GetMapping("file/delete/{key}")
     public ResponseEntity<VoBaseResp> delete(@RequestAttribute(SecurityContants.USERID_KEY) Long userId,
-                                             @PathVariable String key) throws Exception {
+                                             @PathVariable String key) {
         try {
             return fileManagerBiz.deleteFile(userId, key);
         } catch (Exception e) {

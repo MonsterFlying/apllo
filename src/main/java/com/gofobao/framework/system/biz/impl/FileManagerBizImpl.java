@@ -20,14 +20,12 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
+import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.multipart.MultipartHttpServletRequest;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.constraints.NotNull;
-import java.io.BufferedOutputStream;
-import java.io.File;
-import java.io.FileOutputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -52,7 +50,7 @@ public class FileManagerBizImpl implements FileManagerBiz {
     private String bucket;
 
     @Override
-    public ResponseEntity<FileUploadResp> upload(@NonNull Long userId, @NonNull MultipartFile file) throws Exception {
+    public String upload(Long userId, MultipartFile file) throws Exception {
         // 原始文件名
         String originalFilename = file.getOriginalFilename();
         // 文件后缀名
@@ -68,15 +66,10 @@ public class FileManagerBizImpl implements FileManagerBiz {
             Response response = uploadManager.put(file.getBytes(), uploadFileName, upToken);
             //解析上传成功的结果
             DefaultPutRet putRet = new Gson().fromJson(response.bodyString(), DefaultPutRet.class);
+            return putRet.key;
 
-            FileUploadResp fileUploadResp = VoBaseResp.ok("操作成功", FileUploadResp.class);
-            fileUploadResp.setKey(putRet.key);
-            fileUploadResp.setImageUrl(String.format("%s/%s", qiNiuDomain, putRet.key));
-            return ResponseEntity.ok(fileUploadResp);
         } catch (QiniuException ex) {
-            return ResponseEntity
-                    .badRequest()
-                    .body(VoBaseResp.error(ex.code(), ex.response.toString(), FileUploadResp.class));
+            return null;
         }
     }
 
@@ -120,10 +113,10 @@ public class FileManagerBizImpl implements FileManagerBiz {
                 do {
                     looper--;
                     try {
-                        ResponseEntity<FileUploadResp> uploadRespResponseEntity = upload(userId, file);
-                        if (uploadRespResponseEntity.getBody().getState().getCode() == VoBaseResp.OK) {
+                        String key = upload(userId, file);
+                        if (!StringUtils.isEmpty(key)) {
                             // 成功
-                            keys.add(uploadRespResponseEntity.getBody().getKey());
+                            keys.add(key);
                             itemSuccess = true;
                             break;
                         }
@@ -160,6 +153,29 @@ public class FileManagerBizImpl implements FileManagerBiz {
         }
 
         return keys;
+    }
+
+    @Override
+    public ResponseEntity<FileUploadResp> uploadByFileName(@NotNull Long userId,
+                                                           @NotNull HttpServletRequest httpServletRequest,
+                                                           @NotNull String fileName) {
+        try {
+            FileUploadResp fileUploadResp = VoBaseResp.ok("操作成功", FileUploadResp.class);
+            List<String> keys = multiUpload(userId, httpServletRequest, fileName);
+            FileUploadResp.ImageKey imageKey = null;
+            for (String key : keys) {
+                imageKey = new FileUploadResp.ImageKey();
+                imageKey.setImagesUrl(qiNiuDomain + key);
+                imageKey.setKey(key);
+                fileUploadResp.getImages().add(imageKey);
+            }
+
+            return ResponseEntity.ok(fileUploadResp);
+        } catch (Exception e) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "上传失败", FileUploadResp.class));
+        }
     }
 
 

@@ -2,7 +2,6 @@ package com.gofobao.framework.system.biz;
 
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.system.vo.response.FileUploadResp;
-import com.qiniu.storage.model.DefaultPutRet;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -17,7 +16,7 @@ public interface FileManagerBiz {
      * @param file   上传文件包装类
      * @return
      */
-    ResponseEntity<FileUploadResp> upload(Long userId, MultipartFile file) throws Exception;
+    String upload(Long userId, MultipartFile file) throws Exception;
 
 
     /**
@@ -39,4 +38,15 @@ public interface FileManagerBiz {
      * @return
      */
     List<String> multiUpload(Long userId, HttpServletRequest httpServletRequest, String fileName) throws Exception;
+
+
+    /**
+     * 根据指定文件名长传图片(支持批处理)
+     * @param userId
+     * @param httpServletRequest
+     * @param fileName
+     * @return
+     */
+    ResponseEntity<FileUploadResp> uploadByFileName(Long userId, HttpServletRequest httpServletRequest, String fileName);
+
 }
