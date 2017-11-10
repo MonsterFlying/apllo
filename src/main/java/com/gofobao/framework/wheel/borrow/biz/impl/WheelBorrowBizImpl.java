@@ -93,7 +93,7 @@ public class WheelBorrowBizImpl implements WheelBorrowBiz {
             List<Borrow> borrows;
             if (ObjectUtils.isEmpty(borrow) || StringUtils.isEmpty(borrow.getInvest_id())) {
                 Specification<Borrow> borrowSpecification = Specifications.<Borrow>and()
-                        .in("status", Lists.newArrayList(BorrowContants.BIDDING,BorrowContants.PENDING).toArray())
+                        .eq("status", BorrowContants.BIDDING)
                         .eq("successAt", null)
                         .eq("isWindmill", true)
                         .build();
