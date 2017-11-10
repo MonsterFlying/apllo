@@ -15,6 +15,6 @@ public class PlanListWarpRes extends VoBaseResp {
     private List<PlanList> planLists = Lists.newArrayList();
 
     @ApiModelProperty("总条数")
-    private Integer totalCount;
+    private Integer totalCount=0;
 
 }

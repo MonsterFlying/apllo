@@ -18,5 +18,5 @@ public class VoViewFinanceServerPlanResp extends VoBaseResp {
     List<FinanceServerPlan> financeServerPlanList = new ArrayList<>();
 
     @ApiModelProperty("总条数")
-    private Integer totalCount;
+    private Integer totalCount=0;
 }

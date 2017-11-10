@@ -726,7 +726,7 @@ public class FinancePlanBizImpl implements FinancePlanBiz {
     @Override
     public ResponseEntity<PlanListWarpRes> list(Page page) {
         PlanListWarpRes warpRes = VoBaseResp.ok("查询成功", PlanListWarpRes.class);
-        if (page.getPageIndex().intValue() == 2) {
+        if (page.getPageIndex().equals(1)) {
             return ResponseEntity.ok(warpRes);
         }
         page.setPageSize(10);
@@ -768,7 +768,7 @@ public class FinancePlanBizImpl implements FinancePlanBiz {
     @Override
     public ResponseEntity<VoViewFinanceServerPlanResp> financeServerlist(Page page) {
         VoViewFinanceServerPlanResp warpRes = VoBaseResp.ok("查询成功", VoViewFinanceServerPlanResp.class);
-        if (page.getPageIndex()==2) {
+        if (page.getPageIndex().equals(1)) {
             return ResponseEntity.ok(warpRes);
         }
         page.setPageSize(10);
