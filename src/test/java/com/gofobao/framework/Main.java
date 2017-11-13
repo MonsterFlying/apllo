@@ -18,9 +18,9 @@ public class Main {
      * @return
      */
     private static boolean publishRedpack() {
-        String url = "https://api.gofobao.com/pub/publishActivity/red/openAccount";
+        String url = "https://api.gofobao.com/pub/publishActivity/red";
         Map<String, String> data = new HashMap<>();
-        data.put("beginTime", "2017-11-10 00:00:00");
+        data.put("beginTime", "2017-11-09 00:00:00");
         ReleaseHelper.sendMsgByPost(url, data);
         return true;
     }
