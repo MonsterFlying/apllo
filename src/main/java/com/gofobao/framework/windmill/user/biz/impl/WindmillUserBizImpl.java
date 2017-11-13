@@ -281,7 +281,9 @@ public class WindmillUserBizImpl implements WindmillUserBiz {
                 user.setRealname(StringUtils.isEmpty(user.getRealname()) ? userRegisterReq.getTrue_name() : user.getRealname());
                 user.setCardId(StringUtils.isEmpty(user.getCardId()) ? userRegisterReq.getId_no() : user.getCardId());
                 user.setPhone(StringUtils.isEmpty(user.getPhone()) ? userRegisterReq.getMobile() : user.getPhone());
-                if (!StringUtils.isEmpty(userRegisterReq.getEmail())) {
+                String nullStr = "null";
+                if (!StringUtils.isEmpty(userRegisterReq.getEmail())
+                        && !userRegisterReq.getEmail().equals(nullStr)) {
                     user.setEmail(userRegisterReq.getEmail());
                 }
                 userService.save(user);
