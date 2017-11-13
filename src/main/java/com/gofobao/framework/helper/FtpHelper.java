@@ -1,6 +1,9 @@
 package com.gofobao.framework.helper;
 
-import com.jcraft.jsch.*;
+import com.jcraft.jsch.Channel;
+import com.jcraft.jsch.ChannelSftp;
+import com.jcraft.jsch.JSch;
+import com.jcraft.jsch.Session;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.net.ftp.FTP;
@@ -12,7 +15,7 @@ import org.springframework.util.ObjectUtils;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.OutputStream;
-import java.util.Date;
+import java.io.OutputStreamWriter;
 
 @Component
 @Slf4j
@@ -42,10 +45,10 @@ public class FtpHelper {
      * @return
      */
     public String getFileDir(@NonNull String dateStr) {
-        Date date = DateHelper.stringToDate(dateStr, DateHelper.DATE_FORMAT_YMD_NUM);
-        int year = DateHelper.getYear(date);
-        int month = DateHelper.getMonth(date);
-        int day = DateHelper.getDayOfMonth(date);
+        String year = dateStr.substring(0, 4);
+        String month = dateStr.substring(4, 6);
+        String day = dateStr.substring(6, 8);
+
         return String.format("/%s/%s/%s/%s", FILE_ROOT, year, month, day);
     }
 
@@ -154,7 +157,9 @@ public class FtpHelper {
             if (file.exists()) {
                 return true;
             }
-            try (OutputStream outputStream = new FileOutputStream(saveFile)) {
+            try (OutputStream outputStream = new FileOutputStream(saveFile);
+                 OutputStreamWriter writer = new OutputStreamWriter(outputStream, "UTF-8");
+            ) {
                 String path = String.format("%s/%s", dir, fileName);
                 sftp.get(path, outputStream);
                 outputStream.flush();
@@ -162,6 +167,7 @@ public class FtpHelper {
             } catch (Exception e) {
                 log.error("SFTP文件下载异常", e);
             } finally {
+                sftp.quit();
                 sftp.disconnect();
             }
             return true;

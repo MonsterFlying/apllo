@@ -2,7 +2,6 @@ package com.gofobao.framework.financial.biz.impl;
 
 import cn.afterturn.easypoi.excel.ExcelExportUtil;
 import cn.afterturn.easypoi.excel.entity.ExportParams;
-import com.gofobao.framework.api.helper.JixinFileManager;
 import com.gofobao.framework.api.helper.JixinTxDateHelper;
 import com.gofobao.framework.asset.service.NewAssetLogService;
 import com.gofobao.framework.financial.biz.JixinAssetBiz;
@@ -42,8 +41,11 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
-import java.nio.charset.StandardCharsets;
-import java.util.*;
+import java.nio.charset.Charset;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.List;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 
@@ -118,7 +120,7 @@ public class NewEveBizImpl implements NewEveBiz {
     @Override
     public void importEveDataToDatabase(String date, String fileName) throws FileNotFoundException {
         File file = new File(String.format("%s%s%s", filePath, File.separator, fileName));
-        BufferedReader bufferedReader = Files.newReader(file, StandardCharsets.UTF_8);
+        BufferedReader bufferedReader = Files.newReader(file, Charset.forName("gbk"));
         Date opDate = DateHelper.stringToDate(date, DateHelper.DATE_FORMAT_YMD_NUM);
         Date endDate = DateHelper.stringToDate("2017-09-21 00:00:00");
         if (DateHelper.diffInDays(endDate, opDate, false) > 0) {  // 老版本系统
