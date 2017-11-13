@@ -6,8 +6,6 @@ import com.jcraft.jsch.JSch;
 import com.jcraft.jsch.Session;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.net.ftp.FTP;
-import org.apache.commons.net.ftp.FTPClient;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.util.ObjectUtils;
@@ -52,67 +50,7 @@ public class FtpHelper {
         return String.format("/%s/%s/%s/%s", FILE_ROOT, year, month, day);
     }
 
-    /**
-     * ftp 下载
-     *
-     * @param dir      文件目录
-     * @param fileName 文件名称
-     * @return
-     */
-    public boolean download(String dir, String fileName) {
-        log.info("ftp 下载日期路径");
-        FTPClient client = new FTPClient();
-        try {
-            client.connect(ftpHost, ftpPort);
-            boolean flag = client.login(ftpUsername, ftpPassword);
-            if (!flag) {
-                log.warn("======================================");
-                log.warn("// FTP 账号密码错误");
-                log.warn("======================================");
-                return false;
-            }
-            client.enterLocalPassiveMode();
-            client.setFileType(FTP.BINARY_FILE_TYPE);
 
-            // 更改目录
-            client.changeWorkingDirectory(dir);
-            //文件在本地的存放地址
-            File newFile = new File(saveFileUrl);
-            if (!newFile.exists() && !newFile.isDirectory()) {
-                newFile.mkdirs();
-            }
-            String saveFile = String.format("%s%s%s", saveFileUrl, File.separator, fileName);
-            File file = new File(saveFile);
-            if (file.exists()) {
-                return true;
-            }
-            try (OutputStream outputStream = new FileOutputStream(saveFile);) {
-                boolean downloadState = client.retrieveFile(fileName, outputStream);
-                if (!downloadState) {
-                    log.warn(String.format("FTP 文件下载失败: %s", fileName));
-                    return false;
-                }
-                outputStream.flush();
-                outputStream.close();
-            } catch (Exception e) {
-                log.error("SFTP文件下载异常", e);
-            }
-
-        } catch (Exception e) {
-            log.info("ftp 下载异常", e);
-        } finally {
-            if (client.isConnected()) {
-                try {
-                    client.logout();
-                    client.disconnect();
-                } catch (Exception e) {
-                    log.error("FTP 文件关闭失败", e);
-                    return false;
-                }
-            }
-        }
-        return true;
-    }
 
     /**
      * 安全链接

@@ -49,7 +49,7 @@ public class TopicServiceImpl implements TopicService {
     private UsersRepository usersRepository;
 
     @Autowired
-    FileManagerBiz fileManagerBiz ;
+    FileManagerBiz fileManagerBiz;
 
     @Value("${qiniu.domain}")
     private String imgPrefix;
@@ -64,158 +64,163 @@ public class TopicServiceImpl implements TopicService {
     @Override
     @Transactional
     public ResponseEntity<VoBaseResp> publishTopic(VoTopicReq voTopicReq,
-                                                    @NonNull Long userId,
-                                                    HttpServletRequest httpServletRequest) {
-        Date nowDate = new Date() ;
-        Preconditions.checkNotNull(voTopicReq) ;
+                                                   @NonNull Long userId,
+                                                   HttpServletRequest httpServletRequest) {
+        Date nowDate = new Date();
+        Preconditions.checkNotNull(voTopicReq);
         // 判断板块id存在否？
-        TopicType topicType = topicTypeRepository.findById(voTopicReq.getTopicTypeId()) ;
-        Preconditions.checkNotNull(topicType,"topicType is not exist") ;
+        TopicType topicType = topicTypeRepository.findById(voTopicReq.getTopicTypeId());
+        Preconditions.checkNotNull(topicType, "topicType is not exist");
 
         Users user = usersRepository.findById(userId);
-        Preconditions.checkNotNull(user, "user record is empty") ;
+        Preconditions.checkNotNull(user, "user record is empty");
 
         // 图片获取
-        List<String> files = null ;
+        List<String> files = null;
 
-        try{
+        try {
             files = fileManagerBiz.multiUpload(userId, httpServletRequest, "files");
-        }catch (Exception e){
+        } catch (Exception e) {
             log.error(e.getMessage());
             return ResponseEntity
-                    .badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "文件保存失败", VoBaseResp.class)) ;
+                    .badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "文件保存失败", VoBaseResp.class));
         }
 
 
         // 用户内容铭感词过滤
-        FilteredResult filteredResult = WordFilterUtil.filterText(voTopicReq.getContent(),'*');
+        FilteredResult filteredResult = WordFilterUtil.filterText(voTopicReq.getContent(), '*');
         String filteredContent = filteredResult.getFilteredContent();
 
         // 保存数据
         Topic topic = new Topic();
         topic.setUserId(userId);
-        topic.setContent(voTopicReq.getContent()) ;
-        topic.setUserName(user.getUsername()) ;
+        topic.setContent(voTopicReq.getContent());
+        topic.setUserName(user.getUsername());
         // 设置图片
-        for(int i = 1 ,  len = files.size() ; i <= len; i++){
+        for (int i = 1, len = files.size(); i <= len; i++) {
             try {
                 PropertyUtils.setProperty(topic, "img" + i, files.get(i));
             } catch (Exception e) {
                 return ResponseEntity
-                        .badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "系统异常， 请稍后再试！", VoBaseResp.class)) ;
+                        .badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "系统异常， 请稍后再试！", VoBaseResp.class));
             }
         }
-        topic.setTopicTypeId(voTopicReq.getTopicTypeId()) ;
-        topic.setCreateDate(nowDate) ;
-        topic.setUpdateDate(nowDate) ;
-        topic.setContent(filteredResult.getFilteredContent()) ;
+        topic.setTopicTypeId(voTopicReq.getTopicTypeId());
+        topic.setCreateDate(nowDate);
+        topic.setUpdateDate(nowDate);
+        topic.setContent(filteredResult.getFilteredContent());
         Topic saveTopic = topicRepository.save(topic);
-        Preconditions.checkNotNull(saveTopic, "topic record is empty") ;
+        Preconditions.checkNotNull(saveTopic, "topic record is empty");
 
         //发帖后相应版块下数量改变
-        topicTypeRepository.updateTopicTotalNum(topic.getTopicTypeId(),nowDate);
-        return ResponseEntity.ok(VoBaseResp.ok("发布主题成功",VoBaseResp.class)) ;
+        topicTypeRepository.updateTopicTotalNum(topic.getTopicTypeId(), nowDate);
+        return ResponseEntity.ok(VoBaseResp.ok("发布主题成功", VoBaseResp.class));
     }
 
     @Override
-    public ResponseEntity<VoTopicResp> delTopic(long id,long userId) {
-        Topic topic = topicRepository.findOne(id) ;
-        if(ObjectUtils.isEmpty(topic)){
-            return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR,"无权删除",VoTopicResp.class)) ;
+    public ResponseEntity<VoTopicResp> delTopic(long id, long userId) {
+        Topic topic = topicRepository.findOne(id);
+        if (ObjectUtils.isEmpty(topic)) {
+            return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "无权删除", VoTopicResp.class));
         }
-        if (topic.getUserId() != userId){
-            return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR,"无权删除",VoTopicResp.class)) ;
+        if (topic.getUserId() != userId) {
+            return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "无权删除", VoTopicResp.class));
         }
         try {
-            topicRepository.delete(id) ;
-        }catch (Exception e){
-             return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR,"删除主题失败",VoTopicResp.class)) ;
+            topicRepository.delete(id);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "删除主题失败", VoTopicResp.class));
         }
-        return ResponseEntity.ok(VoBaseResp.ok("删除主题成功",VoTopicResp.class)) ;
+        return ResponseEntity.ok(VoBaseResp.ok("删除主题成功", VoTopicResp.class));
 
     }
 
     @Override
     @SuppressWarnings("all")
     public ResponseEntity<VoTopicListResp> listTopic(long topicTypeId, Pageable pageable) {
-        List<Topic> topics = topicRepository.findByTopicTypeIdOrderByCreateDateDesc(topicTypeId,pageable) ;
-        VoTopicListResp voTopicListResp = VoBaseResp.ok("查询主题成功",VoTopicListResp.class) ;
+        List<Topic> topics = topicRepository.findByTopicTypeIdOrderByCreateDateDesc(topicTypeId, pageable);
+        VoTopicListResp voTopicListResp = VoBaseResp.ok("查询主题成功", VoTopicListResp.class);
         for (Topic topic : topics) {
-            VoTopicResp voTopicResp=new VoTopicResp() ;
-            voTopicResp.setTitle(topic.getTitle()) ;
+            VoTopicResp voTopicResp = new VoTopicResp();
+            voTopicResp.setTitle(topic.getTitle());
             //内容评论数量分析,1000以上999+
-            voTopicResp.setContentTotalNum(topic.getContentTotalNum()>CONTENT_COMMENT_LIMIT?CONTENT_COMMENT_LIMIT:topic.getContentTotalNum()) ;
+            voTopicResp.setContentTotalNum(topic.getContentTotalNum() > CONTENT_COMMENT_LIMIT ? CONTENT_COMMENT_LIMIT : topic.getContentTotalNum());
 
             //内容超过两行...代替
-            String content=topic.getContent();
-            if (content.length()>CONTENT_SHOW_LIMIT){
-               content = content.substring(CONTENT_SHOW_LIMIT).concat("...");
+            String content = topic.getContent();
+            if (content.length() > CONTENT_SHOW_LIMIT) {
+                content = content.substring(CONTENT_SHOW_LIMIT).concat("...");
             }
-            voTopicResp.setContent(content) ;
+            voTopicResp.setContent(content);
 
             //时间分析
-            long nowTime=Calendar.getInstance().getTimeInMillis();
+            long nowTime = Calendar.getInstance().getTimeInMillis();
             long publishTime = topic.getCreateDate().getTime();
-            long between = nowTime-publishTime;
-            if (between > DateHelper.MILLIS_PER_DAY*7){
+            long between = nowTime - publishTime;
+            if (between > DateHelper.MILLIS_PER_DAY * 7) {
                 voTopicResp.setTime("1周前");
-            }else if(between >= DateHelper.MILLIS_PER_DAY){
-                voTopicResp.setTime(between/DateHelper.MILLIS_PER_DAY+"天前");
-            }else if(between >= DateHelper.MILLIS_PER_HOUR ){
-                voTopicResp.setTime(between/DateHelper.MILLIS_PER_HOUR+"小时前");
-            }else if(between >= DateHelper.MILLIS_PER_MINUTE){
-                voTopicResp.setTime(between/DateHelper.MILLIS_PER_MINUTE+"分钟前");
+            } else if (between >= DateHelper.MILLIS_PER_DAY) {
+                voTopicResp.setTime(between / DateHelper.MILLIS_PER_DAY + "天前");
+            } else if (between >= DateHelper.MILLIS_PER_HOUR) {
+                voTopicResp.setTime(between / DateHelper.MILLIS_PER_HOUR + "小时前");
+            } else if (between >= DateHelper.MILLIS_PER_MINUTE) {
+                voTopicResp.setTime(between / DateHelper.MILLIS_PER_MINUTE + "分钟前");
             }
 
             //点赞总数显示分析，1000以上999+
-            voTopicResp.setTopTotalNum(topic.getTopTotalNum()>CONTENT_TOP_LIMIT?CONTENT_TOP_LIMIT:topic.getTopTotalNum());
+            voTopicResp.setTopTotalNum(topic.getTopTotalNum() > CONTENT_TOP_LIMIT ? CONTENT_TOP_LIMIT : topic.getTopTotalNum());
 
             //设置图片
-            String img=null;
-            for(int i = 1 ; i <= 9; i++){
+            String img = null;
+            for (int i = 1; i <= 9; i++) {
 
                 try {
                     img = (String) PropertyUtils.getProperty(topic, "img" + i);
-                    if(StringUtils.isEmpty(img)){
+                    if (StringUtils.isEmpty(img)) {
                         break;
                     }
-                    PropertyUtils.setProperty(voTopicResp,"img"+i,imgPrefix+"/"+img);
+                    PropertyUtils.setProperty(voTopicResp, "img" + i, imgPrefix + "/" + img);
                 } catch (Exception e) {
                     return ResponseEntity
-                            .badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "系统异常， 请稍后再试！", VoTopicListResp.class)) ;
+                            .badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "系统异常， 请稍后再试！", VoTopicListResp.class));
                 }
 
             }
-            voTopicListResp.getVoTopicRespList().add(voTopicResp) ;
+            voTopicListResp.getVoTopicRespList().add(voTopicResp);
         }
         return ResponseEntity.ok(voTopicListResp);
     }
 
     @Override
     public ResponseEntity<VoTopicResp> findTopic(long topicId) {
-        Topic topic = topicRepository.findById(topicId) ;
-        VoTopicResp voTopicResp = VoBaseResp.ok("查询主题成功",VoTopicResp.class);
-        voTopicResp.setTitle(topic.getTitle()) ;
-        voTopicResp.setContent(topic.getContent()) ;
+        Topic topic = topicRepository.findById(topicId);
+        VoTopicResp voTopicResp = VoBaseResp.ok("查询主题成功", VoTopicResp.class);
+        voTopicResp.setTitle(topic.getTitle());
+        voTopicResp.setContent(topic.getContent());
         //点赞数显示设置
         voTopicResp.setTopTotalNum(topic.getTopTotalNum() > CONTENT_TOP_LIMIT ? CONTENT_TOP_LIMIT : topic.getTopTotalNum());
         //内容评论数显示
-        voTopicResp.setContentTotalNum(topic.getContentTotalNum() > CONTENT_COMMENT_LIMIT ? CONTENT_COMMENT_LIMIT:topic.getContentTotalNum()) ;
+        voTopicResp.setContentTotalNum(topic.getContentTotalNum() > CONTENT_COMMENT_LIMIT ? CONTENT_COMMENT_LIMIT : topic.getContentTotalNum());
 
         String img = null;
-        for(int i = 1 ; i <= 9; i++){
+        for (int i = 1; i <= 9; i++) {
             try {
-                img=(String) PropertyUtils.getProperty(topic, "img" + i);
-                if(StringUtils.isEmpty(img)){
+                img = (String) PropertyUtils.getProperty(topic, "img" + i);
+                if (StringUtils.isEmpty(img)) {
                     break;
                 }
 
-                PropertyUtils.setProperty(voTopicResp,"img"+i,imgPrefix+"/"+img);
+                PropertyUtils.setProperty(voTopicResp, "img" + i, imgPrefix + "/" + img);
             } catch (Exception e) {
                 return ResponseEntity
-                        .badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "系统异常， 请稍后再试！", VoTopicResp.class)) ;
+                        .badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "系统异常， 请稍后再试！", VoTopicResp.class));
             }
         }
-        return ResponseEntity.ok(voTopicResp) ;
+        return ResponseEntity.ok(voTopicResp);
+    }
+
+    @Override
+    public Topic findById(Long soucreId) {
+        return topicRepository.findOne(soucreId);
     }
 }

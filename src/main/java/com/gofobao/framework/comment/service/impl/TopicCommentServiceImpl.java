@@ -52,7 +52,7 @@ public class TopicCommentServiceImpl implements TopicCommentService {
             VoTopicCommentItem voTopicCommentItem = new VoTopicCommentItem();
             voTopicCommentItem.setContent(topicComment.getContent());
             voTopicCommentItem.setUserName(topicComment.getUserName());
-             // image.......img
+            // image.......img
             voTopicCommentItem.setUserIconUrl(topicComment.getUserIconUrl());
             //评论时间分析
             long nowTime = Calendar.getInstance().getTimeInMillis();
@@ -98,7 +98,12 @@ public class TopicCommentServiceImpl implements TopicCommentService {
         FilteredResult filteredResult = WordFilterUtil.filterText(voTopicCommentReq.getContent(), '*');
         topicComment.setContent(filteredResult.getFilteredContent());
         TopicComment commentResult = topicCommentRepository.save(topicComment);
-        Preconditions.checkNotNull(commentResult,"comment is fail");
+        Preconditions.checkNotNull(commentResult, "comment is fail");
         return ResponseEntity.ok(VoBaseResp.ok("发布成功", VoBaseResp.class));
+    }
+
+    @Override
+    public TopicComment findById(Long id) {
+        return topicCommentRepository.findOne(id);
     }
 }

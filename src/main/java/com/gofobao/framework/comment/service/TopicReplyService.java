@@ -1,5 +1,7 @@
 package com.gofobao.framework.comment.service;
 
+import com.gofobao.framework.comment.entity.TopicReply;
+import com.gofobao.framework.comment.entity.TopicReport;
 import com.gofobao.framework.comment.vo.request.VoTopicReplyReq;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import org.springframework.http.ResponseEntity;
@@ -15,4 +17,8 @@ public interface TopicReplyService {
      * @return
      */
     ResponseEntity<VoBaseResp> publishReply(VoTopicReplyReq voTopicReplyReq, Long userId);
+
+    TopicReply findById(Long id);
+
+
 }
