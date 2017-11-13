@@ -84,7 +84,10 @@ jixin: #银行存管
   query-time-init: "20170430" # 与存管系统查询时间
   crt-path:  # crt证书路径
   p12-path:  # p12证书路径
-
+  ftp-port: 5132 # ftp文件下载端口
+  ftp-host: sftp.credit2go.cn # ftp远程地址
+  ftp-username: guangfubao # ftp用户名
+  ftp-password: A85yL0p9ZyxIj # ftp密码
 gofobao:
   dev: true # 开发环境
   javaDomain: http://p6k30gs.hk1.mofasuidao.cn

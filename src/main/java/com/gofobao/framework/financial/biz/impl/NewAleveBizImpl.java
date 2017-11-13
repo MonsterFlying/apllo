@@ -53,8 +53,11 @@ public class NewAleveBizImpl implements NewAleveBiz {
     @Autowired
     NewAleveService newAleveService;
 
+    // @Autowired
+    // JixinFileManager jixinFileManager;
+
     @Autowired
-    JixinFileManager jixinFileManager;
+    FtpHelper ftpHelper ;
 
     @Autowired
     JixinTxDateHelper jixinTxDateHelper;
@@ -78,22 +81,22 @@ public class NewAleveBizImpl implements NewAleveBiz {
     AssetBiz assetBiz;
 
     @Override
-    public boolean downloadNewAleveFileAndImportDatabase(String date) {
+    public boolean downloadNewAleveFileAndImportDatabase(String dateStr) {
         log.info("===========================================");
-        log.info(String.format("ALEVE调度启动, 时间: %s", date));
+        log.info(String.format("ALEVE调度启动, 时间: %s", dateStr));
         log.info("===========================================");
 
         try {
-            String fileName = String.format("%s-ALEVE%s-%s", bankNo, productNo, date);
-            boolean downloadState = jixinFileManager.download(fileName);
+            String fileName = String.format("%s-ALEVE%s-%s", bankNo, productNo, dateStr);
+            boolean downloadState = ftpHelper.downloadBySecurity(ftpHelper.getFileDir(dateStr), fileName) ;
             if (!downloadState) {
                 throw new Exception("ALEVE下载失败");
             }
 
-            importDatabase(date, fileName);
+            importDatabase(dateStr, fileName);
             return true;
         } catch (Exception ex) {
-            exceptionEmailHelper.sendErrorMessage("ALEVE文件下载失败", String.format("时间: %s", date));
+            exceptionEmailHelper.sendErrorMessage("ALEVE文件下载失败", String.format("时间: %s", dateStr));
             log.error("ALEVE调度执行失败", ex);
         }
         return false;
@@ -316,12 +319,12 @@ public class NewAleveBizImpl implements NewAleveBiz {
     }
 
     @Override
-    public void simpleDownload(String date) {
-        String fileName = String.format("%s-ALEVE%s-%s", bankNo, productNo, date);
+    public void simpleDownload(String dateStr) {
+        String fileName = String.format("%s-ALEVE%s-%s", bankNo, productNo, dateStr);
         log.info("========================");
         log.info("执行下载文件:" + fileName);
         log.info("========================");
-        boolean downloadState = jixinFileManager.download(fileName);
+        boolean downloadState = ftpHelper.downloadBySecurity(ftpHelper.getFileDir(dateStr), fileName) ;
         if (!downloadState) {
             log.error("ALEVE文件下载失败");
         }
