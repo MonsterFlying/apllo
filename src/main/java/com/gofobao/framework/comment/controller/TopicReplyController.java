@@ -1,0 +1,28 @@
+package com.gofobao.framework.comment.controller;
+
+import com.gofobao.framework.comment.service.TopicReplyService;
+import com.gofobao.framework.comment.vo.request.VoTopicReplyReq;
+import com.gofobao.framework.core.vo.VoBaseResp;
+import com.gofobao.framework.security.contants.SecurityContants;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestAttribute;
+import org.springframework.web.bind.annotation.RestController;
+import springfox.documentation.annotations.ApiIgnore;
+
+/**
+ * Created by xin on 2017/11/13.
+ */
+@RestController
+public class TopicReplyController {
+    @Autowired
+    private TopicReplyService topicReplyService;
+    @PostMapping("/comment/topic/reply/publish")
+    public ResponseEntity<VoBaseResp> publishReply(@ModelAttribute  VoTopicReplyReq voTopicReplyReq,
+                                                   @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY)  Long userId){
+        return topicReplyService.publishReply(voTopicReplyReq,userId);
+
+    }
+}

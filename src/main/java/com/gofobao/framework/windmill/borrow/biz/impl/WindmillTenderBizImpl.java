@@ -96,7 +96,7 @@ public class WindmillTenderBizImpl implements WindmillTenderBiz {
      * 5.6投资记录查询接口
      *
      * @param request
-     * @return
+     * @return/pub/tender/v2/user/list/
      */
     @Override
     public InvestRecordsRes investRecordList(HttpServletRequest request) {
