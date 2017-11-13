@@ -408,6 +408,7 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
      *
      * @return
      */
+    @Override
     public ResponseEntity<String> thirdBatchRepayAllRunCall(HttpServletRequest request, HttpServletResponse response) {
         BatchRepayRunResp repayRunResp = jixinManager.callback(request, new TypeToken<BatchRepayRunResp>() {
         });
@@ -437,9 +438,26 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
 
         //触发处理批次放款处理结果队列
         try {
-            //批次执行问题
-            thirdBatchDealBiz.batchDeal(NumberHelper.toLong(acqResMap.get("borrowId")), StringHelper.toString(repayRunResp.getBatchNo()),
-                    ThirdBatchLogContants.BATCH_REPAY_ALL, repayRunResp.getAcqRes(), GSON.toJson(repayRunResp));
+            //推送批次处理到队列中
+            MqConfig mqConfig = new MqConfig();
+            mqConfig.setQueue(MqQueueEnum.RABBITMQ_THIRD_BATCH);
+            mqConfig.setTag(MqTagEnum.BATCH_DEAL);
+            ImmutableMap<String, String> body = new ImmutableMap.Builder<String, String>()
+                    .put(MqConfig.SOURCE_ID, StringHelper.toString(acqResMap.get("borrowId")))
+                    .put(MqConfig.BATCH_NO, StringHelper.toString(repayRunResp.getBatchNo()))
+                    .put(MqConfig.BATCH_TYPE, String.valueOf(ThirdBatchLogContants.BATCH_REPAY_ALL))
+                    .put(MqConfig.MSG_TIME, DateHelper.dateToString(new Date()))
+                    .put(MqConfig.ACQ_RES, repayRunResp.getAcqRes())
+                    .put(MqConfig.BATCH_RESP, GSON.toJson(repayRunResp))
+                    .build();
+
+            mqConfig.setMsg(body);
+            try {
+                log.info(String.format("borrowThirdBizImpl thirdBatchRepayAllRunCall send mq %s", GSON.toJson(body)));
+                mqHelper.convertAndSend(mqConfig);
+            } catch (Throwable e) {
+                log.error("borrowThirdBizImpl thirdBatchRepayAllRunCall send mq exception", e);
+            }
         } catch (Exception e) {
             log.error("批次执行异常:", e);
         }

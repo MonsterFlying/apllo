@@ -7,11 +7,16 @@ import com.gofobao.framework.api.helper.JixinManager;
 import com.gofobao.framework.api.helper.JixinTxCodeEnum;
 import com.gofobao.framework.api.model.batch_query.BatchQueryReq;
 import com.gofobao.framework.api.model.batch_query.BatchQueryResp;
+import com.gofobao.framework.common.rabbitmq.MqConfig;
 import com.gofobao.framework.common.rabbitmq.MqHelper;
+import com.gofobao.framework.common.rabbitmq.MqQueueEnum;
+import com.gofobao.framework.common.rabbitmq.MqTagEnum;
 import com.gofobao.framework.helper.DateHelper;
+import com.gofobao.framework.helper.StringHelper;
 import com.gofobao.framework.system.biz.ThirdBatchDealBiz;
 import com.gofobao.framework.system.entity.ThirdBatchLog;
 import com.gofobao.framework.system.service.ThirdBatchLogService;
+import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import lombok.extern.slf4j.Slf4j;
@@ -24,6 +29,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.ObjectUtils;
 
 import javax.transaction.Transactional;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -68,12 +74,25 @@ public class DealThirdBatchScheduler {
                 if ((!ObjectUtils.isEmpty(resp))
                         && JixinResultContants.SUCCESS.equals(resp.getRetCode())
                         && "S".equals(resp.getBatchState())) {
+                    //推送批次处理到队列中
+                    MqConfig mqConfig = new MqConfig();
+                    mqConfig.setQueue(MqQueueEnum.RABBITMQ_THIRD_BATCH);
+                    mqConfig.setTag(MqTagEnum.BATCH_DEAL);
+                    ImmutableMap<String, String> body = new ImmutableMap.Builder<String, String>()
+                            .put(MqConfig.SOURCE_ID, StringHelper.toString(thirdBatchLog.getSourceId()))
+                            .put(MqConfig.BATCH_NO, thirdBatchLog.getBatchNo())
+                            .put(MqConfig.BATCH_TYPE, String.valueOf(thirdBatchLog.getType()))
+                            .put(MqConfig.MSG_TIME, DateHelper.dateToString(new Date()))
+                            .put(MqConfig.ACQ_RES, thirdBatchLog.getAcqRes())
+                            .put(MqConfig.BATCH_RESP, "")
+                            .build();
+
+                    mqConfig.setMsg(body);
                     try {
-                        //批次执行问题
-                        thirdBatchDealBiz.batchDeal(thirdBatchLog.getSourceId(), thirdBatchLog.getBatchNo(), thirdBatchLog.getType(),
-                                thirdBatchLog.getAcqRes(), "");
-                    } catch (Exception e) {
-                        log.error(String.format("处理第三方批次任务调度批次执行异常:batchNo->%s,sourceId->%s", thirdBatchLog.getBatchNo(), thirdBatchLog.getSourceId()), e);
+                        log.info(String.format("DealThirdBatchScheduler process send mq %s", GSON.toJson(body)));
+                        mqHelper.convertAndSend(mqConfig);
+                    } catch (Throwable e) {
+                        log.error("DealThirdBatchScheduler process send mq exception", e);
                     }
 
                 }

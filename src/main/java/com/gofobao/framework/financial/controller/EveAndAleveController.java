@@ -43,7 +43,7 @@ public class EveAndAleveController {
      * @param date 下载文件时间
      * @return
      */
-    @GetMapping(value = "/pub/download/eve/{date}")
+    @GetMapping(value = "/pub/download/eveAndAleve/{date}")
     public ResponseEntity<VoBaseResp> downloadEve(@PathVariable(name = "date") String date) {
         if (StringUtils.isNullOrEmpty(date)) {
             return ResponseEntity
@@ -51,14 +51,19 @@ public class EveAndAleveController {
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "下载时间不能为空"));
         }
 
-        boolean result = newEveBiz.downloadEveFileAndSaveDB(date);
-        if (result) {
+        boolean newEveResult = true ;
+        boolean newAleveEveResult = true ;
+        newEveResult = newEveBiz.downloadEveFileAndSaveDB(date);
+        newAleveEveResult = newAleveBiz.downloadNewAleveFileAndImportDatabase(date) ;
+        if (newEveResult && newAleveEveResult) {
             return ResponseEntity.ok(VoBaseResp.ok("下载成功"));
         } else {
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "文件下载失败"));
         }
+
+
     }
 
     /**

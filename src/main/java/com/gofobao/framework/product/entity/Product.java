@@ -20,6 +20,7 @@ public class Product {
     private Long id;
     private String name;
     private String title;
+    private String imgUrl;
     private String afterSalesService;
     private String details;
     private Boolean isDel;

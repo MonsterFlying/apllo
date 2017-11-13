@@ -106,6 +106,7 @@ import com.gofobao.framework.wheel.borrow.biz.WheelBorrowBiz;
 import com.gofobao.framework.windmill.borrow.biz.WindmillTenderBiz;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
 import com.google.gson.Gson;
@@ -408,12 +409,25 @@ public class RepaymentBizImpl implements RepaymentBiz {
                     .body(VoBaseResp.error(VoBaseResp.ERROR, StringHelper.toString("还款处理中，请勿重复点击!")));
         } else if (flag == ThirdBatchLogContants.SUCCESS) {
             //结束债权调用处理
+            //推送批次处理到队列中
+            MqConfig mqConfig = new MqConfig();
+            mqConfig.setQueue(MqQueueEnum.RABBITMQ_THIRD_BATCH);
+            mqConfig.setTag(MqTagEnum.BATCH_DEAL);
+            ImmutableMap<String, String> body = new ImmutableMap.Builder<String, String>()
+                    .put(MqConfig.SOURCE_ID, StringHelper.toString(thirdBatchLog.getSourceId()))
+                    .put(MqConfig.BATCH_NO, thirdBatchLog.getBatchNo())
+                    .put(MqConfig.BATCH_TYPE, String.valueOf(thirdBatchLog.getType()))
+                    .put(MqConfig.MSG_TIME, DateHelper.dateToString(new Date()))
+                    .put(MqConfig.ACQ_RES, thirdBatchLog.getAcqRes())
+                    .put(MqConfig.BATCH_RESP, "")
+                    .build();
+
+            mqConfig.setMsg(body);
             try {
-                //批次执行问题
-                thirdBatchDealBiz.batchDeal(thirdBatchLog.getSourceId(), thirdBatchLog.getBatchNo(), thirdBatchLog.getType(),
-                        thirdBatchLog.getAcqRes(), "");
-            } catch (Exception e) {
-                log.error("批次执行异常:", e);
+                log.info(String.format("RepaymentBizImpl repayAll send mq %s", GSON.toJson(body)));
+                mqHelper.convertAndSend(mqConfig);
+            } catch (Throwable e) {
+                log.error("RepaymentBizImpl repayAll send mq exception", e);
             }
         }
 
@@ -2479,12 +2493,25 @@ public class RepaymentBizImpl implements RepaymentBiz {
         } else if (flag == ThirdBatchLogContants.SUCCESS) {
             //墊付批次处理
             //触发处理批次放款处理结果队列
+            //推送批次处理到队列中
+            MqConfig mqConfig = new MqConfig();
+            mqConfig.setQueue(MqQueueEnum.RABBITMQ_THIRD_BATCH);
+            mqConfig.setTag(MqTagEnum.BATCH_DEAL);
+            ImmutableMap<String, String> body = new ImmutableMap.Builder<String, String>()
+                    .put(MqConfig.SOURCE_ID, StringHelper.toString(thirdBatchLog.getSourceId()))
+                    .put(MqConfig.BATCH_NO, thirdBatchLog.getBatchNo())
+                    .put(MqConfig.BATCH_TYPE, String.valueOf(thirdBatchLog.getType()))
+                    .put(MqConfig.MSG_TIME, DateHelper.dateToString(new Date()))
+                    .put(MqConfig.ACQ_RES, thirdBatchLog.getAcqRes())
+                    .put(MqConfig.BATCH_RESP, "")
+                    .build();
+
+            mqConfig.setMsg(body);
             try {
-                //批次执行问题
-                thirdBatchDealBiz.batchDeal(thirdBatchLog.getSourceId(), thirdBatchLog.getBatchNo(), thirdBatchLog.getType(),
-                        thirdBatchLog.getAcqRes(), "");
-            } catch (Exception e) {
-                log.error("批次执行异常:", e);
+                log.info(String.format("RepaymentBizImpl repayConditionCheck send mq %s", GSON.toJson(body)));
+                mqHelper.convertAndSend(mqConfig);
+            } catch (Throwable e) {
+                log.error("RepaymentBizImpl repayConditionCheck send mq exception", e);
             }
 
             log.info("即信批次回调处理结束");
@@ -2578,12 +2605,25 @@ public class RepaymentBizImpl implements RepaymentBiz {
                     .body(VoBaseResp.error(VoBaseResp.ERROR, StringHelper.toString("垫付处理中，请勿重复点击!")));
         } else if (flag == ThirdBatchLogContants.SUCCESS) {
             //墊付批次处理
+            //推送批次处理到队列中
+            MqConfig mqConfig = new MqConfig();
+            mqConfig.setQueue(MqQueueEnum.RABBITMQ_THIRD_BATCH);
+            mqConfig.setTag(MqTagEnum.BATCH_DEAL);
+            ImmutableMap<String, String> body = new ImmutableMap.Builder<String, String>()
+                    .put(MqConfig.SOURCE_ID, StringHelper.toString(thirdBatchLog.getSourceId()))
+                    .put(MqConfig.BATCH_NO, thirdBatchLog.getBatchNo())
+                    .put(MqConfig.BATCH_TYPE, String.valueOf(thirdBatchLog.getType()))
+                    .put(MqConfig.MSG_TIME, DateHelper.dateToString(new Date()))
+                    .put(MqConfig.ACQ_RES, thirdBatchLog.getAcqRes())
+                    .put(MqConfig.BATCH_RESP, "")
+                    .build();
+
+            mqConfig.setMsg(body);
             try {
-                //批次执行问题
-                thirdBatchDealBiz.batchDeal(thirdBatchLog.getSourceId(), thirdBatchLog.getBatchNo(), thirdBatchLog.getType(),
-                        thirdBatchLog.getAcqRes(), "");
-            } catch (Exception e) {
-                log.error("批次执行异常:", e);
+                log.info(String.format("RepaymentBizImpl advanceCheck send mq %s", GSON.toJson(body)));
+                mqHelper.convertAndSend(mqConfig);
+            } catch (Throwable e) {
+                log.error("RepaymentBizImpl advanceCheck send mq exception", e);
             }
         }
 
@@ -2992,6 +3032,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
             thirdBatchDealLogBiz.recordThirdBatchDealLog(batchNo, borrowRepayment.getId(),
                     ThirdBatchDealLogContants.SEND_REQUEST, true, ThirdBatchLogContants.BATCH_BAIL_REPAY, "");
         } catch (Exception e) {
+            log.error("垫付失败!",e);
             // 申请即信还款解冻
             String unfreezeOrderId = JixinHelper.getOrderId(JixinHelper.BALANCE_UNFREEZE_PREFIX);
             BalanceUnfreezeReq balanceUnfreezeReq = new BalanceUnfreezeReq();

@@ -45,6 +45,8 @@ public class Borrow implements Serializable {
 
     private Integer lowest;
 
+    private Long firstMost;
+
     private Integer most;
 
     private Integer mostAuto;

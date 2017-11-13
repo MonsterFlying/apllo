@@ -30,10 +30,11 @@
         </dependency>
 
         <dependency>
-            <groupId>commons-net</groupId>
-            <artifactId>commons-net</artifactId>
-            <version>3.6</version>
+            <groupId>com.belerweb</groupId>
+            <artifactId>alex-word-filter</artifactId>
+            <version>1.0</version>
         </dependency>
+
         <dependency>
             <groupId>commons-io</groupId>
             <artifactId>commons-io</artifactId>
