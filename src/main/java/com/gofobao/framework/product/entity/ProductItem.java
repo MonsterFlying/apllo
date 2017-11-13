@@ -16,7 +16,7 @@ public class ProductItem {
     @Id
     @GeneratedValue
     private Long id;
-    private Long parentId;
+    private Long productId;
     private Long price;
     private Long discountPrice;
     private String afterSalesService;

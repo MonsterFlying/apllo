@@ -10,5 +10,5 @@ import java.util.List;
  */
 @Data
 public class VoViewFindProductPlanListRes extends VoBaseResp {
-    List<VoViewProductPlan> productPlanList;
+    List<VoProductPlan> productPlanList;
 }

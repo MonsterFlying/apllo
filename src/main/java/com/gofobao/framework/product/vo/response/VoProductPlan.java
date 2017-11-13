@@ -9,7 +9,7 @@ import lombok.Data;
  */
 @ApiModel
 @Data
-public class VoViewProductPlan {
+public class VoProductPlan {
     @ApiModelProperty("商品名")
     private String name;
     @ApiModelProperty("小标题")

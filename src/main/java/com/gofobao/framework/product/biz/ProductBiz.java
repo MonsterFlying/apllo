@@ -12,4 +12,5 @@ public interface ProductBiz {
      * 查询广富送商品列表
      */
     ResponseEntity<VoViewFindProductPlanListRes> findProductPlanList(VoFindProductPlanList voFindProductPlanList);
+
 }

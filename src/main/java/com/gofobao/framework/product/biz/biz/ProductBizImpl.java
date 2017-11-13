@@ -1,7 +1,6 @@
 package com.gofobao.framework.product.biz.biz;
 
 import com.github.wenhao.jpa.Specifications;
-import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.common.data.DataObject;
 import com.gofobao.framework.common.data.GeSpecification;
 import com.gofobao.framework.common.data.LeSpecification;
@@ -18,7 +17,7 @@ import com.gofobao.framework.product.service.ProductPlanService;
 import com.gofobao.framework.product.service.ProductService;
 import com.gofobao.framework.product.vo.request.VoFindProductPlanList;
 import com.gofobao.framework.product.vo.response.VoViewFindProductPlanListRes;
-import com.gofobao.framework.product.vo.response.VoViewProductPlan;
+import com.gofobao.framework.product.vo.response.VoProductPlan;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.PageRequest;
@@ -28,7 +27,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
 import java.util.*;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static java.util.stream.Collectors.groupingBy;
@@ -59,7 +57,7 @@ public class ProductBizImpl implements ProductBiz {
     @Override
     public ResponseEntity<VoViewFindProductPlanListRes> findProductPlanList(VoFindProductPlanList voFindProductPlanList) {
         VoViewFindProductPlanListRes res = VoBaseResp.ok("查询成功!", VoViewFindProductPlanListRes.class);
-        List<VoViewProductPlan> showProductPlanList = new ArrayList<>();
+        List<VoProductPlan> showProductPlanList = new ArrayList<>();
         res.setProductPlanList(showProductPlanList);
 
         Date nowDate = new Date();
@@ -99,7 +97,7 @@ public class ProductBizImpl implements ProductBiz {
                 /*子商品记录*/
                 List<ProductItem> productItemList = productItemService.findList(pis);
                 if (!CollectionUtils.isEmpty(productItemList)) {
-                    Set<Long> productIds = productItemList.stream().map(ProductItem::getParentId).collect(Collectors.toSet());
+                    Set<Long> productIds = productItemList.stream().map(ProductItem::getProductId).collect(Collectors.toSet());
                     Specification<Product> ps = Specifications
                             .<Product>and()
                             .in("id", productIds.toArray())
@@ -109,17 +107,17 @@ public class ProductBizImpl implements ProductBiz {
                     List<Product> productList = productService.findList(ps);
                     if (!CollectionUtils.isEmpty(productList)) {
                         /*子商品集合列表*/
-                        Map<Long/*productId*/, List<ProductItem>> productItemMaps = productItemList.stream().collect(groupingBy(ProductItem::getParentId));
+                        Map<Long/*productId*/, List<ProductItem>> productItemMaps = productItemList.stream().collect(groupingBy(ProductItem::getProductId));
                         for (Product product : productList) {
                             List<ProductItem> productItems = productItemMaps.get(product.getId());
                             Collections.sort(productItems, Comparator.comparing(ProductItem::getDiscountPrice));
                             ProductItem productItem = productItems.get(0);
-                            VoViewProductPlan voViewProductPlan = new VoViewProductPlan();
-                            voViewProductPlan.setName(product.getName());
-                            voViewProductPlan.setShowPrice(StringHelper.formatDouble(productItem.getDiscountPrice(), 10000 * 100, true));
-                            voViewProductPlan.setImgUrl(qiNiuDomain + productItem.getImgUrl());
-                            voViewProductPlan.setTitle(product.getTitle());
-                            showProductPlanList.add(voViewProductPlan);
+                            VoProductPlan voProductPlan = new VoProductPlan();
+                            voProductPlan.setName(product.getName());
+                            voProductPlan.setShowPrice(StringHelper.formatDouble(productItem.getDiscountPrice(), 10000 * 100, true));
+                            voProductPlan.setImgUrl(qiNiuDomain + productItem.getImgUrl());
+                            voProductPlan.setTitle(product.getTitle());
+                            showProductPlanList.add(voProductPlan);
                         }
                     }
                 }
@@ -127,7 +125,4 @@ public class ProductBizImpl implements ProductBiz {
         }
         return ResponseEntity.ok(res);
     }
-
-    //查询商品详情页面
-
 }
