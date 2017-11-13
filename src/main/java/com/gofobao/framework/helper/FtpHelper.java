@@ -46,7 +46,7 @@ public class FtpHelper {
         int year = DateHelper.getYear(date);
         int month = DateHelper.getMonth(date);
         int day = DateHelper.getDayOfMonth(date);
-        return String.format("/%s/%s/%s/%s", FILE_ROOT, year, month, date);
+        return String.format("/%s/%s/%s/%s", FILE_ROOT, year, month, day);
     }
 
     /**
@@ -119,6 +119,11 @@ public class FtpHelper {
      * @return
      */
     public boolean downloadBySecurity(String dir, String fileName) {
+        log.info("===========================================");
+        log.info("文件路径" + dir);
+        log.info("文件名称" + fileName);
+        log.info("===========================================");
+
         Session session = null;
         Channel channel = null;
         JSch jsch = new JSch();
