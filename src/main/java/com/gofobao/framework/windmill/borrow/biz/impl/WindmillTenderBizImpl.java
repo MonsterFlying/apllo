@@ -168,8 +168,11 @@ public class WindmillTenderBizImpl implements WindmillTenderBiz {
                         investRecords.setProject_timelimit_desc(borrow.getTimeLimit() + BorrowContants.MONTH);
                     }
                     if (StringUtils.isEmpty(userTenderLogReq.getInvest_status())) {
+                        if (!w.getStatus().equals(TenderConstans.SUCCESS)) {
+                            investRecords.setInvest_status(-2);
+                        }
                         //投标中
-                        if (w.getState() == 1) {
+                        else if (w.getState() == 1) {
                             investRecords.setInvest_status(-1);
                         }
                         // 0:收益中
@@ -214,7 +217,7 @@ public class WindmillTenderBizImpl implements WindmillTenderBiz {
                         investRecords.setAttorn_state(1);
                     }
                     //如果不是投标中
-                    if (!investRecords.getInvest_status().equals(-1) ) {
+                    if (!investRecords.getInvest_status().equals(-1)) {
                         Specification<BorrowCollection> specification = Specifications.<BorrowCollection>and()
                                 .eq("tenderId", w.getId())
                                 .build();

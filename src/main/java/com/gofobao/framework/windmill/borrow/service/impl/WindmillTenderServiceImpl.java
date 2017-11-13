@@ -48,7 +48,7 @@ public class WindmillTenderServiceImpl implements WindmillTenderService {
 
         List<Tender> resultTenders;
 
-        StringBuilder sql = new StringBuilder("SELECT t FROM Tender t WHERE 1=1 AND t.userId=:userId AND t.status=:status ");
+        StringBuilder sql = new StringBuilder("SELECT t FROM Tender t WHERE 1=1 AND t.userId=:userId ");
         //  如果传了id，只查询该用户这个id的记录
         if (StringUtils.isEmpty(tenderLogReq.getInvest_record_id())) {
             //時間條件的判斷
@@ -90,9 +90,7 @@ public class WindmillTenderServiceImpl implements WindmillTenderService {
             }
             sql.append(" order by id desc ");
             Query query = entityManager.createQuery(sql.toString(), Tender.class);
-            query.setParameter("status", TenderConstans.SUCCESS);
             query.setParameter("userId", tenderLogReq.getPf_user_id());
-
             if (StringUtils.isEmpty(tenderLogReq.getInvest_status()) || tenderLogReq.getInvest_status() != 2) {
                 query.setFirstResult(tenderLogReq.getOffset());
                 query.setMaxResults(tenderLogReq.getLimit());
@@ -102,7 +100,6 @@ public class WindmillTenderServiceImpl implements WindmillTenderService {
             sql.append(" AND t.id=:id");
             sql.append(" order by id desc ");
             Query query = entityManager.createQuery(sql.toString(), Tender.class);
-            query.setParameter("status", TenderConstans.SUCCESS);
             query.setParameter("userId", tenderLogReq.getPf_user_id());
             try {
                 query.setParameter("id",  tenderLogReq.getInvest_record_id());
