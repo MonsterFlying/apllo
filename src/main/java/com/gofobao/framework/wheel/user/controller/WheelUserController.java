@@ -54,7 +54,7 @@ public class WheelUserController {
      * @param target_url
      * @param response
      */
-    @RequestMapping(value = "user/auth/login", method = RequestMethod.POST)
+    @RequestMapping(value = "user/auth/login", method = RequestMethod.GET)
     public void authLogin(@RequestParam(name = "from") String from,
                           @RequestAttribute(name = "ticket") String ticket,
                           @RequestAttribute(name = "target_url") String target_url,

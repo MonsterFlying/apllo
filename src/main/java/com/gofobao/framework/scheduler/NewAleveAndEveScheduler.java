@@ -1,6 +1,7 @@
 package com.gofobao.framework.scheduler;
 
 import com.gofobao.framework.api.helper.JixinTxDateHelper;
+import com.gofobao.framework.as.biz.impl.AssetStatementBizImpl;
 import com.gofobao.framework.asset.biz.OfflineRechargeSynBiz;
 import com.gofobao.framework.financial.biz.NewAleveBiz;
 import com.gofobao.framework.financial.biz.NewEveBiz;
@@ -13,6 +14,10 @@ import org.springframework.stereotype.Component;
 @Component
 @Slf4j
 public class NewAleveAndEveScheduler {
+
+    @Autowired
+    AssetStatementBizImpl assetStatementBiz;
+
     @Autowired
     JixinTxDateHelper jixinTxDateHelper;
 
@@ -67,6 +72,11 @@ public class NewAleveAndEveScheduler {
         } catch (Exception e) {
             log.error("线下充值记录对账");
         }
+
+        log.info("====================================");
+        log.info("核对昨日资金变动是否正确?");
+        log.info("====================================");
+        assetStatementBiz.checkUpAccountForChange();
     }
 
 }

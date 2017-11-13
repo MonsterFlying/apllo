@@ -423,12 +423,12 @@ public class LoanServiceImpl implements LoanService {
             condition += "b.repayAt  BETWEEN '" + beginAt + "' AND '" + DateHelper.dateToString(DateHelper.endOfDate(nowDate)) + "'";
         } else if (type.equals("lt30days")) {//30天内有逾期未还
             String beginAt = DateHelper.dateToString(DateHelper.beginOfDate(DateHelper.subDays(nowDate, 30)));
-            condition += "b.repayAt BETWEEN '" + beginAt + "' AND '" + endAt + "' AND b.status=0 AND b.lateDays>0";
+            condition += "b.repayAt BETWEEN '" + beginAt + "' AND '" + DateHelper.dateToString(DateHelper.beginOfDate(nowDate)) + "' AND b.status=0 ";
         } else if (type.equals("gt30days")) {    //30天以上有逾期未还
             String beginAt = DateHelper.dateToString(DateHelper.endOfDate(DateHelper.subDays(nowDate, 30)));
-            condition += "b.repayAt < '" + beginAt + "' AND b.status=0 AND b.lateDays>0";
+            condition += "b.repayAt < '" + beginAt + "' AND b.status=0 ";
         } else if (type.equals("lateRepay")) {//逾期已归还
-            condition += "b.status=1 and b.lateDays>0";
+            condition += "b.status=1 and b.lateDays>0 ";
         }
         String orderBy = "  ORDER BY b.repayAt DESC";
         condition += orderBy;

@@ -27,6 +27,7 @@ import javax.validation.Valid;
 @RestController
 @Api(value = "提现")
 public class CashController {
+
     @Autowired
     private CashDetailLogBiz cashDetailLogBiz;
 

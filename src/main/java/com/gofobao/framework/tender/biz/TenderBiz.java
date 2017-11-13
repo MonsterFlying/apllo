@@ -51,5 +51,14 @@ public interface TenderBiz {
      *
      * @return
      */
-    ResponseEntity<VoBaseResp> pcEndThirdTender(VoPcEndThirdTender voPcEndThirdTender);
+    ResponseEntity<VoBaseResp> pcEndThirdTender(VoPcEndThirdTender voPcEndThirdTender) throws Exception;
+
+    /**
+     * pc结束第三方债权接口
+     *
+     * @param userId
+     * @return
+     * @throws Exception
+     */
+    ResponseEntity<VoBaseResp> endThirdTender(long userId) throws Exception;
 }

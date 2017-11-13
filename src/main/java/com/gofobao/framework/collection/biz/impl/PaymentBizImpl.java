@@ -23,11 +23,14 @@ import com.gofobao.framework.common.jxl.ExcelUtil;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.helper.StringHelper;
+import com.gofobao.framework.member.entity.Users;
+import com.gofobao.framework.member.service.UserService;
 import com.gofobao.framework.repayment.entity.BorrowRepayment;
 import com.gofobao.framework.repayment.service.BorrowRepaymentService;
 import com.gofobao.framework.system.biz.ThirdBatchDealLogBiz;
 import com.gofobao.framework.tender.contants.BorrowContants;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import io.jsonwebtoken.lang.Collections;
 import lombok.extern.slf4j.Slf4j;
@@ -64,6 +67,9 @@ public class PaymentBizImpl implements PaymentBiz {
 
     @Autowired
     private ThirdBatchDealLogBiz thirdBatchDealLogBiz;
+
+    @Autowired
+    private UserService userService;
 
 
     /**
@@ -248,6 +254,7 @@ public class PaymentBizImpl implements PaymentBiz {
      * @param userId
      * @return
      */
+    @Override
     public ResponseEntity<VoCollectionListByDays> collectionListByDays(String dateStr, Long userId) {
 
         Date date = DateHelper.stringToDate(dateStr, DateHelper.DATE_FORMAT_YMD);
@@ -276,13 +283,24 @@ public class PaymentBizImpl implements PaymentBiz {
                 .in("id", borrowIds.toArray())
                 .build();
         List<Borrow> borrowList = borrowService.findList(bs);
+        Set<Long> userIds = borrowList.stream()
+                .map(p -> p.getUserId())
+                .collect(Collectors.toSet());
+        List<Users> usersList = userService.findByIdIn(Lists.newArrayList(userIds));
+        Map<Long, Users> usersMap = usersList.stream()
+                .collect(Collectors.toMap(Users::getId,
+                        Function.identity()));
 
         CollectionDetail collectionDetail = null;
         for (BorrowCollection borrowCollection : borrowCollectionList) {
             for (Borrow borrow : borrowList) {
                 if (String.valueOf(borrowCollection.getBorrowId()).equals(String.valueOf(borrow.getId()))) {
                     collectionDetail = new CollectionDetail();
+                    Users users = usersMap.get(borrow.getUserId());
                     collectionDetail.setName(borrow.getName());
+                    collectionDetail.setBorrowUserName(StringUtils.isEmpty(users.getUsername())
+                            ? users.getPhone()
+                            : users.getUsername());
                     collectionDetail.setCollectionAt(DateHelper.dateToString(borrowCollection.getCollectionAt(), DateHelper.DATE_FORMAT_YMD));
                     collectionDetail.setPrincipal(StringHelper.formatDouble(borrowCollection.getPrincipal(), 100, false));
                     if (borrow.getType().intValue() == 0 || borrow.getType().intValue() == 4) {

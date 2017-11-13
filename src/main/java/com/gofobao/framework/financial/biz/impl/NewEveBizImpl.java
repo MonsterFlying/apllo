@@ -15,6 +15,7 @@ import com.gofobao.framework.financial.service.JixinAssetService;
 import com.gofobao.framework.financial.service.NewEveService;
 import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.helper.ExceptionEmailHelper;
+import com.gofobao.framework.helper.FtpHelper;
 import com.gofobao.framework.helper.MoneyHelper;
 import com.gofobao.framework.helper.project.TranTypeHelper;
 import com.gofobao.framework.migrate.FormatHelper;
@@ -56,8 +57,10 @@ public class NewEveBizImpl implements NewEveBiz {
     @Autowired
     NewEveService newEveService;
 
+    // @Autowired
+    // JixinFileManager jixinFileManager;
     @Autowired
-    JixinFileManager jixinFileManager;
+    FtpHelper ftpHelper;
 
     @Autowired
     private JavaMailSender mailSender;
@@ -85,21 +88,21 @@ public class NewEveBizImpl implements NewEveBiz {
     JixinAssetService jixinAssetService;
 
     @Override
-    public boolean downloadEveFileAndSaveDB(String date) {
+    public boolean downloadEveFileAndSaveDB(String dateStr) {
         log.info("===========================================");
-        log.info(String.format("EVE调度启动, 时间: %s", date));
+        log.info(String.format("EVE调度启动, 时间: %s", dateStr));
         log.info("===========================================");
 
         try {
-            String fileName = String.format("%s-EVE%s-%s", bankNo, productNo, date);
-            boolean downloadState = jixinFileManager.download(fileName);
+            String fileName = String.format("%s-EVE%s-%s", bankNo, productNo, dateStr);
+            boolean downloadState = ftpHelper.downloadBySecurity(ftpHelper.getFileDir(dateStr), fileName) ;
             if (!downloadState) {
                 throw new Exception("EVE下载失败");
             }
-            importEveDataToDatabase(date, fileName);
+            importEveDataToDatabase(dateStr, fileName);
             return true;
         } catch (Exception ex) {
-            exceptionEmailHelper.sendErrorMessage("EVE文件下载失败", String.format("时间: %s", date));
+            exceptionEmailHelper.sendErrorMessage("EVE文件下载失败", String.format("时间: %s", dateStr));
             log.error("EVE调度执行失败", ex);
         }
         return false;
@@ -591,12 +594,12 @@ public class NewEveBizImpl implements NewEveBiz {
     }
 
     @Override
-    public void simpleDownload(String date) {
-        String fileName = String.format("%s-EVE%s-%s", bankNo, productNo, date);
+    public void simpleDownload(String dateStr) {
+        String fileName = String.format("%s-EVE%s-%s", bankNo, productNo, dateStr);
         log.info("========================");
         log.info("执行下载文件:" + fileName);
         log.info("========================");
-        boolean downloadState = jixinFileManager.download(fileName);
+        boolean downloadState = ftpHelper.downloadBySecurity(ftpHelper.getFileDir(dateStr), fileName) ;
         if (!downloadState) {
             log.error("EVE文件下载失败");
         }

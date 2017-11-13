@@ -20,6 +20,7 @@ import com.gofobao.framework.asset.entity.Asset;
 import com.gofobao.framework.asset.entity.CashDetailLog;
 import com.gofobao.framework.asset.service.AssetService;
 import com.gofobao.framework.asset.service.CashDetailLogService;
+import com.gofobao.framework.asset.service.NewAssetLogService;
 import com.gofobao.framework.asset.service.RechargeDetailLogService;
 import com.gofobao.framework.asset.vo.request.VoAdminCashReq;
 import com.gofobao.framework.asset.vo.request.VoBankApsReq;
@@ -42,6 +43,9 @@ import com.gofobao.framework.core.helper.RandomHelper;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.helper.*;
 import com.gofobao.framework.helper.project.SecurityHelper;
+import com.gofobao.framework.helper.project.UserHelper;
+import com.gofobao.framework.marketing.entity.MarketingRedpackRecord;
+import com.gofobao.framework.marketing.service.MarketingRedpackRecordService;
 import com.gofobao.framework.member.entity.UserCache;
 import com.gofobao.framework.member.entity.UserThirdAccount;
 import com.gofobao.framework.member.entity.Users;
@@ -53,6 +57,8 @@ import com.gofobao.framework.scheduler.biz.TaskSchedulerBiz;
 import com.gofobao.framework.system.entity.Notices;
 import com.gofobao.framework.system.service.DictItemService;
 import com.gofobao.framework.system.service.DictValueService;
+import com.gofobao.framework.tender.entity.Tender;
+import com.gofobao.framework.tender.service.TenderService;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
@@ -95,35 +101,26 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
 
     @Autowired
     RechargeAndCashAndRedpackQueryHelper rechargeAndCashAndRedpackQueryHelper;
-
     @Autowired
     AssetService assetService;
-
     @Autowired
     UserService userService;
-
     @Autowired
     CashDetailLogService cashDetailLogService;
-
     @Autowired
     UserThirdAccountService userThirdAccountService;
-
     @Autowired
     RechargeDetailLogService rechargeDetailLogService;
-
     @Autowired
     JixinManager jixinManager;
-
     @Autowired
     BankAccountBizImpl bankAccountBiz;
-
     @Autowired
     AssetChangeProvider assetChangeProvider;
     @Autowired
-    private AssetBiz assetBiz;
-
-    @Autowired
     UserCacheService userCacheService;
+    @Autowired
+    UserHelper userHelper;
 
     @Value("${gofobao.javaDomain}")
     String javaDomain;
@@ -160,16 +157,13 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
     @Value("${gofobao.pcDomain}")
     private String pcDomain;
 
+    @Autowired
+    NewAssetLogService newAssetLogService;
+
     @Override
     @Transactional(rollbackFor = Exception.class)
     public ResponseEntity<VoPreCashResp> preCash(Long userId, HttpServletRequest httpServletRequest) {
         //同步资金
-       /* try {
-            assetBiz.synOffLineRecharge(userId);
-        } catch (Exception e) {
-            log.error("获取可提现额失败", e);
-        }*/
-
         Users users = userService.findByIdLock(userId);
         Preconditions.checkNotNull(users, "当前用户不存在");
         if (users.getIsLock()) {
@@ -324,7 +318,9 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "对不起, 当天提现次数大于10次!", VoHtmlResp.class));
         }
+
         Date nowDate = new Date();
+
         double cashMoney = MoneyHelper.round(MoneyHelper.multiply(voCashReq.getCashMoney(), 100), 0);  // 提现金额
         // 免费体现次数
         int freeTime = queryFreeTime(userId);
@@ -422,7 +418,6 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
 
         return ResponseEntity.ok(voHtmlResp);
     }
-
 
     @Override
     public ResponseEntity<VoBankApsWrapResp> bankAps(Long userId, VoBankApsReq voBankApsReq) {
@@ -583,6 +578,7 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
         entity.setSeqNo(seqNo);
         entity.setUserId(users.getId());
         entity.setRemark(String.format("你在 %s 成功提现%s元", DateHelper.dateToString(nowDate), StringHelper.formatDouble(realCashMoney / 100D, true)));
+        entity.setSourceId(cashDetailLog.getId());
         if (cashDetailLog.getCashType() == 0) { // 小额提现
             entity.setType(AssetChangeTypeEnum.smallCash);
         } else {
@@ -600,6 +596,7 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
             entity.setUserId(users.getId());
             entity.setForUserId(feeAccountId);
             entity.setRemark(String.format("你在 %s 成功扣除提现手续费%s元", DateHelper.dateToString(nowDate), StringHelper.formatDouble(cashDetailLog.getFee() / 100D, true)));
+            entity.setSourceId(cashDetailLog.getId());
             if (cashDetailLog.getCashType() == 0) { // 小额提现
                 entity.setType(AssetChangeTypeEnum.smallCashFee);
             } else {
@@ -615,6 +612,7 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
             entity.setUserId(feeAccountId);
             entity.setForUserId(users.getId());
             entity.setRemark(String.format("你在 %s 成功收取提现手续费%s元", DateHelper.dateToString(nowDate), StringHelper.formatDouble(cashDetailLog.getFee() / 100D, true)));
+            entity.setSourceId(cashDetailLog.getId());
             if (cashDetailLog.getCashType() == 0) {
                 entity.setType(AssetChangeTypeEnum.platformSmallCashFee);
             } else {
@@ -693,7 +691,7 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
         CashDetailLog cashDetailLog = cashDetailLogService.findTopBySeqNoLock(seqNo);
         model.addAttribute("h5Domain", h5Domain);
 
-        if ( ObjectUtils.isEmpty(cashDetailLog.getCallbackTime()) )  {
+        if (ObjectUtils.isEmpty(cashDetailLog.getCallbackTime())) {
             return "cash/loading";
         }
 
@@ -893,11 +891,21 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
     }
 
 
+    @Autowired
+    private TenderService tenderService;
+
+    @Autowired
+    private MarketingRedpackRecordService marketingRedpackRecordService;
+
     /**
      * 获取提现金额
      * <p>
      * 1、如果有未还借款，则 可提现额 = 净值额度 - 正在申请、处理中的提现总额 和 账户可用金额 两者取小值
      * 2、如果没有未还借款，则 可提现额 = 账户可用金额
+     * </p>
+     * 注意此处增加防作弊规则
+     * 遇过用户邀请好友频繁(近三十天超过 80个)
+     * 可提现金额会减去红包金额
      *
      * @param userId
      * @return
@@ -907,11 +915,47 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
         UserCache userCache = userCacheService.findByUserIdLock(userId);
         Double money = 0D;
         if (asset.getPayment() > 0) {
-            money = Math.min((((asset.getUseMoney() + userCache.getWaitCollectionPrincipal()) * 0.8 - asset.getPayment())), asset.getUseMoney());
+            long netWorthQuota = userHelper.getNetWorthQuota(userId);
+            money = Math.min(new Double(netWorthQuota), asset.getUseMoney());
         } else {
             money = asset.getUseMoney() * 1D;
         }
 
-        return money.longValue();
+        Specification<Tender> tenderSpecification = Specifications
+                .<Tender>and()
+                .eq("userId", userId)
+                .eq("status", 1)
+                .build();
+        // 存在投标, 直接返回
+        long tenderCount = tenderService.count(tenderSpecification);
+        if (tenderCount > 0) {
+            return money.longValue();
+        }
+        log.warn("当前用户为投资提现");
+        // 30 天红包数量大于 20个
+        try {
+            Date nowDate = new Date();
+            Date beginDate = DateHelper.subDays(nowDate, 30);
+            Specification<MarketingRedpackRecord> marketingRedpackRecordSpecification = Specifications
+                    .<MarketingRedpackRecord>and()
+                    .eq("userId", userId)
+                    .between("publishTime", new Range(beginDate, nowDate))
+                    .build();
+            long redpackCount = marketingRedpackRecordService.count(marketingRedpackRecordSpecification);
+            if (redpackCount < 20) {
+                log.info("未进入作弊系统");
+                return money.longValue();
+            }
+
+            long redPackMoney = marketingRedpackRecordService.countByUserIdAndDate(userId, beginDate, nowDate);
+            log.warn("领取红包金额:" + redPackMoney) ;
+            long cahsMoney = money.longValue() - redPackMoney;
+            // 提现金额
+            return cahsMoney < 0 ? 0 : cahsMoney;
+        } catch (Exception e) {
+            log.error("提现防作弊代码异常", e);
+            return money.longValue();
+        }
+
     }
 }

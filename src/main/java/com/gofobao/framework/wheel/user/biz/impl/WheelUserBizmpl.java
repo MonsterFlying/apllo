@@ -36,6 +36,8 @@ import org.springframework.util.StringUtils;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.net.URLDecoder;
+import java.net.URLEncoder;
 import java.util.Base64;
 import java.util.Date;
 import java.util.Map;
@@ -210,8 +212,8 @@ public class WheelUserBizmpl implements WheelUserBiz {
         } else {
             Users users = userService.findById(Long.valueOf(checkTicket.getPf_user_id()));
             if (!ObjectUtils.isEmpty(users)
-                    && users.getPhone().equals(checkTicket.getMobile())
-                    && users.getWheelId().equals(checkTicket.getCl_user_id())) {
+                    && !users.getPhone().equals(checkTicket.getMobile())
+                    && !users.getWheelId().equals(checkTicket.getCl_user_id())) {
                 log.info("车轮返回的id和平台绑定车轮id不一致");
                 log.info("打印平台的用户信息" + GSON.toJson(users));
                 log.info("非法请求");
@@ -239,7 +241,11 @@ public class WheelUserBizmpl implements WheelUserBiz {
                     mqConfig.setMsg(body);
                     mqHelper.convertAndSend(mqConfig);
                 }
-                return h5Domain + authLogin.getTarget_url() + "?token=" + tokenStr;
+                String targetUrl = URLDecoder.decode(authLogin.getTarget_url(), "utf-8");
+                targetUrl = targetUrl.contains(h5Domain)
+                        ? targetUrl
+                        : h5Domain + targetUrl;
+                return targetUrl + "?token=" + tokenStr;
             } catch (Exception e) {
                 log.info("平台生成token异常", e);
                 return "load_error";
@@ -257,15 +263,16 @@ public class WheelUserBizmpl implements WheelUserBiz {
         log.info("=================进入请求车轮验证票据接口=================");
         log.info("打印验证参数:" + GSON.toJson(checkTicket));
         CheckTicketRes ticketRes = new CheckTicketRes();
-        String paramStr = "ticket="+"=" + checkTicket.getTicket();
         try {
-            String encryptParamStr = JEncryption.encrypt(paramStr.getBytes(), secretKey);
-            Map<String, String> requestMap = Maps.newHashMap();
-            requestMap.put("param", encryptParamStr);
-            requestMap.put("from",checkTicket.getFrom());
-            requestMap.put("ts",checkTicket.getTs().toString());
-            log.info("打印请求封装车轮请求参数:" + GSON.toJson(requestMap));
-            String resultStr = OKHttpHelper.postForm(domain + checkTicKetUrl, requestMap, null);
+            String paramStr = "ticket=" + checkTicket.getTicket();
+            String encryptParamStr = JEncryption.encrypt(paramStr.getBytes("utf-8"), secretKey);
+            log.info("打印票据加密后：" + encryptParamStr);
+            String paramsStr = "?param=" + URLEncoder.encode(encryptParamStr, "utf-8")
+                    + "&from=" + checkTicket.getFrom()
+                    + "&ts=" + checkTicket.getTs();
+            log.info("打印请求封装车轮请求参数:" + paramsStr);
+            log.info("打印请求车轮请求链接：" + domain + checkTicKetUrl + paramsStr);
+            String resultStr = OKHttpHelper.get(domain + checkTicKetUrl + paramsStr, null, null);
             log.info("打印车轮返回结果" + resultStr);
             if (StringUtils.isEmpty(resultStr)) {
                 throw new Exception();

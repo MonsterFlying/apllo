@@ -146,7 +146,8 @@ public class AssetLogServiceImpl implements AssetLogService {
         Date endTime = DateHelper.endOfDate(DateHelper.stringToDate(voAssetLogReq.getEndTime(), DateHelper.DATE_FORMAT_YMD));
         //gfb_new_asset_log 的 receivedPayments compensatoryReceivedPayments
         Specification<NewAssetLog> nals1 = Specifications.<NewAssetLog>or()
-                .in("localType", AssetChangeTypeEnum.compensatoryReceivedPayments.getLocalType(), AssetChangeTypeEnum.receivedPayments.getLocalType())
+                .in("localType", AssetChangeTypeEnum.compensatoryReceivedPaymentsPrincipal.getLocalType(), AssetChangeTypeEnum.compensatoryReceivedPaymentsInterest.getLocalType(),
+                        AssetChangeTypeEnum.receivedPaymentsPrincipal.getLocalType(), AssetChangeTypeEnum.receivedPaymentsInterest.getLocalType())
                 .notIn("type", 1)
                 .build();
         Specification<NewAssetLog> specification = Specifications.<NewAssetLog>and()

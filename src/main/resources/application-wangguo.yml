@@ -55,7 +55,7 @@ windmill: #风车理财
   local-des-key : 2l0IYbNnRcShWOM9Q5Ej0A3gCGOFOBAO #和风车理财交互时 平台的关键字段加密key值
   notify-address:  http://121.42.52.42/wrb/ws_info_call_back.json  #通知风车理财接口
   online-date: 2017-10-1
-  ips: 121.42.52.42
+  ips: 114.215.102.2,114.215.113.35,121.42.15.7
 
 starfire: # 星火
   key: gofobao_hyfbGxll  #asc加密key值
@@ -65,30 +65,32 @@ starfire: # 星火
   ips: 120.76.29.193,120.76.31.153,120.76.204.32,120.77.12.124
 wheel:
   short-name: gfb
-  secret-key: dsDaNZY7
-  domain: http://promotion-test.chelun.com
+  secret-key: ey4a3wca
+  domain: http://promotion.chelun.com
   check_ticket_url: /Financial/ps_check_ticket
-
 
 jixin: #银行存管
   keysPassword: guangfubao_uat@2016 #私钥密码
-  url: http://uat.gofobao.com/escrow   #即信服务器路径
+  url: http://uat.gofobao.com/escrow  #即信服务器路径
   htmlUrl: https://access.credit2go.cn/escrow  #即信服务器路径
   file-url: https://uat.credit2go.cn/escrow/file/download #文件请求下载链接
-  save-file-path: D:/statistice   #文件本地保存的路径
+  save-file-path: D:/statistice/   #文件本地保存的路径
   version: 10 #版本号
-  instCode: "00960001" #机构代码
-  bankCode: "30050000" #交易机构代码
   product-no: "0105" # 产品编号
   bank-no: "3005" #产品编号
+  instCode: "00960001" #机构代码
+  bankCode: "30050000" #交易机构代码
   query-time-init: "20170430" # 与存管系统查询时间
   crt-path:  # crt证书路径
   p12-path:  # p12证书路径
-
+  ftp-port: 5132 # ftp文件下载端口
+  ftp-host: sftp.credit2go.cn # ftp远程地址
+  ftp-username: guangfubao # ftp用户名
+  ftp-password: A85yL0p9ZyxIj # ftp密码
 gofobao:
   dev: true # 开发环境
-  javaDomain: http://7yhsngp.hk1.mofasuidao.cn/
-  h5Domain:  http://ng.hk1.mofasuidao.cn
+  javaDomain: http://7yhsngp.hk1.mofasuidao.cn
+  h5Domain:  http://dragon.hk1.mofasuidao.cn
   imageDomain : https://api.gofobao.com
   pcDomain: http://gofobao.oicp.io/
   #adminDomain: http://m7ocvas9.gofobao.com  #管理员后台地址

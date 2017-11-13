@@ -381,6 +381,9 @@ public class MarketingProcessBizImpl implements MarketingProcessBiz {
      * @param marketingData
      */
     private void filterDataByCondition(List<Marketing> marketings, MarketingData marketingData) throws Exception {
+        if(CollectionUtils.isEmpty(marketings)){
+            return;
+        }
         List<Long> marketingidList = marketings.stream().map(marketing -> marketing.getId()).collect(Collectors.toList());
         List<MarketingCondition> marketingConditions = marketingConditionService.findBymarketingIdInAndDel(marketingidList, 0);
         Preconditions.checkState(!CollectionUtils.isEmpty(marketingConditions), "MarketingProcessBizImpl.filterDataByCondition marketingConditions is null");
@@ -498,6 +501,16 @@ public class MarketingProcessBizImpl implements MarketingProcessBiz {
                     }
                     break;
                 case MarketingTypeContants.OPEN_ACCOUNT:
+                    Date openAcountRegisterMinTime = condition.getRegisterMinTime();
+                    if (!ObjectUtils.isEmpty(openAcountRegisterMinTime)) {
+                        Date openAcountCreatedAt = user.getCreatedAt();
+                        if (DateHelper.diffInDays(openAcountCreatedAt, openAcountRegisterMinTime, false) < 0) {
+                            log.info("红包派发[小于注册时间]");
+                            iterator.remove();
+                            continue;
+                        }
+                    }
+
                     Date openAccountMinTime = condition.getOpenAccountMinTime();
                     if (ObjectUtils.isEmpty(openAccountMinTime)) {
                         log.info("红包派发[开户时间未设置]");

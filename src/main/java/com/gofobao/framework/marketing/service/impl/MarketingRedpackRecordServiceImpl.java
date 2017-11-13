@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import org.springframework.util.ObjectUtils;
 
 import java.util.Date;
 import java.util.List;
@@ -40,7 +41,7 @@ public class MarketingRedpackRecordServiceImpl implements MarketingRedpackRecord
 
     @Override
     public List<MarketingRedpackRecord> findByUserIdAndState(Long userId, Integer status, Pageable pageable) {
-        return Optional.fromNullable(marketingRedpackRecordRepository.findByUserIdAndStateAndDel(userId, status, 0,  pageable)).or(Lists.newArrayList());
+        return Optional.fromNullable(marketingRedpackRecordRepository.findByUserIdAndStateAndDel(userId, status, 0, pageable)).or(Lists.newArrayList());
     }
 
     @Override
@@ -55,6 +56,16 @@ public class MarketingRedpackRecordServiceImpl implements MarketingRedpackRecord
 
     @Override
     public long count(Specification<MarketingRedpackRecord> specifications) {
-        return marketingRedpackRecordRepository.count(specifications) ;
+        return marketingRedpackRecordRepository.count(specifications);
+    }
+
+    @Override
+    public Long countByUserIdAndDate(Long userId, Date beginDate, Date nowDate) {
+        Long totalMoney = marketingRedpackRecordRepository.countByUserIdAndDate(userId, beginDate, nowDate);
+        if (ObjectUtils.isEmpty(totalMoney)) {
+            return 0L;
+        } else {
+            return totalMoney;
+        }
     }
 }

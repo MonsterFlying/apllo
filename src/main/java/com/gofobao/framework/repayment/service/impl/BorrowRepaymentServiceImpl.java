@@ -217,7 +217,7 @@ public class BorrowRepaymentServiceImpl implements BorrowRepaymentService {
             collection.setPrincipal(StringHelper.formatMon(p.getPrincipal() / 100D));
             collection.setInterest(StringHelper.formatMon(p.getInterest() / 100D));
             collection.setVoFindRepayStatusList(thirdBatchDealLogBiz.getVoFindRepayStatusList(null, p.getId()));
-            collection.setLateInterest(StringHelper.formatDouble(repaymentBiz.calculateLateInterest(repaymentBiz.getLateDays(p), p, borrow), 100, true));
+            collection.setLateInterest(StringHelper.formatDouble(repaymentBiz.calculateLateInterest(repaymentBiz.getLateDays(p, false), p, borrow), 100, true));
             collections.add(collection);
         });
         resultMaps.put("repaymentList", collections);
@@ -269,7 +269,7 @@ public class BorrowRepaymentServiceImpl implements BorrowRepaymentService {
             lateDays = borrowRepayment.getLateDays();
             //当前是否是垫付
         } else if (nowDate.getTime() > tempRepayAt.getTime() && borrowRepayment.getStatus() == RepaymentContants.STATUS_NO) {
-            lateDays = repaymentBiz.getLateDays(borrowRepayment);
+            lateDays = repaymentBiz.getLateDays(borrowRepayment, false);
         }
         detailRes.setLateDays(lateDays);
         List<ThirdBatchLog> thirdBatchLogs = thirdBatchLogService.findList(thirdBatchLogSpecification);

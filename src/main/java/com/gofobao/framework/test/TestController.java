@@ -2,30 +2,21 @@ package com.gofobao.framework.test;
 
 import com.github.wenhao.jpa.Specifications;
 import com.gofobao.framework.api.contants.ChannelContant;
-import com.gofobao.framework.api.contants.DesLineFlagContant;
 import com.gofobao.framework.api.contants.JixinResultContants;
 import com.gofobao.framework.api.helper.JixinManager;
 import com.gofobao.framework.api.helper.JixinTxCodeEnum;
 import com.gofobao.framework.api.model.account_details_query.AccountDetailsQueryRequest;
 import com.gofobao.framework.api.model.account_details_query.AccountDetailsQueryResponse;
-import com.gofobao.framework.api.model.balance_freeze.BalanceFreezeReq;
-import com.gofobao.framework.api.model.balance_freeze.BalanceFreezeResp;
 import com.gofobao.framework.api.model.balance_query.BalanceQueryRequest;
 import com.gofobao.framework.api.model.balance_query.BalanceQueryResponse;
 import com.gofobao.framework.api.model.balance_un_freeze.BalanceUnfreezeReq;
 import com.gofobao.framework.api.model.balance_un_freeze.BalanceUnfreezeResp;
 import com.gofobao.framework.api.model.batch_cancel.BatchCancelReq;
 import com.gofobao.framework.api.model.batch_cancel.BatchCancelResp;
-import com.gofobao.framework.api.model.batch_credit_invest.BatchCreditInvestReq;
-import com.gofobao.framework.api.model.batch_credit_invest.BatchCreditInvestResp;
-import com.gofobao.framework.api.model.batch_credit_invest.CreditInvest;
 import com.gofobao.framework.api.model.batch_details_query.BatchDetailsQueryReq;
 import com.gofobao.framework.api.model.batch_details_query.BatchDetailsQueryResp;
 import com.gofobao.framework.api.model.batch_query.BatchQueryReq;
 import com.gofobao.framework.api.model.batch_query.BatchQueryResp;
-import com.gofobao.framework.api.model.batch_repay.BatchRepayReq;
-import com.gofobao.framework.api.model.batch_repay.BatchRepayResp;
-import com.gofobao.framework.api.model.batch_repay.Repay;
 import com.gofobao.framework.api.model.bid_apply_query.BidApplyQueryRequest;
 import com.gofobao.framework.api.model.bid_apply_query.BidApplyQueryResponse;
 import com.gofobao.framework.api.model.credit_details_query.CreditDetailsQueryRequest;
@@ -34,74 +25,44 @@ import com.gofobao.framework.api.model.credit_invest_query.CreditInvestQueryReq;
 import com.gofobao.framework.api.model.credit_invest_query.CreditInvestQueryResp;
 import com.gofobao.framework.api.model.freeze_details_query.FreezeDetailsQueryRequest;
 import com.gofobao.framework.api.model.freeze_details_query.FreezeDetailsQueryResponse;
-import com.gofobao.framework.api.model.voucher_pay.VoucherPayRequest;
-import com.gofobao.framework.api.model.voucher_pay.VoucherPayResponse;
-import com.gofobao.framework.asset.contants.AssetTypeContants;
-import com.gofobao.framework.asset.contants.BatchAssetChangeContants;
-import com.gofobao.framework.asset.entity.Asset;
-import com.gofobao.framework.asset.entity.BatchAssetChange;
-import com.gofobao.framework.asset.entity.BatchAssetChangeItem;
-import com.gofobao.framework.asset.entity.NewAssetLog;
 import com.gofobao.framework.asset.service.BatchAssetChangeItemService;
 import com.gofobao.framework.asset.service.BatchAssetChangeService;
 import com.gofobao.framework.asset.service.NewAssetLogService;
 import com.gofobao.framework.borrow.biz.BorrowBiz;
-import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.borrow.service.BorrowService;
-import com.gofobao.framework.collection.entity.BorrowCollection;
 import com.gofobao.framework.collection.service.BorrowCollectionService;
 import com.gofobao.framework.common.assets.AssetChange;
 import com.gofobao.framework.common.assets.AssetChangeProvider;
 import com.gofobao.framework.common.assets.AssetChangeTypeEnum;
-import com.gofobao.framework.common.integral.IntegralChangeEntity;
-import com.gofobao.framework.common.integral.IntegralChangeEnum;
 import com.gofobao.framework.common.rabbitmq.MqConfig;
 import com.gofobao.framework.common.rabbitmq.MqHelper;
 import com.gofobao.framework.common.rabbitmq.MqQueueEnum;
 import com.gofobao.framework.common.rabbitmq.MqTagEnum;
 import com.gofobao.framework.core.vo.VoBaseResp;
-import com.gofobao.framework.finance.entity.FinancePlan;
-import com.gofobao.framework.finance.entity.FinancePlanBuyer;
-import com.gofobao.framework.finance.service.FinancePlanBuyerService;
-import com.gofobao.framework.finance.service.FinancePlanService;
 import com.gofobao.framework.helper.*;
 import com.gofobao.framework.helper.project.BatchAssetChangeHelper;
-import com.gofobao.framework.helper.project.BorrowCalculatorHelper;
-import com.gofobao.framework.helper.project.BorrowHelper;
 import com.gofobao.framework.helper.project.IntegralChangeHelper;
-import com.gofobao.framework.member.entity.UserCache;
-import com.gofobao.framework.member.entity.UserThirdAccount;
-import com.gofobao.framework.member.entity.Users;
 import com.gofobao.framework.member.service.UserCacheService;
 import com.gofobao.framework.member.service.UserService;
 import com.gofobao.framework.member.service.UserThirdAccountService;
-import com.gofobao.framework.repayment.entity.BorrowRepayment;
-import com.gofobao.framework.repayment.entity.RepayAssetChange;
 import com.gofobao.framework.repayment.service.BorrowRepaymentService;
-import com.gofobao.framework.repayment.vo.request.VoRepayReq;
 import com.gofobao.framework.system.biz.ThirdBatchDealBiz;
 import com.gofobao.framework.system.biz.ThirdBatchDealLogBiz;
-import com.gofobao.framework.system.contants.ThirdBatchDealLogContants;
-import com.gofobao.framework.system.contants.ThirdBatchLogContants;
 import com.gofobao.framework.system.entity.ThirdBatchLog;
 import com.gofobao.framework.system.service.ThirdBatchLogService;
 import com.gofobao.framework.tender.biz.AutoTenderBiz;
+import com.gofobao.framework.tender.biz.TenderBiz;
 import com.gofobao.framework.tender.biz.TransferBiz;
 import com.gofobao.framework.tender.entity.Tender;
-import com.gofobao.framework.tender.entity.Transfer;
-import com.gofobao.framework.tender.entity.TransferBuyLog;
 import com.gofobao.framework.tender.service.TenderService;
 import com.gofobao.framework.tender.service.TransferBuyLogService;
 import com.gofobao.framework.tender.service.TransferService;
-import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.BooleanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.jpa.domain.Specification;
@@ -110,20 +71,13 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
-import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.math.BigDecimal;
 import java.util.*;
-import java.util.concurrent.ExecutionException;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
-import static com.gofobao.framework.helper.DateHelper.isBetween;
-import static com.gofobao.framework.listener.providers.NoticesMessageProvider.GSON;
 import static java.util.stream.Collectors.groupingBy;
 
 /**
@@ -188,101 +142,12 @@ public class TestController {
     @Autowired
     private TransferBuyLogService transferBuyLogService;
 
-    @RequestMapping("/pub/test/repair/repay")
-    @Transactional(rollbackFor = Exception.class)
-    public void repairRepay() {
-        //官标默认zfh作为还款人
-        UserThirdAccount repayUserThirdAccount = userThirdAccountService.findByUserId(22002L);
-
-        /* 还款orderId */
-        String orderId = JixinHelper.getOrderId(JixinHelper.REPAY_PREFIX);
-
-        List<Repay> repayList = new ArrayList<>();
-        Repay repay = new Repay();
-        repay.setAccountId(repayUserThirdAccount.getAccountId());
-        repay.setOrderId(orderId);
-        repay.setTxAmount("0");
-        repay.setIntAmount("0.01");
-        //收款手续费 向投资人收取
-        //多付的92.26元利息 加上0.01利息
-        repay.setTxFeeIn("92.27");
-        repay.setTxFeeOut("0");
-        repay.setProductId("169825");
-        repay.setAuthCode("20171025210049806377");
-        //苏德仁
-        UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(153356L);
-        Preconditions.checkNotNull(userThirdAccount, "投资人未开户!");
-        repay.setForAccountId(userThirdAccount.getAccountId());
-        repayList.add(repay);
-
-
-        /* 还款orderId */
-        orderId = JixinHelper.getOrderId(JixinHelper.REPAY_PREFIX);
-
-        repay = new Repay();
-        repay.setAccountId(repayUserThirdAccount.getAccountId());
-        repay.setOrderId(orderId);
-        repay.setTxAmount("0");
-        repay.setIntAmount("0.01");
-        //收款手续费 向投资人收取
-        //多付的181.45元利息 加上0.01利息
-        repay.setTxFeeIn("181.46");
-        repay.setTxFeeOut("0");
-        repay.setProductId("169825");
-        repay.setAuthCode("20171025210049806436");
-        //陈惠卿
-        userThirdAccount = userThirdAccountService.findByUserId(153434L);
-        Preconditions.checkNotNull(userThirdAccount, "投资人未开户!");
-        repay.setForAccountId(userThirdAccount.getAccountId());
-        repayList.add(repay);
-
-        //还款批次号
-        String batchNo = JixinHelper.getBatchNo();
-        //批次还款操作
-        BatchRepayReq request = new BatchRepayReq();
-        request.setBatchNo(batchNo);
-        request.setTxAmount("0");
-        request.setRetNotifyURL(javaDomain + "/pub/test/call");
-        request.setNotifyURL(javaDomain + "/pub/test/call");
-        request.setSubPacks(GSON.toJson(repayList));
-        request.setChannel(ChannelContant.HTML);
-        request.setTxCounts(StringHelper.toString(repayList.size()));
-        BatchRepayResp response = jixinManager.send(JixinTxCodeEnum.BATCH_REPAY, request, BatchRepayResp.class);
-        if ((ObjectUtils.isEmpty(response)) || (!JixinResultContants.BATCH_SUCCESS.equalsIgnoreCase(response.getReceived()))) {
-            BatchCancelReq batchCancelReq = new BatchCancelReq();
-            batchCancelReq.setBatchNo(batchNo);
-            batchCancelReq.setTxAmount("0");
-            batchCancelReq.setTxCounts(StringHelper.toString(repayList.size()));
-            batchCancelReq.setChannel(ChannelContant.HTML);
-            BatchCancelResp batchCancelResp = jixinManager.send(JixinTxCodeEnum.BATCH_CANCEL, batchCancelReq, BatchCancelResp.class);
-            if ((ObjectUtils.isEmpty(batchCancelResp)) || (!ObjectUtils.isEmpty(batchCancelResp.getRetCode()))) {
-                log.error("即信批次撤销失败!");
-            }
-            log.error(response.getRetMsg());
-        }
-
-        //记录日志
-        ThirdBatchLog thirdBatchLog = new ThirdBatchLog();
-        thirdBatchLog.setBatchNo(batchNo);
-        thirdBatchLog.setCreateAt(new Date());
-        thirdBatchLog.setState(3);
-        thirdBatchLog.setUpdateAt(new Date());
-        thirdBatchLog.setTxDate(request.getTxDate());
-        thirdBatchLog.setTxTime(request.getTxTime());
-        thirdBatchLog.setSeqNo(request.getSeqNo());
-        thirdBatchLog.setSourceId(0L);
-        thirdBatchLog.setType(ThirdBatchLogContants.BATCH_REPAY);
-        thirdBatchLog.setRemark("即信批次还款.(修复)");
-        thirdBatchLog.setAcqRes(GSON.toJson(new HashMap<>()));
-        thirdBatchLogService.save(thirdBatchLog);
-    }
-
     @RequestMapping("/pub/test/asset/change")
     @Transactional(rollbackFor = Exception.class)
     public void repairCall(@RequestParam("sourceId") Object sourceId, @RequestParam("batchNo") Object batchNo, @RequestParam("type") Object type) {
         //2.处理资金还款人、收款人资金变动
         try {
-            batchAssetChangeHelper.batchAssetChangeAndCollection(NumberHelper.toLong(sourceId), String.valueOf(batchNo), NumberHelper.toInt(type));
+            batchAssetChangeHelper.batchAssetChangeDeal(NumberHelper.toLong(sourceId), String.valueOf(batchNo), NumberHelper.toInt(type));
         } catch (Exception e) {
             log.error("变动异常：", e);
         }
@@ -302,6 +167,23 @@ public class TestController {
         if (CollectionUtils.isEmpty(thirdBatchLogList)) {
             return;
         }
+    }
+
+    @Autowired
+    TenderBiz tenderBiz;
+
+    @ApiOperation("结束第三方债权")
+    @RequestMapping("/pub/test/end/third")
+    @Transactional(rollbackFor = Exception.class)
+    public void endThird(@RequestParam("userId") Object userId) {
+        ResponseEntity<VoBaseResp> responseEntity = null;
+        try {
+            responseEntity = tenderBiz.endThirdTender(NumberHelper.toLong(userId));
+        } catch (Exception e) {
+            log.error("异常：", e);
+            e.printStackTrace();
+        }
+        log.info(responseEntity.getBody().getState().getMsg());
     }
 
     @ApiOperation("获取自动投标列表")

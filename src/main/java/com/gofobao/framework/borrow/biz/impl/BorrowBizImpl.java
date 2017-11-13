@@ -91,6 +91,7 @@ import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 
+import javax.persistence.criteria.Predicate;
 import javax.servlet.http.HttpServletRequest;
 import java.util.*;
 import java.util.function.Function;
@@ -104,58 +105,40 @@ import java.util.stream.Collectors;
 public class BorrowBizImpl implements BorrowBiz {
 
     static final Gson GSON = new Gson();
-
     @Autowired
     private BatchAssetChangeService batchAssetChangeService;
-
     @Autowired
     private UserCacheService userCacheService;
-
     @Autowired
     private AssetService assetService;
-
     @Autowired
     private BorrowService borrowService;
-
     @Autowired
     private AutoTenderService autoTenderService;
-
     @Autowired
     private UserThirdAccountService userThirdAccountService;
-
     @Autowired
     private MqHelper mqHelper;
-
     @Autowired
     private TenderService tenderService;
-
     @Autowired
     private TransferService transferService;
-
     @Autowired
     private BorrowCollectionService borrowCollectionService;
-
     @Autowired
     private BorrowRepaymentService borrowRepaymentService;
-
     @Autowired
     private BorrowProvider borrowProvider;
-
     @Autowired
     private BorrowThirdBiz borrowThirdBiz;
-
     @Autowired
     private IncrStatisticBiz incrStatisticBiz;
-
     @Autowired
     private UserService userService;
-
     @Autowired
     private StatisticBiz statisticBiz;
-
     @Autowired
     private ThymeleafHelper thymeleafHelper;
-
     @Autowired
     private TenderThirdBiz tenderThirdBiz;
     @Autowired
@@ -182,6 +165,8 @@ public class BorrowBizImpl implements BorrowBiz {
     BatchAssetChangeHelper batchAssetChangeHelper;
     @Autowired
     private ThirdBatchLogBiz thirdBatchLogBiz;
+    @Autowired
+    private UserHelper userHelper;
 
     @Value("${gofobao.javaDomain}")
     private String javaDomain;
@@ -195,6 +180,7 @@ public class BorrowBizImpl implements BorrowBiz {
      * @return
      */
     @Transactional(rollbackFor = Exception.class)
+    @Override
     public ResponseEntity<VoBaseResp> sendAgainVerify(VoSendAgainVerify voSendAgainVerify) {
         String paramStr = voSendAgainVerify.getParamStr();/* pc请求提前结清参数 */
         if (!SecurityHelper.checkSign(voSendAgainVerify.getSign(), paramStr)) {
@@ -518,6 +504,7 @@ public class BorrowBizImpl implements BorrowBiz {
      * @return
      */
     @Transactional(rollbackFor = Exception.class)
+    @Override
     public ResponseEntity<VoBaseResp> addNetWorth(VoAddNetWorthBorrow voAddNetWorthBorrow) throws Exception {
         Long userId = voAddNetWorthBorrow.getUserId();
         String releaseAtStr = voAddNetWorthBorrow.getReleaseAt();
@@ -541,13 +528,8 @@ public class BorrowBizImpl implements BorrowBiz {
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "发布时间必须在24小时内!"));
         }
 
-        UserCache userCache = userCacheService.findById(userId);
-        Preconditions.checkNotNull(userCache, "净值标的发布: 当前用户资金缓存账户为空!");
-
-        /* 总资产 */
-        long assets = asset.getUseMoney() + userCache.getWaitCollectionPrincipal();
         /* 净值额度 */
-        long totalMoney = new Double(MoneyHelper.multiply(assets, 0.8)).longValue() - asset.getPayment();
+        long totalMoney = userHelper.getNetWorthQuota(userId);
         if (totalMoney < money) {
             log.info("新增借款：借款金额大于净值额度。");
             return ResponseEntity
@@ -555,7 +537,6 @@ public class BorrowBizImpl implements BorrowBiz {
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "借款金额大于净值额度!"));
         }
 
-        // long count = borrowService.countByUserIdAndStatusIn(userId, Arrays.asList(0, 1));
         Specification<Borrow> specification = Specifications.<Borrow>and()
                 .eq("userId", userId)
                 .eq("status", BorrowContants.BIDDING)
@@ -687,6 +668,7 @@ public class BorrowBizImpl implements BorrowBiz {
      * @return
      */
     @Transactional(rollbackFor = Exception.class)
+    @Override
     public ResponseEntity<VoBaseResp> cancelBorrow(VoCancelBorrow voCancelBorrow) throws Exception {
         Long borrowId = voCancelBorrow.getBorrowId();
         Date nowDate = new Date();
@@ -906,6 +888,7 @@ public class BorrowBizImpl implements BorrowBiz {
      * @throws Exception
      */
     @Transactional(rollbackFor = Throwable.class)
+    @Override
     public boolean financeBorrowAgainVerify(Borrow borrow, String batchNo) throws Exception {
         if ((ObjectUtils.isEmpty(borrow)) || (borrow.getStatus() != 1)
                 || (!StringHelper.toString(borrow.getMoney()).equals(StringHelper.toString(borrow.getMoneyYes())))) {
@@ -937,7 +920,7 @@ public class BorrowBizImpl implements BorrowBiz {
         long count = batchAssetChangeService.count(bacs);
         if (count > 0) {
             //1.处理借款人资产变动
-            batchAssetChangeHelper.batchAssetChangeAndCollection(borrow.getId(), batchNo, BatchAssetChangeContants.BATCH_LEND_REPAY);
+            batchAssetChangeHelper.batchAssetChangeDeal(borrow.getId(), batchNo, BatchAssetChangeContants.BATCH_LEND_REPAY);
             //2.新增待还记录
             addLendRepayPayment(borrow, borrowRepaymentList, groupSeqNo);
         } else {
@@ -958,6 +941,7 @@ public class BorrowBizImpl implements BorrowBiz {
      * @throws Exception
      */
     @Transactional(rollbackFor = Throwable.class)
+    @Override
     public boolean borrowAgainVerify(Borrow borrow, String batchNo) throws Exception {
         if ((ObjectUtils.isEmpty(borrow)) || (borrow.getStatus() != 1)
                 || (!StringHelper.toString(borrow.getMoney()).equals(StringHelper.toString(borrow.getMoneyYes())))) {
@@ -980,10 +964,7 @@ public class BorrowBizImpl implements BorrowBiz {
         // 标的自身设置奖励信息:进行存管红包发放
         awardUserByBorrowTender(borrow, tenderList);
         try {
-            // 老用户投标
-            if (!borrow.getIsNovice()) {
-                userTenderRedPackage(tenderList);
-            }
+            userTenderRedPackage(tenderList);
         } catch (Exception e) {
             log.error("触发老用户投标红包失败", e);
         }
@@ -997,9 +978,10 @@ public class BorrowBizImpl implements BorrowBiz {
                 .in("state", 0, 1)
                 .build();
         long count = batchAssetChangeService.count(bacs);
+
         if (count > 0) {
             //1.处理借款人资产变动
-            batchAssetChangeHelper.batchAssetChangeAndCollection(borrow.getId(), batchNo, BatchAssetChangeContants.BATCH_LEND_REPAY);
+            batchAssetChangeHelper.batchAssetChangeDeal(borrow.getId(), batchNo, BatchAssetChangeContants.BATCH_LEND_REPAY);
             //2.新增待还记录
             addLendRepayPayment(borrow, borrowRepaymentList, groupSeqNo);
         } else {
@@ -1214,7 +1196,7 @@ public class BorrowBizImpl implements BorrowBiz {
             }
             //每日统计记录
             IncrStatistic incrStatistic = new IncrStatistic();
-            incrStatistic.setCashSum(0l);
+            incrStatistic.setCashSum(0L);
             incrStatistic.setJzSumPublish(0);
             incrStatistic.setJzSumRepay(0);
             if ((!BooleanUtils.toBoolean(userCache.getTenderTransfer())) && (!BooleanUtils.toBoolean(userCache.getTenderTuijian()))
@@ -1265,6 +1247,7 @@ public class BorrowBizImpl implements BorrowBiz {
      *
      * @param tender
      */
+    @Override
     public void touchMarketingByTender(Tender tender) {
         MarketingData marketingData = new MarketingData();
         marketingData.setTransTime(DateHelper.dateToString(new Date()));
@@ -1477,6 +1460,7 @@ public class BorrowBizImpl implements BorrowBiz {
     /**
      * 请求复审
      */
+    @Override
     public ResponseEntity<VoBaseResp> doAgainVerify(VoDoAgainVerifyReq voDoAgainVerifyReq) {
         String paramStr = voDoAgainVerifyReq.getParamStr();
         if (!SecurityHelper.checkSign(voDoAgainVerifyReq.getSign(), paramStr)) {
@@ -1970,6 +1954,7 @@ public class BorrowBizImpl implements BorrowBiz {
      * @return
      */
     @Transactional(rollbackFor = Exception.class)
+    @Override
     public ResponseEntity<VoBaseResp> pcFirstVerify(VoPcDoFirstVerity voPcDoFirstVerity) throws Exception {
         String paramStr = voPcDoFirstVerity.getParamStr();
         if (!SecurityHelper.checkSign(voPcDoFirstVerity.getSign(), paramStr)) {

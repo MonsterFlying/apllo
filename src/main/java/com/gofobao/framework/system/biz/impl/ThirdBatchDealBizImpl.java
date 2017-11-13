@@ -55,6 +55,7 @@ import com.gofobao.framework.tender.service.TransferBuyLogService;
 import com.gofobao.framework.tender.service.TransferService;
 import com.gofobao.framework.tender.vo.request.VoCancelThirdTenderReq;
 import com.gofobao.framework.tender.vo.request.VoEndTransfer;
+import com.gofobao.framework.wheel.borrow.biz.WheelBorrowBiz;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -121,6 +122,9 @@ public class ThirdBatchDealBizImpl implements ThirdBatchDealBiz {
     private UserCacheService userCacheService;
     @Autowired
     private FinancePlanBuyerService financePlanBuyerService;
+
+    @Autowired
+    private WheelBorrowBiz wheelBorrowBiz;
 
     /**
      * 批次处理
@@ -261,11 +265,11 @@ public class ThirdBatchDealBizImpl implements ThirdBatchDealBiz {
     /**
      * 批次结束债权处理
      *
-     * @param borrowId
+     * @param userId
      * @param failureThirdCreditEndOrderIds
      * @param successThirdCreditEndOrderIds
      */
-    private void creditEndDeal(String batchNo, long borrowId, List<String> failureThirdCreditEndOrderIds, List<String> successThirdCreditEndOrderIds) {
+    private void creditEndDeal(String batchNo, long userId, List<String> failureThirdCreditEndOrderIds, List<String> successThirdCreditEndOrderIds) {
         if (CollectionUtils.isEmpty(failureThirdCreditEndOrderIds)) {
             log.info("================================================================================");
             log.info("即信批次还款查询：未发现失败批次！");
@@ -287,7 +291,7 @@ public class ThirdBatchDealBizImpl implements ThirdBatchDealBiz {
 
         if (CollectionUtils.isEmpty(failureThirdCreditEndOrderIds)) {
             //更新批次日志状态
-            thirdBatchLogBiz.updateBatchLogState(String.valueOf(batchNo), borrowId, 3, ThirdBatchLogContants.BATCH_CREDIT_END);
+            thirdBatchLogBiz.updateBatchLogState(String.valueOf(batchNo), userId, 3, ThirdBatchLogContants.BATCH_CREDIT_END);
         }
     }
 
@@ -760,6 +764,19 @@ public class ThirdBatchDealBizImpl implements ThirdBatchDealBiz {
             borrow.setLendRepayStatus(ThirdDealStatusContrants.DISPOSED);
             borrow.setRecheckAt(new Date());
             borrowService.save(borrow);
+            //满标复审成功通知车轮
+            if (borrow.getIsWindmill()) {
+                Specification<Tender> tenderSpecification = Specifications.<Tender>and()
+                        .eq("borrowId", borrow.getId())
+                        .build();
+                List<Tender> tenders = tenderService.findList(tenderSpecification);
+                if (!CollectionUtils.isEmpty(tenders)) {
+                    tenders.forEach(tender -> {
+                        wheelBorrowBiz.investNotice(tender);
+                    });
+                }
+                wheelBorrowBiz.borrowUpdateNotice(borrow);
+            }
         } else {
             log.info("非流转标复审失败!");
         }
@@ -1085,23 +1102,6 @@ public class ThirdBatchDealBizImpl implements ThirdBatchDealBiz {
             if (resp.getBody().getState().getCode() == VoBaseResp.OK) {
                 //更新批次状态
                 thirdBatchLogBiz.updateBatchLogState(String.valueOf(batchNo), transferId, 3, ThirdBatchLogContants.BATCH_CREDIT_INVEST);
-
-                /*Transfer transfer = transferService.findById(transferId);
-                //推送队列结束债权
-                MqConfig mqConfig = new MqConfig();
-                mqConfig.setQueue(MqQueueEnum.RABBITMQ_CREDIT);
-                mqConfig.setTag(MqTagEnum.END_CREDIT_BY_TRANSFER);
-                mqConfig.setSendTime(DateHelper.addMinutes(new Date(), 1));
-                ImmutableMap<String, String> body = ImmutableMap
-                        .of(MqConfig.MSG_BORROW_ID, StringHelper.toString(transfer.getBorrowId()), MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
-                mqConfig.setMsg(body);
-                try {
-                    log.info(String.format("thirdBatchProvider creditInvestDeal send mq %s", GSON.toJson(body)));
-                    mqHelper.convertAndSend(mqConfig);
-                } catch (Throwable e) {
-                    log.error("thirdBatchProvider creditInvestDeal send mq exception", e);
-                }*/
-
                 log.info("批量债权转让复审: 成功");
             } else {
                 log.error("批量债权转让复审: 失败");

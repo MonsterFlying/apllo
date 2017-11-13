@@ -31,6 +31,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
@@ -155,6 +156,13 @@ public class StatisticBizImpl implements StatisticBiz {
                 }
             });
 
+    /**
+     * 更新总统计  挂起旧事务开启新的事务
+     *
+     * @param changeEntity
+     * @return
+     * @throws Exception
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public boolean caculate(Statistic changeEntity) throws Exception {

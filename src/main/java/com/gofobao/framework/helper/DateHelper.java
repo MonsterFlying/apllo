@@ -279,6 +279,14 @@ public class DateHelper {
         return get(date, Calendar.DAY_OF_YEAR);
     }
 
+
+    /**
+     * 获得日期是一个月的第几天，返回值从1开始
+     */
+    public static int getDayOfMonth(final Date date) {
+        return get(date, Calendar.DAY_OF_MONTH);
+    }
+
     /**
      * 获得日期是一月的第几周，返回值从1开始.
      * <p>
@@ -306,6 +314,15 @@ public class DateHelper {
      */
     public static int getMonth(final Date date) {
         return get(date, Calendar.MONTH) + 1;
+    }
+
+    /**
+     * 根据日期获取年份
+     * @param date
+     * @return
+     */
+    public static  int getYear(final Date date){
+        return get(date, Calendar.YEAR) ;
     }
 
     /**

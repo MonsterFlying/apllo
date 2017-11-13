@@ -1,5 +1,8 @@
 package com.gofobao.framework.api.model.credit_details_query;
 
+import lombok.Data;
+
+@Data
 public class CreditDetailsQueryItem {
   private String productId  ;
   private String buyDate  ;

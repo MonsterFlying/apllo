@@ -129,7 +129,7 @@ public class WindmillTenderBizImpl implements WindmillTenderBiz {
             Map<Long, Borrow> borrowMap = borrows.stream()
                     .collect(Collectors.toMap(Borrow::getId,
                             Function.identity()));
-            List<Long> tenderIds = tenders.stream()
+           /* List<Long> tenderIds = tenders.stream()
                     .map(p -> p.getId())
                     .collect(Collectors.toList());
             Specification<BorrowCollection> specification = Specifications.<BorrowCollection>and()
@@ -137,6 +137,7 @@ public class WindmillTenderBizImpl implements WindmillTenderBiz {
                     .build();
             List<BorrowCollection> borrowCollections = borrowCollectionService.findList(specification, new Sort(Sort.Direction.ASC, "id"));
             Map<Long, List<BorrowCollection>> borrowCollectionMap = borrowCollections.stream().collect(groupingBy(BorrowCollection::getTenderId));
+  */
             List<InvestRecords> invest_records = Lists.newArrayList();
             tenders.forEach(w -> {
                 InvestRecords investRecords = new InvestRecords();
@@ -159,7 +160,7 @@ public class WindmillTenderBizImpl implements WindmillTenderBiz {
                     //项目期限描述
                     investRecords.setProject_timelimit_desc(borrow.getDescription());
                     //还款方式
-                    if (borrow.getRepayFashion() == BorrowContants.REPAY_FASHION_ONCE) {
+                    if (borrow.getRepayFashion().equals(BorrowContants.REPAY_FASHION_ONCE)) {
                         investRecords.setProject_timelimit(borrow.getTimeLimit());
                         investRecords.setProject_timelimit_desc(borrow.getTimeLimit() + BorrowContants.DAY);
                     } else {
@@ -187,13 +188,13 @@ public class WindmillTenderBizImpl implements WindmillTenderBiz {
                     //是否自动投标
                     investRecords.setIs_auto_bid0(borrow.getMostAuto());
                     //还款方式
-                    if (borrow.getRepayFashion() == BorrowContants.REPAY_FASHION_ONCE) {
+                    if (borrow.getRepayFashion().equals(BorrowContants.REPAY_FASHION_ONCE)) {
                         investRecords.setPayback_way("到期一次性还本付息");
                     }
-                    if (borrow.getRepayFashion() == BorrowContants.REPAY_FASHION_MONTH) {
+                    if (borrow.getRepayFashion().equals(BorrowContants.REPAY_FASHION_MONTH)) {
                         investRecords.setPayback_way("等额本息");
                     }
-                    if (borrow.getRepayFashion() == BorrowContants.REPAY_FASHION_INTEREST_THEN_PRINCIPAL) {
+                    if (borrow.getRepayFashion().equals(BorrowContants.REPAY_FASHION_INTEREST_THEN_PRINCIPAL)) {
                         investRecords.setPayback_way(BorrowContants.REPAY_FASHION_INTEREST_THEN_PRINCIPAL_STR);
                     }
                     //预期收益
@@ -206,27 +207,38 @@ public class WindmillTenderBizImpl implements WindmillTenderBiz {
                     investRecords.setAll_interest(StringHelper.formatDouble(earnings / 100D, false));
 
                     //转让状态
-                    if (w.getTransferFlag() == TenderConstans.TRANSFER_ING ||
-                            w.getTransferFlag() == TenderConstans.TRANSFER_NO) {
+                    if (w.getTransferFlag().equals(TenderConstans.TRANSFER_ING) ||
+                            w.getTransferFlag().equals(TenderConstans.TRANSFER_NO)) {
                         investRecords.setAttorn_state(0);
                     } else {
                         investRecords.setAttorn_state(1);
                     }
                     //如果不是投标中
-                    if (StringUtils.isEmpty(userTenderLogReq.getInvest_status()) || userTenderLogReq.getInvest_status() != -1) {
-
-                        List<BorrowCollection> tempCollections = borrowCollectionMap.get(w.getId());
+                    if (!investRecords.getInvest_status().equals(-1) ) {
+                        Specification<BorrowCollection> specification = Specifications.<BorrowCollection>and()
+                                .eq("tenderId", w.getId())
+                                .build();
+                        List<BorrowCollection> borrowCollections = borrowCollectionService.findList(specification, new Sort(Sort.Direction.ASC, "order"));
                         //已回款本金
-                        Long principal = borrowCollections.stream().filter(p -> p.getStatus() == BorrowCollectionContants.STATUS_YES).mapToLong(p -> p.getPrincipal()).sum();
+                        Long principal = borrowCollections.stream()
+                                .filter(p -> p.getStatus().equals(BorrowCollectionContants.STATUS_YES))
+                                .mapToLong(p -> p.getPrincipal())
+                                .sum();
                         //已回款利息
-                        Long interest = borrowCollections.stream().filter(p -> p.getStatus() == BorrowCollectionContants.STATUS_YES).mapToLong(p -> p.getInterest()).sum();
+                        Long interest = borrowCollections.stream()
+                                .filter(p -> p.getStatus().equals(BorrowCollectionContants.STATUS_YES))
+                                .mapToLong(p -> p.getInterest())
+                                .sum();
                         investRecords.setAll_back_interest(StringHelper.formatDouble(interest / 100D, false));
                         investRecords.setAll_back_principal(StringHelper.formatDouble(principal / 100D, false));
                         //货款中 ||预期中
-                        if (w.getState() == TenderConstans.BACK_MONEY) {
+                        if (w.getState().equals(TenderConstans.BACK_MONEY)) {
                             //过滤掉已回款的期数 获取第一条 就是下个还款日
-                            BorrowCollection borrowCollection = borrowCollections.stream().filter(p -> p.getStatus() == BorrowCollectionContants.STATUS_NO).collect(Collectors.toList()).get(0);
-                            investRecords.setNext_back_date(DateHelper.dateToString(borrowCollection.getCollectionAt(),DateHelper.DATE_FORMAT_YMD));
+                            BorrowCollection borrowCollection = borrowCollections.stream()
+                                    .filter(p -> p.getStatus().equals(BorrowCollectionContants.STATUS_NO))
+                                    .collect(Collectors.toList())
+                                    .get(0);
+                            investRecords.setNext_back_date(DateHelper.dateToString(borrowCollection.getCollectionAt(), DateHelper.DATE_FORMAT_YMD));
                             investRecords.setNext_back_money(StringHelper.formatDouble(borrowCollection.getCollectionMoney() / 100D, false));
                             investRecords.setNext_back_principal(StringHelper.formatDouble(borrowCollection.getPrincipal() / 100D, false));
                             investRecords.setNext_back_interest(StringHelper.formatDouble(borrowCollection.getInterest() / 100D, false));
@@ -320,7 +332,7 @@ public class WindmillTenderBizImpl implements WindmillTenderBiz {
                     "&invest_time=" + DateHelper.dateToString(tender.getCreatedAt()) +
                     "&invest_sno=" + tender.getId() +
                     "&invest_money=" + StringHelper.formatDouble(tender.getValidMoney() / 100D, false) +
-                    "&invest_limit=" + (borrow.getRepayFashion() == BorrowContants.REPAY_FASHION_ONCE ? borrow.getTimeLimit() : (borrow.getTimeLimit() * 30)) +
+                    "&invest_limit=" + (borrow.getRepayFashion().equals(BorrowContants.REPAY_FASHION_ONCE) ? borrow.getTimeLimit() : (borrow.getTimeLimit() * 30)) +
                     "&invest_rate=" + borrow.getApr() +
                     "&back_way=" + getBorrowBackWay(borrow.getRepayFashion()) +
                     "&invest_title=" + borrow.getName();
@@ -396,7 +408,7 @@ public class WindmillTenderBizImpl implements WindmillTenderBiz {
                                 "&invest_time=" + DateHelper.dateToString(tender.getCreatedAt()) +
                                 "&invest_sno=" + tender.getId() +
                                 "&invest_money" + StringHelper.formatDouble(tender.getValidMoney() / 100D, false) +
-                                "&invest_limit=" + (borrow.getRepayFashion() == BorrowContants.REPAY_FASHION_ONCE ? borrow.getTimeLimit() : (borrow.getTimeLimit() * 30)) +
+                                "&invest_limit=" + (borrow.getRepayFashion().equals(BorrowContants.REPAY_FASHION_ONCE) ? borrow.getTimeLimit() : (borrow.getTimeLimit() * 30)) +
                                 "&invest_rate=" + StringHelper.formatDouble(borrow.getApr() / 100D, false) +
                                 "&back_way=" + getBorrowBackWay(borrow.getRepayFashion()) +
                                 "&invest_title=" + borrow.getName();

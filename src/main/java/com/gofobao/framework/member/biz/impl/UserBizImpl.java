@@ -7,13 +7,6 @@ import com.gofobao.framework.asset.service.AssetService;
 import com.gofobao.framework.collection.contants.BorrowCollectionContants;
 import com.gofobao.framework.collection.entity.BorrowCollection;
 import com.gofobao.framework.collection.service.BorrowCollectionService;
-import com.gofobao.framework.common.qiniu.common.QiniuException;
-import com.gofobao.framework.common.qiniu.common.Zone;
-import com.gofobao.framework.common.qiniu.http.Response;
-import com.gofobao.framework.common.qiniu.storage.BucketManager;
-import com.gofobao.framework.common.qiniu.storage.Configuration;
-import com.gofobao.framework.common.qiniu.storage.UploadManager;
-import com.gofobao.framework.common.qiniu.util.Auth;
 import com.gofobao.framework.common.rabbitmq.MqConfig;
 import com.gofobao.framework.common.rabbitmq.MqHelper;
 import com.gofobao.framework.common.rabbitmq.MqQueueEnum;
@@ -47,6 +40,13 @@ import com.gofobao.framework.security.vo.VoLoginReq;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.google.gson.Gson;
+import com.qiniu.common.QiniuException;
+import com.qiniu.common.Zone;
+import com.qiniu.http.Response;
+import com.qiniu.storage.BucketManager;
+import com.qiniu.storage.Configuration;
+import com.qiniu.storage.UploadManager;
+import com.qiniu.util.Auth;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -191,8 +191,17 @@ public class UserBizImpl implements UserBiz {
 
         long parentId = 0;
         if (!StringUtils.isEmpty(voRegisterReq.getInviteCode())) {
+            String inviteCode = voRegisterReq.getInviteCode();
+            //注册码可能是手机号，可能是用户名，可能是邀请码
+            Specification<Users> us = Specifications
+                    .<Users>or()
+                    .eq("inviteCode", inviteCode)
+                    .eq("phone", inviteCode)
+                    .eq("username", inviteCode)
+                    .build();
             // 3.推荐人处理
-            Users invitedUser = userService.findByInviteCode(voRegisterReq.getInviteCode());
+            List<Users> usersList = userService.findList(us);
+            Users invitedUser = usersList.get(0);
             if (ObjectUtils.isEmpty(invitedUser)) {
                 return ResponseEntity
                         .badRequest()
@@ -231,9 +240,9 @@ public class UserBizImpl implements UserBiz {
         users.setPayPassword("");
         users.setRealname("");
         //如果是
-        if(voRegisterReq.getSourceType().equals(UsersContants.TYPE_SOURCE_FINANCE)){
+        if (voRegisterReq.getSourceType().equals(UsersContants.TYPE_SOURCE_FINANCE)) {
             users.setType(UsersContants.FINANCE);
-        }else{
+        } else {
             users.setType(voRegisterReq.getType());
         }
         users.setBranch(0);
@@ -736,7 +745,7 @@ public class UserBizImpl implements UserBiz {
             try {
                 //删除用户在七牛云上的用户头像
                 userAvatar = userAvatar.substring(userAvatar.lastIndexOf("/") + 1);
-                bucketManager.delete(bucketname, "avatar/" + userAvatar);
+                bucketManager.delete(bucketname, "/avatar/" + userAvatar);
             } catch (QiniuException e) {
                 //捕获异常信息
                 Response r = e.response;

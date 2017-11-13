@@ -52,9 +52,9 @@ public class InvestNoticeReq {
 
     private String project_timelimit_desc;
 
-    private String invest_status;
+    private Integer invest_status=0;
 
-    private String interest_time;
+    private String interest_time="";
 
     private Integer monthly_back_date;
 
@@ -71,4 +71,6 @@ public class InvestNoticeReq {
     private Integer attorn_state = 0;
 
     private String attorn_time = "";
+
+    private String invest_title;
 }

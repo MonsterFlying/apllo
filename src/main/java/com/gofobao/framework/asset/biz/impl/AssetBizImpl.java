@@ -47,6 +47,7 @@ import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.financial.entity.NewAleve;
 import com.gofobao.framework.helper.*;
 import com.gofobao.framework.helper.project.SecurityHelper;
+import com.gofobao.framework.helper.project.UserHelper;
 import com.gofobao.framework.marketing.service.MarketingRedpackRecordService;
 import com.gofobao.framework.member.entity.UserCache;
 import com.gofobao.framework.member.entity.UserThirdAccount;
@@ -114,7 +115,7 @@ public class AssetBizImpl implements AssetBiz {
     @Autowired
     AssetService assetService;
     @Autowired
-    private JixinHelper jixinHelper;
+    UserHelper userHelper;
 
     @Autowired
     AssetLogService assetLogService;
@@ -313,6 +314,7 @@ public class AssetBizImpl implements AssetBiz {
      * @return
      */
     @Transactional(rollbackFor = Exception.class)
+    @Override
     public ResponseEntity<VoUserAssetInfoResp> userAssetInfo(Long userId) {
         Asset asset = assetService.findByUserId(userId); //查询会员资产信息
         if (ObjectUtils.isEmpty(asset)) {
@@ -326,7 +328,8 @@ public class AssetBizImpl implements AssetBiz {
 
         Long useMoney = asset.getUseMoney();
         Long payment = asset.getPayment();
-        long netWorthQuota = new Double((useMoney + userCache.getWaitCollectionPrincipal()) * 0.8 - payment).longValue();//计算净值额度
+        //计算净值额度
+        long netWorthQuota = userHelper.getNetWorthQuota(userId);
         Long netAsset = new Double((asset.getCollection() + asset.getNoUseMoney() + asset.getUseMoney()) - asset.getPayment()).longValue();
         VoUserAssetInfoResp voUserAssetInfoResp = VoBaseResp.ok("成功", VoUserAssetInfoResp.class);
         voUserAssetInfoResp.setHideUserMoney(StringHelper.formatDouble(useMoney / 100D, true));
@@ -334,13 +337,13 @@ public class AssetBizImpl implements AssetBiz {
         voUserAssetInfoResp.setHidePayment(StringHelper.formatDouble(payment / 100D, true));
         voUserAssetInfoResp.setHideCollection(StringHelper.formatDouble(asset.getCollection() / 100D, true));
         voUserAssetInfoResp.setHideVirtualMoney(StringHelper.formatDouble(asset.getVirtualMoney() / 100D, true));
-        voUserAssetInfoResp.setHideNetWorthQuota(StringHelper.formatDouble((netWorthQuota > 0 ? netWorthQuota : 0) / 100D, true));
+        voUserAssetInfoResp.setHideNetWorthQuota(StringHelper.formatDouble(netWorthQuota / 100D, true));
         voUserAssetInfoResp.setUseMoney(useMoney);
         voUserAssetInfoResp.setNoUseMoney(asset.getNoUseMoney());
         voUserAssetInfoResp.setPayment(asset.getPayment());
         voUserAssetInfoResp.setCollection(asset.getCollection());
         voUserAssetInfoResp.setVirtualMoney(asset.getVirtualMoney());
-        voUserAssetInfoResp.setNetWorthQuota(netWorthQuota > 0 ? netWorthQuota : 0);
+        voUserAssetInfoResp.setNetWorthQuota(netWorthQuota);
         voUserAssetInfoResp.setNetAsset(StringHelper.formatMon(netAsset / 100D));
         voUserAssetInfoResp.setIncomeTotal(StringHelper.formatMon(userCache.getIncomeTotal() / 100D));
         voUserAssetInfoResp.setHideIncomeTotal(userCache.getIncomeTotal());
@@ -433,6 +436,16 @@ public class AssetBizImpl implements AssetBiz {
                         .badRequest()
                         .body(VoBaseResp.error(VoBaseResp.ERROR_INIT_BANK_PASSWORD, "请初始化江西银行存管账户密码！"));
             }
+            // ====================================
+            // 针对中国银行不能快捷充值进行特殊处理
+            // ====================================
+            if ("中国银行".equals(userThirdAccount.getBankName())) {
+                log.warn("中国银行快捷充值, 系统主动拒绝充值!");
+                return ResponseEntity
+                        .badRequest()
+                        .body(VoBaseResp.error(VoBaseResp.ERROR_INIT_BANK_PASSWORD,
+                                "非常抱歉, 存管系统暂不支持中国银行的快捷充值, 建议你使用支付宝/网银转账"));
+            }
 
             String smsSeq = null;
             try {
@@ -507,7 +520,8 @@ public class AssetBizImpl implements AssetBiz {
                 log.info(String.format("充值成功: %s", gson.toJson(directRechargeOnlineResponse)));
                 state = 1;
                 msg = directRechargeOnlineResponse.getRetMsg();
-            } else if (JixinResultContants.toBeConfirm(directRechargeOnlineResponse)) { // 需要确认
+            } else if (JixinResultContants.toBeConfirm(directRechargeOnlineResponse)) {
+                // 需要确认
                 log.info(String.format("充值待确认: %s", gson.toJson(directRechargeOnlineResponse)));
                 state = 2; // 充值失败
                 msg = "非常抱歉, 当前充值状态不明确, 系统需要在10分钟后确认是否充值成功!";
@@ -517,7 +531,8 @@ public class AssetBizImpl implements AssetBiz {
                 state = 2;
                 msg = directRechargeOnlineResponse.getRetMsg();
             }
-
+            // 将该账户设置为活跃用户
+            updateAcountToActive(userThirdAccount, now);
             // 插入充值记录
             RechargeDetailLog rechargeDetailLog = new RechargeDetailLog();
             rechargeDetailLog.setRechargeType(0);
@@ -533,10 +548,13 @@ public class AssetBizImpl implements AssetBiz {
             Double recordRecharge = MoneyHelper.multiply(voRechargeReq.getMoney(), 100D, 0);
             rechargeDetailLog.setMoney(recordRecharge.longValue());
             rechargeDetailLog.setRechargeChannel(0);
-            rechargeDetailLog.setState(state); // 充值未确认
+            rechargeDetailLog.setState(state);
             rechargeDetailLog.setSeqNo(directRechargeOnlineRequest.getTxDate() + directRechargeOnlineRequest.getTxTime() + directRechargeOnlineRequest.getSeqNo());
-            rechargeDetailLog.setResponseMessage(gson.toJson(directRechargeOnlineResponse));  // 响应吗
+            rechargeDetailLog.setResponseMessage(gson.toJson(directRechargeOnlineResponse));
+            // 充值备注
+            rechargeDetailLog.setRemark(directRechargeOnlineResponse.getRetMsg());
             RechargeDetailLog saveRechargeDetailLog = rechargeDetailLogService.save(rechargeDetailLog);
+
 
             // 触发资金变动确认
             if (toBeConform) {
@@ -545,20 +563,26 @@ public class AssetBizImpl implements AssetBiz {
 
             if (state == 1) {
                 try {
-                    doAssetChangeByRecharge(voRechargeReq, users, directRechargeOnlineResponse, now);
+                    // 资金变动
+                    doAssetChangeByRecharge(voRechargeReq, users, rechargeDetailLog, now);
                 } catch (Exception e) {
                     exceptionEmailHelper.sendErrorMessage("充值成功, 资金变动异常", gson.toJson(saveRechargeDetailLog));
                     rechargeAndCashAndRedpackQueryHelper.save(RechargeAndCashAndRedpackQueryHelper.QueryType.QUERY_RECHARGE, users.getId(), saveRechargeDetailLog.getId(), false);
                 }
 
-                MqConfig mqConfig = new MqConfig();
-                mqConfig.setTag(MqTagEnum.RECHARGE);
-                mqConfig.setQueue(MqQueueEnum.RABBITMQ_USER_ACTIVE);
-                mqConfig.setSendTime(DateHelper.addSeconds(now, 10));
-                ImmutableMap<String, String> body = ImmutableMap.of(MqConfig.MSG_ID, rechargeDetailLog.getId().toString());
-                mqConfig.setMsg(body);
-                mqHelper.convertAndSend(mqConfig);
-                log.info("触发充值记录调度");
+                try {
+                    log.info("触发充值记录调度");
+                    MqConfig mqConfig = new MqConfig();
+                    mqConfig.setTag(MqTagEnum.RECHARGE);
+                    mqConfig.setQueue(MqQueueEnum.RABBITMQ_USER_ACTIVE);
+                    mqConfig.setSendTime(DateHelper.addSeconds(now, 10));
+                    ImmutableMap<String, String> body = ImmutableMap.of(MqConfig.MSG_ID, rechargeDetailLog.getId().toString());
+                    mqConfig.setMsg(body);
+                    mqHelper.convertAndSend(mqConfig);
+                } catch (Exception e) {
+                    log.error("发送充值记录异常", e);
+                }
+
                 return ResponseEntity.ok(VoBaseResp.ok("充值成功"));
             } else {
                 return ResponseEntity
@@ -575,17 +599,33 @@ public class AssetBizImpl implements AssetBiz {
 
     }
 
+    /**
+     * 更新用户为活跃用户
+     *
+     * @param userThirdAccount
+     * @param now
+     */
+    private void updateAcountToActive(UserThirdAccount userThirdAccount, Date now) {
+        try {
+            userThirdAccount.setActiveState(1);
+            userThirdAccount.setUpdateAt(now);
+            userThirdAccountService.save(userThirdAccount);
+        } catch (Exception e) {
+            log.error("更新用户为活跃用户异常", e);
+        }
+    }
+
     @Transactional(rollbackFor = Exception.class)
-    public void doAssetChangeByRecharge(VoRechargeReq voRechargeReq, Users users, DirectRechargeOnlineResponse directRechargeOnlineResponse, Date now) throws Exception {
+    public void doAssetChangeByRecharge(VoRechargeReq voRechargeReq, Users users, RechargeDetailLog rechargeDetailLog, Date now) throws Exception {
         AssetChange entity = new AssetChange();
         String groupSeqNo = assetChangeProvider.getGroupSeqNo();
-        String seqNo = String.format("%s%s%s", directRechargeOnlineResponse.getTxDate(), directRechargeOnlineResponse.getTxTime(), directRechargeOnlineResponse.getSeqNo());
         entity.setGroupSeqNo(groupSeqNo);
-        entity.setMoney(new Double(voRechargeReq.getMoney() * 100).longValue());
-        entity.setSeqNo(seqNo);
+        entity.setMoney(rechargeDetailLog.getMoney());
+        entity.setSeqNo(rechargeDetailLog.getSeqNo());
         entity.setUserId(users.getId());
         entity.setRemark(String.format("你在 %s 成功充值%s元", DateHelper.dateToString(now), voRechargeReq.getMoney()));
         entity.setType(AssetChangeTypeEnum.onlineRecharge);
+        entity.setSourceId(rechargeDetailLog.getId());  // 资金变动来源
         assetChangeProvider.commonAssetChange(entity);
     }
 
@@ -1244,7 +1284,8 @@ public class AssetBizImpl implements AssetBiz {
         Date endTime = DateHelper.endOfDate(DateHelper.stringToDate(voAssetLogReq.getEndTime(), DateHelper.DATE_FORMAT_YMD));
         //gfb_new_asset_log 的 receivedPayments compensatoryReceivedPayments
         Specification<NewAssetLog> nals1 = Specifications.<NewAssetLog>or()
-                .in("localType", AssetChangeTypeEnum.compensatoryReceivedPayments.getLocalType(), AssetChangeTypeEnum.receivedPayments.getLocalType())
+                .in("localType", AssetChangeTypeEnum.compensatoryReceivedPaymentsPrincipal.getLocalType(), AssetChangeTypeEnum.compensatoryReceivedPaymentsInterest.getLocalType(),
+                        AssetChangeTypeEnum.receivedPaymentsPrincipal.getLocalType(), AssetChangeTypeEnum.receivedPaymentsInterest.getLocalType())
                 .notIn("type", 1)
                 .build();
 

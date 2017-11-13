@@ -43,7 +43,6 @@ public interface UserThirdAccountService {
 
     void deleteByUserId(Long userId);
 
-
     /**
      * 查询已被删除的用户
      *
@@ -54,7 +53,6 @@ public interface UserThirdAccountService {
 
     List<UserThirdAccount> findByAll();
 
-
     List<UserThirdAccount> findList(Specification<UserThirdAccount> userThirderAccountSpe);
 
     List<UserThirdAccount> findList(Specification<UserThirdAccount> userThirderAccountSpe, Pageable pageable);
@@ -63,10 +61,11 @@ public interface UserThirdAccountService {
 
     long count(Specification<UserThirdAccount> userThirderAccountSpe);
 
-
     Page<UserThirdAccount> findAll(Pageable pageable);
 
     void save(List<UserThirdAccount> userThirdAccountList);
 
     UserThirdAccount findByIdNo(String idNo);
+
+
 }

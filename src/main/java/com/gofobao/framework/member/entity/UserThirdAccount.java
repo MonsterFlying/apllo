@@ -1,6 +1,6 @@
 package com.gofobao.framework.member.entity;
 
-import com.gofobao.framework.common.qiniu.util.StringUtils;
+import com.qiniu.util.StringUtils;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -71,6 +71,8 @@ public class UserThirdAccount {
     private String bankName;
 
     private String bankLogo;
+
+    private Integer activeState ;
 
     public String getIdNo() {
         if (!StringUtils.isNullOrEmpty(idNo)) {

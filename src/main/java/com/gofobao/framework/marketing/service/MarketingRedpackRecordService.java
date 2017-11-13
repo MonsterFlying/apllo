@@ -49,4 +49,13 @@ public interface MarketingRedpackRecordService {
     MarketingRedpackRecord findById(long id);
 
     long count(Specification<MarketingRedpackRecord> specifications);
+
+    /**
+     * 根据时间端获取用户领取红包数量
+     * @param userId
+     * @param beginDate
+     * @param nowDate
+     * @return
+     */
+    Long countByUserIdAndDate(Long userId, Date beginDate, Date nowDate);
 }

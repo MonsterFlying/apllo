@@ -594,16 +594,16 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
         }
 
         Map<String, Object> acqResMap = GSON.fromJson(batchCreditInvestRunCall.getAcqRes(), TypeTokenContants.MAP_TOKEN);
-        Long borrowId = NumberHelper.toLong(acqResMap.get("borrowId"));
+        Long userId = NumberHelper.toLong(acqResMap.get("userId"));
         if (!JixinResultContants.SUCCESS.equals(batchCreditInvestRunCall.getRetCode())) {
             log.error("=============================投资人批次结束债权参数验证回调===========================");
             log.error("回调失败! msg:" + batchCreditInvestRunCall.getRetMsg());
-            thirdBatchLogBiz.updateBatchLogState(batchCreditInvestRunCall.getBatchNo(), borrowId, 2, ThirdBatchLogContants.BATCH_CREDIT_END);
+            thirdBatchLogBiz.updateBatchLogState(batchCreditInvestRunCall.getBatchNo(), userId, 2, ThirdBatchLogContants.BATCH_CREDIT_END);
         } else {
             log.error("=============================投资人批次结束债权参数验证回调===========================");
             log.error("回调成功!");
             //更新批次状态
-            thirdBatchLogBiz.updateBatchLogState(batchCreditInvestRunCall.getBatchNo(), borrowId, 1, ThirdBatchLogContants.BATCH_CREDIT_END);
+            thirdBatchLogBiz.updateBatchLogState(batchCreditInvestRunCall.getBatchNo(), userId, 1, ThirdBatchLogContants.BATCH_CREDIT_END);
         }
 
         try {
@@ -651,7 +651,7 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
         //触发处理批次放款处理结果队列
         try {
             //批次执行问题
-            thirdBatchDealBiz.batchDeal(NumberHelper.toLong(acqResMap.get("borrowId")), batchCreditInvestRunCall.getBatchNo(),
+            thirdBatchDealBiz.batchDeal(NumberHelper.toLong(acqResMap.get("userId")), batchCreditInvestRunCall.getBatchNo(),
                     ThirdBatchLogContants.BATCH_CREDIT_END, batchCreditInvestRunCall.getAcqRes(), GSON.toJson(batchCreditInvestRunCall));
         } catch (Exception e) {
             log.error("批次执行异常:", e);

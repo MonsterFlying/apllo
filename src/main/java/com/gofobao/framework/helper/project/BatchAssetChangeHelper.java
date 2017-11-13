@@ -20,6 +20,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
@@ -67,12 +68,12 @@ public class BatchAssetChangeHelper {
 
 
     /**
-     * 发放债权转让资金
+     * 处理资金变动
      *
      * @param sourceId
      * @param batchNo
      */
-    public void batchAssetChangeAndCollection(Long sourceId, String batchNo, int type) throws Exception {
+    public void batchAssetChangeDeal(Long sourceId, String batchNo, int type) throws Exception {
         Specification<BatchAssetChange> bacs = Specifications
                 .<BatchAssetChange>and()
                 .eq("sourceId", sourceId)
@@ -93,7 +94,7 @@ public class BatchAssetChangeHelper {
                 .eq("batchAssetChangeId", batchAssetChange.getId())
                 .eq("state", 0)
                 .build();
-        List<BatchAssetChangeItem> batchAssetChangeItemList = batchAssetChangeItemService.findList(bacis);
+        List<BatchAssetChangeItem> batchAssetChangeItemList = batchAssetChangeItemService.findList(bacis,new Sort("userId"));
         Preconditions.checkState(!CollectionUtils.isEmpty(batchAssetChangeItemList), batchNo + "债权转让资金变动子记录不存在!");
 
         // 所有的资金变动

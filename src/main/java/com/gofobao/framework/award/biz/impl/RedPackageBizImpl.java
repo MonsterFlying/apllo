@@ -154,7 +154,7 @@ public class RedPackageBizImpl implements RedPackageBiz {
         }
 
         // 派发红包
-         Gson gson = new Gson();
+        Gson gson = new Gson();
         double doubleMoney = MoneyHelper.divide(money, 100, 2);
         VoucherPayRequest voucherPayRequest = new VoucherPayRequest();
         // 红包账户
@@ -162,7 +162,7 @@ public class RedPackageBizImpl implements RedPackageBiz {
         voucherPayRequest.setTxAmount(doubleMoney + "");
         voucherPayRequest.setForAccountId(userThirdAccount.getAccountId());
         voucherPayRequest.setDesLineFlag(DesLineFlagContant.TURE);
-        voucherPayRequest.setDesLine( sourceId + "");
+        voucherPayRequest.setDesLine(sourceId + "");
         voucherPayRequest.setChannel(ChannelContant.HTML);
         VoucherPayResponse voucherPayResponse = jixinManager.send(JixinTxCodeEnum.SEND_RED_PACKET, voucherPayRequest, VoucherPayResponse.class);
         log.info(String.format("开始派发红包:%s", gson.toJson(voucherPayRequest)));
@@ -320,6 +320,8 @@ public class RedPackageBizImpl implements RedPackageBiz {
         }
 
         Date nowDate = new Date();
+
+
         // 判断时间
         if (DateHelper.diffInDays(nowDate, marketingRedpackRecord.getCancelTime(), false) > 0) {
             // 更新红包
@@ -342,6 +344,27 @@ public class RedPackageBizImpl implements RedPackageBiz {
                     .badRequest()
                     .body(VoViewOpenRedPackageWarpRes.error(VoViewOpenRedPackageWarpRes.ERROR, "当前用户锁定, 取消你领取额红包的资格!", VoViewOpenRedPackageWarpRes.class));
         }
+
+        // 红包开启平率限制
+        try {
+            Date beginDate = DateHelper.subDays(nowDate, 1);
+            Specification<MarketingRedpackRecord> marketingRedpackRecordSpecification = Specifications
+                    .<MarketingRedpackRecord>and()
+                    .eq("userId", users.getId())
+                    .eq("marketingId", 3)
+                    .between("publishTime", new Range(DateHelper.endOfDate(beginDate), DateHelper.endOfDate(nowDate)))
+                    .build();
+            long redpackCount = marketingRedpackRecordService.count(marketingRedpackRecordSpecification);
+            if (redpackCount >= 3) {
+                log.warn("当天开启红包[邀请好友]次数超过3个!");
+                return ResponseEntity
+                        .badRequest()
+                        .body(VoViewOpenRedPackageWarpRes.error(VoViewOpenRedPackageWarpRes.ERROR, "开启邀请红包过于频繁, 请明天再次尝试!", VoViewOpenRedPackageWarpRes.class));
+            }
+        } catch (Exception e) {
+            log.error("红包平率限制异常", e);
+        }
+
 
         String onlySeql = String.format("%s%s%s", users.getId(), AssetChangeTypeEnum.receiveRedpack.getLocalType(), marketingRedpackRecord.getId());
         boolean result = commonPublishRedpack(users.getId(),

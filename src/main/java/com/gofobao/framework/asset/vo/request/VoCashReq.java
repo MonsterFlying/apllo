@@ -14,6 +14,7 @@ import javax.validation.constraints.NotNull;
 @ApiModel("提现申请")
 @Data
 public class VoCashReq extends VoBaseReq{
+
     @ApiModelProperty("提现金额(元)")
     @Min(value = 1)
     @NotNull( message = "提现金额不能为空")

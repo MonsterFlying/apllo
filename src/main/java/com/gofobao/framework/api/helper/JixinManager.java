@@ -237,6 +237,14 @@ public class JixinManager {
         return t;
     }
 
+    /**
+     * 网络502
+     */
+    private static  final String HTTP_CODE_502 = "502" ;
+    /**
+     * 网络504
+     */
+    private static  final String HTTP_CODE_504 = "504" ;
 
     /**
      * 特殊回调
@@ -265,6 +273,12 @@ public class JixinManager {
 
 
     public <T extends JixinBaseRequest, S extends JixinBaseResponse> S send(JixinTxCodeEnum txCodeEnum, T req, Class<S> clazz) {
+        // 开启日子打印
+        return baseSend(txCodeEnum, req, clazz, true) ;
+    }
+
+
+    public <T extends JixinBaseRequest, S extends JixinBaseResponse> S baseSend(JixinTxCodeEnum txCodeEnum, T req, Class<S> clazz, boolean openLogState) {
         checkNotNull(req, "请求体为null");
         // 前期初始化
         req.setBankCode(bankCode);
@@ -299,11 +313,13 @@ public class JixinManager {
         String sign = certHelper.doSign(unSign);
         params.put("sign", sign);
 
+        if(openLogState){
+            log.info("=============================================");
+            log.info(String.format("[%s]报文流水请求：%s%s%s", txCodeEnum.getName(), req.getTxDate(), req.getTxTime(), req.getSeqNo()));
+            log.info("=============================================");
+            log.info(String.format("即信请求报文: url=%s body=%s", url, gson.toJson(params)));
+        }
 
-        log.info("=============================================");
-        log.info(String.format("[%s]报文流水请求：%s%s%s", txCodeEnum.getName(), req.getTxDate(), req.getTxTime(), req.getSeqNo()));
-        log.info("=============================================");
-        log.info(String.format("即信请求报文: url=%s body=%s", url, gson.toJson(params)));
         initHttps();
         HttpEntity entity = getHttpEntity(params);
         RestTemplate restTemplate = new RestTemplate();
@@ -324,13 +340,14 @@ public class JixinManager {
             s.setRetCode(JixinResultContants.ERROR_COMMON_CONNECT);
             s.setRetMsg(String.format("请求网络异常: %s", e.getMessage()));
 
-            if (e instanceof HttpServerErrorException) { // 针对 500以上代码特殊处理
-                if (e.getMessage().contains("502")) {
+            // 针对 500以上代码特殊处理
+            if (e instanceof HttpServerErrorException) {
+                if (e.getMessage().contains(HTTP_CODE_502)) {
                     s.setRetCode(JixinResultContants.ERROR_502);
-                    s.setRetMsg("请求即信502");
-                } else if (e.getMessage().contains("504")) {
-                    s.setRetCode(JixinResultContants.ERROR_502);
-                    s.setRetMsg("请求即信504");
+                    s.setRetMsg("请求存管系统, 网络返回502");
+                } else if (e.getMessage().contains(HTTP_CODE_504)) {
+                    s.setRetCode(JixinResultContants.ERROR_504);
+                    s.setRetMsg("请求存管系统, 网络返回504");
                 }
                 return s;
             }
@@ -365,20 +382,19 @@ public class JixinManager {
             return s;
         }
 
-        log.info("=============================================");
-        log.info(String.format("[%s]报文流水响应：%s%s%s", txCodeEnum.getName(), req.getTxDate(), req.getTxTime(), req.getSeqNo()));
-        log.info("=============================================");
-        log.info(String.format("即信响应报文:url=%s body=%s", url, gson.toJson(body)));
+        if(openLogState){
+            log.info("=============================================");
+            log.info(String.format("[%s]报文流水响应：%s%s%s", txCodeEnum.getName(), req.getTxDate(), req.getTxTime(), req.getSeqNo()));
+            log.info("=============================================");
+            log.info(String.format("即信响应报文:url=%s body=%s", url, gson.toJson(body)));
+        }
+
         body.setRetMsg(JixinResultContants.getMessage(body.getRetCode()));
 
         // 未开通交易接口发送邮件通知
         if (JixinResultContants.ERROR_JX900663.equalsIgnoreCase(body.getRetCode())) {
             exceptionEmailHelper.sendErrorMessage("访问权限受限, 需要联系即信", gson.toJson(req));
         }
-
-        /*if (JixinResultContants.ERROR_JX999999.equalsIgnoreCase(body.getRetCode())) {
-            exceptionEmailHelper.sendErrorMessage("FES系统异常", gson.toJson(req));
-        }*/
 
         return body;
     }

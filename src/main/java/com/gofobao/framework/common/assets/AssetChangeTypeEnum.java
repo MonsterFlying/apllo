@@ -5,6 +5,16 @@ public enum AssetChangeTypeEnum {
 
 
     /**
+     * 理财计划到期收回本金
+     */
+    financeReceivedPaymentsPrincipal("理财计划到期收回本金", "financeReceivedPayments", "7781", "add@financePlanMoney", "", "D"),
+
+    /**
+     * 理财计划到期收回利息
+     */
+    financeReceivedPaymentsInterest("理财计划到期收回利息", "financeReceivedPayments", "7781", "add@financePlanMoney", "", "D"),
+
+    /**
      * 理财计划到期收回本息
      */
     financeReceivedPayments("理财计划回款", "financeReceivedPayments", "7781", "add@financePlanMoney", "", "D"),
@@ -12,38 +22,7 @@ public enum AssetChangeTypeEnum {
     /**
      * 投资人到期收回本息
      */
-    financeSettlement("理财计划结算", "financeSettlement", "2833", "add@useMoney", "add@incomeInterest#interest", "D"),
-
-/*    *//**
-     * 投资人到期收回本息
-     *//*
-    makeUpReceivedPayments("正常回款", "makeUpReceivedPayments", "7781", "add@useMoney", "add@incomeInterest#interest", "D"),
-
-    *//**
-     * 净值标借款入账
-     *//*
-    lendPaymentRepair("净值标借款入账", "lendPaymentRepair", "0", "add@useMoney", "", "B"),
-
-    *//**
-     * 投资人到期收回本息
-     *//*
-    amendUseMoney("验证服可用金额数据修正", "amendUseMoney", "0", "add@useMoney", "", "B"),
-
-    *//**
-     * 投资人到期收回本息
-     *//*
-    amendNotUseMoney("验证服冻结金额数据修正", "amendNotUseMoney", "0", "sub@noUseMoney", "", "B"),
-
-    *//**
-     * 投资人到期收回本息
-     *//*
-    amendPayment("验证服冻结金额数据修正", "amendPayment", "0", "sub@payment", "", "B"),
-
-
-    *//**
-     * 投资人到期收回本息
-     *//*
-    initAsset("数据迁移资产初始化", "initAsset", "0", "", "", "B"),*/
+    financeSettlement("投资人到期收回本息", "financeSettlement", "2833", "add@useMoney", "add@incomeInterest#interest", "D"),
 
     /**
      * 联机充值
@@ -169,6 +148,16 @@ public enum AssetChangeTypeEnum {
     /**
      * 投资人到期收回本息
      */
+    receivedPaymentsPrincipal("正常本金回款", "receivedPaymentsPrincipal", "7781", "add@useMoney", "", "D"),
+
+    /**
+     * 投资人到期收回本息
+     */
+    receivedPaymentsInterest("正常利息回款", "receivedPaymentsInterest", "7781", "add@useMoney", "add@incomeInterest#interest", "D"),
+
+    /**
+     * 投资人到期收回本息
+     */
     receivedPayments("正常回款", "receivedPayments", "7781", "add@useMoney", "add@incomeInterest#interest", "D"),
 
     /**
@@ -186,6 +175,16 @@ public enum AssetChangeTypeEnum {
      * 投资人收到滞纳金
      */
     receivedPaymentsPenalty("还款滞纳金", "receivedPaymentsPenalty", "7781", "add@useMoney", "add@incomeOverdue", "D"),
+
+    /**
+     * 垫付账户收回垫付本金
+     */
+    compensatoryReceivedPaymentsPrincipal("垫付账户收回垫付本金", "compensatoryReceivedPayments", "7781", "add@useMoney", "", "D"),
+
+    /**
+     * 垫付账户收回垫付利息
+     */
+    compensatoryReceivedPaymentsInterest("垫付账户收回垫付利息", "compensatoryReceivedPayments", "7781", "add@useMoney", "add@incomeInterest#interest", "D"),
 
     /**
      * 垫付账户收回垫付本息
@@ -291,7 +290,7 @@ public enum AssetChangeTypeEnum {
     /**
      * 利息管理费
      */
-    interestManagementFee("利息管理费", "interestManagementFee", "9781", "sub@useMoney", "add@expenditureInterestManage", "C"),
+    interestManagementFee("利息管理费", "interestManagementFee", "9781", "sub@useMoney", "add@expenditureInterestManage,sub@waitExpenditureInterestManage", "C"),
 
 
     /**

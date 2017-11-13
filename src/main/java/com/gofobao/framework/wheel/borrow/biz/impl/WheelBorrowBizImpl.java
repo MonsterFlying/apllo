@@ -14,6 +14,7 @@ import com.gofobao.framework.member.entity.UserCache;
 import com.gofobao.framework.member.entity.Users;
 import com.gofobao.framework.member.service.UserCacheService;
 import com.gofobao.framework.member.service.UserService;
+import com.gofobao.framework.repayment.contants.RepaymentContants;
 import com.gofobao.framework.repayment.entity.BorrowRepayment;
 import com.gofobao.framework.repayment.service.BorrowRepaymentService;
 import com.gofobao.framework.tender.contants.TenderConstans;
@@ -25,22 +26,24 @@ import com.gofobao.framework.wheel.borrow.vo.response.BorrowsRes;
 import com.gofobao.framework.wheel.common.BaseResponse;
 import com.gofobao.framework.wheel.common.ResponseConstant;
 import com.gofobao.framework.wheel.util.JEncryption;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 
-import java.util.ArrayList;
-import java.util.Base64;
-import java.util.List;
-import java.util.Map;
+import java.net.URLEncoder;
+import java.util.*;
+import java.util.stream.Collector;
+import java.util.stream.Collectors;
 
 /**
  * @author master
@@ -107,6 +110,7 @@ public class WheelBorrowBizImpl implements WheelBorrowBiz {
             borrows.forEach(tempBorrow -> {
                 infoArrayList.add(commonHandle(tempBorrow));
             });
+            borrowsRes.setInvest_list(infoArrayList);
             borrowsRes.setRetcode(ResponseConstant.SUCCESS);
             return borrowsRes;
         } catch (Exception e) {
@@ -124,29 +128,31 @@ public class WheelBorrowBizImpl implements WheelBorrowBiz {
     @Override
     public void borrowUpdateNotice(Borrow borrow) {
         String borrowUpdateNoticeUrl = "/financial/ps_target_notice";
-        BorrowsRes.BorrowInfo borrowInfo = commonHandle(borrow);
-        Map<String, String> paramMaps = GSON.fromJson(GSON.toJson(borrowInfo),
-                new TypeToken<Map<String, String>>() {
-                }.getType());
-        String paramStr = "";
-        for (String keyStr : paramMaps.keySet()) {
-            paramStr += paramMaps.get(keyStr) + "&";
-        }
-        String requestParamStr = paramStr.substring(0, paramStr.lastIndexOf("&"));
         try {
-            String bizParamStr = JEncryption.encrypt(requestParamStr.getBytes(), secretKey);
-            Map<String, String> paramMap = Maps.newHashMap();
-            paramMap.put("param", bizParamStr);
-            paramMap.put("from", shortName);
-            String resultStr = OKHttpHelper.postForm(wheelDomain + borrowUpdateNoticeUrl, paramMap, null);
+            BorrowsRes.BorrowInfo borrowInfo = commonHandle(borrow);
+            Map<String, String> paramMaps = GSON.fromJson(GSON.toJson(borrowInfo),
+                    new TypeToken<Map<String, String>>() {
+                    }.getType());
+            String paramStr = "";
+            for (String keyStr : paramMaps.keySet()) {
+                paramStr += keyStr + "=" + paramMaps.get(keyStr) + "&";
+            }
+            String requestParamStr = paramStr.substring(0, paramStr.lastIndexOf("&"));
+
+            String bizParamStr = JEncryption.encrypt(requestParamStr.getBytes("utf-8"), secretKey);
+            String param = "?param=" + URLEncoder.encode(bizParamStr, "utf-8") + "&from=" + shortName;
+            log.info("打印请求车轮参数：" + param);
+            System.out.print("标的变化接口通知,请求车轮地址：" + wheelDomain + borrowUpdateNoticeUrl + param);
+
+            String resultStr = OKHttpHelper.get(wheelDomain + borrowUpdateNoticeUrl + param, null, null);
+            log.info("打印车轮返回信息：" + resultStr);
             if (StringUtils.isEmpty(resultStr)) {
                 log.info("请求车轮异常");
                 return;
             }
-            BaseResponse baseResponse = GSON.fromJson(GSON.toJson(resultStr),
+            BaseResponse baseResponse = GSON.fromJson(resultStr,
                     new TypeToken<BaseResponse>() {
                     }.getType());
-
             log.info(baseResponse.getRetcode().equals(ResponseConstant.SUCCESS)
                     ? "标的变化通知车轮成功" : baseResponse.getRetmsg());
         } catch (Exception e) {
@@ -177,12 +183,12 @@ public class WheelBorrowBizImpl implements WheelBorrowBiz {
                 : tempBorrow.getTimeLimit() + BorrowContants.MONTH);
         borrowInfo.setTotal_amount(StringHelper.formatDouble(tempBorrow.getMoney() / 100d, false));
         borrowInfo.setRate(StringHelper.formatDouble(tempBorrow.getApr() / 100D, false));
-
+        borrowInfo.setStart_time(DateHelper.dateToString(tempBorrow.getReleaseAt()));
         String progress = StringHelper.formatMon(
                 NumberHelper.floorDouble(tempBorrow.getMoneyYes() / tempBorrow.getMoney().doubleValue(),
                         2)
                         * 100);
-        borrowInfo.setProgress(progress + BorrowContants.PERCENT);
+        borrowInfo.setProgress(progress);
         borrowInfo.setPayback_way(repayFashion.equals(BorrowContants.REPAY_FASHION_ONCE)
                 ? "一次性还本付息"
                 : repayFashion.equals(BorrowContants.REPAY_FASHION_MONTH)
@@ -197,6 +203,8 @@ public class WheelBorrowBizImpl implements WheelBorrowBiz {
     }
 
     /**
+     * 用户投资通知车轮
+     *
      * @param tender
      */
     @Override
@@ -228,13 +236,16 @@ public class WheelBorrowBizImpl implements WheelBorrowBiz {
         investNotice.setInvesting_principal(StringHelper.formatDouble(waitCollectionPrincipal, 100, false));
         investNotice.setEarned_interest(StringHelper.formatDouble(userCache.getIncomeTotal(), 100, false));
         investNotice.setCurrent_money(StringHelper.formatDouble(0, false));
-        investNotice.setInterest_time(DateHelper.dateToString(tender.getCreatedAt()));
         investNotice.setInvest_record_id(tender.getId().toString());
         investNotice.setProject_title(borrow.getName());
         investNotice.setProject_id(borrow.getId().toString());
         investNotice.setProject_url("/#/borrow/" + borrow.getId());
-        investNotice.setProject_rate(StringHelper.formatDouble(borrow.getApr(), 100, false) + BorrowContants.PERCENT);
-        investNotice.setProject_progress(StringHelper.formatDouble(borrow.getMoney() - borrow.getMoneyYes(), 100, false));
+        investNotice.setProject_rate(StringHelper.formatDouble(borrow.getApr(), 100, false));
+        String progress = StringHelper.formatMon(
+                NumberHelper.floorDouble(borrow.getMoneyYes() / borrow.getMoney().doubleValue(),
+                        2)
+                        * 100);
+        investNotice.setProject_progress(progress);
         Integer repayFashion = borrow.getRepayFashion();
         investNotice.setProject_timelimit(repayFashion.equals(BorrowContants.REPAY_FASHION_ONCE)
                 ? borrow.getTimeLimit()
@@ -248,14 +259,19 @@ public class WheelBorrowBizImpl implements WheelBorrowBiz {
                 : repayFashion.equals(BorrowContants.REPAY_FASHION_MONTH)
                 ? "等额本息"
                 : "按月付息");
-
-        if (StringUtils.isEmpty(borrow.getRecheckAt())
-                && BorrowContants.PASS.equals(borrow.getStatus())) {
+        investNotice.setInvest_money(StringHelper.formatDouble(tender.getValidMoney(), 100, false));
+        if (!StringUtils.isEmpty(borrow.getRecheckAt())
+                && BorrowContants.PASS.equals(borrow.getStatus())
+                && StringUtils.isEmpty(borrow.getCloseAt())) {
             Specification<BorrowRepayment> specification = Specifications.<BorrowRepayment>and()
                     .eq("borrowId", borrow.getId())
                     .build();
-            List<BorrowRepayment> borrowRepayments = borrowRepaymentService.findList(specification);
-            BorrowRepayment borrowRepayment = borrowRepayments.get(0);
+            List<BorrowRepayment> borrowRepayments = borrowRepaymentService.findList(specification,
+                    new Sort(Sort.Direction.ASC, "order"));
+            BorrowRepayment borrowRepayment = borrowRepayments.stream()
+                    .filter(p -> p.getStatus().equals(RepaymentContants.STATUS_NO))
+                    .collect(Collectors.toList())
+                    .get(0);
             investNotice.setMonthly_back_date(DateHelper.getDay(borrow.getReleaseAt()));
             investNotice.setNext_back_date(DateHelper.dateToString(borrowRepayment.getRepayAt(), DateHelper.DATE_FORMAT_YMD));
             investNotice.setNext_back_money(StringHelper.formatDouble(borrowRepayment.getRepayMoney(), 100, false));
@@ -267,35 +283,42 @@ public class WheelBorrowBizImpl implements WheelBorrowBiz {
             investNotice.setAttorn_state(1);
             investNotice.setAttorn_time(DateHelper.dateToString(tender.getUpdatedAt()));
         }
+        investNotice.setInterest_time("");
+        if (tender.getState().equals(TenderConstans.BACK_MONEY)) {
+            investNotice.setInterest_time(DateHelper.dateToString(borrow.getRecheckAt()));
+        } else if (tender.getState().equals(TenderConstans.SETTLE)) {
+            investNotice.setInvest_status(1);
+            investNotice.setInterest_time(DateHelper.dateToString(borrow.getRecheckAt()));
+        }
+        investNotice.setInvest_time(DateHelper.dateToString(tender.getCreatedAt()));
+        investNotice.setInvest_title(borrow.getName());
         String investNoticeUrl = "/financial/ps_invest_notice";
-
         Map<String, String> paramMap = GSON.fromJson(GSON.toJson(investNotice),
-                new TypeToken<Map<String, String>>() {
+                new TypeToken<HashMap<String, String>>() {
                 }.getType());
 
         String paramStr = "";
         for (String keyStr : paramMap.keySet()) {
-            paramStr = paramMap.get(keyStr) + "&";
+            paramStr += keyStr + "=" + paramMap.get(keyStr) + "&";
         }
         String tempRequestParamStr = paramStr.substring(0, paramStr.lastIndexOf("&"));
         try {
-            String bizParamStr = new String(Base64.getEncoder().encode(JEncryption.encrypt(tempRequestParamStr.getBytes(), secretKey).getBytes()));
-            Map<String, String> requestMap = Maps.newHashMap();
-            requestMap.put("from", shortName);
-            requestMap.put("param", bizParamStr);
-            String resultStr = OKHttpHelper.postForm(wheelDomain + investNoticeUrl, requestMap, null);
+            String bizParamStr = JEncryption.encrypt(tempRequestParamStr.getBytes("utf-8"), secretKey);
+            String param = "?param=" + URLEncoder.encode(bizParamStr, "utf-8") + "&from=" + shortName;
+            System.out.print("用户投资通知车轮,请求车轮地址：" + wheelDomain + investNoticeUrl + param);
+            String resultStr = OKHttpHelper.get(wheelDomain + investNoticeUrl + param, null, null);
             if (StringUtils.isEmpty(resultStr)) {
                 log.info("请求车轮异常");
                 return;
             }
-            BaseResponse baseResponse = GSON.fromJson(GSON.toJson(resultStr),
+            BaseResponse baseResponse = GSON.fromJson(resultStr,
                     new TypeToken<BaseResponse>() {
                     }.getType());
 
             log.info(baseResponse.getRetcode().equals(ResponseConstant.SUCCESS)
-                    ? "标的变化通知车轮成功" : baseResponse.getRetmsg());
+                    ? "用户投资通知车轮成功" : baseResponse.getRetmsg());
         } catch (Exception e) {
-            log.info("标的变化通知车轮失败", e);
+            log.info("用户投资通知车轮失败", e);
         }
     }
 }

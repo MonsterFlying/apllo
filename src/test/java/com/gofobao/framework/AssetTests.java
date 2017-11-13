@@ -1,10 +1,12 @@
 package com.gofobao.framework;
 
+import com.gofobao.framework.as.biz.AssetStatementBiz;
 import com.gofobao.framework.asset.biz.AssetSynBiz;
 import com.gofobao.framework.financial.biz.NewAleveBiz;
 import com.gofobao.framework.financial.biz.NewEveBiz;
 import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.helper.ExceptionEmailHelper;
+import com.gofobao.framework.helper.FtpHelper;
 import com.gofobao.framework.scheduler.biz.FundStatisticsBiz;
 import com.google.common.base.Predicate;
 import com.google.common.collect.FluentIterable;
@@ -33,6 +35,9 @@ public class AssetTests {
 
     final Gson GSON = new GsonBuilder().create();
 
+    @Autowired
+    AssetStatementBiz assetStatementBiz;
+
 
     @Autowired
     AssetSynBiz assetSynBiz;
@@ -46,6 +51,8 @@ public class AssetTests {
     @Autowired
     NewEveBiz newEveBiz;
 
+    @Autowired
+    FtpHelper ftpHelper ;
     @Test
     public void test01() throws Exception {
         Date synDate = DateHelper.stringToDate("2017-09-12", DateHelper.DATE_FORMAT_YMD);
@@ -54,7 +61,8 @@ public class AssetTests {
 
     @Test
     public void test02() throws Exception {
-        exceptionEmailHelper.sendErrorMessage("测试多人发送", "测试多人发送");
+        boolean download = ftpHelper.downloadBySecurity("/C2P/2017/11/11", "3005-ALEVE0110-20171111");
+        log.error("结果" + download);
     }
 
     @Test
@@ -110,11 +118,4 @@ public class AssetTests {
             }
         }
     }
-
-    @Test
-    public void test05() throws Exception {
-        String date = "20171001";
-        newEveBiz.audit(date);
-    }
-
 }

@@ -586,7 +586,9 @@ public class AplloApplicationTests {
     @Test
     @Transactional
     public void test() {
-
+        String resultStr = OKHttpHelper.postJson("http://m7ocvas9.gofobao.com/api/open/finance-plan/auto-match", GSON.toJson(new HashMap<>()), null);
+        log.info(" 理财计划债权转让复审 url:" + "http://m7ocvas9.gofobao.com/api/open/finance-plan/auto-match\n");
+        log.info(" 理财计划债权转让复审 调用后台返回响应:" + resultStr);
         //购买债权转让有效金额 本金
 
 

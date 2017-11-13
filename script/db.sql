@@ -921,3 +921,240 @@ CREATE TABLE `gfb_application_version` (
 
 ALTER TABLE gfb_users ADD wheel_id VARCHAR(50) NULL;
 ALTER TABLE gfb_users ADD bind_wheel_date DATETIME NULL;
+
+
+
+CREATE TABLE `gfb_realtime_asset` (
+  `id` INT NOT NULL AUTO_INCREMENT,
+  `user_id` INT NULL COMMENT '用户ID',
+  `account_id` INT NULL COMMENT '存管账户ID',
+  `username` VARCHAR(45) NULL COMMENT '用户昵称',
+  `phone` VARCHAR(45) NULL COMMENT '手机',
+  `jixin_total_amount` DECIMAL(16,2) NULL COMMENT '存管账户总额',
+  `local_total_amount` DECIMAL(16,2) NULL COMMENT '本地总金额',
+  `jixin_use_amount` DECIMAL(16,2) NULL COMMENT '存管可用金额',
+  `local_use_amount` DECIMAL(16,2) NULL COMMENT '本地可用金额',
+  `inteval_money` DECIMAL(16,2) NULL COMMENT '相差金额(存管账户总额-本地总金额)',
+  `create_time` DATETIME NULL COMMENT '查询时间',
+  `batch_no` BIGINT NULL COMMENT '查询批次(每一次调用资金比对, 生成最新批次)',
+  PRIMARY KEY (`id`))
+  COMMENT = '实时查询存管金额记录表' , charset="utf8";
+
+
+# 账户中添加用户活跃状态
+ALTER TABLE `gfb_user_third_account`
+  ADD COLUMN `active_state` int(11) NULL DEFAULT 0 COMMENT '用户活跃状态: 1.活跃账户, 0, 僵尸用户' AFTER `bank_logo`;
+
+
+
+ALTER TABLE gfb_user_cache
+  ADD wait_expenditure_interest_manage INT(10) UNSIGNED NOT NULL DEFAULT 0
+COMMENT '待付利息管理费'
+  AFTER expenditure_interest_manage;
+
+
+DROP TABLE IF EXISTS `gfb_user_address`;
+CREATE TABLE `gfb_user_address` (
+  `id` int(11) NOT NULL AUTO_INCREMENT COMMENT '主键id',
+  `type` int(11) DEFAULT '0' COMMENT '地址类型：0.收货地址',
+  `name` varchar(255) DEFAULT NULL COMMENT '收件人姓名',
+  `phone` varchar(25) DEFAULT NULL COMMENT '收货号码',
+  `country` varchar(255) DEFAULT NULL COMMENT '国家',
+  `province` varchar(255) DEFAULT NULL COMMENT '身份',
+  `city` varchar(255) DEFAULT NULL COMMENT '城市',
+  `district` varchar(255) DEFAULT NULL COMMENT '地区（市区/县）',
+  `detailed_address` varchar(1024) DEFAULT NULL COMMENT '详细地址',
+  `default` int(11) DEFAULT '0' COMMENT '是否默认地址：0否，1是',
+  `del` int(11) DEFAULT '0' COMMENT '是否删除 0否 1是',
+  `create_at` datetime DEFAULT NULL COMMENT '创建时间',
+  `update_at` datetime DEFAULT NULL COMMENT '更新时间',
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+-- 主题类型表
+CREATE TABLE gfb_topic_type (
+  id INT AUTO_INCREMENT COMMENT '主题唯一标识',
+  topic_type_name VARCHAR(32) DEFAULT '未命名' COMMENT '主题类型名称',
+  sort INT NOT NULL DEFAULT 0 COMMENT '排序, 数字越大越靠前',
+  hot_state INT NOT NULL DEFAULT 0 COMMENT '最热标识',
+  new_state INT NOT NULL DEFAULT 0 COMMENT '最新标识',
+  topic_total_num INT NOT NULL DEFAULT 0 COMMENT '帖子总数数量',
+  icon_url VARCHAR(255) NOT NULL DEFAULT '' COMMENT '主题类型icon',
+  create_date DATETIME NULL COMMENT '创建时间',
+  update_date DATETIME NULL COMMENT '更新时间',
+  admin_id INT NOT NULL DEFAULT 0 COMMENT '主题管理员',
+  del INT NOT NULL DEFAULT 0 COMMENT '记录有效状态, 1 .删除',
+  PRIMARY KEY (id)
+)  CHARSET=UTF8MB4 , COMMENT '主题类型表';
+
+
+-- 主题表
+CREATE TABLE gfb_topics (
+  id BIGINT AUTO_INCREMENT COMMENT '主题唯一标识',
+  titel VARCHAR(128) NOT NULL DEFAULT '' COMMENT '标的',
+  topic_type_id INT NOT NULL DEFAULT 0 COMMENT '主题类型Id',
+  user_id INT NOT NULL DEFAULT 0 COMMENT '发帖用户ID',
+  user_name VARCHAR(36) NOT NULL DEFAULT '' COMMENT '用户名-此处冗余',
+  user_icon_url VARCHAR(255) NOT NULL DEFAULT '' COMMENT '用户头像-此处冗余',
+  sort INT NOT NULL DEFAULT 0 COMMENT '(只有设置顶置状态, 此字段才有效果)排序, 数字越大越靠前',
+  fix_state INT NOT NULL DEFAULT 0 COMMENT '是否顶置 1: 为顶置贴',
+  hot_state INT NOT NULL DEFAULT 0 COMMENT '最热标识',
+  new_state INT NOT NULL DEFAULT 0 COMMENT '最新标识',
+  top_total_num INT NOT NULL DEFAULT 0 COMMENT '点赞总数',
+  content_total_num INT NOT NULL DEFAULT 0 COMMENT '评论总数',
+  view_total_num INT NOT NULL DEFAULT 0 COMMENT '浏览人数',
+  del INT NOT NULL DEFAULT 0 COMMENT '记录有效状态, 1 .删除',
+  create_date DATETIME NULL COMMENT '创建时间',
+  update_date DATETIME NULL COMMENT '更新时间',
+  img1 VARCHAR(255) NULL COMMENT '图片1',
+  img2 VARCHAR(255) NULL COMMENT '图片1',
+  img3 VARCHAR(255) NULL COMMENT '图片1',
+  img4 VARCHAR(255) NULL COMMENT '图片1',
+  img5 VARCHAR(255) NULL COMMENT '图片1',
+  img6 VARCHAR(255) NULL COMMENT '图片1',
+  img7 VARCHAR(255) NULL COMMENT '图片1',
+  img8 VARCHAR(255) NULL COMMENT '图片1',
+  img9 VARCHAR(255) NULL COMMENT '图片1',
+  content VARCHAR(1024) NULL COMMENT '主题内容',
+  PRIMARY KEY (id),
+  INDEX (topic_type_id),
+  INDEX (user_id)
+)  CHARSET=UTF8MB4 , COMMENT '主题';
+
+
+-- 评论表
+CREATE TABLE gfb_topics_comment (
+  id BIGINT AUTO_INCREMENT COMMENT '评论唯一标识',
+  topic_id INT NOT NULL DEFAULT 0 COMMENT '主题id',
+  topic_type_id INT NOT NULL DEFAULT 0 COMMENT '主题类型Id',
+  content VARCHAR(255) NOT NULL DEFAULT '无评论' COMMENT '评论内容',
+  user_id INT NOT NULL DEFAULT 0 COMMENT '评论用户ID',
+  user_name VARCHAR(36) NOT NULL DEFAULT '' COMMENT '用户名-此处冗余',
+  user_icon_url VARCHAR(255) NOT NULL DEFAULT '' COMMENT '用户头像-此处冗余',
+  top_total_num INT NOT NULL DEFAULT 0 COMMENT '点赞总数',
+  content_total_num INT NOT NULL DEFAULT 0 COMMENT '回复总数',
+  del INT NOT NULL DEFAULT 0 COMMENT '记录有效状态, 1 .删除',
+  create_date DATETIME NULL COMMENT '创建时间',
+  update_date DATETIME NULL COMMENT '更新时间',
+  PRIMARY KEY (id),
+  INDEX (topic_id),
+  INDEX (user_id)
+)  CHARSET=UTF8MB4 , COMMENT '评论表';
+
+-- 回复表
+CREATE TABLE gfb_topics_reply (
+  id BIGINT AUTO_INCREMENT COMMENT '回复唯一标识',
+  topic_id BIGINT NOT NULL DEFAULT 0 COMMENT '主题id',
+  topic_comment_id BIGINT NOT NULL DEFAULT 0 COMMENT '评论表ID',
+  topic_type_id INT NOT NULL DEFAULT 0 COMMENT '主题类型Id',
+  topic_reply_id BIGINT NOT NULL DEFAULT 0 COMMENT '回复Id',
+  reply_type INT NOT NULL DEFAULT 0 COMMENT '回复类型: 0 评论, 1.回复',
+  content VARCHAR(255) NOT NULL DEFAULT '无评论' COMMENT '评论内容',
+  top_total_num INT NOT NULL DEFAULT 0 COMMENT '点赞总数',
+  user_id INT NOT NULL DEFAULT 0 COMMENT '回复用户ID',
+  user_name VARCHAR(36) NOT NULL DEFAULT '' COMMENT '用户名-此处冗余',
+  user_icon_url VARCHAR(255) NOT NULL DEFAULT '' COMMENT '用户头像-此处冗余',
+  for_user_id INT NOT NULL DEFAULT 0 COMMENT '被@的用户Id , 如果回复类型为评论直接为评论用户ID',
+  for_user_name VARCHAR(36) NOT NULL DEFAULT '' COMMENT '用户名-此处冗余',
+  for_user_icon_url VARCHAR(255) NOT NULL DEFAULT '' COMMENT '用户头像-此处冗余',
+  del INT NOT NULL DEFAULT 0 COMMENT '记录有效状态, 1 .删除',
+  create_date DATETIME NULL COMMENT '创建时间',
+  update_date DATETIME NULL COMMENT '更新时间',
+  PRIMARY KEY (id),
+  INDEX (topic_id),
+  INDEX (topic_comment_id),
+  INDEX (user_id)
+)  CHARSET=UTF8MB4 , COMMENT '评论表';
+
+-- 点赞记录表
+CREATE TABLE gfb_topics_top_record (
+  id BIGINT AUTO_INCREMENT COMMENT '点赞记录唯一标识',
+  user_id INT NOT NULL DEFAULT 0 COMMENT '回复用户ID',
+  source_id BIGINT NOT NULL DEFAULT 0 COMMENT '点赞来源',
+  source_type INT NOT NULL DEFAULT 0 COMMENT '点赞类型 0:主题点赞, 1:评论点赞, 2:回复点赞',
+  create_date DATETIME NULL COMMENT '创建时间',
+  update_date DATETIME NULL COMMENT '更新时间',
+  PRIMARY KEY (id),
+  INDEX (user_id),
+  INDEX (user_id , source_id , source_type)
+)  CHARSET=UTF8MB4 , COMMENT '点赞记录标';
+
+
+CREATE TABLE `gfb_product` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `name` varchar(255) DEFAULT NULL COMMENT '商品名',
+  `title` varchar(255) DEFAULT NULL COMMENT '标题',
+  `after_sales_service` text COMMENT '售后服务',
+  `details` text COMMENT '商品详情',
+  `is_del` int(11) DEFAULT '0' COMMENT '是否删除 0否 1是',
+  `create_at` datetime DEFAULT NULL,
+  `update_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+CREATE TABLE `gfb_product_ plan` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `time_limit` int(2) unsigned NOT NULL DEFAULT '0' COMMENT '期限',
+  `lowest` int(10) unsigned NOT NULL DEFAULT '0' COMMENT '单个用户加入金额最小阈值',
+  `apr` int(11) DEFAULT NULL COMMENT '利率',
+  `is_open` int(11) DEFAULT NULL,
+  `start_at` datetime DEFAULT NULL COMMENT '开始时间',
+  `end_at` datetime DEFAULT NULL COMMENT '结束时间',
+  `is_del` int(11) DEFAULT '0' COMMENT '是否删除 0否 1是',
+  `create_at` datetime DEFAULT NULL,
+  `update_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+CREATE TABLE `gfb_product_item_plan_ref` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `product_item_id` int(11) DEFAULT NULL COMMENT '利率',
+  `plan_id` int(11) DEFAULT NULL COMMENT '商品计划id',
+  `is_del` int(11) DEFAULT '0' COMMENT '是否删除 0否 1是',
+  `create_at` datetime DEFAULT NULL,
+  `update_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+CREATE TABLE `gfb_product_item` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `price` int(11) DEFAULT NULL COMMENT '价格',
+  `discount_price` int(11) DEFAULT NULL COMMENT '折扣价',
+  `after_sales_service` text COMMENT '售后服务',
+  `details` text COMMENT '商品详情',
+  `inventory` int(11) DEFAULT '0' COMMENT '库存',
+  `is_del` int(11) DEFAULT '0' COMMENT '是否删除 0否 1是',
+  `is_enable` int(11) DEFAULT '0' COMMENT '是否上架',
+  `enable_at` datetime DEFAULT NULL COMMENT '上架时间',
+  `create_at` datetime DEFAULT NULL,
+  `update_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+CREATE TABLE `gfb_product_item_sku_ref` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `product_item_id` int(11) DEFAULT NULL,
+  `sku_id` int(11) DEFAULT NULL COMMENT '备注',
+  `create_at` datetime DEFAULT NULL,
+  `update_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='商品子表与sku的关联表';
+
+CREATE TABLE `gfb_product_sku_classify` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `name` varchar(255) DEFAULT NULL,
+  `remark` varchar(255) DEFAULT NULL COMMENT '备注',
+  `is_del` int(11) DEFAULT '0' COMMENT '是否删除 0否 1是',
+  `create_at` datetime DEFAULT NULL,
+  `update_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+CREATE TABLE `gfb_product_sku` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `sc_id` int(11) DEFAULT NULL COMMENT 'sku_classify主键id',
+  `name` varchar(255) DEFAULT NULL,
+  `is_del` int(11) DEFAULT '0' COMMENT '是否删除 0否 1是',
+  `create_at` datetime DEFAULT NULL,
+  `update_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;

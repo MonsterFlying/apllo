@@ -1,6 +1,7 @@
 package com.gofobao.framework.tender.service.impl;
 
 import com.github.wenhao.jpa.Specifications;
+import com.gofobao.framework.borrow.contants.BorrowContants;
 import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.borrow.repository.BorrowRepository;
 import com.gofobao.framework.borrow.vo.response.VoBorrowTenderUserRes;
@@ -8,6 +9,7 @@ import com.gofobao.framework.common.constans.MoneyConstans;
 import com.gofobao.framework.common.data.DataObject;
 import com.gofobao.framework.common.data.GeSpecification;
 import com.gofobao.framework.helper.DateHelper;
+import com.gofobao.framework.helper.NumberHelper;
 import com.gofobao.framework.helper.StringHelper;
 import com.gofobao.framework.helper.project.UserHelper;
 import com.gofobao.framework.member.entity.Users;
@@ -30,7 +32,11 @@ import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
+import javax.persistence.Query;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Created by admin on 2017/5/19.
@@ -41,18 +47,19 @@ public class TenderServiceImpl implements TenderService {
 
     @Autowired
     private TenderRepository tenderRepository;
-
-
     @Autowired
     private BorrowRepository borrowRepository;
-
-
     @Autowired
     private UsersRepository usersRepository;
+
     @Autowired
     private UserService userService;
 
     public static final Long SHOW_LIMIT=10000L;
+
+
+    @PersistenceContext
+    private EntityManager entityManager;
 
 
     /**
@@ -82,7 +89,6 @@ public class TenderServiceImpl implements TenderService {
                         TenderConstans.TRANSFER_PART_YES).toArray())
                 .build();
         Page<Tender> tenderPage = tenderRepository.findAll(tenderSpecification, pageRequest);
-        //Optional<List<Tender>> listOptional = Optional.ofNullable(tenderList);
         List<Tender> tenderList = tenderPage.getContent();
         if (CollectionUtils.isEmpty(tenderList)) {
             return Collections.EMPTY_LIST;
@@ -199,6 +205,20 @@ public class TenderServiceImpl implements TenderService {
         return Optional.empty().ofNullable(tenderUserResList).orElse(Collections.emptyList());
     }
 
+    /**
+     * 查询投标复审金额
+     *
+     * @param userId
+     * @return
+     */
+    @Override
+    public long findTenderAgainVerifyMoney(long userId) {
+        StringBuffer sql = new StringBuffer("SELECT sum(t1.`valid_money`)  FROM `gfb_borrow_tender` t1 LEFT JOIN `gfb_borrow`" +
+                " t2 on t1.`borrow_id` = t2.`id` WHERE t2.`status` = 1 and t2.`money_yes` = t2.`money` and t2.`success_at` IS NOT NULL  and t1.`user_id` = " + userId + " ;");
+        Query query = entityManager.createNativeQuery(sql.toString());
+        return NumberHelper.toInt(query.getResultList().get(0));
+    }
+
     public Tender save(Tender tender) {
         return tenderRepository.save(tender);
     }
@@ -270,21 +290,31 @@ public class TenderServiceImpl implements TenderService {
     public Map<String, Long> statistic() {
         Date todayAt = new Date();
         Date yesterdayAt = DateHelper.subDays(todayAt, 1);
-        Specification todaySpecificati = Specifications.<Tender>and()
-                .between("createdAt", new Range<>(DateHelper.beginOfDate(todayAt), DateHelper.endOfDate(todayAt)))
-                .eq("status", TenderConstans.SUCCESS)
+        Date todayBeginOfDate = DateHelper.beginOfDate(todayAt);
+        Specification<Borrow> borrowSpecification = Specifications.<Borrow>and()
+                .eq("status", BorrowContants.PASS)
+                .between("successAt", new Range<>(DateHelper.beginOfDate(yesterdayAt), todayAt))
                 .build();
-        Specification yesterdaySpecificati = Specifications.<Tender>and()
-                .between("createdAt", new Range<>(DateHelper.beginOfDate(yesterdayAt), DateHelper.endOfDate(yesterdayAt)))
-                .eq("status", TenderConstans.SUCCESS)
-                .build();
-        List<Tender> todayTender = tenderRepository.findAll(todaySpecificati);
-        List<Tender> yesterdayTender = tenderRepository.findAll(yesterdaySpecificati);
-
+        List<Borrow> borrows = borrowRepository.findAll(borrowSpecification);
+        List<Borrow> yesterdayBorrow = borrows.stream()
+                .filter(borrow ->
+                        borrow.getSuccessAt().getTime() < todayBeginOfDate.getTime())
+                .collect(Collectors.toList());
+        List<Borrow> todayBorrow = borrows.stream()
+                .filter(borrow ->
+                        borrow.getSuccessAt().getTime() > todayBeginOfDate.getTime())
+                .collect(Collectors.toList());
         Map<String, Long> statistic = Maps.newHashMap();
-        statistic.put("todayTender", CollectionUtils.isEmpty(todayTender) ? 0 : todayTender.stream().mapToLong(p -> p.getValidMoney()).sum());
-        statistic.put("yesterdayTender", CollectionUtils.isEmpty(yesterdayTender) ? 0 : yesterdayTender.stream().mapToLong(p -> p.getValidMoney()).sum());
-
+        statistic.put("todayTender", CollectionUtils.isEmpty(todayBorrow)
+                ? 0
+                : todayBorrow.stream()
+                .mapToLong(p -> p.getMoneyYes())
+                .sum());
+        statistic.put("yesterdayTender", CollectionUtils.isEmpty(yesterdayBorrow)
+                ? 0
+                : yesterdayBorrow.stream()
+                .mapToLong(p -> p.getMoneyYes())
+                .sum());
         return statistic;
     }
 }

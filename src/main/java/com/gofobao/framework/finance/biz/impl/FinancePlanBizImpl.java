@@ -725,20 +725,24 @@ public class FinancePlanBizImpl implements FinancePlanBiz {
      */
     @Override
     public ResponseEntity<PlanListWarpRes> list(Page page) {
-
         PlanListWarpRes warpRes = VoBaseResp.ok("查询成功", PlanListWarpRes.class);
-
+        if (page.getPageIndex().equals(1)) {
+            return ResponseEntity.ok(warpRes);
+        }
+        page.setPageSize(10);
         Specification<FinancePlan> specification = Specifications.<FinancePlan>and()
                 .notIn("status", statusArray.toArray())
+             /*   .eq("successAt",null)*/
                 .eq("type", 0)
                 .build();
-        List<FinancePlan> financePlans = financePlanService.findList(specification, new PageRequest(page.getPageIndex(), page.getPageSize(),
-                new Sort(Sort.Direction.DESC, "id")));
-
+        List<FinancePlan> financePlans = financePlanService.findList(specification,
+                new PageRequest(page.getPageIndex(), page.getPageSize(),
+                        new Sort(Sort.Direction.ASC, "status")));
+        warpRes.setTotalCount(10);
         if (CollectionUtils.isEmpty(financePlans)) {
             return ResponseEntity.ok(warpRes);
         }
-        List<PlanList> planLists = new ArrayList<>();
+        List<PlanList> planLists = new ArrayList<>(financePlans.size());
         //装配结果集
         financePlans.stream().forEach(p -> {
             PlanList plan = new PlanList();
@@ -763,16 +767,19 @@ public class FinancePlanBizImpl implements FinancePlanBiz {
      */
     @Override
     public ResponseEntity<VoViewFinanceServerPlanResp> financeServerlist(Page page) {
-
         VoViewFinanceServerPlanResp warpRes = VoBaseResp.ok("查询成功", VoViewFinanceServerPlanResp.class);
-
+        if (page.getPageIndex().equals(1)) {
+            return ResponseEntity.ok(warpRes);
+        }
+        page.setPageSize(10);
         Specification<FinancePlan> specification = Specifications.<FinancePlan>and()
                 .notIn("status", statusArray.toArray())
                 .eq("type", 1)
+    /*            .eq("successAt",null)*/
                 .eq("status", 1)
                 .build();
         List<FinancePlan> financePlans = financePlanService.findList(specification, new PageRequest(page.getPageIndex(), page.getPageSize(), new Sort(Sort.Direction.DESC, "id")));
-
+        warpRes.setTotalCount(10);
         if (CollectionUtils.isEmpty(financePlans)) {
             return ResponseEntity.ok(warpRes);
         }
