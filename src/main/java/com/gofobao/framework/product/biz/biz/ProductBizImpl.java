@@ -1,10 +1,12 @@
 package com.gofobao.framework.product.biz.biz;
 
 import com.github.wenhao.jpa.Specifications;
+import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.common.data.DataObject;
 import com.gofobao.framework.common.data.GeSpecification;
 import com.gofobao.framework.common.data.LeSpecification;
 import com.gofobao.framework.core.vo.VoBaseResp;
+import com.gofobao.framework.helper.StringHelper;
 import com.gofobao.framework.product.biz.ProductBiz;
 import com.gofobao.framework.product.entity.Product;
 import com.gofobao.framework.product.entity.ProductItem;
@@ -18,17 +20,18 @@ import com.gofobao.framework.product.vo.request.VoFindProductPlanList;
 import com.gofobao.framework.product.vo.response.VoViewFindProductPlanListRes;
 import com.gofobao.framework.product.vo.response.VoViewProductPlan;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
+
+import static java.util.stream.Collectors.groupingBy;
 
 /**
  * Created by Zeke on 2017/11/10.
@@ -44,7 +47,15 @@ public class ProductBizImpl implements ProductBiz {
     private ProductItemService productItemService;
     @Autowired
     private ProductService productService;
+    @Value("${qiniu.domain}")
+    private String qiNiuDomain;
 
+    /**
+     * 查询首页广富送列表
+     *
+     * @param voFindProductPlanList
+     * @return
+     */
     @Override
     public ResponseEntity<VoViewFindProductPlanListRes> findProductPlanList(VoFindProductPlanList voFindProductPlanList) {
         VoViewFindProductPlanListRes res = VoBaseResp.ok("查询成功!", VoViewFindProductPlanListRes.class);
@@ -96,11 +107,24 @@ public class ProductBizImpl implements ProductBiz {
                             .build();
                     /*商品记录*/
                     List<Product> productList = productService.findList(ps);
-
+                    if (!CollectionUtils.isEmpty(productList)) {
+                        /*子商品集合列表*/
+                        Map<Long/*productId*/, List<ProductItem>> productItemMaps = productItemList.stream().collect(groupingBy(ProductItem::getParentId));
+                        for (Product product : productList) {
+                            List<ProductItem> productItems = productItemMaps.get(product.getId());
+                            Collections.sort(productItems, Comparator.comparing(ProductItem::getDiscountPrice));
+                            ProductItem productItem = productItems.get(0);
+                            VoViewProductPlan voViewProductPlan = new VoViewProductPlan();
+                            voViewProductPlan.setName(product.getName());
+                            voViewProductPlan.setShowPrice(StringHelper.formatDouble(productItem.getDiscountPrice(), 10000 * 100, true));
+                            voViewProductPlan.setImgUrl(qiNiuDomain + productItem.getImgUrl());
+                            voViewProductPlan.setTitle(product.getTitle());
+                            showProductPlanList.add(voViewProductPlan);
+                        }
+                    }
                 }
             }
         }
-
         return ResponseEntity.ok(res);
     }
 

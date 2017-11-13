@@ -3032,6 +3032,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
             thirdBatchDealLogBiz.recordThirdBatchDealLog(batchNo, borrowRepayment.getId(),
                     ThirdBatchDealLogContants.SEND_REQUEST, true, ThirdBatchLogContants.BATCH_BAIL_REPAY, "");
         } catch (Exception e) {
+            log.error("垫付失败!",e);
             // 申请即信还款解冻
             String unfreezeOrderId = JixinHelper.getOrderId(JixinHelper.BALANCE_UNFREEZE_PREFIX);
             BalanceUnfreezeReq balanceUnfreezeReq = new BalanceUnfreezeReq();
