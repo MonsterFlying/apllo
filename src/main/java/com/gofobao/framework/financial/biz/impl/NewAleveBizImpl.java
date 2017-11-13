@@ -1,7 +1,6 @@
 package com.gofobao.framework.financial.biz.impl;
 
 import com.github.wenhao.jpa.Specifications;
-import com.gofobao.framework.api.helper.JixinFileManager;
 import com.gofobao.framework.api.helper.JixinTxDateHelper;
 import com.gofobao.framework.asset.biz.AssetBiz;
 import com.gofobao.framework.asset.service.CurrentIncomeLogService;
@@ -9,7 +8,10 @@ import com.gofobao.framework.common.assets.AssetChangeProvider;
 import com.gofobao.framework.financial.biz.NewAleveBiz;
 import com.gofobao.framework.financial.entity.NewAleve;
 import com.gofobao.framework.financial.service.NewAleveService;
-import com.gofobao.framework.helper.*;
+import com.gofobao.framework.helper.DateHelper;
+import com.gofobao.framework.helper.ExceptionEmailHelper;
+import com.gofobao.framework.helper.FtpHelper;
+import com.gofobao.framework.helper.MoneyHelper;
 import com.gofobao.framework.member.entity.UserThirdAccount;
 import com.gofobao.framework.member.service.UserService;
 import com.gofobao.framework.member.service.UserThirdAccountService;
@@ -31,8 +33,7 @@ import org.springframework.util.StringUtils;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
+import java.nio.charset.Charset;
 import java.util.Date;
 import java.util.List;
 import java.util.function.Consumer;
@@ -112,7 +113,7 @@ public class NewAleveBizImpl implements NewAleveBiz {
     @Override
     public void importDatabase(String date, String fileName) throws FileNotFoundException {
         File file = new File(String.format("%s%s%s", filePath, File.separator, fileName));
-        BufferedReader bufferedReader = Files.newReader(file, StandardCharsets.UTF_8);
+        BufferedReader bufferedReader = Files.newReader(file,  Charset.forName("gbk"));
 
         Date opDate = DateHelper.stringToDate(date, DateHelper.DATE_FORMAT_YMD_NUM);
         Date endDate = DateHelper.stringToDate("2017-09-21 00:00:00");
