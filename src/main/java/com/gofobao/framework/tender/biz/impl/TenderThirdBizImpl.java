@@ -17,6 +17,10 @@ import com.gofobao.framework.api.model.bid_cancel.BidCancelResp;
 import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.borrow.service.BorrowService;
 import com.gofobao.framework.common.constans.TypeTokenContants;
+import com.gofobao.framework.common.rabbitmq.MqConfig;
+import com.gofobao.framework.common.rabbitmq.MqHelper;
+import com.gofobao.framework.common.rabbitmq.MqQueueEnum;
+import com.gofobao.framework.common.rabbitmq.MqTagEnum;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.helper.*;
 import com.gofobao.framework.member.entity.UserThirdAccount;
@@ -32,6 +36,7 @@ import com.gofobao.framework.tender.service.TransferBuyLogService;
 import com.gofobao.framework.tender.vo.request.VoCancelThirdTenderReq;
 import com.gofobao.framework.tender.vo.request.VoCreateThirdTenderReq;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -94,6 +99,8 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
 
     @Autowired
     JixinHelper jixinHelper;
+    @Autowired
+    private MqHelper mqHelper;
 
     public ResponseEntity<VoBaseResp> createThirdTender(VoCreateThirdTenderReq voCreateThirdTenderReq) {
         Long userId = voCreateThirdTenderReq.getUserId();
@@ -272,13 +279,27 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
         }
 
         // 触发处理批次购买债权处理队列
+        //推送批次处理到队列中
+        MqConfig mqConfig = new MqConfig();
+        mqConfig.setQueue(MqQueueEnum.RABBITMQ_THIRD_BATCH);
+        mqConfig.setTag(MqTagEnum.BATCH_DEAL);
+        ImmutableMap<String, String> body = new ImmutableMap.Builder<String, String>()
+                .put(MqConfig.SOURCE_ID, StringHelper.toString(acqResMap.get("transferId")))
+                .put(MqConfig.BATCH_NO, batchCreditInvestRunCall.getBatchNo())
+                .put(MqConfig.BATCH_TYPE, String.valueOf(ThirdBatchLogContants.BATCH_FINANCE_CREDIT_INVEST))
+                .put(MqConfig.MSG_TIME, DateHelper.dateToString(new Date()))
+                .put(MqConfig.ACQ_RES, batchCreditInvestRunCall.getAcqRes())
+                .put(MqConfig.BATCH_RESP, GSON.toJson(batchCreditInvestRunCall))
+                .build();
+
+        mqConfig.setMsg(body);
         try {
-            //批次执行问题
-            thirdBatchDealBiz.batchDeal(NumberHelper.toLong(acqResMap.get("transferId")), batchCreditInvestRunCall.getBatchNo(),
-                    ThirdBatchLogContants.BATCH_FINANCE_CREDIT_INVEST, batchCreditInvestRunCall.getAcqRes(), GSON.toJson(batchCreditInvestRunCall));
-        } catch (Exception e) {
-            log.error("批次执行异常:", e);
+            log.info(String.format("TenderThirdBizImpl dealFinanceBatchCreditInvest send mq %s", GSON.toJson(body)));
+            mqHelper.convertAndSend(mqConfig);
+        } catch (Throwable e) {
+            log.error("TenderThirdBizImpl dealFinanceBatchCreditInvest send mq exception", e);
         }
+
         return ResponseEntity.ok("success");
     }
 
@@ -473,6 +494,7 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
      * @param batchCreditInvestRunCall
      * @return
      */
+    @Override
     public ResponseEntity<String> dealBatchCreditInvest(BatchCreditInvestRunCall batchCreditInvestRunCall) {
         Gson gson = new Gson();
         log.info(String.format("批量债权购买回调信息打印: %s", gson.toJson(batchCreditInvestRunCall)));
@@ -494,13 +516,27 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
         }
 
         // 触发处理批次购买债权处理队列
+        //推送批次处理到队列中
+        MqConfig mqConfig = new MqConfig();
+        mqConfig.setQueue(MqQueueEnum.RABBITMQ_THIRD_BATCH);
+        mqConfig.setTag(MqTagEnum.BATCH_DEAL);
+        ImmutableMap<String, String> body = new ImmutableMap.Builder<String, String>()
+                .put(MqConfig.SOURCE_ID, StringHelper.toString(acqResMap.get("transferId")))
+                .put(MqConfig.BATCH_NO, batchCreditInvestRunCall.getBatchNo())
+                .put(MqConfig.BATCH_TYPE, String.valueOf(ThirdBatchLogContants.BATCH_CREDIT_INVEST))
+                .put(MqConfig.MSG_TIME, DateHelper.dateToString(new Date()))
+                .put(MqConfig.ACQ_RES, batchCreditInvestRunCall.getAcqRes())
+                .put(MqConfig.BATCH_RESP, GSON.toJson(batchCreditInvestRunCall))
+                .build();
+
+        mqConfig.setMsg(body);
         try {
-            //批次执行问题
-            thirdBatchDealBiz.batchDeal(NumberHelper.toLong(acqResMap.get("transferId")), batchCreditInvestRunCall.getBatchNo(),
-                    ThirdBatchLogContants.BATCH_CREDIT_INVEST, batchCreditInvestRunCall.getAcqRes(), GSON.toJson(batchCreditInvestRunCall));
-        } catch (Exception e) {
-            log.error("批次执行异常:", e);
+            log.info(String.format("TenderThirdBizImpl dealBatchCreditInvest send mq %s", GSON.toJson(body)));
+            mqHelper.convertAndSend(mqConfig);
+        } catch (Throwable e) {
+            log.error("TenderThirdBizImpl dealBatchCreditInvest send mq exception", e);
         }
+
         return ResponseEntity.ok("success");
     }
 
@@ -620,6 +656,7 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
      *
      * @return
      */
+    @Override
     public ResponseEntity<String> thirdBatchCreditEndRunCall(HttpServletRequest request, HttpServletResponse
             response) throws Exception {
         BatchCreditInvestRunCall batchCreditInvestRunCall = jixinManager.callback(request, new TypeToken<BatchCreditInvestRunCall>() {
@@ -649,12 +686,25 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
         }
 
         //触发处理批次放款处理结果队列
+        //推送批次处理到队列中
+        MqConfig mqConfig = new MqConfig();
+        mqConfig.setQueue(MqQueueEnum.RABBITMQ_THIRD_BATCH);
+        mqConfig.setTag(MqTagEnum.BATCH_DEAL);
+        ImmutableMap<String, String> body = new ImmutableMap.Builder<String, String>()
+                .put(MqConfig.SOURCE_ID, StringHelper.toString(acqResMap.get("userId")))
+                .put(MqConfig.BATCH_NO, batchCreditInvestRunCall.getBatchNo())
+                .put(MqConfig.BATCH_TYPE, String.valueOf(ThirdBatchLogContants.BATCH_CREDIT_END))
+                .put(MqConfig.MSG_TIME, DateHelper.dateToString(new Date()))
+                .put(MqConfig.ACQ_RES, batchCreditInvestRunCall.getAcqRes())
+                .put(MqConfig.BATCH_RESP, GSON.toJson(batchCreditInvestRunCall))
+                .build();
+
+        mqConfig.setMsg(body);
         try {
-            //批次执行问题
-            thirdBatchDealBiz.batchDeal(NumberHelper.toLong(acqResMap.get("userId")), batchCreditInvestRunCall.getBatchNo(),
-                    ThirdBatchLogContants.BATCH_CREDIT_END, batchCreditInvestRunCall.getAcqRes(), GSON.toJson(batchCreditInvestRunCall));
-        } catch (Exception e) {
-            log.error("批次执行异常:", e);
+            log.info(String.format("TenderThirdBizImpl thirdBatchCreditEndRunCall send mq %s", GSON.toJson(body)));
+            mqHelper.convertAndSend(mqConfig);
+        } catch (Throwable e) {
+            log.error("TenderThirdBizImpl thirdBatchCreditEndRunCall send mq exception", e);
         }
 
         return ResponseEntity.ok("success");

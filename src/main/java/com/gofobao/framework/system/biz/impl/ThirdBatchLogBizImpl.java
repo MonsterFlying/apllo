@@ -15,6 +15,10 @@ import com.gofobao.framework.asset.service.AdvanceLogService;
 import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.borrow.service.BorrowService;
 import com.gofobao.framework.common.constans.TypeTokenContants;
+import com.gofobao.framework.common.rabbitmq.MqConfig;
+import com.gofobao.framework.common.rabbitmq.MqHelper;
+import com.gofobao.framework.common.rabbitmq.MqQueueEnum;
+import com.gofobao.framework.common.rabbitmq.MqTagEnum;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.helper.BooleanHelper;
 import com.gofobao.framework.helper.DateHelper;
@@ -35,6 +39,7 @@ import com.gofobao.framework.tender.entity.Transfer;
 import com.gofobao.framework.tender.service.TenderService;
 import com.gofobao.framework.tender.service.TransferService;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -51,6 +56,7 @@ import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -78,7 +84,10 @@ public class ThirdBatchLogBizImpl implements ThirdBatchLogBiz {
     private TransferService transferService;
     @Autowired
     private ThirdBatchDealBiz thirdBatchDealBiz;
+    @Autowired
+    private MqHelper mqHelper;
 
+    final Gson GSON = new GsonBuilder().create();
 
     /**
      * 查询批次状态
@@ -187,6 +196,7 @@ public class ThirdBatchLogBizImpl implements ThirdBatchLogBiz {
      * @return
      */
     @Transactional(rollbackFor = Exception.class)
+    @Override
     public ResponseEntity<VoBaseResp> sendThirdBatchDeal(VoSendThirdBatch voSendThirdBatch) {
         log.info("pc：触发发送即信批次处理");
         String paramStr = voSendThirdBatch.getParamStr();/* pc请求提前结清参数 */
@@ -210,14 +220,26 @@ public class ThirdBatchLogBizImpl implements ThirdBatchLogBiz {
         //批次日志记录
         ThirdBatchLog thirdBatchLog = thirdBatchLogList.get(0);
         log.info(String.format("thirdBatchLog 记录->%s", gson.toJson(thirdBatchLog)));
+        //推送批次处理到队列中
+        MqConfig mqConfig = new MqConfig();
+        mqConfig.setQueue(MqQueueEnum.RABBITMQ_THIRD_BATCH);
+        mqConfig.setTag(MqTagEnum.BATCH_DEAL);
+        ImmutableMap<String, String> body = new ImmutableMap.Builder<String, String>()
+                .put(MqConfig.SOURCE_ID, StringHelper.toString(thirdBatchLog.getSourceId()))
+                .put(MqConfig.BATCH_NO, thirdBatchLog.getBatchNo())
+                .put(MqConfig.BATCH_TYPE, String.valueOf(thirdBatchLog.getType()))
+                .put(MqConfig.MSG_TIME, DateHelper.dateToString(new Date()))
+                .put(MqConfig.ACQ_RES, thirdBatchLog.getAcqRes())
+                .put(MqConfig.BATCH_RESP, "")
+                .build();
 
+        mqConfig.setMsg(body);
         try {
-            //批次执行问题
-            thirdBatchDealBiz.batchDeal(thirdBatchLog.getSourceId(), thirdBatchLog.getBatchNo(), thirdBatchLog.getType(),
-                    thirdBatchLog.getAcqRes(), "");
+            log.info(String.format("ThirdBatchLogBizImpl sendThirdBatchDeal send mq %s", GSON.toJson(body)));
+            mqHelper.convertAndSend(mqConfig);
             return ResponseEntity.ok(VoBaseResp.ok("处理成功!"));
-        } catch (Exception e) {
-            log.error("批次执行异常:", e);
+        } catch (Throwable e) {
+            log.error("ThirdBatchLogBizImpl sendThirdBatchDeal send mq exception", e);
             return ResponseEntity.ok(VoBaseResp.ok("处理失败!"));
         }
     }

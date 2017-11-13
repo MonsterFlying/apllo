@@ -21,6 +21,9 @@ import com.gofobao.framework.borrow.service.BorrowService;
 import com.gofobao.framework.common.assets.AssetChangeProvider;
 import com.gofobao.framework.common.assets.AssetChangeTypeEnum;
 import com.gofobao.framework.common.rabbitmq.MqConfig;
+import com.gofobao.framework.common.rabbitmq.MqHelper;
+import com.gofobao.framework.common.rabbitmq.MqQueueEnum;
+import com.gofobao.framework.common.rabbitmq.MqTagEnum;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.helper.*;
 import com.gofobao.framework.helper.project.SecurityHelper;
@@ -93,6 +96,8 @@ public class FinancePlanProvider {
     private ThirdBatchLogBiz thirdBatchLogBiz;
     @Autowired
     private ThirdBatchDealBiz thirdBatchDealBiz;
+    @Autowired
+    private MqHelper mqHelper;
 
     /**
      * n
@@ -135,13 +140,27 @@ public class FinancePlanProvider {
         } else if (flag == ThirdBatchLogContants.SUCCESS) {
             //墊付批次处理
             //触发处理批次放款处理结果队列
+            //推送批次处理到队列中
+            MqConfig mqConfig = new MqConfig();
+            mqConfig.setQueue(MqQueueEnum.RABBITMQ_THIRD_BATCH);
+            mqConfig.setTag(MqTagEnum.BATCH_DEAL);
+            ImmutableMap<String, String> body = new ImmutableMap.Builder<String, String>()
+                    .put(MqConfig.SOURCE_ID, StringHelper.toString(thirdBatchLog.getSourceId()))
+                    .put(MqConfig.BATCH_NO, thirdBatchLog.getBatchNo())
+                    .put(MqConfig.BATCH_TYPE, String.valueOf(thirdBatchLog.getType()))
+                    .put(MqConfig.MSG_TIME, DateHelper.dateToString(new Date()))
+                    .put(MqConfig.ACQ_RES, thirdBatchLog.getAcqRes())
+                    .put(MqConfig.BATCH_RESP, "")
+                    .build();
+
+            mqConfig.setMsg(body);
             try {
-                //批次执行问题
-                thirdBatchDealBiz.batchDeal(thirdBatchLog.getSourceId(), thirdBatchLog.getBatchNo(), thirdBatchLog.getType(),
-                        thirdBatchLog.getAcqRes(), "");
-            } catch (Exception e) {
-                log.error("financePlanProvider againVerifyFinanceTransfer 批次处理执行异常:", e);
+                log.info(String.format("financePlanProvider againVerifyFinanceTransfer send mq %s", GSON.toJson(body)));
+                mqHelper.convertAndSend(mqConfig);
+            } catch (Throwable e) {
+                log.error("financePlanProvider againVerifyFinanceTransfer send mq exception", e);
             }
+
             log.info("重新触发即信批次回调处理结束");
             return false;
         }

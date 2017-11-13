@@ -175,7 +175,7 @@ public class UserAdressBizImpl implements UserAddressBiz {
 
 
     /**
-     * 设置默认地址
+     * 删除地址
      *
      * @param voDeleteUserAddress
      * @return
@@ -229,7 +229,7 @@ public class UserAdressBizImpl implements UserAddressBiz {
 
 
     /**
-     * 查询收货地址详情
+     * 查询收货地址详情列表
      *
      * @param voFindUserAddressList
      * @return
