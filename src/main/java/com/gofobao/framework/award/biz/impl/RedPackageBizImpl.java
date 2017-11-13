@@ -376,6 +376,7 @@ public class RedPackageBizImpl implements RedPackageBiz {
         if (result) {
             // 更新红包
             marketingRedpackRecord.setState(1);
+            marketingRedpackRecord.setOpenTime(nowDate);
             marketingRedpackRecordService.save(marketingRedpackRecord);
             //站内信数据装配
             Notices notices = new Notices();

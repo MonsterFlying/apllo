@@ -166,7 +166,7 @@ public class FtpHelper {
             }
             return true;
         } catch (Exception e) {
-            log.error("sftp异常", e);
+            log.error("SFTP文件异常", e);
             return false;
         } finally {
             if (!ObjectUtils.isEmpty(session)) {
