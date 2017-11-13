@@ -11,7 +11,7 @@ import com.gofobao.framework.comment.repository.TopicTypeRepository;
 import com.gofobao.framework.comment.service.TopicCommentService;
 import com.gofobao.framework.comment.vo.request.VoTopicCommentReq;
 import com.gofobao.framework.comment.vo.response.VoTopicCommentListResp;
-import com.gofobao.framework.comment.vo.response.VoTopicCommentResp;
+import com.gofobao.framework.comment.vo.response.VoTopicCommentItem;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.member.entity.Users;
@@ -49,24 +49,25 @@ public class TopicCommentServiceImpl implements TopicCommentService {
         List<TopicComment> topicComments = topicCommentRepository.findByTopicIdOrderByIdAsc(topicId, pageable);
         VoTopicCommentListResp voTopicCommentListResp = VoBaseResp.ok("查询评论成功", VoTopicCommentListResp.class);
         for (TopicComment topicComment : topicComments) {
-            VoTopicCommentResp voTopicCommentResp = new VoTopicCommentResp();
-            voTopicCommentResp.setContent(topicComment.getContent());
-            voTopicCommentResp.setUserName(topicComment.getUserName());
-            voTopicCommentResp.setUserIconUrl(topicComment.getUserIconUrl());
+            VoTopicCommentItem voTopicCommentItem = new VoTopicCommentItem();
+            voTopicCommentItem.setContent(topicComment.getContent());
+            voTopicCommentItem.setUserName(topicComment.getUserName());
+             // image.......img
+            voTopicCommentItem.setUserIconUrl(topicComment.getUserIconUrl());
             //评论时间分析
             long nowTime = Calendar.getInstance().getTimeInMillis();
             long publishTime = topicComment.getCreateDate().getTime();
             long between = nowTime - publishTime;
             if (between > DateHelper.MILLIS_PER_DAY * 7) {
-                voTopicCommentResp.setTime("1周前");
+                voTopicCommentItem.setTime("1周前");
             } else if (between >= DateHelper.MILLIS_PER_DAY) {
-                voTopicCommentResp.setTime(between / DateHelper.MILLIS_PER_DAY + "天前");
+                voTopicCommentItem.setTime(between / DateHelper.MILLIS_PER_DAY + "天前");
             } else if (between >= DateHelper.MILLIS_PER_HOUR) {
-                voTopicCommentResp.setTime(between / DateHelper.MILLIS_PER_HOUR + "小时前");
+                voTopicCommentItem.setTime(between / DateHelper.MILLIS_PER_HOUR + "小时前");
             } else if (between >= DateHelper.MILLIS_PER_MINUTE) {
-                voTopicCommentResp.setTime(between / DateHelper.MILLIS_PER_MINUTE + "分钟前");
+                voTopicCommentItem.setTime(between / DateHelper.MILLIS_PER_MINUTE + "分钟前");
             }
-            voTopicCommentListResp.getVoTopicCommentRespList().add(voTopicCommentResp);
+            voTopicCommentListResp.getVoTopicCommentItemList().add(voTopicCommentItem);
         }
         return ResponseEntity.ok(voTopicCommentListResp);
     }
@@ -93,8 +94,11 @@ public class TopicCommentServiceImpl implements TopicCommentService {
         topicComment.setUpdateDate(nowDate);
         topicComment.setTopicTypeId(voTopicCommentReq.getTopicTypeId());
         // 用户内容铭感词过滤
+
         FilteredResult filteredResult = WordFilterUtil.filterText(voTopicCommentReq.getContent(), '*');
         topicComment.setContent(filteredResult.getFilteredContent());
+        TopicComment commentResult = topicCommentRepository.save(topicComment);
+        Preconditions.checkNotNull(commentResult,"comment is fail");
         return ResponseEntity.ok(VoBaseResp.ok("发布成功", VoBaseResp.class));
     }
 }

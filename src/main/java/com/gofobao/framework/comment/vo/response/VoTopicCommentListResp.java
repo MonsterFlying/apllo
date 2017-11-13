@@ -13,5 +13,6 @@ import java.util.List;
 @Data
 @ApiModel
 public class VoTopicCommentListResp extends VoBaseResp {
-    private List<VoTopicCommentResp> voTopicCommentRespList = Lists.newArrayList();
+
+    private List<VoTopicCommentItem> voTopicCommentItemList = Lists.newArrayList();
 }

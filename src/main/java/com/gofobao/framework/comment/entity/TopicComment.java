@@ -24,13 +24,13 @@ public class TopicComment implements Serializable {
     @GeneratedValue
     private long id;
 
-    private Integer topicId;
+    private long topicId;
 
-    private Integer topicTypeId;
+    private long topicTypeId;
 
     private String content;
 
-    private Integer userId;
+    private long userId;
 
     private String userName;
 
@@ -38,7 +38,7 @@ public class TopicComment implements Serializable {
 
     private Integer topTotalNum;
 
-    private Integer contentNum;
+    private Integer contentTotalNum;
 
     private Integer del;
 

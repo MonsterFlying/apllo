@@ -26,7 +26,7 @@ public class Topic implements Serializable {
 
     private String title;
 
-    private Integer topicTypeId;
+    private long topicTypeId;
 
     private long userId;
 

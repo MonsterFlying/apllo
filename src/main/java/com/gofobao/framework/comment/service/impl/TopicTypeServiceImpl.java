@@ -5,6 +5,7 @@ import com.gofobao.framework.comment.entity.TopicType;
 import com.gofobao.framework.comment.repository.TopicTypeRepository;
 import com.gofobao.framework.comment.service.TopicTypeService;
 import com.gofobao.framework.comment.vo.request.VoTopicTypeReq;
+import com.gofobao.framework.comment.vo.response.VoTopicListResp;
 import com.gofobao.framework.comment.vo.response.VoTopicTypeListResp;
 import com.gofobao.framework.comment.vo.response.VoTopicTypeResp;
 import com.gofobao.framework.core.vo.VoBaseResp;
@@ -75,9 +76,21 @@ public class TopicTypeServiceImpl implements TopicTypeService {
     @Override
     public ResponseEntity<VoTopicTypeListResp> listTopicType() {
         List<TopicType> topicTypes = topicTypeRepository.findAll() ;
+        VoTopicTypeListResp voTopicTypeListResp = VoBaseResp.ok("查询主题模块成功", VoTopicTypeListResp.class) ;
+        for (TopicType topicType : topicTypes) {
+            VoTopicTypeResp voTopicTypeResp = new VoTopicTypeResp() ;
+            voTopicTypeResp.setTopicTypeName(topicType.getTopicTypeName()) ;
+            voTopicTypeResp.setAdminId(topicType.getAdminId()) ;
+            voTopicTypeResp.setHotState(topicType.getHotState()) ;
+            voTopicTypeResp.setNewState(topicType.getNewState()) ;
+            voTopicTypeResp.setDel(topicType.getDel()) ;
+            voTopicTypeResp.setIconUrl(topicType.getIconUrl());
+            voTopicTypeResp.setTopicTotalNum(topicType.getTopicTotalNum());
+            voTopicTypeResp.setCreateDate(topicType.getCreateDate());
+            voTopicTypeResp.setUpdateDate(topicType.getUpdateDate());
+            voTopicTypeListResp.getVoTopicTypeRespList().add(voTopicTypeResp);
+        }
 
-        VoTopicTypeListResp voTopicTypeListResp = VoBaseResp.ok("查询主题模块成功", VoTopicTypeListResp.class);
-        voTopicTypeListResp.setVoTopicTypeRespList(topicTypes);
-        return  ResponseEntity.ok(voTopicTypeListResp);
+        return  ResponseEntity.ok(voTopicTypeListResp) ;
     }
 }

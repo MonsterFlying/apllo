@@ -3,6 +3,8 @@ package com.gofobao.framework.comment.service;
 import com.gofobao.framework.comment.vo.request.VoTopicReq;
 import com.gofobao.framework.comment.vo.response.VoTopicListResp;
 import com.gofobao.framework.comment.vo.response.VoTopicResp;
+import com.gofobao.framework.core.vo.VoBaseResp;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 
 import javax.servlet.http.HttpServletRequest;
@@ -18,7 +20,7 @@ public interface TopicService {
      * @param httpServletRequest
      * @return
      */
-    ResponseEntity<VoTopicResp> publishTopic(VoTopicReq voTopicReq, Long userId, HttpServletRequest httpServletRequest);
+    ResponseEntity<VoBaseResp> publishTopic(VoTopicReq voTopicReq, Long userId, HttpServletRequest httpServletRequest);
 
     /**
      * 删除主题
@@ -32,5 +34,12 @@ public interface TopicService {
      * @param topicTypeId
      * @return
      */
-    ResponseEntity<VoTopicListResp> listTopic(Integer topicTypeId);
+    ResponseEntity<VoTopicListResp> listTopic(long topicTypeId, Pageable pageable);
+
+    /**
+     * 查询帖子详情
+     * @param topicId
+     * @return
+     */
+    ResponseEntity<VoTopicResp> findTopic(long topicId);
 }

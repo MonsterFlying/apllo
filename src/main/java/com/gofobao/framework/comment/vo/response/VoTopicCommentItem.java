@@ -10,7 +10,7 @@ import lombok.Data;
  */
 @Data
 @ApiModel
-public class VoTopicCommentResp extends VoBaseResp {
+public class VoTopicCommentItem {
     @ApiModelProperty("评论内容")
     private String content = "";
 

@@ -26,31 +26,4 @@ public class VoTopicReq  {
     @Length(max = 120,message = "内容最多为140字")
     private String content;
 
-   /* @ApiModelProperty("图片1")
-    private String img1;
-
-    @ApiModelProperty("图片2")
-    private String img2;
-
-    @ApiModelProperty("图片3")
-    private String img3;
-
-    @ApiModelProperty("图片4")
-    private String img4;
-
-    @ApiModelProperty("图片5")
-    private String img5;
-
-    @ApiModelProperty("图片6")
-    private String img6;
-
-    @ApiModelProperty("图片7")
-    private String img7;
-
-    @ApiModelProperty("图片8")
-    private String img8;
-
-    @ApiModelProperty("图片9")
-    private String img9;
-*/
 }

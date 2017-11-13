@@ -33,7 +33,7 @@ public class TopicTypeController {
         return topicTypeService.delTopicType(id,userId);
     }
 
-    @GetMapping("/pub/comment/topicType/list")
+    @GetMapping("/comment/topicType/list")
     public ResponseEntity<VoTopicTypeListResp> listTopicType(){
         return topicTypeService.listTopicType();
     }
