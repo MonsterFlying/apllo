@@ -253,6 +253,7 @@ public class UserAdressBizImpl implements UserAddressBiz {
         List<VoUserAddress> showUserAddresses = new ArrayList<>();
         userAddressList.stream().forEach(userAddress -> {
             VoUserAddress voUserAddress = new VoUserAddress();
+            voUserAddress.setAddressId(userAddress.getId());
             voUserAddress.setName(userAddress.getName());
             voUserAddress.setPhone(userAddress.getPhone());
             voUserAddress.setIsDefault(userAddress.getIsDefault());

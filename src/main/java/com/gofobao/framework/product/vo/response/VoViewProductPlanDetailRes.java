@@ -1,5 +1,6 @@
 package com.gofobao.framework.product.vo.response;
 
+import com.gofobao.framework.core.vo.VoBaseResp;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
@@ -11,7 +12,7 @@ import java.util.List;
  */
 @ApiModel
 @Data
-public class VoProductPlanDetail {
+public class VoViewProductPlanDetailRes extends VoBaseResp {
     @ApiModelProperty("商品名")
     private String name;
     @ApiModelProperty("子标题")
@@ -24,4 +25,6 @@ public class VoProductPlanDetail {
     private String discountPrice;
     @ApiModelProperty("sku集合")
     private List<VoSku> skuList;
+    @ApiModelProperty("商品详情")
+    private String details;
 }

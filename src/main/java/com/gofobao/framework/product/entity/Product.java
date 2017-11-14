@@ -18,6 +18,7 @@ public class Product {
     @Id
     @GeneratedValue
     private Long id;
+    private Long pcId;
     private String name;
     private String title;
     private String imgUrl;

@@ -738,6 +738,7 @@ public class FinancePlanBizImpl implements FinancePlanBiz {
         List<FinancePlan> financePlans = financePlanService.findList(specification,
                 new PageRequest(page.getPageIndex(), page.getPageSize(),
                         new Sort(Sort.Direction.ASC, "status")));
+
         warpRes.setTotalCount(10);
         if (CollectionUtils.isEmpty(financePlans)) {
             return ResponseEntity.ok(warpRes);

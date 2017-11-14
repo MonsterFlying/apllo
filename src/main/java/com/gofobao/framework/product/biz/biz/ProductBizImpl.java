@@ -16,8 +16,10 @@ import com.gofobao.framework.product.service.ProductItemService;
 import com.gofobao.framework.product.service.ProductPlanService;
 import com.gofobao.framework.product.service.ProductService;
 import com.gofobao.framework.product.vo.request.VoFindProductPlanList;
+import com.gofobao.framework.product.vo.request.VoProductPlanDetail;
 import com.gofobao.framework.product.vo.response.VoViewFindProductPlanListRes;
 import com.gofobao.framework.product.vo.response.VoProductPlan;
+import com.gofobao.framework.product.vo.response.VoViewProductPlanDetailRes;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.PageRequest;
@@ -47,6 +49,20 @@ public class ProductBizImpl implements ProductBiz {
     private ProductService productService;
     @Value("${qiniu.domain}")
     private String qiNiuDomain;
+
+    /**
+     * 查询广富送商品详情
+     *
+     * @param voProductPlanDetail
+     * @return
+     */
+    @Override
+    public ResponseEntity<VoViewProductPlanDetailRes> findProductDetail(VoProductPlanDetail voProductPlanDetail) {
+        VoViewProductPlanDetailRes voViewProductPlanDetailRes = VoBaseResp.ok("查询成功!", VoViewProductPlanDetailRes.class);
+        /**/
+        long productId = voProductPlanDetail.getProductId();
+        return ResponseEntity.ok(voViewProductPlanDetailRes);
+    }
 
     /**
      * 查询首页广富送列表
@@ -113,6 +129,7 @@ public class ProductBizImpl implements ProductBiz {
                             Collections.sort(productItems, Comparator.comparing(ProductItem::getDiscountPrice));
                             ProductItem productItem = productItems.get(0);
                             VoProductPlan voProductPlan = new VoProductPlan();
+                            voProductPlan.setProductId(product.getId());
                             voProductPlan.setName(product.getName());
                             voProductPlan.setShowPrice(StringHelper.formatDouble(productItem.getDiscountPrice(), 10000 * 100, true));
                             voProductPlan.setImgUrl(qiNiuDomain + productItem.getImgUrl());
