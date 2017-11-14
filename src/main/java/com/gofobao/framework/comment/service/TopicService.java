@@ -45,4 +45,12 @@ public interface TopicService {
     ResponseEntity<VoTopicResp> findTopic(long topicId);
 
     Topic findById(Long soucreId);
+
+    /**
+     * 批量修改帖子冗余的用户名和头像
+     * @param userId
+     * @param username
+     * @param avatar
+     */
+    void batchUpdateRedundancy(Long userId, String username, String avatar) throws Exception;
 }

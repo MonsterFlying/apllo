@@ -17,10 +17,12 @@ import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.member.entity.Users;
 import com.gofobao.framework.member.repository.UsersRepository;
 import com.google.common.base.Preconditions;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 import java.util.Calendar;
 import java.util.Date;
@@ -30,6 +32,7 @@ import java.util.List;
  * Created by xin on 2017/11/10.
  */
 @Service
+@Slf4j
 public class TopicCommentServiceImpl implements TopicCommentService {
     @Autowired
     private TopicCommentRepository topicCommentRepository;
@@ -44,7 +47,6 @@ public class TopicCommentServiceImpl implements TopicCommentService {
     private UsersRepository usersRepository;
 
     @Override
-    @SuppressWarnings("all")
     public ResponseEntity<VoTopicCommentListResp> listDetail(long topicId, Pageable pageable) {
         List<TopicComment> topicComments = topicCommentRepository.findByTopicIdOrderByIdAsc(topicId, pageable);
         VoTopicCommentListResp voTopicCommentListResp = VoBaseResp.ok("查询评论成功", VoTopicCommentListResp.class);
@@ -105,5 +107,17 @@ public class TopicCommentServiceImpl implements TopicCommentService {
     @Override
     public TopicComment findById(Long id) {
         return topicCommentRepository.findOne(id);
+    }
+
+    @Override
+    public void batchUpdateRedundancy(Long userId, String username, String avatar) throws Exception {
+        if (StringUtils.isEmpty(username) || StringUtils.isEmpty(avatar)) {
+            throw new Exception("参数错误!");
+        }
+        if (!StringUtils.isEmpty(username)) {
+            topicCommentRepository.batchUpateUsernameByUserId(userId, username);
+        } else {
+            topicCommentRepository.batchUpateAvatarByUserId(userId, avatar);
+        }
     }
 }

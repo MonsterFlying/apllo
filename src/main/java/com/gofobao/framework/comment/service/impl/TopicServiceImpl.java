@@ -223,4 +223,19 @@ public class TopicServiceImpl implements TopicService {
     public Topic findById(Long soucreId) {
         return topicRepository.findOne(soucreId);
     }
+
+    @Override
+    public void batchUpdateRedundancy(@NonNull Long userId, String username, String avatar) throws Exception {
+        if (StringUtils.isEmpty(username) || StringUtils.isEmpty(avatar)) {
+            throw new Exception("参数错误!");
+        }
+
+        if (!StringUtils.isEmpty(username)) {
+            log.info("=========批量修改用户名==========");
+            topicRepository.batchUpateUsernameByUserId(userId, username);
+        } else {
+            log.info("=========批量修改头像==========");
+            topicRepository.batchUpateAvatarByUserId(userId, avatar);
+        }
+    }
 }

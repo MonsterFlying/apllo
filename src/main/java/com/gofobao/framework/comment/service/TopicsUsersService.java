@@ -14,4 +14,11 @@ public interface TopicsUsersService {
      * @return
      */
     TopicsUsers findByUserId(Long userId);
+
+    /**
+     * 保存
+     * @param topicsUsers
+     * @return
+     */
+    TopicsUsers save(TopicsUsers topicsUsers);
 }

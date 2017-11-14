@@ -3,7 +3,6 @@ package com.gofobao.framework.comment.entity;
 import lombok.Data;
 import org.hibernate.annotations.DynamicInsert;
 import org.hibernate.annotations.DynamicUpdate;
-import org.springframework.format.annotation.DateTimeFormat;
 
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
@@ -16,45 +15,22 @@ import java.util.Date;
  * Created by xin on 2017/11/8.
  */
 @Entity
-@Table(name = "gfb_topics_reply")
+@Table(name = "gfb_topics_notices ")
 @DynamicInsert
 @DynamicUpdate
 @Data
-public class TopicReply implements Serializable {
+public class TopicsNotices implements Serializable {
     @Id
     @GeneratedValue
     private Long id;
-
-    private Long topicId;
-
-    private Long topicComentId;
-
-    private Long topicTypeId;
-
-    private Long topicReplyId;
-
-    private Integer replyType;
-
-    private String content;
-
-    private Integer topTotalNum;
-
     private Long userId;
-
-    private String userName;
-
-    private String userIconUrl;
-
+    private Long sourceId;
+    private Integer sourceType;
     private Long forUserId;
-
     private String forUserName;
-
+    private String content;
     private String forUserIconUrl;
-
-    private Integer del;
-
+    private Integer viewState;
     private Date createDate;
-
     private Date updateDate;
-
 }

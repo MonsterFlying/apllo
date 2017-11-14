@@ -8,6 +8,7 @@ import com.gofobao.framework.core.vo.VoBaseResp;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 /**
  * Created by xin on 2017/11/13.
@@ -27,6 +28,20 @@ public class TopicReplyServiceImpl implements TopicReplyService {
     @Override
     public TopicReply findById(Long id) {
         return topicReplyRepository.findOne(id);
+    }
+
+    @Override
+    public void batchUpdateRedundancy(Long userId, String username, String avatar) throws Exception {
+        if (StringUtils.isEmpty(username) || StringUtils.isEmpty(avatar)) {
+            throw new Exception("参数错误!");
+        }
+        if (!StringUtils.isEmpty(username)) {
+            topicReplyRepository.batchUpateUsernameByUserId(userId, username);
+            topicReplyRepository.batchUpateUsernameByForUserId(userId, username);
+        } else {
+            topicReplyRepository.batchUpateAvatarByUserId(userId, avatar);
+            topicReplyRepository.batchUpateAvatarByForUserId(userId, avatar);
+        }
     }
 
 

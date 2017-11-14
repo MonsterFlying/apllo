@@ -35,4 +35,12 @@ public interface TopicCommentService {
      * @return
      */
     TopicComment findById(Long id);
+
+    /**
+     * 批量修改冗余数据
+     * @param userId
+     * @param username
+     * @param avatar
+     */
+    void batchUpdateRedundancy(Long userId, String username, String avatar) throws Exception;
 }

@@ -8,6 +8,7 @@ import com.gofobao.framework.helper.RandomUtil;
 import com.gofobao.framework.member.entity.Users;
 import com.gofobao.framework.member.service.UserService;
 import com.google.common.base.Preconditions;
+import lombok.NonNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
@@ -41,7 +42,7 @@ public class TopicsUsersServiceImpl implements TopicsUsersService {
             TopicsUsers save = new TopicsUsers();
             String username = users.getUsername();
             if (StringUtils.isEmpty(username)) {
-                username = "m_" + RandomUtil.getRandomString(5) + userId;
+                username = "a_z_" + RandomUtil.getRandomString(5) + userId;
             }
             save.setUsername(username);
             save.setAvatar(users.getAvatarPath());
@@ -56,5 +57,10 @@ public class TopicsUsersServiceImpl implements TopicsUsersService {
         } else {
             return topicsUsers;
         }
+    }
+
+    @Override
+    public TopicsUsers save(@NonNull TopicsUsers topicsUsers) {
+        return topicsUsersRepository.save(topicsUsers);
     }
 }

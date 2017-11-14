@@ -20,5 +20,11 @@ public interface TopicReplyService {
 
     TopicReply findById(Long id);
 
-
+    /**
+     * 修改冗余数据
+     * @param userId
+     * @param username
+     * @param avatar
+     */
+    void batchUpdateRedundancy(Long userId, String username, String avatar) throws Exception;
 }
