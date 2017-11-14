@@ -15,22 +15,21 @@ import java.util.Date;
  * Created by xin on 2017/11/8.
  */
 @Entity
-@Table(name = "gfb_topics_report")
+@Table(name = "gfb_topics_users")
 @DynamicInsert
 @DynamicUpdate
 @Data
-public class TopicReport implements Serializable {
+public class TopicsUsers implements Serializable {
     @Id
     @GeneratedValue
-    private long id;
-    private Long sourceId;
-    private Integer sourceType;
-    private Integer reportType;
+    private Long id;
     private Long userId;
-    private Long reportUserId;
-    private Integer responseState;
-    private String responseContent;
-    private Date responseDate;
+    private String username;
+    private String avatar;
+    private Integer forceState;
+    private Long levelId;
+    private Long useIntegral;
+    private Long noUseIntegral;
     private Date createDate;
     private Date updateDate;
 }
