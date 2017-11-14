@@ -14,11 +14,15 @@ import java.util.Date;
  * Created by xin on 2017/11/8.
  */
 @Repository
-public interface TopicTypeRepository extends JpaRepository<TopicType,Long>,JpaSpecificationExecutor<TopicType> {
+public interface TopicTypeRepository extends JpaRepository<TopicType, Long>, JpaSpecificationExecutor<TopicType> {
     TopicType findById(Long id);
 
     @Modifying
     @Query(value = "update gfb_topic_type set topic_total_num = topic_total_num + 1 , update_date = ?2 where id = ?1 ",
-    nativeQuery = true)
+            nativeQuery = true)
     int updateTopicTotalNum(long topicTypeId, Date nowDate);
+
+    @Modifying
+    @Query(value = "update gfb_topic_type  set del = 1 where id=?1", nativeQuery = true)
+    Integer updateDel(long id);
 }

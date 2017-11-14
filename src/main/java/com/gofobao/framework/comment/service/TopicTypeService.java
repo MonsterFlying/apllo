@@ -6,6 +6,7 @@ import com.gofobao.framework.comment.vo.request.VoTopicTypeReq;
 import com.gofobao.framework.comment.vo.response.VoTopicResp;
 import com.gofobao.framework.comment.vo.response.VoTopicTypeListResp;
 import com.gofobao.framework.comment.vo.response.VoTopicTypeResp;
+import com.gofobao.framework.core.vo.VoBaseResp;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
@@ -21,14 +22,14 @@ public interface TopicTypeService {
      * @param voDoAgainVerifyReq
      * @return
      */
-    ResponseEntity<VoTopicTypeResp> publishTopicType( VoDoAgainVerifyReq voDoAgainVerifyReq);
+    ResponseEntity<VoBaseResp> publishTopicType( VoDoAgainVerifyReq voDoAgainVerifyReq);
 
     /**
      * 删除主题类型
      * @param id
      * @return
      */
-    ResponseEntity<VoTopicTypeResp> delTopicType(long id,long userId);
+    ResponseEntity<VoBaseResp> delTopicType(long id, long userId);
 
     /**
      * 查询主题板块列表

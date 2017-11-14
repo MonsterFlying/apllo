@@ -14,7 +14,7 @@ import java.util.List;
  * Created by xin on 2017/11/10.
  */
 @Repository
-public interface TopicCommentRepository extends JpaRepository<TopicComment,Long>,JpaSpecificationExecutor<TopicComment> {
+public interface TopicCommentRepository extends JpaRepository<TopicComment, Long>, JpaSpecificationExecutor<TopicComment> {
 
     List<TopicComment> findByTopicIdOrderByIdAsc(long topicId, Pageable pageable);
 
@@ -25,4 +25,5 @@ public interface TopicCommentRepository extends JpaRepository<TopicComment,Long>
     @Modifying
     @Query(value = "UPDATE gfb_topics_comment SET user_icon_url = ?2 WHERE user_id = ?1", nativeQuery = true)
     Integer batchUpateAvatarByUserId(Long userId, String avatar);
+    List<TopicComment> findByTopicIdAndDelOrderByIdAsc(long topicId, int i, Pageable pageable);
 }

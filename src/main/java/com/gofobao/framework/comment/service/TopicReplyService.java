@@ -28,6 +28,14 @@ public interface TopicReplyService {
      */
     void batchUpdateRedundancy(Long userId, String username, String avatar) throws Exception;
 
+
+    /**
+     * 查询回复
+     * @param topicCommentId
+     * @return
+     */
+    ResponseEntity<VoTopicReplyListResp> listReply(Long topicCommentId);
+
     /**
      *  保存
      * @param topicReply

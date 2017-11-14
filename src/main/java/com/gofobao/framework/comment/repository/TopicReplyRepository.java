@@ -7,6 +7,8 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
+
 /**
  * Created by xin on 2017/11/13.
  */
@@ -28,4 +30,5 @@ public interface TopicReplyRepository extends JpaRepository<TopicReply, Long>, J
     @Modifying
     @Query(value = "UPDATE gfb_topics_reply SET for_user_icon_url = ?2 WHERE for_user_id = ?1", nativeQuery = true)
     Integer batchUpateAvatarByForUserId(Long userId, String avatar);
+    List<TopicReply> findByTopicCommentId(Long topicCommentId);
 }

@@ -5,14 +5,15 @@ import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
-import java.util.Date;
-
 /**
  * Created by xin on 2017/11/8.
  */
 @Data
 @ApiModel("主题")
 public class VoTopicResp extends VoBaseResp {
+    @ApiModelProperty("帖子Id")
+    private Long id;
+
     @ApiModelProperty("主题标题")
     private String title = "";
 
@@ -60,4 +61,8 @@ public class VoTopicResp extends VoBaseResp {
 
     @ApiModelProperty("主题内容")
     private String content = "";
+
+    @ApiModelProperty("是否点赞过")
+    private boolean topState = false;
+
 }

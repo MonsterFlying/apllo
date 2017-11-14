@@ -2,6 +2,7 @@ package com.gofobao.framework.helper;
 
 import org.apache.commons.lang3.Validate;
 import org.apache.commons.lang3.time.DateUtils;
+import org.apache.poi.ss.formula.functions.T;
 import org.springframework.util.ObjectUtils;
 
 import java.text.SimpleDateFormat;
@@ -700,6 +701,27 @@ public class DateHelper {
             return dateFormat.format(nowDate);
         } catch (Throwable e) {
             return null;
+        }
+    }
+
+    /**
+     * 获取距今过去的时间
+     * @param time
+     * @return
+     */
+    public static String getPastTime(long time){
+        long nowTime = Calendar.getInstance().getTimeInMillis();
+        long between = nowTime - time;
+        if (between > DateHelper.MILLIS_PER_DAY * 7) {
+            return "1周前";
+        } else if (between >= DateHelper.MILLIS_PER_DAY) {
+            return between/DateHelper.MILLIS_PER_DAY+"天前";
+        } else if (between >= DateHelper.MILLIS_PER_HOUR) {
+            return between/DateHelper.MILLIS_PER_HOUR+"小时前";
+        } else if (between >= DateHelper.MILLIS_PER_MINUTE) {
+            return between/DateHelper.MILLIS_PER_MINUTE+"分钟前";
+        }else {
+            return "1分钟前";
         }
     }
 

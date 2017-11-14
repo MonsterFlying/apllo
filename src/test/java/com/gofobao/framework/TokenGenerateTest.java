@@ -27,7 +27,7 @@ public class TokenGenerateTest {
      */
     @Test
     public void generateTokenTest() {
-        final long userId = 44914L;
+        final long userId = 129751L;
         Users user = userService.findById(userId);
         String username = user.getUsername();
         if (StringUtils.isEmpty(username)) username = user.getPhone();
