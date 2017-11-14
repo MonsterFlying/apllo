@@ -25,13 +25,13 @@ public class TopicReply implements Serializable {
     @GeneratedValue
     private Integer id;
 
-    private long topicId;
+    private Long topicId;
 
-    private long topicCommentId;
+    private Long topicComentId;
 
-    private long topicTypeId;
+    private Long topicTypeId;
 
-    private long topicReplyId;
+    private Long topicReplyId;
 
     private Integer replyType;
 
@@ -39,7 +39,7 @@ public class TopicReply implements Serializable {
 
     private Integer topTotalNum;
 
-    private Integer userId;
+    private Long userId;
 
     private String userName;
 

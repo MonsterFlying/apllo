@@ -1079,6 +1079,70 @@ CREATE TABLE gfb_topics_top_record (
 )  CHARSET=UTF8MB4 , COMMENT '点赞记录标';
 
 
+-- 论坛举报表
+DROP TABLE IF EXISTS gfb_topics_report;
+CREATE TABLE gfb_topics_report (
+  id BIGINT AUTO_INCREMENT COMMENT '帖子举报唯一标识',
+  source_id BIGINT NOT NULL DEFAULT 0 COMMENT '点赞来源',
+  source_type INT NOT NULL DEFAULT 0 COMMENT '点赞类型 0:主题点赞, 1:评论点赞, 2:回复点赞',
+  report_type INT NOT NULL DEFAULT 0 COMMENT '举报类型 0: 广告, 1: 政治有害类, 2: 暴恐类. 3:淫秽色情类, 4:赌博类, 5:诈骗类,  6:其他有害类',
+  user_id INT NOT NULL DEFAULT 0 COMMENT '举报用户ID',
+  report_user_id INT NOT NULL DEFAULT 0 COMMENT '被举报用户ID',
+  response_state INT NOT NULL DEFAULT 0 COMMENT '举报处理状态 0:待处理, 1:处理成功, 2:处理失败',
+  response_content VARCHAR(128) NOT NULL DEFAULT '待处理' COMMENT '举报结果',
+  response_date DATETIME NULL COMMENT '举报处理时间',
+  create_date DATETIME NULL COMMENT '创建时间',
+  update_date DATETIME NULL COMMENT '更新时间',
+  PRIMARY KEY (id),
+  INDEX (user_id),
+  INDEX (report_user_id),
+  INDEX (user_id , source_id , source_type)
+)  CHARSET=UTF8MB4 , COMMENT '帖子举报表';
+
+
+
+-- 论坛用户表
+DROP TABLE IF EXISTS gfb_topics_users;
+CREATE TABLE gfb_topics_users (
+  id BIGINT AUTO_INCREMENT COMMENT '点赞记录唯一标识',
+  user_id INT NOT NULL DEFAULT 0 COMMENT '用户ID',
+  username varchar(32) NOT NULL DEFAULT '' COMMENT '用户昵称',
+  avatar varchar(255) NOT NULL DEFAULT '' COMMENT '头像地址',
+  force_state INT NOT NULL DEFAULT 0 COMMENT '冻结状态 0:主题点赞, 1:评论点赞, 2:回复点赞',
+  level_id INT NOT NULL DEFAULT 0 COMMENT '等级ID',
+  use_integral INT NOT NULL DEFAULT 0 COMMENT '可用积分',
+  no_use_integral INT NOT NULL DEFAULT 0 COMMENT '不可用积分',
+  create_date DATETIME NULL COMMENT '创建时间',
+  update_date DATETIME NULL COMMENT '更新时间',
+  PRIMARY KEY (id),
+  INDEX (user_id)
+)  CHARSET=UTF8MB4 , COMMENT '论坛用户表';
+
+-- 论坛积分变动记录表
+DROP TABLE IF EXISTS gfb_topics_integral_record;
+CREATE TABLE gfb_topics_integral_record (
+  id BIGINT AUTO_INCREMENT COMMENT '点赞记录唯一标识',
+  user_id INT NOT NULL DEFAULT 0 COMMENT '用户ID',
+  op_type VARCHAR(64) NOT NULL DEFAULT '' COMMENT '操作类型',
+  op_name VARCHAR(32) NOT NULL DEFAULT '' COMMENT '操作名称',
+  op_flag VARCHAR(2) NOT NULL DEFAULT 'D' COMMENT 'D 标识加, C 标识减',
+  op_money INT NOT NULL DEFAULT 0 COMMENT '操作积分',
+  use_integral INT NOT NULL DEFAULT 0 COMMENT '可用积分',
+  no_use_integral INT NOT NULL DEFAULT 0 COMMENT '不可用积分',
+  source_id INT NOT NULL DEFAULT 0 COMMENT '来源ID',
+  source_type INT NOT NULL DEFAULT 0 COMMENT '来源类型',
+  del INT NOT NULL DEFAULT 0 COMMENT '记录有效状态, 1 .删除',
+  create_date DATETIME NULL COMMENT '创建时间',
+  update_date DATETIME NULL COMMENT '更新时间',
+  PRIMARY KEY (id),
+  INDEX (user_id),
+  INDEX (source_id),
+  INDEX (user_id, op_type)
+)  CHARSET=UTF8MB4 , COMMENT '论坛积分变动记录表';
+
+
+
+
 CREATE TABLE `gfb_product` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `name` varchar(255) DEFAULT NULL COMMENT '商品名',

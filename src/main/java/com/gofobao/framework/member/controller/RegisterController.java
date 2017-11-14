@@ -3,6 +3,7 @@ package com.gofobao.framework.member.controller;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.member.biz.UserBiz;
 import com.gofobao.framework.member.vo.request.VoRegisterReq;
+import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
@@ -22,7 +23,7 @@ import javax.validation.Valid;
 @RestController
 @RequestMapping("/pub")
 @Slf4j
-@ApiModel("用户注册")
+@Api(description = "用户注册")
 public class RegisterController {
 
     @Autowired
@@ -30,7 +31,7 @@ public class RegisterController {
 
     @ApiOperation("用户注册")
     @PostMapping(value = "/v2/register")
-    public ResponseEntity<VoBaseResp> register(HttpServletRequest request, @Valid @ModelAttribute VoRegisterReq voRegisterReq) throws Exception{
-        return userBiz.register(request, voRegisterReq) ;
+    public ResponseEntity<VoBaseResp> register(HttpServletRequest request, @Valid @ModelAttribute VoRegisterReq voRegisterReq) throws Exception {
+        return userBiz.register(request, voRegisterReq);
     }
 }

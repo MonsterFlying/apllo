@@ -1,5 +1,6 @@
 package com.gofobao.framework.comment.service;
 
+import com.gofobao.framework.comment.entity.Topic;
 import com.gofobao.framework.comment.vo.request.VoTopicReq;
 import com.gofobao.framework.comment.vo.response.VoTopicListResp;
 import com.gofobao.framework.comment.vo.response.VoTopicResp;
@@ -44,4 +45,6 @@ public interface TopicService {
      * @return
      */
     ResponseEntity<VoTopicResp> findTopic(long topicId);
+
+    Topic findById(Long soucreId);
 }

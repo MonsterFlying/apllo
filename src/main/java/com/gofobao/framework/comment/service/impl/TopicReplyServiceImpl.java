@@ -1,18 +1,22 @@
 package com.gofobao.framework.comment.service.impl;
 
+import com.gofobao.framework.comment.entity.TopicReply;
+import com.gofobao.framework.comment.repository.TopicReplyRepository;
 import alex.zhrenjie04.wordfilter.WordFilterUtil;
 import alex.zhrenjie04.wordfilter.result.FilteredResult;
 import com.gofobao.framework.comment.entity.TopicReply;
-import com.gofobao.framework.comment.repository.TopicReplyRepository;
 import com.gofobao.framework.comment.service.TopicReplyService;
 import com.gofobao.framework.comment.vo.request.VoTopicReplyReq;
 import com.gofobao.framework.comment.vo.response.VoTopicReplyListResp;
 import com.gofobao.framework.comment.vo.response.VoTopicReplyResp;
 import com.gofobao.framework.core.vo.VoBaseResp;
-import com.gofobao.framework.member.entity.Users;
 import com.gofobao.framework.member.repository.UsersRepository;
-import com.google.common.base.Preconditions;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import com.gofobao.framework.comment.vo.request.VoTopicReplyReq;
+import com.gofobao.framework.core.vo.VoBaseResp;
+import com.gofobao.framework.member.entity.Users;
+import com.google.common.base.Preconditions;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
@@ -23,8 +27,10 @@ import java.util.List;
  */
 @Service
 public class TopicReplyServiceImpl implements TopicReplyService {
+
+
     @Autowired
-    private TopicReplyRepository topicReplyRepository;
+    TopicReplyRepository topicReplyRepository;
 
     @Autowired
     private UsersRepository usersRepository;
@@ -51,6 +57,12 @@ public class TopicReplyServiceImpl implements TopicReplyService {
     }
 
     @Override
+    public TopicReply findById(Long id) {
+        return topicReplyRepository.findOne(id);
+    }
+
+
+    @Override
     public ResponseEntity<VoTopicReplyListResp> listReply(Long topicCommentId) {
         List<TopicReply> topicReplies = topicReplyRepository.findByTopicCommentId(topicCommentId);
         VoTopicReplyListResp voTopicReplyListResp = VoBaseResp.ok("查询成功",VoTopicReplyListResp.class);
@@ -63,4 +75,5 @@ public class TopicReplyServiceImpl implements TopicReplyService {
         }
         return ResponseEntity.ok(voTopicReplyListResp);
     }
+
 }

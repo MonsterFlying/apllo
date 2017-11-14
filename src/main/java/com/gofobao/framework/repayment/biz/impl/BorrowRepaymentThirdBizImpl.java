@@ -34,6 +34,10 @@ import com.gofobao.framework.common.assets.AssetChange;
 import com.gofobao.framework.common.assets.AssetChangeProvider;
 import com.gofobao.framework.common.assets.AssetChangeTypeEnum;
 import com.gofobao.framework.common.constans.TypeTokenContants;
+import com.gofobao.framework.common.rabbitmq.MqConfig;
+import com.gofobao.framework.common.rabbitmq.MqHelper;
+import com.gofobao.framework.common.rabbitmq.MqQueueEnum;
+import com.gofobao.framework.common.rabbitmq.MqTagEnum;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.helper.*;
 import com.gofobao.framework.helper.project.TrusteePayQueryHelper;
@@ -62,6 +66,7 @@ import com.gofobao.framework.tender.service.TransferBuyLogService;
 import com.gofobao.framework.tender.service.TransferService;
 import com.gofobao.framework.tender.vo.request.VoEndTransfer;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -156,6 +161,8 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
 
     @Value("${gofobao.javaDomain}")
     private String javaDomain;
+    @Autowired
+    private MqHelper mqHelper;
 
     @Autowired
     TrusteePayQueryHelper trusteePayQueryHelper;
@@ -683,6 +690,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
      * @return
      */
     @Transactional(rollbackFor = Exception.class)
+    @Override
     public ResponseEntity<String> thirdBatchRepayCheckCall(HttpServletRequest request, HttpServletResponse response) {
         BatchRepayCheckResp repayCheckResp = jixinManager.callback(request, new TypeToken<BatchRepayCheckResp>() {
         });
@@ -779,18 +787,32 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
      * @param repayRunResp
      * @return
      */
+    @Override
     public ResponseEntity<String> dealBatchRepay(BatchRepayRunResp repayRunResp) {
         Preconditions.checkNotNull(repayRunResp, "即信批次回调触发: 请求体为空!");
         Preconditions.checkState(JixinResultContants.SUCCESS.equals(repayRunResp.getRetCode()), String.format("即信批次回调触发: 验证失败 %s", repayRunResp.getRetMsg()));
 
         Map<String, Object> acqResMap = GSON.fromJson(repayRunResp.getAcqRes(), TypeTokenContants.MAP_TOKEN);
         //触发处理批次放款处理结果队列
+        //推送批次处理到队列中
+        MqConfig mqConfig = new MqConfig();
+        mqConfig.setQueue(MqQueueEnum.RABBITMQ_THIRD_BATCH);
+        mqConfig.setTag(MqTagEnum.BATCH_DEAL);
+        ImmutableMap<String, String> body = new ImmutableMap.Builder<String, String>()
+                .put(MqConfig.SOURCE_ID, StringHelper.toString(acqResMap.get("repaymentId")))
+                .put(MqConfig.BATCH_NO, repayRunResp.getBatchNo())
+                .put(MqConfig.BATCH_TYPE, String.valueOf(ThirdBatchLogContants.BATCH_REPAY))
+                .put(MqConfig.MSG_TIME, DateHelper.dateToString(new Date()))
+                .put(MqConfig.ACQ_RES, repayRunResp.getAcqRes())
+                .put(MqConfig.BATCH_RESP,GSON.toJson(repayRunResp))
+                .build();
+
+        mqConfig.setMsg(body);
         try {
-            //批次执行问题
-            thirdBatchDealBiz.batchDeal(NumberHelper.toLong(acqResMap.get("repaymentId")), StringHelper.toString(repayRunResp.getBatchNo()),
-                    ThirdBatchLogContants.BATCH_REPAY, repayRunResp.getAcqRes(), GSON.toJson(repayRunResp));
-        } catch (Exception e) {
-            log.error("批次执行异常:", e);
+            log.info(String.format("BorrowRepaymentThirdBizImpl dealBatchRepay send mq %s", GSON.toJson(body)));
+            mqHelper.convertAndSend(mqConfig);
+        } catch (Throwable e) {
+            log.error("BorrowRepaymentThirdBizImpl dealBatchRepay send mq exception", e);
         }
         log.info("即信批次回调处理结束");
         return ResponseEntity.ok("success");
@@ -853,6 +875,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
      * @param lendRepayRunResp
      * @return
      */
+    @Override
     public ResponseEntity<String> dealBatchLendRepay(BatchLendPayRunResp lendRepayRunResp) {
         log.info("进入批次放款处理流程!");
         Preconditions.checkNotNull(lendRepayRunResp, "即信请求体为空！");
@@ -862,12 +885,25 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
 
 
         //触发处理批次放款处理结果队列
+        //推送批次处理到队列中
+        MqConfig mqConfig = new MqConfig();
+        mqConfig.setQueue(MqQueueEnum.RABBITMQ_THIRD_BATCH);
+        mqConfig.setTag(MqTagEnum.BATCH_DEAL);
+        ImmutableMap<String, String> body = new ImmutableMap.Builder<String, String>()
+                .put(MqConfig.SOURCE_ID, StringHelper.toString(acqResMap.get("borrowId")))
+                .put(MqConfig.BATCH_NO, lendRepayRunResp.getBatchNo())
+                .put(MqConfig.BATCH_TYPE, String.valueOf(ThirdBatchLogContants.BATCH_LEND_REPAY))
+                .put(MqConfig.MSG_TIME, DateHelper.dateToString(new Date()))
+                .put(MqConfig.ACQ_RES, lendRepayRunResp.getAcqRes())
+                .put(MqConfig.BATCH_RESP,  GSON.toJson(lendRepayRunResp))
+                .build();
+
+        mqConfig.setMsg(body);
         try {
-            //批次执行问题
-            thirdBatchDealBiz.batchDeal(NumberHelper.toLong(acqResMap.get("borrowId")), lendRepayRunResp.getBatchNo(),
-                    ThirdBatchLogContants.BATCH_LEND_REPAY, lendRepayRunResp.getAcqRes(), GSON.toJson(lendRepayRunResp));
-        } catch (Exception e) {
-            log.error("批次执行异常:", e);
+            log.info(String.format("BorrowRepaymentThirdBizImpl dealBatchLendRepay send mq %s", GSON.toJson(body)));
+            mqHelper.convertAndSend(mqConfig);
+        } catch (Throwable e) {
+            log.error("BorrowRepaymentThirdBizImpl dealBatchLendRepay send mq exception", e);
         }
 
         return ResponseEntity.ok("success");
@@ -876,6 +912,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
     /**
      * 批次名义借款人垫付参数检查回调
      */
+    @Override
     public ResponseEntity<String> thirdBatchAdvanceCheckCall(HttpServletRequest request, HttpServletResponse response) {
         BatchBailRepayCheckResp batchBailRepayCheckResp = jixinManager.callback(request, new TypeToken<BatchBailRepayCheckResp>() {
         });
@@ -1026,6 +1063,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
      * @param batchBailRepayRunResp
      * @return
      */
+    @Override
     public ResponseEntity<String> dealBatchAdvance(BatchBailRepayRunResp batchBailRepayRunResp) {
 
         log.info("进入批次名义借款人垫付业务处理流程");
@@ -1046,12 +1084,24 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
         }
 
         //触发批次名义借款人垫付业务处理队列
+        MqConfig mqConfig = new MqConfig();
+        mqConfig.setQueue(MqQueueEnum.RABBITMQ_THIRD_BATCH);
+        mqConfig.setTag(MqTagEnum.BATCH_DEAL);
+        ImmutableMap<String, String> body = new ImmutableMap.Builder<String, String>()
+                .put(MqConfig.SOURCE_ID, StringHelper.toString(acqResMap.get("borrowId")))
+                .put(MqConfig.BATCH_NO, batchBailRepayRunResp.getBatchNo())
+                .put(MqConfig.BATCH_TYPE, String.valueOf(ThirdBatchLogContants.BATCH_BAIL_REPAY))
+                .put(MqConfig.MSG_TIME, DateHelper.dateToString(new Date()))
+                .put(MqConfig.ACQ_RES, batchBailRepayRunResp.getAcqRes())
+                .put(MqConfig.BATCH_RESP, GSON.toJson(batchBailRepayRunResp))
+                .build();
+
+        mqConfig.setMsg(body);
         try {
-            //批次执行问题
-            thirdBatchDealBiz.batchDeal(NumberHelper.toLong(acqResMap.get("borrowId")), batchBailRepayRunResp.getBatchNo(),
-                    ThirdBatchLogContants.BATCH_BAIL_REPAY, batchBailRepayRunResp.getAcqRes(), GSON.toJson(batchBailRepayRunResp));
-        } catch (Exception e) {
-            log.error("批次执行异常:", e);
+            log.info(String.format("BorrowRepaymentThirdBizImpl dealBatchAdvance send mq %s", GSON.toJson(body)));
+            mqHelper.convertAndSend(mqConfig);
+        } catch (Throwable e) {
+            log.error("BorrowRepaymentThirdBizImpl dealBatchAdvance send mq exception", e);
         }
 
         return ResponseEntity.ok("success");

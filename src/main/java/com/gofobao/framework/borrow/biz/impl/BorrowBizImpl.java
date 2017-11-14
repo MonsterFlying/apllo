@@ -203,11 +203,25 @@ public class BorrowBizImpl implements BorrowBiz {
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, StringHelper.toString("复审处理中，请勿重复点击!")));
         } else if (flag == ThirdBatchLogContants.SUCCESS) {
+            //推送批次处理到队列中
+            MqConfig mqConfig = new MqConfig();
+            mqConfig.setQueue(MqQueueEnum.RABBITMQ_THIRD_BATCH);
+            mqConfig.setTag(MqTagEnum.BATCH_DEAL);
+            ImmutableMap<String, String> body = new ImmutableMap.Builder<String, String>()
+                    .put(MqConfig.SOURCE_ID, StringHelper.toString(thirdBatchLog.getSourceId()))
+                    .put(MqConfig.BATCH_NO, thirdBatchLog.getBatchNo())
+                    .put(MqConfig.BATCH_TYPE, String.valueOf(thirdBatchLog.getType()))
+                    .put(MqConfig.MSG_TIME, DateHelper.dateToString(new Date()))
+                    .put(MqConfig.ACQ_RES, thirdBatchLog.getAcqRes())
+                    .put(MqConfig.BATCH_RESP, "")
+                    .build();
+
+            mqConfig.setMsg(body);
             try {
-                //批次执行问题
-                thirdBatchDealBiz.batchDeal(thirdBatchLog.getSourceId(), thirdBatchLog.getBatchNo(), thirdBatchLog.getType(), thirdBatchLog.getAcqRes(), "");
-            } catch (Exception e) {
-                log.error("批次执行异常:", e);
+                log.info(String.format("borrowBizImpl sendAgainVerify send mq %s", GSON.toJson(body)));
+                mqHelper.convertAndSend(mqConfig);
+            } catch (Throwable e) {
+                log.error("borrowBizImpl sendAgainVerify send mq exception", e);
             }
         }
 

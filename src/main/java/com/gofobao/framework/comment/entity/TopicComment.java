@@ -22,15 +22,15 @@ import java.util.Date;
 public class TopicComment implements Serializable {
     @Id
     @GeneratedValue
-    private long id;
+    private Long id;
 
-    private long topicId;
+    private Long topicId;
 
-    private long topicTypeId;
+    private Long topicTypeId;
 
     private String content;
 
-    private long userId;
+    private Long userId;
 
     private String userName;
 

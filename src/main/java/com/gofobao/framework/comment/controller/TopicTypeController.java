@@ -2,7 +2,6 @@ package com.gofobao.framework.comment.controller;
 
 import com.gofobao.framework.borrow.vo.request.VoDoAgainVerifyReq;
 import com.gofobao.framework.comment.service.TopicTypeService;
-import com.gofobao.framework.comment.vo.response.VoTopicResp;
 import com.gofobao.framework.comment.vo.response.VoTopicTypeListResp;
 import com.gofobao.framework.comment.vo.response.VoTopicTypeResp;
 import com.gofobao.framework.security.contants.SecurityContants;
@@ -10,8 +9,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import springfox.documentation.annotations.ApiIgnore;
-
-import java.util.List;
 
 /**
  * Created by xin on 2017/11/8.

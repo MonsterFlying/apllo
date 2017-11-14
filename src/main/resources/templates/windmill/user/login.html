@@ -57,6 +57,27 @@
             border-bottom: none;
         }
 
+        @font-face {
+            font-family: 'iconfont';
+            src: url('http://at.alicdn.com/t/font_253966_jtk2k3dla4soflxr.eot');
+            src: url('http://at.alicdn.com/t/font_253966_jtk2k3dla4soflxr.eot?#iefix') format('embedded-opentype'),
+            url('http://at.alicdn.com/t/font_253966_jtk2k3dla4soflxr.woff') format('woff'),
+            url('http://at.alicdn.com/t/font_253966_jtk2k3dla4soflxr.ttf') format('truetype'),
+            url('http://at.alicdn.com/t/font_253966_jtk2k3dla4soflxr.svg#iconfont') format('svg');
+        }
+
+        .gfbFont {
+            display: block;
+            margin-top: 4px;
+            font-family: "iconfont" !important;
+            font-size: 20px;
+            font-style: normal;
+            -webkit-font-smoothing: antialiased;
+            -webkit-text-stroke-width: 0.2px;
+            -moz-osx-font-smoothing: grayscale;
+            color: #333333;
+        }
+
         input {
             border: 0;
             display: block;
@@ -147,6 +168,7 @@
         </p>
         <p class="row">
             <input type="password" name="passsword" placeholder="输入密码">
+            <i class="gfbFont" id="SHOW">&#xe6ea;</i>
         </p>
         <input type="hidden" name="param" th:value="${param}"/>
         <input type="hidden" name="address" th:value="${address}"/>
@@ -164,6 +186,8 @@
                 $toast.remove();
             }, 2000);
         };
+        var is_show = false;
+        var show_btn = $('#SHOW');
         var _login_btn = $('#LOGIN_BOX input[type=button]')[0];
         var _username = $('#LOGIN_BOX input[name=userName]')[0];
         var _password = $('#LOGIN_BOX input[name=passsword]')[0];
@@ -183,15 +207,27 @@
                     const target_url = response.target_url;
                     window.location.href = target_url;
                 },
-                error: function (response) {
-                    const res = JSON.parse(response.response)
-                    const msg = res.state.msg
-                    $.toast(msg)
+                complete: function (response) {
+                    if (response.status != 200) {
+                        const res = JSON.parse(response.response)
+                        const msg = res.state.msg
+                        $.toast(msg)
+                    }
                 }
             })
         }
 
-
+        show_btn[0].onclick = function () {
+            console.log("test")
+            if (is_show) {
+                show_btn.html('&#xe64b;');
+                $('#LOGIN_BOX input[name=passsword]').attr('type', 'password');
+            } else {
+                show_btn.html('&#xe6ea;');
+                $('#LOGIN_BOX input[name=passsword]').attr('type', 'text');
+            }
+            is_show = !is_show;
+        }
     }
 </script>
 </html>

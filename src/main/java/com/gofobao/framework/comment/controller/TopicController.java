@@ -22,6 +22,7 @@ import javax.validation.Valid;
  */
 @RestController
 public class TopicController {
+
     @Autowired
     private TopicService topicService;
 

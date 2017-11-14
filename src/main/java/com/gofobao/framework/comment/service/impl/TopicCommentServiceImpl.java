@@ -99,4 +99,9 @@ public class TopicCommentServiceImpl implements TopicCommentService {
         topicRepository.updateToTalComment(topicComment.getTopicId());
         return ResponseEntity.ok(VoBaseResp.ok("发布成功", VoBaseResp.class));
     }
+
+    @Override
+    public TopicComment findById(Long id) {
+        return topicCommentRepository.findOne(id);
+    }
 }
