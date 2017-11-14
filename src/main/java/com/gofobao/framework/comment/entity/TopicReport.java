@@ -15,36 +15,22 @@ import java.util.Date;
  * Created by xin on 2017/11/8.
  */
 @Entity
-@Table(name = "gfb_topics_comment")
-@DynamicUpdate
+@Table(name = "gfb_topics")
 @DynamicInsert
+@DynamicUpdate
 @Data
-public class TopicComment implements Serializable {
+public class TopicReport implements Serializable {
     @Id
     @GeneratedValue
-    private Long id;
-
-    private Long topicId;
-
-    private Long topicTypeId;
-
-    private String content;
-
+    private long id;
+    private Long sourceId;
+    private Integer sourceType;
+    private Integer reportType;
     private Long userId;
-
-    private String userName;
-
-    private String userIconUrl;
-
-    private Integer topTotalNum;
-
-    private Integer contentTotalNum;
-
-    private Integer del;
-
+    private Long reportUserId;
+    private Integer responseState;
+    private String responseContent;
+    private Date responseDate;
     private Date createDate;
-
     private Date updateDate;
-
-
 }

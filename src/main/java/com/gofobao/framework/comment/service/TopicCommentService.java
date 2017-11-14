@@ -1,5 +1,6 @@
 package com.gofobao.framework.comment.service;
 
+import com.gofobao.framework.comment.entity.TopicComment;
 import com.gofobao.framework.comment.vo.request.VoTopicCommentReq;
 import com.gofobao.framework.comment.vo.response.VoTopicCommentListResp;
 import com.gofobao.framework.core.vo.VoBaseResp;
@@ -12,6 +13,7 @@ import org.springframework.http.ResponseEntity;
 public interface TopicCommentService {
     /**
      * 查询话题评论
+     *
      * @param topicId
      * @param pageable
      * @return
@@ -20,9 +22,17 @@ public interface TopicCommentService {
 
     /**
      * 发布评论
+     *
      * @param voTopicCommentReq
      * @param userId
      * @return
      */
     ResponseEntity<VoBaseResp> publishComment(VoTopicCommentReq voTopicCommentReq, Long userId);
+
+    /**
+     * 发现评论
+     * @param id
+     * @return
+     */
+    TopicComment findById(Long id);
 }

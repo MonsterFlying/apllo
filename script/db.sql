@@ -1079,6 +1079,27 @@ CREATE TABLE gfb_topics_top_record (
 )  CHARSET=UTF8MB4 , COMMENT '点赞记录标';
 
 
+-- 论坛举报表
+DROP TABLE IF EXISTS gfb_topics_report;
+CREATE TABLE gfb_topics_report (
+  id BIGINT AUTO_INCREMENT COMMENT '帖子举报唯一标识',
+  source_id BIGINT NOT NULL DEFAULT 0 COMMENT '点赞来源',
+  source_type INT NOT NULL DEFAULT 0 COMMENT '点赞类型 0:主题点赞, 1:评论点赞, 2:回复点赞',
+  report_type INT NOT NULL DEFAULT 0 COMMENT '举报类型 0: 广告, 1: 政治有害类, 2: 暴恐类. 3:淫秽色情类, 4:赌博类, 5:诈骗类,  6:其他有害类',
+  user_id INT NOT NULL DEFAULT 0 COMMENT '举报用户ID',
+  report_user_id INT NOT NULL DEFAULT 0 COMMENT '被举报用户ID',
+  response_state INT NOT NULL DEFAULT 0 COMMENT '举报处理状态 0:待处理, 1:处理成功, 2:处理失败',
+  response_content VARCHAR(128) NOT NULL DEFAULT '待处理' COMMENT '举报结果',
+  response_date DATETIME NULL COMMENT '举报处理时间',
+  create_date DATETIME NULL COMMENT '创建时间',
+  update_date DATETIME NULL COMMENT '更新时间',
+  PRIMARY KEY (id),
+  INDEX (user_id),
+  INDEX (report_user_id),
+  INDEX (user_id , source_id , source_type)
+)  CHARSET=UTF8MB4 , COMMENT '帖子举报表';
+
+
 CREATE TABLE `gfb_product` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `name` varchar(255) DEFAULT NULL COMMENT '商品名',

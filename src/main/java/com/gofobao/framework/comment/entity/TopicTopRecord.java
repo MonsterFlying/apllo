@@ -24,9 +24,9 @@ public class TopicTopRecord implements Serializable {
     @GeneratedValue
     private long id;
 
-    private Integer userId;
+    private Long userId;
 
-    private Integer sourceid;
+    private Long sourceId;
 
     private Integer sourceType;
 
