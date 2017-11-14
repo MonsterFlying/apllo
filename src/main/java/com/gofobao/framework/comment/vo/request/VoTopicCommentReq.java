@@ -14,13 +14,9 @@ import javax.validation.constraints.NotNull;
 @Data
 @ApiModel
 public class VoTopicCommentReq extends VoBaseReq {
-    @ApiModelProperty("版块id")
-    @NotNull(message = "版块id不能为空")
-    private long topicTypeId;
-
     @ApiModelProperty("话题id")
     @NotNull(message = "话题id不能为空")
-    private long topicId;
+    private Long topicId;
 
     @ApiModelProperty("评论内容")
     @NotNull(message = "内容不能为空")

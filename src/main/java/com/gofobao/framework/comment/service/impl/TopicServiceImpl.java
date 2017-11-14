@@ -82,7 +82,7 @@ public class TopicServiceImpl implements TopicService {
 
     @Override
     @Transactional
-    public ResponseEntity<VoBaseResp> publishTopic(VoTopicReq voTopicReq,
+    public ResponseEntity<VoBaseResp> publishTopic(@NonNull VoTopicReq voTopicReq,
                                                    @NonNull Long userId,
                                                    HttpServletRequest httpServletRequest) {
 
@@ -94,13 +94,9 @@ public class TopicServiceImpl implements TopicService {
         }
 
         Date nowDate = new Date();
-        Preconditions.checkNotNull(voTopicReq);
         // 判断板块id存在否？
         TopicType topicType = topicTypeRepository.findById(voTopicReq.getTopicTypeId());
         Preconditions.checkNotNull(topicType, "topicType is not exist");
-
-        Users user = usersRepository.findById(userId);
-        Preconditions.checkNotNull(user, "user record is empty");
 
         // 图片获取
         List<String> files = null;

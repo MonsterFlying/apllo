@@ -1,7 +1,10 @@
 package com.gofobao.framework.comment.service.impl;
 
+import com.gofobao.framework.comment.biz.TopicsNoticesBiz;
+import com.gofobao.framework.comment.entity.TopicComment;
 import com.gofobao.framework.comment.entity.TopicReply;
 import com.gofobao.framework.comment.entity.TopicsUsers;
+import com.gofobao.framework.comment.repository.TopicCommentRepository;
 import com.gofobao.framework.comment.repository.TopicReplyRepository;
 import alex.zhrenjie04.wordfilter.WordFilterUtil;
 import alex.zhrenjie04.wordfilter.result.FilteredResult;
@@ -21,8 +24,10 @@ import com.gofobao.framework.member.entity.Users;
 import com.google.common.base.Preconditions;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -36,35 +41,71 @@ public class TopicReplyServiceImpl implements TopicReplyService {
     TopicReplyRepository topicReplyRepository;
 
     @Autowired
-    private UsersRepository usersRepository;
-
-    @Autowired
     private TopicsUsersRepository topicsUsersRepository;
 
+    @Autowired
+    private TopicCommentRepository topicCommentRepository;
+
+    @Autowired
+    private TopicsNoticesBiz topicsNoticesBiz ;
+
     @Override
-    public ResponseEntity<VoBaseResp> publishReply(VoTopicReplyReq voTopicReplyReq, Long userId) {
+    public ResponseEntity<VoBaseResp>
+    publishReply(VoTopicReplyReq voTopicReplyReq, Long userId) {
+        Date nowDate = new Date();
         //判断用户是否能发言
         TopicsUsers topicsUsers = topicsUsersRepository.findByUserId(userId);
-        Preconditions.checkNotNull(topicsUsers,"用户不存在");
-        if (topicsUsers.getForceState() != 0){
-            return ResponseEntity.ok(VoBaseResp.ok("用户已被禁止发言",VoBaseResp.class));
+        Preconditions.checkNotNull(topicsUsers, "用户不存在");
+        if (topicsUsers.getForceState() != 0) {
+            return ResponseEntity.ok(VoBaseResp.ok("用户已被禁止发言", VoBaseResp.class));
         }
-        Users users = usersRepository.findById(userId);
-        Preconditions.checkNotNull(users, "user is not exist");
-        TopicReply topicReply = new TopicReply();
-        topicReply.setTopicId(voTopicReplyReq.getTopicId());
-        topicReply.setTopicCommentId(voTopicReplyReq.getTopicCommentId());
-        topicReply.setTopicTypeId(voTopicReplyReq.getTopicTypeId());
-        topicReply.setUserName(users.getUsername());
+        // 评论ID
+        TopicComment topicComment = topicCommentRepository.findOne(voTopicReplyReq.getTopicCommentId());
+        Preconditions.checkNotNull(topicComment, "topicComment record is empty");
+
+        // 回复ID
+        TopicReply parentTopicReply = null;
+        if (voTopicReplyReq.getTopicReplyId() != 0) {
+            parentTopicReply = topicReplyRepository.findOne(voTopicReplyReq.getTopicReplyId());
+        }
+
+        TopicReply reply = new TopicReply();
+        reply.setTopicId(topicComment.getTopicId());
+        reply.setTopicCommentId(topicComment.getId());
+        reply.setTopicTypeId(topicComment.getTopicTypeId());
+        reply.setUserName(topicsUsers.getUsername());
+        reply.setUserIconUrl(topicsUsers.getAvatar());
+        reply.setUserId(topicsUsers.getUserId());
+        reply.setUpdateDate(nowDate);
+        reply.setCreateDate(nowDate);
+        if (!ObjectUtils.isEmpty(parentTopicReply)) {
+            // 回复
+            reply.setReplyType(1);
+            reply.setTopicReplyId(parentTopicReply.getId());
+            reply.setForUserId(reply.getUserId());
+            reply.setForUserIconUrl(reply.getUserIconUrl());
+            reply.setForUserName(reply.getUserName());
+        } else {
+            // 评论
+            reply.setReplyType(0);
+            reply.setForUserId(topicComment.getUserId());
+            reply.setForUserIconUrl(topicComment.getUserIconUrl());
+            reply.setForUserName(topicComment.getUserName());
+        }
+
         //回复内容敏感词过滤
         FilteredResult filterResult = WordFilterUtil.filterText(voTopicReplyReq.getContent(), '*');
-        topicReply.setContent(filterResult.getFilteredContent());
+        reply.setContent(filterResult.getFilteredContent());
 
-        topicReply.setReplyType(voTopicReplyReq.getReplyType());
-        TopicReply reply = topicReplyRepository.save(topicReply);
+        reply = topicReplyRepository.save(reply);
         Preconditions.checkNotNull(reply, "reply is fail");
-        //回复成功修改回复总数
 
+        // 回复成功修改回复总数
+        topicComment.setContentTotalNum(topicComment.getTopTotalNum() + 1);
+        topicComment.setUpdateDate(nowDate);
+        topicCommentRepository.save(topicComment) ;
+
+        topicsNoticesBiz.noticesByReplay(reply) ;
         return ResponseEntity.ok(VoBaseResp.ok("回复成功", VoBaseResp.class));
     }
 
@@ -91,8 +132,8 @@ public class TopicReplyServiceImpl implements TopicReplyService {
     @Override
     public ResponseEntity<VoTopicReplyListResp> listReply(Long topicCommentId) {
         List<TopicReply> topicReplies = topicReplyRepository.findByTopicCommentId(topicCommentId);
-        VoTopicReplyListResp voTopicReplyListResp = VoBaseResp.ok("查询成功",VoTopicReplyListResp.class);
-        for (TopicReply topicReply : topicReplies){
+        VoTopicReplyListResp voTopicReplyListResp = VoBaseResp.ok("查询成功", VoTopicReplyListResp.class);
+        for (TopicReply topicReply : topicReplies) {
             VoTopicReplyResp voTopicReplyResp = new VoTopicReplyResp();
             voTopicReplyResp.setUserName(topicReply.getUserName());
             voTopicReplyResp.setContent(topicReply.getContent());
