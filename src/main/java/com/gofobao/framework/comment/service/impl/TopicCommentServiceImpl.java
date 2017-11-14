@@ -5,11 +5,9 @@ import alex.zhrenjie04.wordfilter.result.FilteredResult;
 import com.gofobao.framework.comment.entity.Topic;
 import com.gofobao.framework.comment.entity.TopicComment;
 import com.gofobao.framework.comment.entity.TopicType;
-import com.gofobao.framework.comment.entity.TopicsUsers;
 import com.gofobao.framework.comment.repository.TopicCommentRepository;
 import com.gofobao.framework.comment.repository.TopicRepository;
 import com.gofobao.framework.comment.repository.TopicTypeRepository;
-import com.gofobao.framework.comment.repository.TopicsUsersRepository;
 import com.gofobao.framework.comment.service.TopicCommentService;
 import com.gofobao.framework.comment.vo.request.VoTopicCommentReq;
 import com.gofobao.framework.comment.vo.response.VoTopicCommentListResp;
@@ -19,11 +17,13 @@ import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.member.entity.Users;
 import com.gofobao.framework.member.repository.UsersRepository;
 import com.google.common.base.Preconditions;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Calendar;
@@ -34,6 +34,7 @@ import java.util.List;
  * Created by xin on 2017/11/10.
  */
 @Service
+@Slf4j
 public class TopicCommentServiceImpl implements TopicCommentService {
     @Autowired
     private TopicCommentRepository topicCommentRepository;
@@ -54,7 +55,6 @@ public class TopicCommentServiceImpl implements TopicCommentService {
     private String imgPrefix;
 
     @Override
-    @SuppressWarnings("all")
     public ResponseEntity<VoTopicCommentListResp> listDetail(long topicId, Pageable pageable) {
         List<TopicComment> topicComments = topicCommentRepository.findByTopicIdAndDelOrderByIdAsc(topicId,0, pageable);
         VoTopicCommentListResp voTopicCommentListResp = VoBaseResp.ok("查询评论成功", VoTopicCommentListResp.class);
@@ -115,5 +115,17 @@ public class TopicCommentServiceImpl implements TopicCommentService {
     @Override
     public TopicComment findById(Long id) {
         return topicCommentRepository.findOne(id);
+    }
+
+    @Override
+    public void batchUpdateRedundancy(Long userId, String username, String avatar) throws Exception {
+        if (StringUtils.isEmpty(username) || StringUtils.isEmpty(avatar)) {
+            throw new Exception("参数错误!");
+        }
+        if (!StringUtils.isEmpty(username)) {
+            topicCommentRepository.batchUpateUsernameByUserId(userId, username);
+        } else {
+            topicCommentRepository.batchUpateAvatarByUserId(userId, avatar);
+        }
     }
 }

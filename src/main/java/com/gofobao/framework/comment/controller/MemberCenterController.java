@@ -1,14 +1,19 @@
 package com.gofobao.framework.comment.controller;
 
 import com.gofobao.framework.comment.biz.TopicsUsersBiz;
+import com.gofobao.framework.comment.vo.request.VoUpdateUsernameReq;
+import com.gofobao.framework.comment.vo.response.VoAvatarResp;
 import com.gofobao.framework.comment.vo.response.VoTopicMemberCenterResp;
+import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.security.contants.SecurityContants;
+import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestAttribute;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import springfox.documentation.annotations.ApiIgnore;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.validation.Valid;
 
 /**
  * 用户中心
@@ -17,12 +22,26 @@ import springfox.documentation.annotations.ApiIgnore;
 public class MemberCenterController {
 
     @Autowired
-    TopicsUsersBiz topicsUsersBiz ;
+    TopicsUsersBiz topicsUsersBiz;
 
-
+    @ApiOperation("用户中心")
     @GetMapping("/member-center/")
     public ResponseEntity<VoTopicMemberCenterResp> memberCenter(@ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
-        return topicsUsersBiz.memberCenter(userId) ;
+        return topicsUsersBiz.memberCenter(userId);
     }
 
+    @ApiOperation("修改头像")
+    @PostMapping("/member-center/avatar")
+    public ResponseEntity<VoAvatarResp> avatar(HttpServletRequest httpServletRequest,
+                                               @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
+        return topicsUsersBiz.avatar(httpServletRequest, userId);
+    }
+
+
+    @ApiOperation("用户名称修改")
+    @PostMapping("/member-center/username/update")
+    public ResponseEntity<VoBaseResp> updateUsername(@Valid @ModelAttribute VoUpdateUsernameReq voUpdateUsernameReq,
+                                                     @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
+        return topicsUsersBiz.updateUsername(voUpdateUsernameReq, userId);
+    }
 }

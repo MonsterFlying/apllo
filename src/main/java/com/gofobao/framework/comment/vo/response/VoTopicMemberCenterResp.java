@@ -21,8 +21,8 @@ public class VoTopicMemberCenterResp extends VoBaseResp {
     private String avatar = "";
 
     @ApiModelProperty("帖子最新动态")
-    private Integer topicNumber = 0;
+    private long topicNumber = 0;
 
     @ApiModelProperty("回复我的帖子")
-    private Integer topicReplyNumber = 0;
+    private long topicReplyNumber = 0;
 }

@@ -1141,6 +1141,23 @@ CREATE TABLE gfb_topics_integral_record (
 )  CHARSET=UTF8MB4 , COMMENT '论坛积分变动记录表';
 
 
+-- 论坛回复通知
+DROP TABLE IF EXISTS gfb_topics_reply_notices;
+CREATE TABLE gfb_topics_reply_notices (
+  id BIGINT AUTO_INCREMENT COMMENT '点赞记录唯一标识',
+  user_id INT NOT NULL DEFAULT 0 COMMENT '回复用户ID',
+  reply_id BIGINT NOT NULL DEFAULT 0 COMMENT '通知信息ID',
+  source_type INT NOT NULL DEFAULT 0 COMMENT '点赞类型 0:评论, 1:回复',
+  for_user_id INT NOT NULL DEFAULT 0 COMMENT '被@的用户Id , 如果回复类型为评论直接为评论用户ID',
+  for_user_name VARCHAR(36) NOT NULL DEFAULT '' COMMENT '用户名-此处冗余',
+  for_user_icon_url VARCHAR(255) NOT NULL DEFAULT '' COMMENT '用户头像-此处冗余',
+  view_state INT NOT NULL DEFAULT 0 COMMENT '阅读状态, 0:未阅读, 1.以阅读',
+  create_date DATETIME NULL COMMENT '创建时间',
+  update_date DATETIME NULL COMMENT '更新时间',
+  PRIMARY KEY (id),
+  INDEX (user_id)
+)  CHARSET=UTF8MB4 , COMMENT '论坛回复通知表';
+
 
 
 CREATE TABLE `gfb_product` (

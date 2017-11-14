@@ -4,6 +4,8 @@ import com.gofobao.framework.comment.entity.TopicComment;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -14,5 +16,14 @@ import java.util.List;
 @Repository
 public interface TopicCommentRepository extends JpaRepository<TopicComment, Long>, JpaSpecificationExecutor<TopicComment> {
 
+    List<TopicComment> findByTopicIdOrderByIdAsc(long topicId, Pageable pageable);
+
+    @Modifying
+    @Query(value = "UPDATE gfb_topics_comment SET user_name = ?2 WHERE user_id = ?1", nativeQuery = true)
+    Integer batchUpateUsernameByUserId(Long userId, String username);
+
+    @Modifying
+    @Query(value = "UPDATE gfb_topics_comment SET user_icon_url = ?2 WHERE user_id = ?1", nativeQuery = true)
+    Integer batchUpateAvatarByUserId(Long userId, String avatar);
     List<TopicComment> findByTopicIdAndDelOrderByIdAsc(long topicId, int i, Pageable pageable);
 }
