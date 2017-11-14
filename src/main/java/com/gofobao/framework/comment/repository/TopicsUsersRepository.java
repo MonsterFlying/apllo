@@ -11,4 +11,5 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface TopicsUsersRepository extends JpaRepository<TopicsUsers,Long>,JpaSpecificationExecutor<TopicsUsers> {
 
+    TopicsUsers findByUserId(Long userId);
 }

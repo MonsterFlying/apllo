@@ -27,7 +27,7 @@ public class TopicReply implements Serializable {
 
     private Long topicId;
 
-    private Long topicComentId;
+    private Long topicCommentId;
 
     private Long topicTypeId;
 

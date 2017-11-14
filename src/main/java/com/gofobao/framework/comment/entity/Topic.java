@@ -36,6 +36,7 @@ public class Topic implements Serializable {
 
     private Integer sort;
 
+
     private Integer fixState;
 
     private Integer hotState;

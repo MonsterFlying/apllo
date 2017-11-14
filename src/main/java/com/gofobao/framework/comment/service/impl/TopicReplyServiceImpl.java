@@ -1,10 +1,12 @@
 package com.gofobao.framework.comment.service.impl;
 
 import com.gofobao.framework.comment.entity.TopicReply;
+import com.gofobao.framework.comment.entity.TopicsUsers;
 import com.gofobao.framework.comment.repository.TopicReplyRepository;
 import alex.zhrenjie04.wordfilter.WordFilterUtil;
 import alex.zhrenjie04.wordfilter.result.FilteredResult;
 import com.gofobao.framework.comment.entity.TopicReply;
+import com.gofobao.framework.comment.repository.TopicsUsersRepository;
 import com.gofobao.framework.comment.service.TopicReplyService;
 import com.gofobao.framework.comment.vo.request.VoTopicReplyReq;
 import com.gofobao.framework.comment.vo.response.VoTopicReplyListResp;
@@ -35,8 +37,17 @@ public class TopicReplyServiceImpl implements TopicReplyService {
     @Autowired
     private UsersRepository usersRepository;
 
+    @Autowired
+    private TopicsUsersRepository topicsUsersRepository;
+
     @Override
     public ResponseEntity<VoBaseResp> publishReply(VoTopicReplyReq voTopicReplyReq, Long userId) {
+        //判断用户是否能发言
+        TopicsUsers topicsUsers = topicsUsersRepository.findByUserId(userId);
+        Preconditions.checkNotNull(topicsUsers,"用户不存在");
+        if (topicsUsers.getForceState() != 0){
+            return ResponseEntity.ok(VoBaseResp.ok("用户已被禁止发言",VoBaseResp.class));
+        }
         Users users = usersRepository.findById(userId);
         Preconditions.checkNotNull(users, "user is not exist");
         TopicReply topicReply = new TopicReply();

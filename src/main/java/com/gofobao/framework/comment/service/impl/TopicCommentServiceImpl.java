@@ -5,9 +5,11 @@ import alex.zhrenjie04.wordfilter.result.FilteredResult;
 import com.gofobao.framework.comment.entity.Topic;
 import com.gofobao.framework.comment.entity.TopicComment;
 import com.gofobao.framework.comment.entity.TopicType;
+import com.gofobao.framework.comment.entity.TopicsUsers;
 import com.gofobao.framework.comment.repository.TopicCommentRepository;
 import com.gofobao.framework.comment.repository.TopicRepository;
 import com.gofobao.framework.comment.repository.TopicTypeRepository;
+import com.gofobao.framework.comment.repository.TopicsUsersRepository;
 import com.gofobao.framework.comment.service.TopicCommentService;
 import com.gofobao.framework.comment.vo.request.VoTopicCommentReq;
 import com.gofobao.framework.comment.vo.response.VoTopicCommentListResp;
@@ -45,6 +47,9 @@ public class TopicCommentServiceImpl implements TopicCommentService {
     @Autowired
     private UsersRepository usersRepository;
 
+    @Autowired
+    private TopicsUsersRepository topicsUsersRepository;
+
     @Value("${qiniu.domain}")
     private String imgPrefix;
 
@@ -70,6 +75,13 @@ public class TopicCommentServiceImpl implements TopicCommentService {
     @Override
     @Transactional
     public ResponseEntity<VoBaseResp> publishComment(VoTopicCommentReq voTopicCommentReq, Long userId) {
+
+        //判断用户
+        TopicsUsers topicsUsers = topicsUsersRepository.findByUserId(userId);
+        Preconditions.checkNotNull(topicsUsers,"用户不存在");
+        if (topicsUsers.getForceState()!=0){
+            return ResponseEntity.ok(VoBaseResp.ok("用户已被禁言",VoBaseResp.class));
+        }
         // 判断板块id存在否？
         TopicType topicType = topicTypeRepository.findById(voTopicCommentReq.getTopicTypeId());
         Preconditions.checkNotNull(topicType, "topicType is not exist");

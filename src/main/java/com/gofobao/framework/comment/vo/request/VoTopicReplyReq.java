@@ -11,16 +11,16 @@ import lombok.Data;
 @ApiModel("评论回复接口")
 public class VoTopicReplyReq {
     @ApiModelProperty("主题id")
-    private long topicId;
+    private Long topicId;
 
     @ApiModelProperty("主题类型id")
-    private long topicTypeId;
+    private Long topicTypeId;
 
     @ApiModelProperty("评论id")
-    private long topicCommentId;
+    private Long topicCommentId;
 
     @ApiModelProperty("回复id")
-    private long topicReplyId;
+    private Long topicReplyId;
 
     @ApiModelProperty("回复内容")
     private String content;

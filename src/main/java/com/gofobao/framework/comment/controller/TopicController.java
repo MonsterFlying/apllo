@@ -35,18 +35,23 @@ public class TopicController {
     }
 
     @PostMapping("/comment/topic/del/{id}")
-    public ResponseEntity<VoTopicResp> delTopic(@PathVariable long id, @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
+    public ResponseEntity<VoBaseResp> delTopic(@PathVariable long id, @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
         return topicService.delTopic(id, userId);
     }
 
     @GetMapping("/pub/comment/topic/list/{topicTypeId}/{page}")
-    public ResponseEntity<VoTopicListResp> listTopic(@PathVariable long topicTypeId, @PathVariable(name = "page") Integer pageable) {
-        return topicService.listTopic(topicTypeId, pageable);
+    public ResponseEntity<VoTopicListResp> listTopic(HttpServletRequest httpServletRequest,
+                                                     @PathVariable long topicTypeId,
+                                                     @PathVariable(name = "page") Integer pageable) {
+        return topicService.listTopic(httpServletRequest, topicTypeId, pageable);
     }
 
     @GetMapping("/pub/comment/topic/findTopic/{topicId}")
-    public ResponseEntity<VoTopicResp> findTopic(@PathVariable long topicId) {
-        return topicService.findTopic(topicId);
+    public ResponseEntity<VoTopicResp> findTopic(@PathVariable long topicId, HttpServletRequest httpServletRequest) {
+        return topicService.findTopic(topicId, httpServletRequest);
     }
 
+
 }
+
+

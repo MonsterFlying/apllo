@@ -26,4 +26,8 @@ public interface TopicRepository extends JpaRepository<Topic, Long>, JpaSpecific
     List<Topic> findByTopicTypeIdAndDelOrderByCreateDateDesc(long topicTypeId, int i, PageRequest pageRequest);
 
     Topic findByIdAndDel(long topicId, int i);
+
+    @Modifying
+    @Query(value = "update gfb_topics set del=1 where id = ?1", nativeQuery = true)
+    int updateDel(long id);
 }

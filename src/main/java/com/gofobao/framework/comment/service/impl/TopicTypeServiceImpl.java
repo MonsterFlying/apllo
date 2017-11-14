@@ -11,6 +11,7 @@ import com.gofobao.framework.comment.vo.response.VoTopicTypeListResp;
 import com.gofobao.framework.comment.vo.response.VoTopicTypeResp;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.helper.project.SecurityHelper;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
@@ -27,6 +28,7 @@ import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
+import javax.transaction.Transactional;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -41,13 +43,13 @@ public class TopicTypeServiceImpl implements TopicTypeService {
     private TopicTypeRepository topicTypeRepository;
 
     @Override
-    public ResponseEntity<VoTopicTypeResp> publishTopicType(VoDoAgainVerifyReq voDoAgainVerifyReq) {
+    public ResponseEntity<VoBaseResp> publishTopicType(VoDoAgainVerifyReq voDoAgainVerifyReq) {
         //只有管理员才能发布主题类型
         if (ObjectUtils.isEmpty(voDoAgainVerifyReq)
                 || StringUtils.isEmpty(voDoAgainVerifyReq.getParamStr())
                 || StringUtils.isEmpty(voDoAgainVerifyReq.getSign())
                 || !SecurityHelper.checkSign(voDoAgainVerifyReq.getSign(), voDoAgainVerifyReq.getParamStr())) {
-            return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR,"非法访问",VoTopicTypeResp.class));
+            return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR,"非法访问",VoBaseResp.class));
 
         }
         Map<String, VoTopicTypeReq> paramMap = new Gson().fromJson(voDoAgainVerifyReq.getParamStr(), new TypeToken<Map<String, String>>() {
@@ -58,26 +60,30 @@ public class TopicTypeServiceImpl implements TopicTypeService {
         topicType.setAdminId(voTopicTypeReq.getAdminId()) ;
         topicType.setIconUrl(voTopicTypeReq.getIconUrl()) ;
         topicType.setTopicTypeName(voTopicTypeReq.getTopicTypeName()) ;
-        topicType = topicTypeRepository.save(topicType) ;
-        return ResponseEntity.ok(VoBaseResp.ok("发布主题类型成功", VoTopicTypeResp.class)) ;
+        topicType = topicTypeRepository.save(topicType);
+        Preconditions.checkNotNull(topicType,"保存用户失败");
+        return ResponseEntity.ok(VoBaseResp.ok("发布主题类型成功", VoBaseResp.class)) ;
     }
 
     @Override
-    public ResponseEntity<VoTopicTypeResp> delTopicType(long id, long userId) {
+    @Transactional
+    public ResponseEntity<VoBaseResp> delTopicType(long id, long userId) {
         TopicType topicType = topicTypeRepository.findOne(id);
         if (ObjectUtils.isEmpty(topicType)) {
-            return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "删除主题类型失败", VoTopicTypeResp.class)) ;
+            return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "删除主题类型失败", VoBaseResp.class)) ;
         }
         //只有发帖人才能删除主题类型板块
         if (topicType.getAdminId() != userId) {
-            return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "无权删除", VoTopicTypeResp.class)) ;
+            return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "无权删除", VoBaseResp.class)) ;
         }
         try {
-            topicTypeRepository.delete(id);
+            Integer count = topicTypeRepository.updateDel(id);
+            Preconditions.checkNotNull(count,"删除主题类型失败");
+           // topicTypeRepository.delete(id);
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "删除主题类型失败", VoTopicTypeResp.class)) ;
+            return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "删除主题类型失败", VoBaseResp.class)) ;
         }
-        return ResponseEntity.ok(VoBaseResp.ok("删除主题类型成功", VoTopicTypeResp.class)) ;
+        return ResponseEntity.ok(VoBaseResp.ok("删除主题类型成功", VoBaseResp.class)) ;
     }
 
     @Override
