@@ -238,4 +238,9 @@ public class TopicServiceImpl implements TopicService {
             topicRepository.batchUpateAvatarByUserId(userId, avatar);
         }
     }
+
+    @Override
+    public Topic save(Topic topic) {
+        return topicRepository.save(topic) ;
+    }
 }

@@ -2,7 +2,12 @@ package com.gofobao.framework.comment.biz.impl;
 
 import com.github.wenhao.jpa.Specifications;
 import com.gofobao.framework.comment.biz.TopicTopRecordBiz;
+import com.gofobao.framework.comment.entity.Topic;
+import com.gofobao.framework.comment.entity.TopicComment;
+import com.gofobao.framework.comment.entity.TopicReply;
 import com.gofobao.framework.comment.entity.TopicTopRecord;
+import com.gofobao.framework.comment.service.TopicCommentService;
+import com.gofobao.framework.comment.service.TopicReplyService;
 import com.gofobao.framework.comment.service.TopicService;
 import com.gofobao.framework.comment.service.TopicTopRecordService;
 import com.gofobao.framework.comment.vo.request.VoTopicTopReq;
@@ -22,6 +27,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 
+import javax.validation.constraints.NotNull;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -35,6 +41,15 @@ public class TopicTopRecordBizImpl implements TopicTopRecordBiz {
 
     @Autowired
     TopicTopRecordService topicTopRecordService;
+
+    @Autowired
+    TopicService topicService ;
+
+    @Autowired
+    TopicCommentService topicCommentService ;
+
+    @Autowired
+    TopicReplyService topicReplyService;
 
     @Autowired
     UserService userService;
@@ -94,6 +109,7 @@ public class TopicTopRecordBizImpl implements TopicTopRecordBiz {
                 log.error("topic top reocrd save error!", ex);
                 throw new Exception(ex);
             }
+            commonAddAndSubNumber(voTopicTopReq.getSoucreId(), voTopicTopReq.getSourceType(), 1);
         } else {
             // 删除点赞
             try {
@@ -103,9 +119,34 @@ public class TopicTopRecordBizImpl implements TopicTopRecordBiz {
                 log.error("topic top reocrd delete error!", ex);
                 throw new Exception(ex);
             }
+
+            commonAddAndSubNumber(voTopicTopReq.getSoucreId(), voTopicTopReq.getSourceType(), -1);
         }
 
         return ResponseEntity.ok(voTopicTopRecordResp);
+    }
+
+    private void commonAddAndSubNumber(@NotNull Long soucreId, @NotNull Integer sourceType, int value) {
+        Date nowDate = new Date() ;
+        if (TOP_TYPE_TOPIC.equals(sourceType)) {
+            Topic topic = topicService.findById(soucreId);
+            Preconditions.checkNotNull(topic, "topic record is empty") ;
+            topic.setTopTotalNum(topic.getTopTotalNum() + value < 0 ? 0 : topic.getTopTotalNum() + value);
+            topic.setUpdateDate(nowDate);
+            topicService.save(topic) ;
+        } else if (TOP_TYPE_REPLY.equals(sourceType)) {
+            TopicComment topicComment = topicCommentService.findById(soucreId);
+            Preconditions.checkNotNull(topicComment, "topicComment record is empty") ;
+            topicComment.setTopTotalNum(topicComment.getTopTotalNum() + value < 0 ? 0 : topicComment.getTopTotalNum() + value);
+            topicComment.setUpdateDate(nowDate);
+            topicCommentService.save(topicComment) ;
+        } else if (TOP_TYPE_COMMENT.equals(sourceType)) {
+            TopicReply topicReply = topicReplyService.findById(soucreId);
+            Preconditions.checkNotNull(topicReply, "topicReply record is empty") ;
+            topicReply.setTopTotalNum(topicReply.getTopTotalNum() + value < 0 ? 0 : topicReply.getTopTotalNum() + value);
+            topicReply.setUpdateDate(nowDate);
+            topicReplyService.save(topicReply) ;
+        }
     }
 
     @Override

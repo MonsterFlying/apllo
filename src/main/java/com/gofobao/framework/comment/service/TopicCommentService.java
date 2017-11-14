@@ -43,4 +43,6 @@ public interface TopicCommentService {
      * @param avatar
      */
     void batchUpdateRedundancy(Long userId, String username, String avatar) throws Exception;
+
+    TopicComment save(TopicComment topicComment);
 }

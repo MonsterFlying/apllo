@@ -53,4 +53,6 @@ public interface TopicService {
      * @param avatar
      */
     void batchUpdateRedundancy(Long userId, String username, String avatar) throws Exception;
+
+    Topic save(Topic topic);
 }

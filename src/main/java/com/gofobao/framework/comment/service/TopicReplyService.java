@@ -27,4 +27,11 @@ public interface TopicReplyService {
      * @param avatar
      */
     void batchUpdateRedundancy(Long userId, String username, String avatar) throws Exception;
+
+    /**
+     *  保存
+     * @param topicReply
+     * @return
+     */
+    TopicReply save(TopicReply topicReply);
 }

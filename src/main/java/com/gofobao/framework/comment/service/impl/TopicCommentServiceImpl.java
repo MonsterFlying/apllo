@@ -120,4 +120,9 @@ public class TopicCommentServiceImpl implements TopicCommentService {
             topicCommentRepository.batchUpateAvatarByUserId(userId, avatar);
         }
     }
+
+    @Override
+    public TopicComment save(TopicComment topicComment) {
+        return topicCommentRepository.save(topicComment);
+    }
 }

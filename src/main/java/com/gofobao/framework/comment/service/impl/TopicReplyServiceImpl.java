@@ -44,5 +44,10 @@ public class TopicReplyServiceImpl implements TopicReplyService {
         }
     }
 
+    @Override
+    public TopicReply save(TopicReply topicReply) {
+        return topicReplyRepository.save(topicReply);
+    }
+
 
 }
