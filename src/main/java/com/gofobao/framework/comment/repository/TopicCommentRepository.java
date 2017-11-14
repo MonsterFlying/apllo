@@ -12,7 +12,7 @@ import java.util.List;
  * Created by xin on 2017/11/10.
  */
 @Repository
-public interface TopicCommentRepository extends JpaRepository<TopicComment,Long>,JpaSpecificationExecutor<TopicComment> {
+public interface TopicCommentRepository extends JpaRepository<TopicComment, Long>, JpaSpecificationExecutor<TopicComment> {
 
-    List<TopicComment> findByTopicIdOrderByIdAsc(long topicId, Pageable pageable);
+    List<TopicComment> findByTopicIdAndDelOrderByIdAsc(long topicId, int i, Pageable pageable);
 }

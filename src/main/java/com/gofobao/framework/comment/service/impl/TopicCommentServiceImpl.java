@@ -18,9 +18,11 @@ import com.gofobao.framework.member.entity.Users;
 import com.gofobao.framework.member.repository.UsersRepository;
 import com.google.common.base.Preconditions;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Calendar;
 import java.util.Date;
@@ -43,43 +45,37 @@ public class TopicCommentServiceImpl implements TopicCommentService {
     @Autowired
     private UsersRepository usersRepository;
 
+    @Value("${qiniu.domain}")
+    private String imgPrefix;
+
     @Override
     @SuppressWarnings("all")
     public ResponseEntity<VoTopicCommentListResp> listDetail(long topicId, Pageable pageable) {
-        List<TopicComment> topicComments = topicCommentRepository.findByTopicIdOrderByIdAsc(topicId, pageable);
+        List<TopicComment> topicComments = topicCommentRepository.findByTopicIdAndDelOrderByIdAsc(topicId,0, pageable);
         VoTopicCommentListResp voTopicCommentListResp = VoBaseResp.ok("查询评论成功", VoTopicCommentListResp.class);
         for (TopicComment topicComment : topicComments) {
             VoTopicCommentItem voTopicCommentItem = new VoTopicCommentItem();
             voTopicCommentItem.setContent(topicComment.getContent());
             voTopicCommentItem.setUserName(topicComment.getUserName());
-             // image.......img
-            voTopicCommentItem.setUserIconUrl(topicComment.getUserIconUrl());
+            // image.......img
+            voTopicCommentItem.setUserIconUrl(imgPrefix+"/"+topicComment.getUserIconUrl());
             //评论时间分析
-            long nowTime = Calendar.getInstance().getTimeInMillis();
             long publishTime = topicComment.getCreateDate().getTime();
-            long between = nowTime - publishTime;
-            if (between > DateHelper.MILLIS_PER_DAY * 7) {
-                voTopicCommentItem.setTime("1周前");
-            } else if (between >= DateHelper.MILLIS_PER_DAY) {
-                voTopicCommentItem.setTime(between / DateHelper.MILLIS_PER_DAY + "天前");
-            } else if (between >= DateHelper.MILLIS_PER_HOUR) {
-                voTopicCommentItem.setTime(between / DateHelper.MILLIS_PER_HOUR + "小时前");
-            } else if (between >= DateHelper.MILLIS_PER_MINUTE) {
-                voTopicCommentItem.setTime(between / DateHelper.MILLIS_PER_MINUTE + "分钟前");
-            }
+            voTopicCommentItem.setTime(DateHelper.getPastTime(publishTime));
             voTopicCommentListResp.getVoTopicCommentItemList().add(voTopicCommentItem);
         }
         return ResponseEntity.ok(voTopicCommentListResp);
     }
 
     @Override
+    @Transactional
     public ResponseEntity<VoBaseResp> publishComment(VoTopicCommentReq voTopicCommentReq, Long userId) {
         // 判断板块id存在否？
         TopicType topicType = topicTypeRepository.findById(voTopicCommentReq.getTopicTypeId());
         Preconditions.checkNotNull(topicType, "topicType is not exist");
 
         //判断话题id是否存在?
-        Topic topic = topicRepository.findById(voTopicCommentReq.getTopicId());
+        Topic topic = topicRepository.findByIdAndDel(voTopicCommentReq.getTopicId(),0);
         Preconditions.checkNotNull(topic, "topic is not exist");
 
         Users user = usersRepository.findById(userId);
@@ -98,7 +94,9 @@ public class TopicCommentServiceImpl implements TopicCommentService {
         FilteredResult filteredResult = WordFilterUtil.filterText(voTopicCommentReq.getContent(), '*');
         topicComment.setContent(filteredResult.getFilteredContent());
         TopicComment commentResult = topicCommentRepository.save(topicComment);
-        Preconditions.checkNotNull(commentResult,"comment is fail");
+        Preconditions.checkNotNull(commentResult, "comment is fail");
+        //发布成功修改评论总数
+        topicRepository.updateToTalComment(topicComment.getTopicId());
         return ResponseEntity.ok(VoBaseResp.ok("发布成功", VoBaseResp.class));
     }
 }

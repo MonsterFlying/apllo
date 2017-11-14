@@ -4,6 +4,8 @@ import com.gofobao.framework.comment.vo.request.VoTopicReq;
 import com.gofobao.framework.comment.vo.response.VoTopicListResp;
 import com.gofobao.framework.comment.vo.response.VoTopicResp;
 import com.gofobao.framework.core.vo.VoBaseResp;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 
@@ -34,7 +36,7 @@ public interface TopicService {
      * @param topicTypeId
      * @return
      */
-    ResponseEntity<VoTopicListResp> listTopic(long topicTypeId, Pageable pageable);
+    ResponseEntity<VoTopicListResp> listTopic(long topicTypeId, Integer pageable);
 
     /**
      * 查询帖子详情

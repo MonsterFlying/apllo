@@ -1,5 +1,6 @@
 package com.gofobao.framework.comment.service.impl;
 
+import com.github.wenhao.jpa.Specifications;
 import com.gofobao.framework.borrow.vo.request.VoDoAgainVerifyReq;
 import com.gofobao.framework.comment.entity.TopicType;
 import com.gofobao.framework.comment.repository.TopicTypeRepository;
@@ -14,12 +15,18 @@ import com.google.common.collect.Lists;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Example;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 
+import javax.persistence.criteria.CriteriaBuilder;
+import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.Predicate;
+import javax.persistence.criteria.Root;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -75,7 +82,12 @@ public class TopicTypeServiceImpl implements TopicTypeService {
 
     @Override
     public ResponseEntity<VoTopicTypeListResp> listTopicType() {
-        List<TopicType> topicTypes = topicTypeRepository.findAll() ;
+        Specification<TopicType> specification = Specifications.
+                <TopicType>and()
+                .eq("del",0)
+                .build();
+
+        List<TopicType> topicTypes = topicTypeRepository.findAll(specification) ;
         VoTopicTypeListResp voTopicTypeListResp = VoBaseResp.ok("查询主题模块成功", VoTopicTypeListResp.class) ;
         for (TopicType topicType : topicTypes) {
             VoTopicTypeResp voTopicTypeResp = new VoTopicTypeResp() ;

@@ -25,13 +25,13 @@ public class TopicReply implements Serializable {
     @GeneratedValue
     private Integer id;
 
-    private Integer topicId;
+    private long topicId;
 
-    private Integer topicComentId;
+    private long topicCommentId;
 
-    private Integer topicTypeId;
+    private long topicTypeId;
 
-    private Integer topicReplyId;
+    private long topicReplyId;
 
     private Integer replyType;
 

@@ -22,13 +22,13 @@ import java.util.Date;
 public class Topic implements Serializable {
     @Id
     @GeneratedValue
-    private long id;
+    private Long id;
 
     private String title;
 
-    private long topicTypeId;
+    private Long topicTypeId;
 
-    private long userId;
+    private Long userId;
 
     private String userName;
 
