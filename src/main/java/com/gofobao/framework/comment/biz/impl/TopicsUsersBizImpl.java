@@ -156,7 +156,6 @@ public class TopicsUsersBizImpl implements TopicsUsersBiz {
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "昵称含有铭感词汇"));
         }
-
         // 只允许修改一次
         TopicsUsers topicsUsers = null;
         try {
