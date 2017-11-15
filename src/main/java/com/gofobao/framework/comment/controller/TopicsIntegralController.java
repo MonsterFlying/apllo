@@ -25,7 +25,8 @@ public class TopicsIntegralController {
 
     @ApiOperation("我的积分")
     @GetMapping("/member-integral/")
-    public ResponseEntity<VoTopicMemberIntegralResp> memberIntegral(@ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
+    public ResponseEntity<VoTopicMemberIntegralResp> memberIntegral(
+            @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
         return topicsIntegralRecordBiz.memberIntegral(userId);
     }
 

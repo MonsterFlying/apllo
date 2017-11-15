@@ -24,4 +24,9 @@ public class TopicsIntegralRecordServiceImpl implements TopicsIntegralRecordServ
         Optional<List<TopicsIntegralRecord>> optional = Optional.ofNullable(page.getContent());
         return optional.orElse(Lists.newArrayList());
     }
+
+    @Override
+    public TopicsIntegralRecord save(TopicsIntegralRecord record) {
+        return topicsIntegralRecordRepository.save(record);
+    }
 }

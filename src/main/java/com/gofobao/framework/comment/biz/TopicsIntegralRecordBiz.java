@@ -21,4 +21,16 @@ public interface TopicsIntegralRecordBiz {
      * @return
      */
     ResponseEntity<VoTopicIntegralListResp> list(Integer pageInde, Long userId);
+
+    /**
+     * 操作积分
+     * @param userId 用户ID
+     * @param value 金额(可分正负)
+     * @param sourceId 积分操作触发来源
+     * @param sourceType 触发来源类型
+     * @param opTypeId 此次变动类型
+     * @return
+     */
+    boolean operateIntegral(Long userId, Long value, Long sourceId, Integer sourceType, Integer opTypeId) throws Exception;
+
 }

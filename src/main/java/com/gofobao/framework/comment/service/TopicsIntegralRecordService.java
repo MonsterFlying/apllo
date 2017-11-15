@@ -14,4 +14,11 @@ public interface TopicsIntegralRecordService {
      * @return
      */
     List<TopicsIntegralRecord> findAll(Specification<TopicsIntegralRecord> topicsIntegralRecordSpecification, Pageable pageable);
+
+    /**
+     * 保存
+     * @param record
+     * @return
+     */
+    TopicsIntegralRecord save(TopicsIntegralRecord record);
 }
