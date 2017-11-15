@@ -41,4 +41,6 @@ public interface TopicRepository extends JpaRepository<Topic, Long>, JpaSpecific
     int updateDel(long id);
 
     List<Topic> findByTopicTypeIdAndDelAndUserIdOrderByCreateDateDesc(Long topicTypeId, int i, Long userId,Pageable pageable);
+
+    Topic findTopByUserIdOrderByIdDesc(Long userId);
 }

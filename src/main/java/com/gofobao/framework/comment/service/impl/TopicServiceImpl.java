@@ -3,10 +3,7 @@ package com.gofobao.framework.comment.service.impl;
 import alex.zhrenjie04.wordfilter.WordFilterUtil;
 import alex.zhrenjie04.wordfilter.result.FilteredResult;
 import com.gofobao.framework.comment.biz.TopicTopRecordBiz;
-import com.gofobao.framework.comment.entity.Topic;
-import com.gofobao.framework.comment.entity.TopicTopRecord;
-import com.gofobao.framework.comment.entity.TopicType;
-import com.gofobao.framework.comment.entity.TopicsUsers;
+import com.gofobao.framework.comment.entity.*;
 import com.gofobao.framework.comment.repository.TopicCommentRepository;
 import com.gofobao.framework.comment.repository.TopicRepository;
 import com.gofobao.framework.comment.repository.TopicTypeRepository;
@@ -138,6 +135,17 @@ public class TopicServiceImpl implements TopicService {
         topic.setUpdateDate(nowDate);
         topic.setContent(filteredResult.getFilteredContent());
         Topic saveTopic = topicRepository.save(topic);
+        //查询用上次发帖时间
+        Topic lastTopic = topicRepository.findTopByUserIdOrderByIdDesc(userId);
+        if(!ObjectUtils.isEmpty(lastTopic)) {
+            Date createDate = topic.getCreateDate();
+            createDate = ObjectUtils.isArray(createDate) ? nowDate : createDate;
+            if (nowDate.getTime() - (createDate.getTime() + 5 * 60 * 1000) < 0) {
+                return ResponseEntity
+                        .badRequest()
+                        .body(VoBaseResp.error(VoBaseResp.ERROR, "发帖过于频繁, 请稍后操作!"));
+            }
+        }
         Preconditions.checkNotNull(saveTopic, "topic record is empty");
 
         //发帖后相应版块下数量改变

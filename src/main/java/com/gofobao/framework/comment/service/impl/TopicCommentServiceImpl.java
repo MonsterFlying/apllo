@@ -12,6 +12,7 @@ import com.gofobao.framework.comment.repository.TopicsUsersRepository;
 import com.gofobao.framework.comment.service.TopicCommentService;
 import com.gofobao.framework.comment.service.TopicsUsersService;
 import com.gofobao.framework.comment.vo.request.VoTopicCommentReq;
+import com.gofobao.framework.comment.vo.response.VoAvatarResp;
 import com.gofobao.framework.comment.vo.response.VoTopicCommentItem;
 import com.gofobao.framework.comment.vo.response.VoTopicCommentListResp;
 import com.gofobao.framework.core.vo.VoBaseResp;
@@ -78,7 +79,14 @@ public class TopicCommentServiceImpl implements TopicCommentService {
     public ResponseEntity<VoBaseResp> publishComment(@NonNull VoTopicCommentReq voTopicCommentReq,
                                                      @NonNull Long userId) {
         //判断用户
-        TopicsUsers topicsUsers = topicsUsersService.findByUserId(userId);
+        TopicsUsers topicsUsers = null;
+        try {
+            topicsUsers = topicsUsersService.findByUserId(userId);
+        } catch (Exception e) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, e.getMessage())) ;
+        }
         //TopicsUsers topicsUsers = topicsUsersRepository.findByUserId(userId);
         Preconditions.checkNotNull(topicsUsers, "用户不存在");
         if (topicsUsers.getForceState() != 0) {
