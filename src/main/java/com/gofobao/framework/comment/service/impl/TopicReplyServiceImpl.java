@@ -1,6 +1,7 @@
 package com.gofobao.framework.comment.service.impl;
 
 import com.gofobao.framework.comment.biz.TopicsNoticesBiz;
+import com.gofobao.framework.comment.biz.TopisIntegralBiz;
 import com.gofobao.framework.comment.entity.TopicComment;
 import com.gofobao.framework.comment.entity.TopicReply;
 import com.gofobao.framework.comment.entity.TopicsUsers;
@@ -35,8 +36,6 @@ import java.util.List;
  */
 @Service
 public class TopicReplyServiceImpl implements TopicReplyService {
-
-
     @Autowired
     TopicReplyRepository topicReplyRepository;
 
@@ -47,11 +46,13 @@ public class TopicReplyServiceImpl implements TopicReplyService {
     private TopicCommentRepository topicCommentRepository;
 
     @Autowired
-    private TopicsNoticesBiz topicsNoticesBiz ;
+    private TopicsNoticesBiz topicsNoticesBiz;
+
+    @Autowired
+    TopisIntegralBiz topisIntegralBiz;
 
     @Override
-    public ResponseEntity<VoBaseResp>
-    publishReply(VoTopicReplyReq voTopicReplyReq, Long userId) {
+    public ResponseEntity<VoBaseResp> publishReply(VoTopicReplyReq voTopicReplyReq, Long userId) {
         Date nowDate = new Date();
         //判断用户是否能发言
         TopicsUsers topicsUsers = topicsUsersRepository.findByUserId(userId);
@@ -103,9 +104,11 @@ public class TopicReplyServiceImpl implements TopicReplyService {
         // 回复成功修改回复总数
         topicComment.setContentTotalNum(topicComment.getTopTotalNum() + 1);
         topicComment.setUpdateDate(nowDate);
-        topicCommentRepository.save(topicComment) ;
-
-        topicsNoticesBiz.noticesByReplay(reply) ;
+        topicCommentRepository.save(topicComment);
+        // 评论
+        topicsNoticesBiz.noticesByReplay(reply);
+        // 发布回复
+        topisIntegralBiz.publishReply(reply);
         return ResponseEntity.ok(VoBaseResp.ok("回复成功", VoBaseResp.class));
     }
 

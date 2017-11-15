@@ -3,6 +3,7 @@ package com.gofobao.framework.comment.service.impl;
 import alex.zhrenjie04.wordfilter.WordFilterUtil;
 import alex.zhrenjie04.wordfilter.result.FilteredResult;
 import com.gofobao.framework.comment.biz.TopicsNoticesBiz;
+import com.gofobao.framework.comment.biz.TopisIntegralBiz;
 import com.gofobao.framework.comment.entity.Topic;
 import com.gofobao.framework.comment.entity.TopicComment;
 import com.gofobao.framework.comment.entity.TopicsUsers;
@@ -52,6 +53,9 @@ public class TopicCommentServiceImpl implements TopicCommentService {
 
     @Autowired
     private TopicsUsersService topicsUsersService;
+
+    @Autowired
+    TopisIntegralBiz topisIntegralBiz;
 
     @Value("${qiniu.domain}")
     private String imgPrefix;
@@ -114,6 +118,7 @@ public class TopicCommentServiceImpl implements TopicCommentService {
         //发布成功修改评论总数
         topicRepository.updateToTalComment(topicComment.getTopicId());
         topicsNoticesBiz.noticesByComment(topicComment);
+        topisIntegralBiz.publishComment(topicComment) ;
         return ResponseEntity.ok(VoBaseResp.ok("发布成功", VoBaseResp.class));
     }
 
