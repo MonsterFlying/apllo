@@ -7,6 +7,7 @@ import com.gofobao.framework.comment.entity.Topic;
 import com.gofobao.framework.comment.entity.TopicTopRecord;
 import com.gofobao.framework.comment.entity.TopicType;
 import com.gofobao.framework.comment.entity.TopicsUsers;
+import com.gofobao.framework.comment.repository.TopicCommentRepository;
 import com.gofobao.framework.comment.repository.TopicRepository;
 import com.gofobao.framework.comment.repository.TopicTypeRepository;
 import com.gofobao.framework.comment.repository.TopicsUsersRepository;
@@ -54,6 +55,9 @@ public class TopicServiceImpl implements TopicService {
 
     @Autowired
     private TopicTypeRepository topicTypeRepository;
+
+    @Autowired
+    private TopicCommentRepository topicCommentRepository;
 
     @Autowired
     private UsersRepository usersRepository;
@@ -154,6 +158,10 @@ public class TopicServiceImpl implements TopicService {
         try {
             Integer count = topicRepository.updateDel(id);
             Preconditions.checkNotNull(count, "删除帖子失败");
+            //删除帖子下面的所有评论
+            Integer updateResult = topicCommentRepository.updateComment(id);
+            Preconditions.checkNotNull(updateResult,"删除评论失败");
+
             //topicRepository.delete(id);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "删除帖子失败", VoBaseResp.class));

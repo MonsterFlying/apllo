@@ -39,4 +39,6 @@ public interface TopicRepository extends JpaRepository<Topic, Long>, JpaSpecific
     @Modifying
     @Query(value = "update gfb_topics set del=1 where id = ?1", nativeQuery = true)
     int updateDel(long id);
+
+    List<Topic> findByTopicTypeIdAndDelAndUserIdOrderByCreateDateDesc(Long topicTypeId, int i, Long userId,Pageable pageable);
 }

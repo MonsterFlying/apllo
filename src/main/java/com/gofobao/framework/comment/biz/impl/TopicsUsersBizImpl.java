@@ -10,6 +10,8 @@ import com.gofobao.framework.comment.entity.TopicsUsers;
 import com.gofobao.framework.comment.service.*;
 import com.gofobao.framework.comment.vo.request.VoUpdateUsernameReq;
 import com.gofobao.framework.comment.vo.response.VoAvatarResp;
+import com.gofobao.framework.comment.vo.response.VoTopicCommentManagerListResp;
+import com.gofobao.framework.comment.vo.response.VoTopicListResp;
 import com.gofobao.framework.comment.vo.response.VoTopicMemberCenterResp;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.member.entity.Users;
@@ -61,7 +63,7 @@ public class TopicsUsersBizImpl implements TopicsUsersBiz {
     TopicReportService topicReportService;
 
     @Autowired
-    TopicsNoticesService topicsNoticesService ;
+    TopicsNoticesService topicsNoticesService;
 
     @Override
     public ResponseEntity<VoTopicMemberCenterResp> memberCenter(@NonNull Long userId) {
@@ -165,6 +167,23 @@ public class TopicsUsersBizImpl implements TopicsUsersBiz {
         }
 
         return ResponseEntity.ok(VoBaseResp.ok("操作成功"));
+    }
+
+    @Override
+    public ResponseEntity<VoTopicListResp> listUserTopic(Long topicTypeId, Long userId, Integer pageable,
+                                                         HttpServletRequest httpServletRequest) {
+        return topicsUsersService.listUserTopic(topicTypeId, userId, pageable, httpServletRequest);
+    }
+
+    @Override
+    public ResponseEntity<VoTopicCommentManagerListResp> listComment(Integer sourceType, HttpServletRequest httpServletRequest, Integer pageable,
+                                                                     Long userId) {
+        return topicsUsersService.listComment(sourceType, httpServletRequest, pageable, userId);
+    }
+
+    @Override
+    public ResponseEntity<VoTopicCommentManagerListResp> listByComment(Integer sourceType, HttpServletRequest httpServletRequest, Integer pageable, Long userId) {
+        return topicsUsersService.listByComment(sourceType, httpServletRequest, pageable, userId);
     }
 
     /**

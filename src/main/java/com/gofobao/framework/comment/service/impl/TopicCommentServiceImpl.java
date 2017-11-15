@@ -10,6 +10,7 @@ import com.gofobao.framework.comment.repository.TopicCommentRepository;
 import com.gofobao.framework.comment.repository.TopicRepository;
 import com.gofobao.framework.comment.repository.TopicsUsersRepository;
 import com.gofobao.framework.comment.service.TopicCommentService;
+import com.gofobao.framework.comment.service.TopicsUsersService;
 import com.gofobao.framework.comment.vo.request.VoTopicCommentReq;
 import com.gofobao.framework.comment.vo.response.VoTopicCommentItem;
 import com.gofobao.framework.comment.vo.response.VoTopicCommentListResp;
@@ -48,6 +49,9 @@ public class TopicCommentServiceImpl implements TopicCommentService {
     @Autowired
     private TopicsUsersRepository topicsUsersRepository;
 
+    @Autowired
+    private TopicsUsersService topicsUsersService;
+
     @Value("${qiniu.domain}")
     private String imgPrefix;
 
@@ -74,7 +78,8 @@ public class TopicCommentServiceImpl implements TopicCommentService {
     public ResponseEntity<VoBaseResp> publishComment(@NonNull VoTopicCommentReq voTopicCommentReq,
                                                      @NonNull Long userId) {
         //判断用户
-        TopicsUsers topicsUsers = topicsUsersRepository.findByUserId(userId);
+        TopicsUsers topicsUsers = topicsUsersService.findByUserId(userId);
+        //TopicsUsers topicsUsers = topicsUsersRepository.findByUserId(userId);
         Preconditions.checkNotNull(topicsUsers, "用户不存在");
         if (topicsUsers.getForceState() != 0) {
             return ResponseEntity.ok(VoBaseResp.ok("用户已被禁言", VoBaseResp.class));

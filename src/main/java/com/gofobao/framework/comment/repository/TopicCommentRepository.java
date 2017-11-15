@@ -26,4 +26,8 @@ public interface TopicCommentRepository extends JpaRepository<TopicComment, Long
     @Query(value = "UPDATE gfb_topics_comment SET user_icon_url = ?2 WHERE user_id = ?1", nativeQuery = true)
     Integer batchUpateAvatarByUserId(Long userId, String avatar);
     List<TopicComment> findByTopicIdAndDelOrderByIdAsc(long topicId, int i, Pageable pageable);
+
+    @Modifying
+    @Query(value = "update gfb_topics_comment set del = 1 where topic_id = ?1",nativeQuery = true)
+    Integer updateComment(long id);
 }
