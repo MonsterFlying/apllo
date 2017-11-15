@@ -5,8 +5,10 @@ import com.gofobao.framework.comment.entity.TopicsUsers;
 import com.gofobao.framework.comment.repository.TopicsUsersRepository;
 import com.gofobao.framework.comment.service.TopicsUsersService;
 import com.gofobao.framework.helper.RandomUtil;
+import com.gofobao.framework.member.entity.UserThirdAccount;
 import com.gofobao.framework.member.entity.Users;
 import com.gofobao.framework.member.service.UserService;
+import com.gofobao.framework.member.service.UserThirdAccountService;
 import com.google.common.base.Preconditions;
 import lombok.NonNull;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,9 +29,12 @@ public class TopicsUsersServiceImpl implements TopicsUsersService {
     @Autowired
     UserService userService;
 
+    @Autowired
+    UserThirdAccountService userThirdAccountService ;
+
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public TopicsUsers findByUserId(Long userId) {
+    public TopicsUsers findByUserId(Long userId) throws Exception {
         Users users = userService.findByIdLock(userId);
         Preconditions.checkNotNull(users, "find user record is empty");
         Specification<TopicsUsers> specification = Specifications
@@ -38,6 +43,11 @@ public class TopicsUsersServiceImpl implements TopicsUsersService {
                 .build();
         TopicsUsers topicsUsers = topicsUsersRepository.findOne(specification);
         if (ObjectUtils.isEmpty(topicsUsers)) {
+            // 判断用户是否开户
+            UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(userId);
+            if(ObjectUtils.isEmpty(userThirdAccount)){
+                throw new Exception("禁止未开户用户操作社区") ;
+            }
             Date nowDate = new Date();
             TopicsUsers save = new TopicsUsers();
             String username = users.getUsername();

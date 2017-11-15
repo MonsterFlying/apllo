@@ -2,15 +2,10 @@ package com.gofobao.framework.comment.biz.impl;
 
 import com.github.wenhao.jpa.Specifications;
 import com.gofobao.framework.comment.biz.TopicTopRecordBiz;
-import com.gofobao.framework.comment.entity.Topic;
-import com.gofobao.framework.comment.entity.TopicComment;
-import com.gofobao.framework.comment.entity.TopicReply;
-import com.gofobao.framework.comment.entity.TopicTopRecord;
-import com.gofobao.framework.comment.service.TopicCommentService;
-import com.gofobao.framework.comment.service.TopicReplyService;
-import com.gofobao.framework.comment.service.TopicService;
-import com.gofobao.framework.comment.service.TopicTopRecordService;
+import com.gofobao.framework.comment.entity.*;
+import com.gofobao.framework.comment.service.*;
 import com.gofobao.framework.comment.vo.request.VoTopicTopReq;
+import com.gofobao.framework.comment.vo.response.VoAvatarResp;
 import com.gofobao.framework.comment.vo.response.VoTopicTopRecordResp;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.member.entity.Users;
@@ -43,10 +38,10 @@ public class TopicTopRecordBizImpl implements TopicTopRecordBiz {
     TopicTopRecordService topicTopRecordService;
 
     @Autowired
-    TopicService topicService ;
+    TopicService topicService;
 
     @Autowired
-    TopicCommentService topicCommentService ;
+    TopicCommentService topicCommentService;
 
     @Autowired
     TopicReplyService topicReplyService;
@@ -74,6 +69,9 @@ public class TopicTopRecordBizImpl implements TopicTopRecordBiz {
      */
     private final static Integer[] OK_TYPES = {TOP_TYPE_COMMENT, TOP_TYPE_TOPIC, TOP_TYPE_REPLY};
 
+    @Autowired
+    TopicsUsersService topicsUsersService;
+
     @Override
     @Transactional(rollbackFor = Exception.class)
     public ResponseEntity<VoTopicTopRecordResp> topOrCancelTop(@NonNull Long userId,
@@ -84,10 +82,20 @@ public class TopicTopRecordBizImpl implements TopicTopRecordBiz {
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "来源类型错误", VoTopicTopRecordResp.class));
         }
-
+        try {
+            TopicsUsers topicsUsers = topicsUsersService.findByUserId(userId);
+            if (0 != topicsUsers.getForceState()) {
+                return ResponseEntity
+                        .badRequest()
+                        .body(VoBaseResp.error(VoBaseResp.ERROR, "抱歉,你在论坛处于冻结状态, 如需解冻请联系平台客服!", VoTopicTopRecordResp.class));
+            }
+        } catch (Exception e) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, e.getMessage(), VoTopicTopRecordResp.class));
+        }
         Users users = userService.findByIdLock(userId);
         Preconditions.checkNotNull(users, "find user record is empty!");
-
         List<TopicTopRecord> topicTopRecordList = topicTopRecordService.findByUserIdAndSourceIdAndSourceType(userId,
                 voTopicTopReq.getSoucreId(),
                 voTopicTopReq.getSourceType());
@@ -127,25 +135,25 @@ public class TopicTopRecordBizImpl implements TopicTopRecordBiz {
     }
 
     private void commonAddAndSubNumber(@NotNull Long soucreId, @NotNull Integer sourceType, int value) {
-        Date nowDate = new Date() ;
+        Date nowDate = new Date();
         if (TOP_TYPE_TOPIC.equals(sourceType)) {
             Topic topic = topicService.findById(soucreId);
-            Preconditions.checkNotNull(topic, "topic record is empty") ;
+            Preconditions.checkNotNull(topic, "topic record is empty");
             topic.setTopTotalNum(topic.getTopTotalNum() + value < 0 ? 0 : topic.getTopTotalNum() + value);
             topic.setUpdateDate(nowDate);
-            topicService.save(topic) ;
+            topicService.save(topic);
         } else if (TOP_TYPE_REPLY.equals(sourceType)) {
             TopicComment topicComment = topicCommentService.findById(soucreId);
-            Preconditions.checkNotNull(topicComment, "topicComment record is empty") ;
+            Preconditions.checkNotNull(topicComment, "topicComment record is empty");
             topicComment.setTopTotalNum(topicComment.getTopTotalNum() + value < 0 ? 0 : topicComment.getTopTotalNum() + value);
             topicComment.setUpdateDate(nowDate);
-            topicCommentService.save(topicComment) ;
+            topicCommentService.save(topicComment);
         } else if (TOP_TYPE_COMMENT.equals(sourceType)) {
             TopicReply topicReply = topicReplyService.findById(soucreId);
-            Preconditions.checkNotNull(topicReply, "topicReply record is empty") ;
+            Preconditions.checkNotNull(topicReply, "topicReply record is empty");
             topicReply.setTopTotalNum(topicReply.getTopTotalNum() + value < 0 ? 0 : topicReply.getTopTotalNum() + value);
             topicReply.setUpdateDate(nowDate);
-            topicReplyService.save(topicReply) ;
+            topicReplyService.save(topicReply);
         }
     }
 
