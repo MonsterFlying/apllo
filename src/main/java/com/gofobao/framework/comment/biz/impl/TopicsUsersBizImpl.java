@@ -13,6 +13,7 @@ import com.gofobao.framework.comment.vo.response.VoAvatarResp;
 import com.gofobao.framework.comment.vo.response.VoTopicCommentManagerListResp;
 import com.gofobao.framework.comment.vo.response.VoTopicListResp;
 import com.gofobao.framework.comment.vo.response.VoTopicMemberCenterResp;
+import com.gofobao.framework.comment.vo.response.VoTopicMemberIntegralResp;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.member.entity.Users;
 import com.gofobao.framework.member.service.UserService;
@@ -67,7 +68,14 @@ public class TopicsUsersBizImpl implements TopicsUsersBiz {
 
     @Override
     public ResponseEntity<VoTopicMemberCenterResp> memberCenter(@NonNull Long userId) {
-        TopicsUsers topicsUsers = topicsUsersService.findByUserId(userId);
+        TopicsUsers topicsUsers = null;
+        try {
+            topicsUsers = topicsUsersService.findByUserId(userId);
+        } catch (Exception e) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, e.getMessage(), VoTopicMemberCenterResp.class)) ;
+        }
         VoTopicMemberCenterResp response = VoBaseResp.ok("成功", VoTopicMemberCenterResp.class);
         response.setUsername(topicsUsers.getUsername());
         if (!StringUtils.isEmpty(topicsUsers.getAvatar())) {
@@ -105,7 +113,14 @@ public class TopicsUsersBizImpl implements TopicsUsersBiz {
         }
 
         Date nowDate = new Date();
-        TopicsUsers topicsUsers = topicsUsersService.findByUserId(userId);
+        TopicsUsers topicsUsers = null;
+        try {
+            topicsUsers = topicsUsersService.findByUserId(userId);
+        } catch (Exception e) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, e.getMessage(), VoAvatarResp.class)) ;
+        }
         Preconditions.checkNotNull(topicsUsers, "topicsUsers record is empty");
         topicsUsers.setAvatar(strings.get(0));
         topicsUsers.setUpdateDate(nowDate);
@@ -143,9 +158,15 @@ public class TopicsUsersBizImpl implements TopicsUsersBiz {
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "昵称含有铭感词汇"));
         }
-
         // 只允许修改一次
-        TopicsUsers topicsUsers = topicsUsersService.findByUserId(userId);
+        TopicsUsers topicsUsers = null;
+        try {
+            topicsUsers = topicsUsersService.findByUserId(userId);
+        } catch (Exception e) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, e.getMessage(), VoAvatarResp.class)) ;
+        }
         Preconditions.checkNotNull(topicsUsers, "topicsUsers is empty");
         Users user = userService.findById(userId);
         Preconditions.checkNotNull(user, "user record is empty");

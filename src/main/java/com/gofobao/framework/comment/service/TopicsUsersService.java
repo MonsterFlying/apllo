@@ -19,7 +19,7 @@ public interface TopicsUsersService {
      * @param userId
      * @return
      */
-    TopicsUsers findByUserId(Long userId);
+    TopicsUsers findByUserId(Long userId) throws Exception;
 
     /**
      * 保存

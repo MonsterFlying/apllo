@@ -16,10 +16,12 @@ import com.gofobao.framework.core.vo.VoBaseReq;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.helper.RandomUtil;
+import com.gofobao.framework.member.entity.UserThirdAccount;
 import com.gofobao.framework.member.entity.Users;
 import com.gofobao.framework.member.service.UserService;
 import com.gofobao.framework.security.helper.JwtTokenHelper;
 import com.gofobao.framework.system.biz.FileManagerBiz;
+import com.gofobao.framework.member.service.UserThirdAccountService;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import lombok.NonNull;
@@ -77,9 +79,12 @@ public class TopicsUsersServiceImpl implements TopicsUsersService {
 
     public static final Integer CONTENT_TOP_LIMIT = 999;
 
+    @Autowired
+    UserThirdAccountService userThirdAccountService ;
+
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public TopicsUsers findByUserId(Long userId) {
+    public TopicsUsers findByUserId(Long userId) throws Exception {
         Users users = userService.findByIdLock(userId);
         Preconditions.checkNotNull(users, "find user record is empty");
         Specification<TopicsUsers> specification = Specifications
@@ -88,6 +93,11 @@ public class TopicsUsersServiceImpl implements TopicsUsersService {
                 .build();
         TopicsUsers topicsUsers = topicsUsersRepository.findOne(specification);
         if (ObjectUtils.isEmpty(topicsUsers)) {
+            // 判断用户是否开户
+            UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(userId);
+            if(ObjectUtils.isEmpty(userThirdAccount)){
+                throw new Exception("禁止未开户用户操作社区") ;
+            }
             Date nowDate = new Date();
             TopicsUsers save = new TopicsUsers();
             String username = users.getUsername();
