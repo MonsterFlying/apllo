@@ -50,8 +50,7 @@ public class TopicReplyServiceImpl implements TopicReplyService {
     private TopicsNoticesBiz topicsNoticesBiz ;
 
     @Override
-    public ResponseEntity<VoBaseResp>
-    publishReply(VoTopicReplyReq voTopicReplyReq, Long userId) {
+    public ResponseEntity<VoBaseResp> publishReply(VoTopicReplyReq voTopicReplyReq, Long userId) {
         Date nowDate = new Date();
         //判断用户是否能发言
         TopicsUsers topicsUsers = topicsUsersRepository.findByUserId(userId);
@@ -64,10 +63,14 @@ public class TopicReplyServiceImpl implements TopicReplyService {
         Preconditions.checkNotNull(topicComment, "topicComment record is empty");
 
         // 回复ID
+        //判断是回复评论还是回复评论的回复
         TopicReply parentTopicReply = null;
         if (voTopicReplyReq.getTopicReplyId() != 0) {
             parentTopicReply = topicReplyRepository.findOne(voTopicReplyReq.getTopicReplyId());
         }
+
+        //用户不能自己对自己进行回复
+
 
         TopicReply reply = new TopicReply();
         reply.setTopicId(topicComment.getTopicId());
@@ -82,9 +85,9 @@ public class TopicReplyServiceImpl implements TopicReplyService {
             // 回复
             reply.setReplyType(1);
             reply.setTopicReplyId(parentTopicReply.getId());
-            reply.setForUserId(reply.getUserId());
-            reply.setForUserIconUrl(reply.getUserIconUrl());
-            reply.setForUserName(reply.getUserName());
+            reply.setForUserId(parentTopicReply.getUserId());
+            reply.setForUserIconUrl(parentTopicReply.getUserIconUrl());
+            reply.setForUserName(parentTopicReply.getUserName());
         } else {
             // 评论
             reply.setReplyType(0);
@@ -103,6 +106,7 @@ public class TopicReplyServiceImpl implements TopicReplyService {
         // 回复成功修改回复总数
         topicComment.setContentTotalNum(topicComment.getTopTotalNum() + 1);
         topicComment.setUpdateDate(nowDate);
+
         topicCommentRepository.save(topicComment) ;
 
         topicsNoticesBiz.noticesByReplay(reply) ;
