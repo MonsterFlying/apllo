@@ -3,6 +3,7 @@ package com.gofobao.framework.comment.service.impl;
 import alex.zhrenjie04.wordfilter.WordFilterUtil;
 import alex.zhrenjie04.wordfilter.result.FilteredResult;
 import com.gofobao.framework.comment.biz.TopicTopRecordBiz;
+import com.gofobao.framework.comment.biz.TopisIntegralBiz;
 import com.gofobao.framework.comment.entity.*;
 import com.gofobao.framework.comment.repository.TopicCommentRepository;
 import com.gofobao.framework.comment.repository.TopicRepository;
@@ -85,6 +86,9 @@ public class TopicServiceImpl implements TopicService {
 
     public static final Integer CONTENT_TOP_LIMIT = 999;
 
+    @Autowired
+    TopisIntegralBiz topisIntegralBiz;
+
 
     @Override
     @Transactional
@@ -119,7 +123,6 @@ public class TopicServiceImpl implements TopicService {
             return ResponseEntity
                     .badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "文件保存失败", VoBaseResp.class));
         }
-
 
         // 用户内容铭感词过滤
         FilteredResult filteredResult = WordFilterUtil.filterText(voTopicReq.getContent(), '*');
@@ -159,8 +162,10 @@ public class TopicServiceImpl implements TopicService {
         Topic saveTopic = topicRepository.save(topic);
         Preconditions.checkNotNull(saveTopic, "topic record is empty");
 
-        //发帖后相应版块下数量改变
+        // 发帖后相应版块下数量改变
         topicTypeRepository.updateTopicTotalNum(topic.getTopicTypeId(), nowDate);
+        // 添加积分
+        topisIntegralBiz.publishTopic(topic) ;
         return ResponseEntity.ok(VoBaseResp.ok("发布主题成功", VoBaseResp.class));
     }
 
