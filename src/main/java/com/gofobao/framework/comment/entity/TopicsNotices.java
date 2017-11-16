@@ -1,8 +1,10 @@
 package com.gofobao.framework.comment.entity;
 
+import com.vdurmont.emoji.EmojiParser;
 import lombok.Data;
 import org.hibernate.annotations.DynamicInsert;
 import org.hibernate.annotations.DynamicUpdate;
+import org.springframework.util.StringUtils;
 
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
@@ -33,4 +35,20 @@ public class TopicsNotices implements Serializable {
     private Integer viewState;
     private Date createDate;
     private Date updateDate;
+
+    public String getContent() {
+        if (!StringUtils.isEmpty(this.content)) {
+            return EmojiParser.parseToUnicode(this.content);
+        } else {
+            return content;
+        }
+    }
+
+    public void setContent(String content) {
+        if (!StringUtils.isEmpty(content)) {
+            this.content = EmojiParser.parseToAliases(content);
+        } else {
+            this.content = content;
+        }
+    }
 }

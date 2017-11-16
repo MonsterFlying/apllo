@@ -92,14 +92,6 @@ public class Topic implements Serializable {
         }
     }
 
-    public String getUserName() {
-        return userName;
-    }
-
-    public void setUserName(String userName) {
-        this.userName = userName;
-    }
-
     public String getContent() {
         if (!StringUtils.isEmpty(this.content)) {
             return EmojiParser.parseToUnicode(this.content);
