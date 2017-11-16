@@ -70,7 +70,12 @@ public class TopicReplyServiceImpl implements TopicReplyService {
         }
 
         //用户不能自己对自己进行回复
-
+         if (topicsUsers.getUserId() == topicComment.getUserId()){
+              return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR,"不能对自己回复",VoBaseResp.class));
+         }
+        if (topicsUsers.getUserId() == parentTopicReply.getUserId()){
+            return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR,"不能对自己回复",VoBaseResp.class));
+        }
 
         TopicReply reply = new TopicReply();
         reply.setTopicId(topicComment.getTopicId());
