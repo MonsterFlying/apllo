@@ -1,8 +1,10 @@
 package com.gofobao.framework.comment.entity;
 
+import com.vdurmont.emoji.EmojiParser;
 import lombok.Data;
 import org.hibernate.annotations.DynamicInsert;
 import org.hibernate.annotations.DynamicUpdate;
+import org.springframework.util.StringUtils;
 
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
@@ -35,7 +37,6 @@ public class Topic implements Serializable {
     private String userIconUrl;
 
     private Integer sort;
-
 
     private Integer fixState;
 
@@ -75,5 +76,43 @@ public class Topic implements Serializable {
 
     private String content;
 
+    public String getTitle() {
+        if (!StringUtils.isEmpty(this.title)) {
+            return EmojiParser.parseToUnicode(this.title);
+        } else {
+            return title;
+        }
+    }
 
+    public void setTitle(String title) {
+        if (!StringUtils.isEmpty(title)) {
+            this.title = EmojiParser.parseToAliases(title);
+        } else {
+            this.title = title;
+        }
+    }
+
+    public String getUserName() {
+        return userName;
+    }
+
+    public void setUserName(String userName) {
+        this.userName = userName;
+    }
+
+    public String getContent() {
+        if (!StringUtils.isEmpty(this.content)) {
+            return EmojiParser.parseToUnicode(this.content);
+        } else {
+            return content;
+        }
+    }
+
+    public void setContent(String content) {
+        if (!StringUtils.isEmpty(content)) {
+            this.content = EmojiParser.parseToAliases(content);
+        } else {
+            this.content = content;
+        }
+    }
 }
