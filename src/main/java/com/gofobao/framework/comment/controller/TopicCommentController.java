@@ -18,18 +18,18 @@ import javax.validation.Valid;
  */
 @RestController
 public class TopicCommentController {
+
     @Autowired
     private TopicCommentService topicCommentService;
 
     @GetMapping("/comment/topic/detail/{topicId}")
-    public ResponseEntity<VoTopicCommentListResp> listComment(@PathVariable long topicId, Pageable pageable){
-      return topicCommentService.listDetail(topicId,pageable);
+    public ResponseEntity<VoTopicCommentListResp> listComment(@PathVariable long topicId, Pageable pageable) {
+        return topicCommentService.listDetail(topicId, pageable);
     }
 
     @PostMapping("/comment/topic/comment/publish")
-    public ResponseEntity<VoBaseResp> publishComment(@Valid @ModelAttribute  VoTopicCommentReq voTopicCommentReq ,
-                                                     @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId){
-        return topicCommentService.publishComment(voTopicCommentReq , userId) ;
+    public ResponseEntity<VoBaseResp> publishComment(@Valid @ModelAttribute VoTopicCommentReq voTopicCommentReq,
+                                                     @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
+        return topicCommentService.publishComment(voTopicCommentReq, userId);
     }
-
 }

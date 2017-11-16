@@ -47,6 +47,7 @@ import com.gofobao.framework.system.service.ThirdBatchLogService;
 import com.gofobao.framework.system.service.ThirdErrorRemarkService;
 import com.gofobao.framework.tender.biz.TenderThirdBiz;
 import com.gofobao.framework.tender.biz.TransferBiz;
+import com.gofobao.framework.tender.contants.TenderConstans;
 import com.gofobao.framework.tender.entity.Tender;
 import com.gofobao.framework.tender.entity.Transfer;
 import com.gofobao.framework.tender.entity.TransferBuyLog;
@@ -768,6 +769,7 @@ public class ThirdBatchDealBizImpl implements ThirdBatchDealBiz {
             if (borrow.getIsWindmill()) {
                 Specification<Tender> tenderSpecification = Specifications.<Tender>and()
                         .eq("borrowId", borrow.getId())
+                        .eq("status", TenderConstans.SUCCESS)
                         .build();
                 List<Tender> tenders = tenderService.findList(tenderSpecification);
                 if (!CollectionUtils.isEmpty(tenders)) {

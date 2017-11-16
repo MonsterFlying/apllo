@@ -82,7 +82,7 @@ public class TopicCommentServiceImpl implements TopicCommentService {
     @Transactional
     public ResponseEntity<VoBaseResp> publishComment(@NonNull VoTopicCommentReq voTopicCommentReq,
                                                      @NonNull Long userId) {
-        //判断用户
+        // 判断用户
         TopicsUsers topicsUsers = null;
         try {
             topicsUsers = topicsUsersService.findByUserId(userId);
@@ -91,7 +91,6 @@ public class TopicCommentServiceImpl implements TopicCommentService {
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, e.getMessage())) ;
         }
-        //TopicsUsers topicsUsers = topicsUsersRepository.findByUserId(userId);
         Preconditions.checkNotNull(topicsUsers, "用户不存在");
         if (topicsUsers.getForceState() != 0) {
             return ResponseEntity.ok(VoBaseResp.ok("用户已被禁言", VoBaseResp.class));
@@ -117,7 +116,9 @@ public class TopicCommentServiceImpl implements TopicCommentService {
         Preconditions.checkNotNull(commentResult, "comment is fail");
         //发布成功修改评论总数
         topicRepository.updateToTalComment(topicComment.getTopicId());
+        // 发送通知
         topicsNoticesBiz.noticesByComment(topicComment);
+        // 发送积分
         topisIntegralBiz.publishComment(topicComment) ;
         return ResponseEntity.ok(VoBaseResp.ok("发布成功", VoBaseResp.class));
     }
