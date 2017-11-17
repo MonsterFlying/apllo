@@ -431,7 +431,8 @@ public class AssetBizImpl implements AssetBiz {
                         .badRequest()
                         .body(VoBaseResp.error(VoBaseResp.ERROR_BIND_BANK_CARD, "对不起!你的账号还没绑定银行卡呢"));
             }
-            if (userThirdAccount.getPasswordState() != 1) {
+
+            if (userThirdAccount.getPasswordState().intValue() == 1) {
                 return ResponseEntity
                         .badRequest()
                         .body(VoBaseResp.error(VoBaseResp.ERROR_INIT_BANK_PASSWORD, "请初始化江西银行存管账户密码！"));

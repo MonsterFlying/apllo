@@ -154,17 +154,17 @@ public class AutoTenderBizImpl implements AutoTenderBiz {
                     .body(VoBaseResp.error(VoBaseResp.ERROR_INIT_BANK_PASSWORD, "请初始化江西银行存管账户密码！", VoViewAutoTenderList.class));
         }
 
-        if (userThirdAccount.getAutoTransferState() != 1) {
+        /*if (userThirdAccount.getAutoTransferState() != 1) { // 审核
             return ResponseEntity
                     .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR_CREDIT, "请先签订自动债权转让协议！", VoViewAutoTenderList.class));
+                    .body(VoBaseResp.error(VoBaseResp.ERROR_CREDIT_TENDER, "请先签订自动债权转让协议！", VoViewAutoTenderList.class));
         }
-
+*/
 
         if (userThirdAccount.getAutoTenderState() != 1) {
             return ResponseEntity
                     .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR_CREDIT, "请先签订自动投标协议！", VoViewAutoTenderList.class));
+                    .body(VoBaseResp.error(VoBaseResp.ERROR_CREDIT_TENDER, "请先签订自动投标协议！", VoViewAutoTenderList.class));
         }
 
         Long userId = voSaveAutoTenderReq.getUserId();
@@ -218,17 +218,17 @@ public class AutoTenderBizImpl implements AutoTenderBiz {
                     .body(VoBaseResp.error(VoBaseResp.ERROR_INIT_BANK_PASSWORD, "请初始化江西银行存管账户密码！", VoViewAutoTenderList.class));
         }
 
-        if (userThirdAccount.getAutoTransferState() != 1) {
+    /*    if (userThirdAccount.getAutoTransferState() != 1) {  // 审核
             return ResponseEntity
                     .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR_CREDIT, "请先签订自动债权转让协议！", VoViewAutoTenderList.class));
-        }
+                    .body(VoBaseResp.error(VoBaseResp.ERROR_CREDIT_TENDER, "请先签订自动债权转让协议！", VoViewAutoTenderList.class));
+        }*/
 
 
         if (userThirdAccount.getAutoTenderState() != 1) {
             return ResponseEntity
                     .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR_CREDIT, "请先签订自动投标协议！", VoViewAutoTenderList.class));
+                    .body(VoBaseResp.error(VoBaseResp.ERROR_CREDIT_TENDER, "请先签订自动投标协议！", VoViewAutoTenderList.class));
         }
 
 
@@ -408,17 +408,17 @@ public class AutoTenderBizImpl implements AutoTenderBiz {
                     .body(VoBaseResp.error(VoBaseResp.ERROR_INIT_BANK_PASSWORD, "请初始化江西银行存管账户密码！", VoViewAutoTenderList.class));
         }
 
-        if (userThirdAccount.getAutoTransferState() != 1) {
+     /*   if (userThirdAccount.getAutoTransferState() != 1) {  // 审核
             return ResponseEntity
                     .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR_CREDIT, "请先签订自动债权转让协议！", VoViewAutoTenderList.class));
-        }
+                    .body(VoBaseResp.error(VoBaseResp.ERROR_CREDIT_TENDER, "请先签订自动债权转让协议！", VoViewAutoTenderList.class));
+        }*/
 
 
         if (userThirdAccount.getAutoTenderState() != 1) {
             return ResponseEntity
                     .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR_CREDIT, "请先签订自动投标协议！", VoViewAutoTenderList.class));
+                    .body(VoBaseResp.error(VoBaseResp.ERROR_CREDIT_TENDER, "请先签订自动投标协议！", VoViewAutoTenderList.class));
         }
 
 
@@ -464,17 +464,17 @@ public class AutoTenderBizImpl implements AutoTenderBiz {
                     .body(VoBaseResp.error(VoBaseResp.ERROR_INIT_BANK_PASSWORD, "请初始化江西银行存管账户密码！", VoViewAutoTenderList.class));
         }
 
-        if (userThirdAccount.getAutoTransferState() != 1) {
+        /*if (userThirdAccount.getAutoTransferState() != 1) {  // 审核
             return ResponseEntity
                     .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR_CREDIT, "请先签订自动债权转让协议！", VoViewAutoTenderList.class));
-        }
+                    .body(VoBaseResp.error(VoBaseResp.ERROR_CREDIT_TENDER, "请先签订自动债权转让协议！", VoViewAutoTenderList.class));
+        }*/
 
 
         if (userThirdAccount.getAutoTenderState() != 1) {
             return ResponseEntity
                     .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR_CREDIT, "请先签订自动投标协议！", VoViewAutoTenderList.class));
+                    .body(VoBaseResp.error(VoBaseResp.ERROR_CREDIT_TENDER, "请先签订自动投标协议！", VoViewAutoTenderList.class));
         }
 
 
@@ -515,18 +515,18 @@ public class AutoTenderBizImpl implements AutoTenderBiz {
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR_INIT_BANK_PASSWORD, "请初始化江西银行存管账户密码！", VoAutoTenderInfo.class));
         }
-
-        if (userThirdAccount.getAutoTransferState() != 1) {
+/*
+        if (userThirdAccount.getAutoTransferState() != 1) { // 审核
             return ResponseEntity
                     .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR_CREDIT, "请先签订自动债权转让协议！", VoAutoTenderInfo.class));
-        }
+                    .body(VoBaseResp.error(VoBaseResp.ERROR_CREDIT_TENDER, "请先签订自动债权转让协议！", VoAutoTenderInfo.class));
+        }*/
 
 
         if (userThirdAccount.getAutoTenderState() != 1) {
             return ResponseEntity
                     .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR_CREDIT, "请先签订自动投标协议！", VoAutoTenderInfo.class));
+                    .body(VoBaseResp.error(VoBaseResp.ERROR_CREDIT_TENDER, "请先签订自动投标协议！", VoAutoTenderInfo.class));
         }
 
         if (ObjectUtils.isEmpty(autoTenderId) || ObjectUtils.isEmpty(userId)) {
@@ -641,18 +641,20 @@ public class AutoTenderBizImpl implements AutoTenderBiz {
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR_INIT_BANK_PASSWORD, "请初始化江西银行存管账户密码！", VoViewAutoTenderList.class));
         }
+/*
 
-        if (userThirdAccount.getAutoTransferState() != 1) {
+        if (userThirdAccount.getAutoTransferState() != 1) {  // 审核
             return ResponseEntity
                     .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR_CREDIT, "请先签订自动债权转让协议！", VoViewAutoTenderList.class));
+                    .body(VoBaseResp.error(VoBaseResp.ERROR_CREDIT_TENDER, "请先签订自动债权转让协议！", VoViewAutoTenderList.class));
         }
+*/
 
 
         if (userThirdAccount.getAutoTenderState() != 1) {
             return ResponseEntity
                     .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR_CREDIT, "请先签订自动投标协议！", VoViewAutoTenderList.class));
+                    .body(VoBaseResp.error(VoBaseResp.ERROR_CREDIT_TENDER, "请先签订自动投标协议！", VoViewAutoTenderList.class));
         }
 
 
@@ -704,17 +706,17 @@ public class AutoTenderBizImpl implements AutoTenderBiz {
                     .body(VoBaseResp.error(VoBaseResp.ERROR_INIT_BANK_PASSWORD, "请初始化江西银行存管账户密码！", VoViewPcAutoTenderWarpRes.class));
         }
 
-        if (userThirdAccount.getAutoTransferState() != 1) {
+        /*if (userThirdAccount.getAutoTransferState() != 1) {  // 审核
             return ResponseEntity
                     .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR_CREDIT, "请先签订自动债权转让协议！", VoViewPcAutoTenderWarpRes.class));
-        }
+                    .body(VoBaseResp.error(VoBaseResp.ERROR_CREDIT_TENDER, "请先签订自动债权转让协议！", VoViewPcAutoTenderWarpRes.class));
+        }*/
 
 
         if (userThirdAccount.getAutoTenderState() != 1) {
             return ResponseEntity
                     .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR_CREDIT, "请先签订自动投标协议！", VoViewPcAutoTenderWarpRes.class));
+                    .body(VoBaseResp.error(VoBaseResp.ERROR_CREDIT_TENDER, "请先签订自动投标协议！", VoViewPcAutoTenderWarpRes.class));
         }
 
 
