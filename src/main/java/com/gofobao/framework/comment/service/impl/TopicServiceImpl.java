@@ -5,10 +5,7 @@ import alex.zhrenjie04.wordfilter.result.FilteredResult;
 import com.gofobao.framework.comment.biz.TopicTopRecordBiz;
 import com.gofobao.framework.comment.biz.TopisIntegralBiz;
 import com.gofobao.framework.comment.entity.*;
-import com.gofobao.framework.comment.repository.TopicCommentRepository;
-import com.gofobao.framework.comment.repository.TopicRepository;
-import com.gofobao.framework.comment.repository.TopicTypeRepository;
-import com.gofobao.framework.comment.repository.TopicsUsersRepository;
+import com.gofobao.framework.comment.repository.*;
 import com.gofobao.framework.comment.service.TopicService;
 import com.gofobao.framework.comment.service.TopicsUsersService;
 import com.gofobao.framework.comment.vo.request.VoTopicReq;
@@ -33,12 +30,12 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 
 import javax.servlet.http.HttpServletRequest;
-import javax.transaction.Transactional;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -67,6 +64,9 @@ public class TopicServiceImpl implements TopicService {
     @Autowired
     private TopicTopRecordBiz topicTopRecordBiz;
 
+    @Autowired
+    private TopicReplyRepository topicReplyRepository;
+
 
     @Autowired
     FileManagerBiz fileManagerBiz;
@@ -91,7 +91,7 @@ public class TopicServiceImpl implements TopicService {
 
 
     @Override
-    @Transactional
+    @Transactional(noRollbackFor = Exception.class)
     public ResponseEntity<VoBaseResp> publishTopic(@NonNull VoTopicReq voTopicReq,
                                                    @NonNull Long userId,
                                                    HttpServletRequest httpServletRequest) {
@@ -149,7 +149,7 @@ public class TopicServiceImpl implements TopicService {
         topic.setContent(filteredResult.getFilteredContent());
         //查询用上次发帖时间
         Topic lastTopic = topicRepository.findTopByUserIdOrderByIdDesc(userId);
-        if(!ObjectUtils.isEmpty(lastTopic)) {
+        if (!ObjectUtils.isEmpty(lastTopic)) {
             Date createDate = lastTopic.getCreateDate();
             createDate = ObjectUtils.isArray(createDate) ? nowDate : createDate;
             if (nowDate.getTime() - (createDate.getTime() + DateHelper.MILLIS_PER_MINUTE) < 0) {
@@ -165,12 +165,12 @@ public class TopicServiceImpl implements TopicService {
         // 发帖后相应版块下数量改变
         topicTypeRepository.updateTopicTotalNum(topic.getTopicTypeId(), nowDate);
         // 添加积分
-        topisIntegralBiz.publishTopic(topic) ;
+        topisIntegralBiz.publishTopic(topic);
         return ResponseEntity.ok(VoBaseResp.ok("发布主题成功", VoBaseResp.class));
     }
 
     @Override
-    @Transactional
+    @Transactional(noRollbackFor = Exception.class)
     public ResponseEntity<VoBaseResp> delTopic(long id, long userId) {
         Topic topic = topicRepository.findOne(id);
         if (ObjectUtils.isEmpty(topic)) {
@@ -183,10 +183,21 @@ public class TopicServiceImpl implements TopicService {
             Integer count = topicRepository.updateDel(id);
             Preconditions.checkNotNull(count, "删除帖子失败");
             //删除帖子下面的所有评论
-            Integer updateResult = topicCommentRepository.updateComment(id);
-            Preconditions.checkNotNull(updateResult,"删除评论失败");
+            Integer updateCommentResult = topicCommentRepository.updateComment(id);
+            Preconditions.checkNotNull(updateCommentResult, "删除评论失败");
+            //删除帖子下所有评论的回复
+            List<TopicComment> commentList = topicCommentRepository.findByTopicIdAndDelOrderByIdAsc(id, 0);
+            if (!CollectionUtils.isEmpty(commentList)){
+                List<Long> commentIds = Lists.newArrayList();
+                Long commentId = null;
+                for (TopicComment topicComment : commentList) {
+                    commentIds.add(topicComment.getId());
+                    //topicReplyRepository.updateReply(topicComment.getId());
+                }
+                Integer updateReplyResult = topicReplyRepository.updateReply(commentIds);
+                Preconditions.checkNotNull(updateReplyResult, "删除回复失败");
+            }
 
-            //topicRepository.delete(id);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "删除帖子失败", VoBaseResp.class));
         }
@@ -227,7 +238,7 @@ public class TopicServiceImpl implements TopicService {
             voTopicResp.setContent(content);
             voTopicResp.setUserName(topic.getUserName());
             //发帖者图像
-            if(StringUtils.isEmpty(voTopicResp.getUserIconUrl())){
+            if (StringUtils.isEmpty(voTopicResp.getUserIconUrl())) {
                 voTopicResp.setUserIconUrl(imgPrefix + "/" + topic.getUserIconUrl());
             }
 
@@ -362,6 +373,6 @@ public class TopicServiceImpl implements TopicService {
 
     @Override
     public Topic save(Topic topic) {
-        return topicRepository.save(topic) ;
+        return topicRepository.save(topic);
     }
 }

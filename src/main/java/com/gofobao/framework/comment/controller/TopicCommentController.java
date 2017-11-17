@@ -28,7 +28,7 @@ public class TopicCommentController {
                                                               @PathVariable Long topicId,
                                                               @PathVariable Integer pageIndex) {
         if (ObjectUtils.isEmpty(pageIndex) || pageIndex <= 0) {
-            pageIndex = 1 ;
+            pageIndex = 1;
         }
         return topicCommentService.listDetail(httpServletRequest, topicId, pageIndex);
     }
@@ -37,6 +37,12 @@ public class TopicCommentController {
     public ResponseEntity<VoBaseResp> publishComment(@Valid @ModelAttribute VoTopicCommentReq voTopicCommentReq,
                                                      @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
         return topicCommentService.publishComment(voTopicCommentReq, userId);
+    }
+
+    @GetMapping("/comment/topic/comment/delete/{topicCommentId}")
+    public ResponseEntity<VoBaseResp> delComment(@PathVariable Long topicCommentId,
+                                                 @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
+        return topicCommentService.delComment(topicCommentId,userId);
     }
 
 }

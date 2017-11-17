@@ -27,4 +27,10 @@ public class TopicReplyController {
     public ResponseEntity<VoTopicReplyListResp> listReply(@PathVariable() Long topicCommentId ){
         return topicReplyService.listReply(topicCommentId);
     }
+
+    @GetMapping("/comment/topic/reply")
+    public ResponseEntity<VoBaseResp> delReply(){
+        return null;
+    }
+
 }

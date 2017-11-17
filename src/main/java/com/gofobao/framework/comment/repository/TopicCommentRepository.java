@@ -16,8 +16,6 @@ import java.util.List;
 @Repository
 public interface TopicCommentRepository extends JpaRepository<TopicComment, Long>, JpaSpecificationExecutor<TopicComment> {
 
-    List<TopicComment> findByTopicIdOrderByIdAsc(long topicId, Pageable pageable);
-
     @Modifying
     @Query(value = "UPDATE gfb_topics_comment SET user_name = ?2 WHERE user_id = ?1", nativeQuery = true)
     Integer batchUpateUsernameByUserId(Long userId, String username);
@@ -28,9 +26,15 @@ public interface TopicCommentRepository extends JpaRepository<TopicComment, Long
 
     List<TopicComment> findByTopicIdAndDelOrderByIdAsc(long topicId, int del, Pageable pageable);
 
+    List<TopicComment> findByTopicIdAndDelOrderByIdAsc(long topicId, int del);
+
     @Modifying
-    @Query(value = "update gfb_topics_comment set del = 1 where topic_id = ?1",nativeQuery = true)
+    @Query(value = "update gfb_topics_comment set del = 1 where topic_id = ?1", nativeQuery = true)
     Integer updateComment(long id);
 
     TopicComment findTopByUserIdOrderByIdDesc(Long userId);
+
+    @Modifying
+    @Query(value = "update gfb_topics_comment set del = 1 where topic_comment_id = ?1", nativeQuery = true)
+    Integer updateOneComment(Long topicCommentId);
 }

@@ -48,4 +48,12 @@ public interface TopicCommentService {
      * @return
      */
     ResponseEntity<VoTopicCommentListResp> listDetail(HttpServletRequest httpServletRequest, Long topicId, Integer pageIndex);
+
+    /**
+     * 删除评论
+     * @param topicCommentId
+     * @param userId
+     * @return
+     */
+    ResponseEntity<VoBaseResp> delComment(Long topicCommentId, Long userId);
 }

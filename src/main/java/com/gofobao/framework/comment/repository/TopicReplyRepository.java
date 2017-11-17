@@ -30,5 +30,14 @@ public interface TopicReplyRepository extends JpaRepository<TopicReply, Long>, J
     @Modifying
     @Query(value = "UPDATE gfb_topics_reply SET for_user_icon_url = ?2 WHERE for_user_id = ?1", nativeQuery = true)
     Integer batchUpateAvatarByForUserId(Long userId, String avatar);
+
     List<TopicReply> findByTopicCommentId(Long topicCommentId);
+
+    @Modifying
+    @Query(value = "UPDATE gfb_topics_reply SET del = 1 WHERE topic_reply_id IN ?1", nativeQuery = true)
+    Integer updateReply(List<Long> id);
+
+    @Modifying
+    @Query(value = "update gfb_topics_reply set del = 1 where topic_comment_id = ?1", nativeQuery = true)
+    Integer updateByComment(Long topicCommentId);
 }
