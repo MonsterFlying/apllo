@@ -11,11 +11,14 @@ import alex.zhrenjie04.wordfilter.result.FilteredResult;
 import com.gofobao.framework.comment.entity.TopicReply;
 import com.gofobao.framework.comment.repository.TopicsUsersRepository;
 import com.gofobao.framework.comment.service.TopicReplyService;
+import com.gofobao.framework.comment.service.TopicsUsersService;
 import com.gofobao.framework.comment.vo.request.VoTopicReplyReq;
+import com.gofobao.framework.comment.vo.response.VoTopicMemberCenterResp;
 import com.gofobao.framework.comment.vo.response.VoTopicReplyListResp;
 import com.gofobao.framework.comment.vo.response.VoTopicReplyResp;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.member.repository.UsersRepository;
+import com.gofobao.framework.member.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import com.gofobao.framework.comment.vo.request.VoTopicReplyReq;
@@ -41,7 +44,7 @@ public class TopicReplyServiceImpl implements TopicReplyService {
     TopicReplyRepository topicReplyRepository;
 
     @Autowired
-    private TopicsUsersRepository topicsUsersRepository;
+    private TopicsUsersService topicsUsersService;
 
     @Autowired
     private TopicCommentRepository topicCommentRepository;
@@ -53,12 +56,20 @@ public class TopicReplyServiceImpl implements TopicReplyService {
     public ResponseEntity<VoBaseResp> publishReply(VoTopicReplyReq voTopicReplyReq, Long userId) {
         Date nowDate = new Date();
         //判断用户是否能发言
-        TopicsUsers topicsUsers = topicsUsersRepository.findByUserId(userId);
+        TopicsUsers topicsUsers = null;
+        try {
+            topicsUsers = topicsUsersService.findByUserId(userId);
+        } catch (Exception e) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, e.getMessage())) ;
+        }
         Preconditions.checkNotNull(topicsUsers, "用户不存在");
         if (topicsUsers.getForceState() != 0) {
             return ResponseEntity.ok(VoBaseResp.ok("用户已被禁止发言", VoBaseResp.class));
         }
         // 评论ID
+
         TopicComment topicComment = topicCommentRepository.findOne(voTopicReplyReq.getTopicCommentId());
         Preconditions.checkNotNull(topicComment, "topicComment record is empty");
 
@@ -67,15 +78,18 @@ public class TopicReplyServiceImpl implements TopicReplyService {
         TopicReply parentTopicReply = null;
         if (voTopicReplyReq.getTopicReplyId() != 0) {
             parentTopicReply = topicReplyRepository.findOne(voTopicReplyReq.getTopicReplyId());
+            if (topicsUsers.getUserId().equals(parentTopicReply.getUserId()) ){
+                return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR,"不能对自己回复",
+                        VoBaseResp.class));
+            }
         }
 
         //用户不能自己对自己进行回复
-         if (topicsUsers.getUserId() == topicComment.getUserId()){
-              return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR,"不能对自己回复",VoBaseResp.class));
+         if (topicsUsers.getUserId() .equals(topicComment.getUserId()) ){
+              return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR,"不能对自己回复",
+                      VoBaseResp.class));
          }
-        if (topicsUsers.getUserId() == parentTopicReply.getUserId()){
-            return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR,"不能对自己回复",VoBaseResp.class));
-        }
+
 
         TopicReply reply = new TopicReply();
         reply.setTopicId(topicComment.getTopicId());

@@ -2,23 +2,25 @@ package com.gofobao.framework.comment.service.impl;
 
 import alex.zhrenjie04.wordfilter.WordFilterUtil;
 import alex.zhrenjie04.wordfilter.result.FilteredResult;
+import com.github.wenhao.jpa.Specifications;
 import com.gofobao.framework.comment.biz.TopicTopRecordBiz;
 import com.gofobao.framework.comment.biz.TopicsNoticesBiz;
 import com.gofobao.framework.comment.biz.TopisIntegralBiz;
-import com.gofobao.framework.comment.entity.Topic;
-import com.gofobao.framework.comment.entity.TopicComment;
-import com.gofobao.framework.comment.entity.TopicTopRecord;
-import com.gofobao.framework.comment.entity.TopicsUsers;
+import com.gofobao.framework.comment.entity.*;
 import com.gofobao.framework.comment.repository.TopicCommentRepository;
+import com.gofobao.framework.comment.repository.TopicReplyRepository;
 import com.gofobao.framework.comment.repository.TopicRepository;
+import com.gofobao.framework.comment.repository.TopicsUsersRepository;
 import com.gofobao.framework.comment.service.TopicCommentService;
 import com.gofobao.framework.comment.service.TopicsUsersService;
 import com.gofobao.framework.comment.vo.request.VoTopicCommentReq;
+import com.gofobao.framework.comment.vo.response.VoReplyDetailItem;
 import com.gofobao.framework.comment.vo.response.VoTopicCommentItem;
 import com.gofobao.framework.comment.vo.response.VoTopicCommentListResp;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.security.helper.JwtTokenHelper;
+import com.google.common.base.Functions;
 import com.google.common.base.Preconditions;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
@@ -26,6 +28,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -62,6 +65,9 @@ public class TopicCommentServiceImpl implements TopicCommentService {
     private TopicsUsersService topicsUsersService;
 
     @Autowired
+    private TopicsUsersRepository topicsUsersRepository;
+
+    @Autowired
     TopisIntegralBiz topisIntegralBiz;
 
     @Value("${qiniu.domain}")
@@ -69,6 +75,9 @@ public class TopicCommentServiceImpl implements TopicCommentService {
 
     @Autowired
     TopicTopRecordBiz topicTopRecordBiz;
+
+    @Autowired
+    TopicReplyRepository topicReplyRepository;
 
 
     @Override
@@ -123,7 +132,7 @@ public class TopicCommentServiceImpl implements TopicCommentService {
         // 发送通知
         topicsNoticesBiz.noticesByComment(topicComment);
         // 发送积分
-        topisIntegralBiz.publishComment(topicComment) ;
+        topisIntegralBiz.publishComment(topicComment);
         return ResponseEntity.ok(VoBaseResp.ok("发布成功", VoBaseResp.class));
     }
 
@@ -157,28 +166,63 @@ public class TopicCommentServiceImpl implements TopicCommentService {
         VoTopicCommentListResp voTopicCommentListResp = VoBaseResp.ok("操作成功", VoTopicCommentListResp.class);
         List<VoTopicCommentItem> result = voTopicCommentListResp.getVoTopicCommentItemList();
 
+        Set<Long> commonIds = null;
+        Map<Long/** commid*/, List<TopicReply>> commentIdsMap = null;
+        if (!CollectionUtils.isEmpty(topicComments)) {
+            commonIds = topicComments
+                    .stream()
+                    .map(topicComment -> topicComment.getId()).collect(Collectors.toSet());
+            // 取回复
+            Specification<TopicReply> topicReplySpecification = Specifications
+                    .<TopicReply>and()
+                    .eq("topicId", topicId)
+                    .eq("del", 0)
+                    .in("topicCommentId", commonIds.toArray())
+                    .build();
+            List<TopicReply> replyLists = topicReplyRepository.findAll(topicReplySpecification);
+            if (!CollectionUtils.isEmpty(replyLists)) {
+                commentIdsMap = replyLists
+                        .stream()
+                        .collect(Collectors.groupingBy(TopicReply::getTopicCommentId, Collectors.toList()));
+            }
+        }
+
         for (TopicComment topicComment : topicComments) {
             VoTopicCommentItem voTopicCommentItem = new VoTopicCommentItem();
             voTopicCommentItem.setContent(topicComment.getContent());
             voTopicCommentItem.setUserName(topicComment.getUserName());
             voTopicCommentItem.setCommentId(topicComment.getId());
             voTopicCommentItem.setUserIconUrl(imgDomain + "/" + topicComment.getUserIconUrl());
+            if (!CollectionUtils.isEmpty(commentIdsMap)) {
+                List<TopicReply> topicReplies = commentIdsMap.get(topicComment.getId());
+                if (!CollectionUtils.isEmpty(topicReplies)) {
+                    List<VoReplyDetailItem> replyList = voTopicCommentItem.getReplyList();
+                    VoReplyDetailItem voReplyDetailItem = null;
+                    for (TopicReply item : topicReplies) {
+                        // id 升序
+                        voReplyDetailItem = new VoReplyDetailItem();
+                        voReplyDetailItem.setCommentId(topicComment.getId());
+                        voReplyDetailItem.setReplyId(item.getId());
+                        voReplyDetailItem.setContent(item.getContent());
+                        voReplyDetailItem.setFromUserName(item.getUserName());
+                        voReplyDetailItem.setToUserName(item.getForUserName());
+                        replyList.add(voReplyDetailItem);
+                    }
+                }
+            }
             //评论时间分析
             long publishTime = topicComment.getCreateDate().getTime();
             voTopicCommentItem.setTime(DateHelper.getPastTime(publishTime));
+
             result.add(voTopicCommentItem);
         }
 
         // 点赞
         try {
-
             String token = jwtTokenHelper.getToken(httpServletRequest);
             if (!StringUtils.isEmpty(token)
-                    && !CollectionUtils.isEmpty(result)) {
+                    && !CollectionUtils.isEmpty(commonIds)) {
                 Long visterId = jwtTokenHelper.getUserIdFromToken(token);
-                Set<Long> commonIds = result
-                        .stream()
-                        .map(voTopicCommentItem -> voTopicCommentItem.getCommentId()).collect(Collectors.toSet());
                 Map<Long, TopicTopRecord> topicTopRecordMap
                         = topicTopRecordBiz.findTopState(1, visterId, new ArrayList<>(commonIds));
                 Preconditions.checkNotNull(topicTopRecordMap, "topicTopRecordMap record is empty");
@@ -199,5 +243,28 @@ public class TopicCommentServiceImpl implements TopicCommentService {
 
 
         return ResponseEntity.ok(voTopicCommentListResp);
+    }
+
+    @Override
+    public ResponseEntity<VoBaseResp> delComment(Long topicCommentId, Long userId) {
+        if (ObjectUtils.isEmpty(userId)) {
+            return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "无权删除", VoBaseResp.class));
+        }
+        TopicsUsers topicsUsers = topicsUsersRepository.findByUserId(userId);
+        Preconditions.checkNotNull(topicsUsers, "用户不存在");
+        if (!topicsUsers.getUserId().equals(userId)) {
+            return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "无权删除", VoBaseResp.class));
+        }
+        Integer updateCommentCount = topicCommentRepository.updateOneComment(topicCommentId);
+        if (ObjectUtils.isEmpty(updateCommentCount)) {
+            return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "删除评论失败", VoBaseResp.class));
+        }
+        //成功删除评论后删除评论下的所有回复
+        Integer updateReplyCount = topicReplyRepository.updateByComment(topicCommentId);
+        if (ObjectUtils.isEmpty(updateReplyCount)) {
+            return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "删除评论失败", VoBaseResp.class));
+        }
+
+        return ResponseEntity.ok(VoBaseResp.ok("删除评论成功", VoBaseResp.class));
     }
 }

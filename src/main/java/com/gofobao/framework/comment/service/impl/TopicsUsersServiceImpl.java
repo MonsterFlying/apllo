@@ -221,12 +221,13 @@ public class TopicsUsersServiceImpl implements TopicsUsersService {
     @Override
     public ResponseEntity<VoTopicCommentManagerListResp> listComment(Integer sourceType, HttpServletRequest httpServletRequest,
                                                                      Integer pageable, Long userId) {
-        VoTopicCommentManagerResp voTopicCommentManagerResp = new VoTopicCommentManagerResp();
+
         VoTopicCommentManagerListResp voTopicCommentManagerListResp = VoBaseResp.ok("查询成功",VoTopicCommentManagerListResp.class);
         if(sourceType == 0) {
             //我的评论
-            List<TopicsNotices> topicsNotices = topicsNoticesRepository.findByUserIdAndSourceType(userId, sourceType);
+            List<TopicsNotices> topicsNotices = topicsNoticesRepository.findByForUserIdAndSourceType(userId, sourceType);
             for (TopicsNotices notices : topicsNotices) {
+                VoTopicCommentManagerResp voTopicCommentManagerResp = new VoTopicCommentManagerResp();
                 voTopicCommentManagerResp.setTopicId(notices.getSourceId());
                 voTopicCommentManagerResp.setContent(notices.getContent());
                 //评论时间
@@ -236,13 +237,14 @@ public class TopicsUsersServiceImpl implements TopicsUsersService {
 
         }else {
             //我的回复
-            List<TopicsNotices> topicsNotices = topicsNoticesRepository.findByUserIdAndSourceType(userId, sourceType);
+            List<TopicsNotices> topicsNotices = topicsNoticesRepository.findByForUserIdAndSourceType(userId, sourceType);
             for (TopicsNotices notices : topicsNotices) {
+                VoTopicCommentManagerResp voTopicCommentManagerResp = new VoTopicCommentManagerResp();
                 voTopicCommentManagerResp.setContent(notices.getContent());
                 voTopicCommentManagerResp.setCommentId(notices.getSourceId());
                 //评论时间
                 voTopicCommentManagerResp.setTime(DateHelper.getPastTime(notices.getCreateDate().getTime()));
-                voTopicCommentManagerResp.setForUserId(notices.getForUserId());
+                voTopicCommentManagerResp.setForUserId(notices.getUserId());
                 voTopicCommentManagerListResp.getVoTopicCommentManagerRespList().add(voTopicCommentManagerResp);
             }
         }
@@ -256,7 +258,7 @@ public class TopicsUsersServiceImpl implements TopicsUsersService {
         VoTopicCommentManagerListResp voTopicCommentManagerListResp = VoBaseResp.ok("查询成功", VoTopicCommentManagerListResp.class);
         if (sourceType == 0) {
             //评论我的
-            List<TopicsNotices> topicsNotices = topicsNoticesRepository.findByForUserIdAndSourceType(userId, sourceType);
+            List<TopicsNotices> topicsNotices = topicsNoticesRepository.findByUserIdAndSourceType(userId, sourceType);
             for (TopicsNotices notices : topicsNotices) {
                 voTopicCommentManagerResp.setContent(notices.getContent());
                 //评论时间
@@ -266,7 +268,7 @@ public class TopicsUsersServiceImpl implements TopicsUsersService {
             }
         } else {
             //回复我的
-            List<TopicsNotices> topicsNotices = topicsNoticesRepository.findByForUserIdAndSourceType(userId, sourceType);
+            List<TopicsNotices> topicsNotices = topicsNoticesRepository.findByUserIdAndSourceType(userId, sourceType);
             for (TopicsNotices notices : topicsNotices) {
                 voTopicCommentManagerResp.setContent(notices.getContent());
                 //评论时间

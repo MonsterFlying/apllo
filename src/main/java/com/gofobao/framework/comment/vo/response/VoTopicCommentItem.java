@@ -1,8 +1,11 @@
 package com.gofobao.framework.comment.vo.response;
 
+import com.google.common.collect.Lists;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
+
+import java.util.List;
 
 /**
  * Created by xin on 2017/11/10.
@@ -34,4 +37,9 @@ public class VoTopicCommentItem {
 
     @ApiModelProperty("点赞状态")
     private boolean topState ;
+
+
+    @ApiModelProperty("回复列表")
+    List<VoReplyDetailItem> replyList = Lists.newArrayList() ;
+
 }
