@@ -8,28 +8,22 @@ import com.gofobao.framework.comment.repository.TopicCommentRepository;
 import com.gofobao.framework.comment.repository.TopicReplyRepository;
 import alex.zhrenjie04.wordfilter.WordFilterUtil;
 import alex.zhrenjie04.wordfilter.result.FilteredResult;
-import com.gofobao.framework.comment.entity.TopicReply;
 import com.gofobao.framework.comment.repository.TopicsUsersRepository;
 import com.gofobao.framework.comment.service.TopicReplyService;
 import com.gofobao.framework.comment.service.TopicsUsersService;
 import com.gofobao.framework.comment.vo.request.VoTopicReplyReq;
-import com.gofobao.framework.comment.vo.response.VoTopicMemberCenterResp;
 import com.gofobao.framework.comment.vo.response.VoTopicReplyListResp;
 import com.gofobao.framework.comment.vo.response.VoTopicReplyResp;
 import com.gofobao.framework.core.vo.VoBaseResp;
-import com.gofobao.framework.member.repository.UsersRepository;
-import com.gofobao.framework.member.service.UserService;
+import com.gofobao.framework.helper.DateHelper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import com.gofobao.framework.comment.vo.request.VoTopicReplyReq;
-import com.gofobao.framework.core.vo.VoBaseResp;
-import com.gofobao.framework.member.entity.Users;
 import com.google.common.base.Preconditions;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 
+import javax.validation.constraints.NotNull;
 import java.util.Date;
 import java.util.List;
 
@@ -47,10 +41,13 @@ public class TopicReplyServiceImpl implements TopicReplyService {
     private TopicsUsersService topicsUsersService;
 
     @Autowired
+    private TopicsUsersRepository topicsUsersRepository;
+
+    @Autowired
     private TopicCommentRepository topicCommentRepository;
 
     @Autowired
-    private TopicsNoticesBiz topicsNoticesBiz ;
+    private TopicsNoticesBiz topicsNoticesBiz;
 
     @Override
     public ResponseEntity<VoBaseResp> publishReply(VoTopicReplyReq voTopicReplyReq, Long userId) {
@@ -62,12 +59,21 @@ public class TopicReplyServiceImpl implements TopicReplyService {
         } catch (Exception e) {
             return ResponseEntity
                     .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, e.getMessage())) ;
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, e.getMessage()));
         }
         Preconditions.checkNotNull(topicsUsers, "用户不存在");
         if (topicsUsers.getForceState() != 0) {
             return ResponseEntity.ok(VoBaseResp.ok("用户已被禁止发言", VoBaseResp.class));
         }
+        //判断用户上次回复时间,设置回复时间间隔为1分钟
+        TopicReply topicReply = topicReplyRepository.findTopByUserIdOrderById(userId);
+        if (!ObjectUtils.isEmpty(topicReply)&&(nowDate.getTime() -
+                topicReply.getCreateDate().getTime())< DateHelper.MILLIS_PER_MINUTE){
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR,"发帖过于频繁,请1分钟后再试"));
+        }
+
         // 评论ID
 
         TopicComment topicComment = topicCommentRepository.findOne(voTopicReplyReq.getTopicCommentId());
@@ -78,17 +84,17 @@ public class TopicReplyServiceImpl implements TopicReplyService {
         TopicReply parentTopicReply = null;
         if (voTopicReplyReq.getTopicReplyId() != 0) {
             parentTopicReply = topicReplyRepository.findOne(voTopicReplyReq.getTopicReplyId());
-            if (topicsUsers.getUserId().equals(parentTopicReply.getUserId()) ){
-                return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR,"不能对自己回复",
+            if (topicsUsers.getUserId().equals(parentTopicReply.getUserId())) {
+                return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "不能对自己回复",
                         VoBaseResp.class));
             }
         }
 
         //用户不能自己对自己进行回复
-         if (topicsUsers.getUserId() .equals(topicComment.getUserId()) ){
-              return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR,"不能对自己回复",
-                      VoBaseResp.class));
-         }
+        if (topicsUsers.getUserId().equals(topicComment.getUserId())) {
+            return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "不能对自己回复",
+                    VoBaseResp.class));
+        }
 
 
         TopicReply reply = new TopicReply();
@@ -126,9 +132,9 @@ public class TopicReplyServiceImpl implements TopicReplyService {
         topicComment.setContentTotalNum(topicComment.getTopTotalNum() + 1);
         topicComment.setUpdateDate(nowDate);
 
-        topicCommentRepository.save(topicComment) ;
+        topicCommentRepository.save(topicComment);
 
-        topicsNoticesBiz.noticesByReplay(reply) ;
+        topicsNoticesBiz.noticesByReplay(reply);
         return ResponseEntity.ok(VoBaseResp.ok("回复成功", VoBaseResp.class));
     }
 
@@ -156,9 +162,23 @@ public class TopicReplyServiceImpl implements TopicReplyService {
         return topicReplyRepository.save(topicReply);
     }
 
+    @Override
+    public ResponseEntity<VoBaseResp> deleteReply(@NotNull Long topicReplyId, Long userId) {
+        //判断是否是回复的用户
+        TopicsUsers topicsUsers = topicsUsersRepository.findByUserId(userId);
+        if (!topicsUsers.getUserId().equals(userId)){
+            ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "无权删除", VoBaseResp.class));
+        }
+        Integer updateReplyCount = topicReplyRepository.updateOneReply(topicReplyId);
+        if (ObjectUtils.isEmpty(updateReplyCount)) {
+            ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "删除回复失败", VoBaseResp.class));
+        }
+        return ResponseEntity.ok(VoBaseResp.ok("删除成功",VoBaseResp.class));
+    }
+
 
     @Override
-    public ResponseEntity<VoTopicReplyListResp> listReply(Long topicCommentId) {
+    public ResponseEntity<VoTopicReplyListResp> listReply(@NotNull Long topicCommentId) {
         List<TopicReply> topicReplies = topicReplyRepository.findByTopicCommentId(topicCommentId);
         VoTopicReplyListResp voTopicReplyListResp = VoBaseResp.ok("查询成功", VoTopicReplyListResp.class);
         for (TopicReply topicReply : topicReplies) {

@@ -34,7 +34,7 @@ public class TopicController {
         return topicService.publishTopic(voTopicReq, userId, httpServletRequest);
     }
 
-    @PostMapping("/comment/topic/del/{id}")
+    @GetMapping("/comment/topic/del/{id}")
     public ResponseEntity<VoBaseResp> delTopic(@PathVariable long id, @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
         return topicService.delTopic(id, userId);
     }

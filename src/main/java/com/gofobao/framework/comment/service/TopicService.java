@@ -52,6 +52,7 @@ public interface TopicService {
 
     /**
      * 批量修改帖子冗余的用户名和头像
+     *
      * @param userId
      * @param username
      * @param avatar

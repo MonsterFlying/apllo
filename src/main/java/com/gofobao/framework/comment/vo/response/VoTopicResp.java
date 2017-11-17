@@ -1,9 +1,11 @@
 package com.gofobao.framework.comment.vo.response;
 
 import com.gofobao.framework.core.vo.VoBaseResp;
+import com.sun.org.apache.xpath.internal.operations.Bool;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
+import org.springframework.data.redis.core.BoundGeoOperations;
 
 /**
  * Created by xin on 2017/11/8.
@@ -64,5 +66,8 @@ public class VoTopicResp extends VoBaseResp {
 
     @ApiModelProperty("是否点赞过")
     private boolean topState = false;
+
+    @ApiModelProperty("是否是发帖用户")
+    private boolean TopicUser = false;
 
 }

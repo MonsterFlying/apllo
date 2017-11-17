@@ -6,6 +6,7 @@ import com.github.wenhao.jpa.Specifications;
 import com.gofobao.framework.comment.biz.TopicTopRecordBiz;
 import com.gofobao.framework.comment.biz.TopicsNoticesBiz;
 import com.gofobao.framework.comment.biz.TopisIntegralBiz;
+import com.gofobao.framework.comment.controller.TopicController;
 import com.gofobao.framework.comment.entity.*;
 import com.gofobao.framework.comment.repository.TopicCommentRepository;
 import com.gofobao.framework.comment.repository.TopicReplyRepository;
@@ -19,9 +20,13 @@ import com.gofobao.framework.comment.vo.response.VoTopicCommentItem;
 import com.gofobao.framework.comment.vo.response.VoTopicCommentListResp;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.helper.DateHelper;
+import com.gofobao.framework.member.entity.UserCache;
 import com.gofobao.framework.security.helper.JwtTokenHelper;
 import com.google.common.base.Functions;
 import com.google.common.base.Preconditions;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,6 +43,7 @@ import org.springframework.util.StringUtils;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static com.sun.tools.internal.xjc.reader.Ring.add;
@@ -79,6 +85,19 @@ public class TopicCommentServiceImpl implements TopicCommentService {
     @Autowired
     TopicReplyRepository topicReplyRepository;
 
+    LoadingCache<Long, TopicsUsers> userCache = CacheBuilder
+            .newBuilder()
+            .expireAfterAccess(5, TimeUnit.MINUTES)
+            .maximumSize(1024)
+            .build(new CacheLoader<Long, TopicsUsers>() {
+                @Override
+                public TopicsUsers load(Long userId) throws Exception {
+                    //查询当前登录用户
+                    TopicsUsers topicsUsers = topicsUsersService.findByUserId(userId);
+                    return topicsUsers;
+                }
+            });
+
 
     @Override
     @Transactional
@@ -87,7 +106,8 @@ public class TopicCommentServiceImpl implements TopicCommentService {
         // 判断用户
         TopicsUsers topicsUsers = null;
         try {
-            topicsUsers = topicsUsersService.findByUserId(userId);
+            topicsUsers = userCache.get(userId);
+            //topicsUsers = topicsUsersService.findByUserId(userId);
         } catch (Exception e) {
             return ResponseEntity
                     .badRequest()
@@ -121,7 +141,7 @@ public class TopicCommentServiceImpl implements TopicCommentService {
             if (nowDate.getTime() - (createDate.getTime() + DateHelper.MILLIS_PER_MINUTE) < 0) {
                 return ResponseEntity
                         .badRequest()
-                        .body(VoBaseResp.error(VoBaseResp.ERROR, "评论过于频繁, 请稍后操作!"));
+                        .body(VoBaseResp.error(VoBaseResp.ERROR, "评论过于频繁, 请1分钟后再试!"));
             }
         }
 

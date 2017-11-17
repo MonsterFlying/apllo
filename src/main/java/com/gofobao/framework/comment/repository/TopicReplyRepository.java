@@ -40,4 +40,10 @@ public interface TopicReplyRepository extends JpaRepository<TopicReply, Long>, J
     @Modifying
     @Query(value = "update gfb_topics_reply set del = 1 where topic_comment_id = ?1", nativeQuery = true)
     Integer updateByComment(Long topicCommentId);
+
+    @Modifying
+    @Query(value = "update gfb_topics_reply set del = 1 where id = ?1", nativeQuery = true)
+    Integer updateOneReply(Long topicReplyId);
+
+    TopicReply findTopByUserIdOrderById(Long userId);
 }

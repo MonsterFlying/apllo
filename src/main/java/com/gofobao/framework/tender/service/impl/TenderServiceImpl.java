@@ -142,64 +142,6 @@ public class TenderServiceImpl implements TenderService {
                     ? user.getPhone()
                     : UserHelper.hideChar(user.getPhone(), UserHelper.PHONE_NUM)
             );
-
-            //判断是否是新手标
-            if(!borrow.getIsNovice()){
-                tenderUserResList.add(tenderUserRes);
-                return ;
-            }
-            if(item.getValidMoney()/100<=SHOW_LIMIT){
-                tenderCount[0] = tenderCount[0] +1;
-                tenderUserResList.add(tenderUserRes);
-                return;
-            }
-            long count=0;
-            long more = item.getValidMoney()/100%SHOW_LIMIT;
-            if (item.getValidMoney()/100%SHOW_LIMIT == 0){
-                count = item.getValidMoney()/100/SHOW_LIMIT;
-                for(int i=0;i<count;i++) {
-                    VoBorrowTenderUserRes tenderUserRes1 = new VoBorrowTenderUserRes();
-                    tenderUserRes1.setValidMoney(StringHelper.formatMon(SHOW_LIMIT) + MoneyConstans.RMB);
-                    tenderUserRes1.setType(tenderUserRes.getType());
-                    tenderUserRes1.setUserName(tenderUserRes.getUserName());
-                    Calendar calendar=Calendar.getInstance();
-                    calendar.setTime(item.getCreatedAt());
-
-                    tenderUserRes1.setDate(DateHelper.dateToString(new Date(calendar.getTimeInMillis()+600*i),DateHelper.DATE_FORMAT_YMDHMS));
-                    tenderUserResList.add(tenderUserRes1);
-                }
-                tenderCount[0] = tenderCount[0] +count;
-            } else if (item.getValidMoney()/100<SHOW_LIMIT) {
-              tenderUserResList.add(tenderUserRes);
-              return;
-            } else {
-                count = item.getValidMoney() /100/ SHOW_LIMIT + 1;
-                for(int i=0;i<count-1;i++) {
-                    VoBorrowTenderUserRes tenderUserRes1 = new VoBorrowTenderUserRes();
-                    tenderUserRes1.setValidMoney(StringHelper.formatMon(SHOW_LIMIT ) + MoneyConstans.RMB);
-                    tenderUserRes1.setType(tenderUserRes.getType());
-                    tenderUserRes1.setUserName(tenderUserRes.getUserName());
-                    Calendar calendar=Calendar.getInstance();
-                    calendar.setTime(item.getCreatedAt());
-
-                    tenderUserRes1.setDate(DateHelper.dateToString(new Date(calendar.getTimeInMillis()+600*i),DateHelper.DATE_FORMAT_YMDHMS));
-                    tenderUserResList.add(tenderUserRes1);
-                }
-                tenderCount[0] = tenderCount[0] +count;
-
-            }
-            VoBorrowTenderUserRes tenderUserRes1 = new VoBorrowTenderUserRes();
-            tenderUserRes1.setValidMoney(StringHelper.formatMon(more) + MoneyConstans.RMB);
-            tenderUserRes1.setType(tenderUserRes.getType());
-            tenderUserRes1.setUserName(tenderUserRes.getUserName());
-            Calendar calendar=Calendar.getInstance();
-            calendar.setTime(item.getCreatedAt());
-            tenderUserRes1.setDate(DateHelper.dateToString(new Date(calendar.getTimeInMillis()+count*600),DateHelper.DATE_FORMAT_YMDHMS));
-            if (more != 0) {
-                tenderUserResList.add(tenderUserRes1);
-            }
-            //拆分成功后修改表投标数
-            borrowRepository.updateTenderCount((int) tenderCount[0],borrowId);
         });
         Collections.sort(tenderUserResList,Comparator.comparing(VoBorrowTenderUserRes::getDate).reversed());
         return Optional.empty().ofNullable(tenderUserResList).orElse(Collections.emptyList());
