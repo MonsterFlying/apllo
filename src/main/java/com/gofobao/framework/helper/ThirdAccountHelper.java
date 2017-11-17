@@ -37,7 +37,7 @@ public class ThirdAccountHelper {
         }
 */
 
-        if (userThirdAccount.getAutoTenderState() != 1) {
+        if (!userThirdAccount.getAutoTenderState().equals(1)) {
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR_CREDIT_TENDER, "请先签订自动投标协议！", VoBaseResp.class));

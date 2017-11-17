@@ -1132,7 +1132,7 @@ public class TransferBizImpl implements TransferBiz {
         int autoOrder = voBuyTransfer.getAutoOrder(); /* 自动投标order编号 */
 
         UserThirdAccount buyUserThirdAccount = userThirdAccountService.findByUserId(userId);/*购买人存管信息*/
-        if (buyUserThirdAccount.getAutoTransferState() != 1) {  // 审核
+        if (!buyUserThirdAccount.getAutoTransferState().equals(1)) {  // 审核
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR_CREDIT_TRNSFER, "请先签订自动债权转让协议！", VoBaseResp.class));
@@ -1736,7 +1736,7 @@ public class TransferBizImpl implements TransferBiz {
 
         //判断用户存管信息
         UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(tender.getUserId());
-        if (userThirdAccount.getAutoTransferState() != 1) {  // 审核
+        if (!userThirdAccount.getAutoTransferState().equals(1)) {  // 审核
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR_CREDIT_TRNSFER, "请先签订自动债权转让协议！", VoBaseResp.class));

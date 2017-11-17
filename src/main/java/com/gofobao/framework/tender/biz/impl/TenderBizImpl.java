@@ -172,7 +172,7 @@ public class TenderBizImpl implements TenderBiz {
                     .body(VoBaseResp.error(VoBaseResp.ERROR_CREDIT_TENDER, "当前用户未开户！", VoBaseResp.class));
         }
 
-        if (userThirdAccount.getAutoTenderState() != 1) {
+        if (!userThirdAccount.getAutoTenderState().equals(1)) {
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR_CREDIT_TENDER, "请先签订自动投标协议！", VoBaseResp.class));

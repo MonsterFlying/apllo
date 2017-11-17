@@ -280,7 +280,7 @@ public class OpenAccountBizImpl implements OpenAccountBiz {
      * @return true: 已经设置: false: 未设置
      */
     private boolean findAutoTransferStateByUserId(UserThirdAccount userThirdAccount) {
-        if (1 == userThirdAccount.getAutoTransferState()) {  // 审核
+        if (userThirdAccount.getAutoTransferState().equals(1)) {  // 审核
             return true;
         }
 

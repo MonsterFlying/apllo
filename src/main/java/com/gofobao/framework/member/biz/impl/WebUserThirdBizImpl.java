@@ -197,8 +197,8 @@ public class WebUserThirdBizImpl implements WebUserThirdBiz {
         AccountQueryByMobileResponse accountQueryByMobileResponse = jixinManager.send(JixinTxCodeEnum.ACCOUNT_QUERY_BY_MOBILE,
                 accountQueryByMobileReques, AccountQueryByMobileResponse.class);
         if (!ObjectUtils.isEmpty(accountQueryByMobileResponse)
-                 && JixinResultContants.SUCCESS.equals(accountQueryByMobileResponse.getRetCode())
-                 && !StringUtils.isEmpty(accountQueryByMobileResponse.getAccountId())) {
+                && JixinResultContants.SUCCESS.equals(accountQueryByMobileResponse.getRetCode())
+                && !StringUtils.isEmpty(accountQueryByMobileResponse.getAccountId())) {
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "手机已在存管平台开户, 无需开户！", VoOpenAccountResp.class));
@@ -240,7 +240,7 @@ public class WebUserThirdBizImpl implements WebUserThirdBiz {
         Gson gson = new Gson();
         try {
             String json = gson.toJson(marketingData);
-            Map<String, String> data = gson.fromJson(json, TypeTokenContants.MAP_ALL_STRING_TOKEN) ;
+            Map<String, String> data = gson.fromJson(json, TypeTokenContants.MAP_ALL_STRING_TOKEN);
             MqConfig mqConfig = new MqConfig();
             mqConfig.setMsg(data);
             mqConfig.setTag(MqTagEnum.MARKETING_OPEN_ACCOUNT);
@@ -251,7 +251,6 @@ public class WebUserThirdBizImpl implements WebUserThirdBiz {
             log.error(String.format("开户营销节点触发异常：%s", new Gson().toJson(marketingData)), e);
         }
     }
-
 
 
     @Override
@@ -388,7 +387,7 @@ public class WebUserThirdBizImpl implements WebUserThirdBiz {
         }
 
 
-        if (userThirdAccount.getAutoTenderState() == 1) {
+        if (userThirdAccount.getAutoTenderState().equals(1)) {
             return ResponseEntity.ok("success");
         }
 
@@ -424,7 +423,7 @@ public class WebUserThirdBizImpl implements WebUserThirdBiz {
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "请先设置江西银行存管账户交易密码！", VoHtmlResp.class));
         }
 
-        if (userThirdAccount.getAutoTenderState() == 0) {
+        if (userThirdAccount.getAutoTenderState().equals(0)) {
             log.info("查询用户签约状态开始");
             CreditAuthQueryRequest creditAuthQueryRequest = new CreditAuthQueryRequest();
             creditAuthQueryRequest.setAccountId(userThirdAccount.getAccountId());
@@ -498,7 +497,7 @@ public class WebUserThirdBizImpl implements WebUserThirdBiz {
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "请先设置江西银行存管账户交易密码！", VoHtmlResp.class));
         }
 
-        if (userThirdAccount.getAutoTenderState() != 1) {
+        if (!userThirdAccount.getAutoTenderState().equals(1)) {
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "请先签约江西银行自动投标协议！", VoHtmlResp.class));
@@ -593,7 +592,7 @@ public class WebUserThirdBizImpl implements WebUserThirdBiz {
         }
 
 
-        if (userThirdAccount.getAutoTransferState() == 1) {  // 审核
+        if (userThirdAccount.getAutoTransferState().equals(1)) {  // 审核
             return ResponseEntity.ok("success");
         }
 
@@ -696,7 +695,7 @@ public class WebUserThirdBizImpl implements WebUserThirdBiz {
             return "autoTender/faile";
         }
 
-        if (userThirdAccount.getAutoTenderState() == 1) {
+        if (userThirdAccount.getAutoTenderState().equals(1)) {
             return "autoTender/success";
         } else {
             return "autoTender/faile";
@@ -712,7 +711,7 @@ public class WebUserThirdBizImpl implements WebUserThirdBiz {
             return "autoTranfer/faile";
         }
 
-        if (userThirdAccount.getAutoTransferState() == 1) { // 审核
+        if (userThirdAccount.getAutoTransferState().equals(1)) { // 审核
             return "autoTranfer/success";
         } else {
             return "autoTranfer/faile";
@@ -746,7 +745,7 @@ public class WebUserThirdBizImpl implements WebUserThirdBiz {
 
     @Override
     public UserThirdAccount synCreditQuth(UserThirdAccount userThirdAccount) {
-        if (userThirdAccount.getAutoTenderState() == 0) {
+        if (userThirdAccount.getAutoTenderState().equals(0)) {
             CreditAuthQueryRequest creditAuthQueryRequest = new CreditAuthQueryRequest();
             creditAuthQueryRequest.setAccountId(userThirdAccount.getAccountId());
             creditAuthQueryRequest.setType("1");
@@ -768,7 +767,7 @@ public class WebUserThirdBizImpl implements WebUserThirdBiz {
             }
         }
 
-        if (userThirdAccount.getAutoTransferState() == 0) {  // 审核
+        if (userThirdAccount.getAutoTransferState().equals(0)) {  // 审核
             CreditAuthQueryRequest creditAuthQueryRequest = new CreditAuthQueryRequest();
             creditAuthQueryRequest.setAccountId(userThirdAccount.getAccountId());
             creditAuthQueryRequest.setType("2");
