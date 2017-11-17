@@ -36,6 +36,11 @@ spring:
     mode: LEGACYHTML5
   profiles:
     active: def
+  http:
+    multipart:
+      max-file-size: 2MB
+      max-request-size: 20MB
+      enabled: true
 server:
   port: 8080
 jwt: #JWT 安全配置
