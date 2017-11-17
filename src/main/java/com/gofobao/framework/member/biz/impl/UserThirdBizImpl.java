@@ -233,6 +233,20 @@ public class UserThirdBizImpl implements UserThirdBiz {
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "你访问的账户不存在", VoOpenAccountResp.class));
+
+        // 1.5 判断银行卡号唯一
+        Specification<UserThirdAccount> userThirdAccountSpecification = Specifications.
+                <UserThirdAccount>and()
+                .eq("cardNo", voOpenAccountReq.getCardNo())
+                .build() ;
+
+        long cardNoCount = userThirdAccountService.count(userThirdAccountSpecification);
+        if(cardNoCount > 0){
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "银行卡号已经开户", VoOpenAccountResp.class));
+        }
+
         // 2. 判断用户是否已经开过存管账户
         UserThirdAccount userThirdAccount = null;
         try {
