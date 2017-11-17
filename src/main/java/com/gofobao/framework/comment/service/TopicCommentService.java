@@ -7,18 +7,12 @@ import com.gofobao.framework.core.vo.VoBaseResp;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 
+import javax.servlet.http.HttpServletRequest;
+
 /**
  * Created by xin on 2017/11/10.
  */
 public interface TopicCommentService {
-    /**
-     * 查询话题评论
-     *
-     * @param topicId
-     * @param pageable
-     * @return
-     */
-    ResponseEntity<VoTopicCommentListResp> listDetail(long topicId, Pageable pageable);
 
     /**
      * 发布评论
@@ -45,4 +39,13 @@ public interface TopicCommentService {
     void batchUpdateRedundancy(Long userId, String username, String avatar) throws Exception;
 
     TopicComment save(TopicComment topicComment);
+
+    /**
+     * 查询话题评论
+     * @param httpServletRequest
+     * @param topicId
+     * @param pageIndex
+     * @return
+     */
+    ResponseEntity<VoTopicCommentListResp> listDetail(HttpServletRequest httpServletRequest, Long topicId, Integer pageIndex);
 }

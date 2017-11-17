@@ -10,6 +10,7 @@ import com.gofobao.framework.comment.repository.TopicRepository;
 import com.gofobao.framework.comment.repository.TopicTypeRepository;
 import com.gofobao.framework.comment.repository.TopicsUsersRepository;
 import com.gofobao.framework.comment.service.TopicService;
+import com.gofobao.framework.comment.service.TopicsUsersService;
 import com.gofobao.framework.comment.vo.request.VoTopicReq;
 import com.gofobao.framework.comment.vo.response.VoTopicListResp;
 import com.gofobao.framework.comment.vo.response.VoTopicResp;
@@ -66,6 +67,7 @@ public class TopicServiceImpl implements TopicService {
     @Autowired
     private TopicTopRecordBiz topicTopRecordBiz;
 
+
     @Autowired
     FileManagerBiz fileManagerBiz;
 
@@ -74,6 +76,9 @@ public class TopicServiceImpl implements TopicService {
 
     @Autowired
     JwtTokenHelper jwtTokenHelper;
+
+    @Autowired
+    private TopicsUsersService topicsUsersService;
 
     public static final Integer CONTENT_COMMENT_LIMIT = 999;
 
@@ -92,7 +97,12 @@ public class TopicServiceImpl implements TopicService {
                                                    HttpServletRequest httpServletRequest) {
 
         //判断用户是否被禁止发言
-        TopicsUsers topicsUsers = topicsUsersRepository.findByUserId(userId);
+        TopicsUsers topicsUsers = null;
+        try {
+            topicsUsers = topicsUsersService.findByUserId(userId);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         Preconditions.checkNotNull(topicsUsers, "用户不存在");
         if (topicsUsers.getForceState() != 0) {
             return ResponseEntity.ok(VoBaseResp.ok("用户已被禁言", VoBaseResp.class));
@@ -137,18 +147,19 @@ public class TopicServiceImpl implements TopicService {
         topic.setCreateDate(nowDate);
         topic.setUpdateDate(nowDate);
         topic.setContent(filteredResult.getFilteredContent());
-        Topic saveTopic = topicRepository.save(topic);
         //查询用上次发帖时间
         Topic lastTopic = topicRepository.findTopByUserIdOrderByIdDesc(userId);
         if(!ObjectUtils.isEmpty(lastTopic)) {
-            Date createDate = topic.getCreateDate();
+            Date createDate = lastTopic.getCreateDate();
             createDate = ObjectUtils.isArray(createDate) ? nowDate : createDate;
-            if (nowDate.getTime() - (createDate.getTime() + 5 * 60 * 1000) < 0) {
+            if (nowDate.getTime() - (createDate.getTime() + DateHelper.MILLIS_PER_MINUTE) < 0) {
                 return ResponseEntity
                         .badRequest()
                         .body(VoBaseResp.error(VoBaseResp.ERROR, "发帖过于频繁, 请稍后操作!"));
             }
         }
+
+        Topic saveTopic = topicRepository.save(topic);
         Preconditions.checkNotNull(saveTopic, "topic record is empty");
 
         // 发帖后相应版块下数量改变

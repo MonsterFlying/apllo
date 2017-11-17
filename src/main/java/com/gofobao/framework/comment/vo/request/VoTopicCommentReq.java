@@ -5,6 +5,7 @@ import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 import org.hibernate.validator.constraints.Length;
+import org.hibernate.validator.constraints.NotBlank;
 
 import javax.validation.constraints.NotNull;
 
@@ -19,7 +20,7 @@ public class VoTopicCommentReq extends VoBaseReq {
     private Long topicId;
 
     @ApiModelProperty("评论内容")
-    @NotNull(message = "内容不能为空")
+    @NotBlank(message = "内容不能为空")
     @Length(min = 0 , max = 140 , message = "字数不能超过140字")
     private String content;
 

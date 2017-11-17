@@ -3,6 +3,7 @@ package com.gofobao.framework.comment.vo.request;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
+import org.hibernate.validator.constraints.NotBlank;
 
 /**
  * Created by xin on 2017/11/13.
@@ -18,6 +19,7 @@ public class VoTopicReplyReq {
     private Long topicReplyId;
 
     @ApiModelProperty("回复内容")
+    @NotBlank(message = "回复内容不能为空")
     private String content;
 
 }

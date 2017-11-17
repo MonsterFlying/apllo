@@ -1,6 +1,5 @@
 package com.gofobao.framework.comment.vo.response;
 
-import com.gofobao.framework.core.vo.VoBaseResp;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
@@ -11,6 +10,10 @@ import lombok.Data;
 @Data
 @ApiModel
 public class VoTopicCommentItem {
+
+    @ApiModelProperty("评论ID")
+    private Long commentId;
+
     @ApiModelProperty("评论内容")
     private String content = "";
 
@@ -28,4 +31,7 @@ public class VoTopicCommentItem {
 
     @ApiModelProperty("回复时间")
     private String time = "";
+
+    @ApiModelProperty("点赞状态")
+    private boolean topState ;
 }

@@ -1,7 +1,6 @@
 package com.gofobao.framework.comment.service.impl;
 
 import com.gofobao.framework.comment.biz.TopicsNoticesBiz;
-import com.gofobao.framework.comment.biz.TopisIntegralBiz;
 import com.gofobao.framework.comment.entity.TopicComment;
 import com.gofobao.framework.comment.entity.TopicReply;
 import com.gofobao.framework.comment.entity.TopicsUsers;
@@ -36,6 +35,8 @@ import java.util.List;
  */
 @Service
 public class TopicReplyServiceImpl implements TopicReplyService {
+
+
     @Autowired
     TopicReplyRepository topicReplyRepository;
 
@@ -46,10 +47,7 @@ public class TopicReplyServiceImpl implements TopicReplyService {
     private TopicCommentRepository topicCommentRepository;
 
     @Autowired
-    private TopicsNoticesBiz topicsNoticesBiz;
-
-    @Autowired
-    TopisIntegralBiz topisIntegralBiz;
+    private TopicsNoticesBiz topicsNoticesBiz ;
 
     @Override
     public ResponseEntity<VoBaseResp> publishReply(VoTopicReplyReq voTopicReplyReq, Long userId) {
@@ -65,9 +63,18 @@ public class TopicReplyServiceImpl implements TopicReplyService {
         Preconditions.checkNotNull(topicComment, "topicComment record is empty");
 
         // 回复ID
+        //判断是回复评论还是回复评论的回复
         TopicReply parentTopicReply = null;
         if (voTopicReplyReq.getTopicReplyId() != 0) {
             parentTopicReply = topicReplyRepository.findOne(voTopicReplyReq.getTopicReplyId());
+        }
+
+        //用户不能自己对自己进行回复
+         if (topicsUsers.getUserId() == topicComment.getUserId()){
+              return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR,"不能对自己回复",VoBaseResp.class));
+         }
+        if (topicsUsers.getUserId() == parentTopicReply.getUserId()){
+            return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR,"不能对自己回复",VoBaseResp.class));
         }
 
         TopicReply reply = new TopicReply();
@@ -83,9 +90,9 @@ public class TopicReplyServiceImpl implements TopicReplyService {
             // 回复
             reply.setReplyType(1);
             reply.setTopicReplyId(parentTopicReply.getId());
-            reply.setForUserId(reply.getUserId());
-            reply.setForUserIconUrl(reply.getUserIconUrl());
-            reply.setForUserName(reply.getUserName());
+            reply.setForUserId(parentTopicReply.getUserId());
+            reply.setForUserIconUrl(parentTopicReply.getUserIconUrl());
+            reply.setForUserName(parentTopicReply.getUserName());
         } else {
             // 评论
             reply.setReplyType(0);
@@ -104,11 +111,10 @@ public class TopicReplyServiceImpl implements TopicReplyService {
         // 回复成功修改回复总数
         topicComment.setContentTotalNum(topicComment.getTopTotalNum() + 1);
         topicComment.setUpdateDate(nowDate);
-        topicCommentRepository.save(topicComment);
-        // 评论
-        topicsNoticesBiz.noticesByReplay(reply);
-        // 发布回复
-        topisIntegralBiz.publishReply(reply);
+
+        topicCommentRepository.save(topicComment) ;
+
+        topicsNoticesBiz.noticesByReplay(reply) ;
         return ResponseEntity.ok(VoBaseResp.ok("回复成功", VoBaseResp.class));
     }
 
