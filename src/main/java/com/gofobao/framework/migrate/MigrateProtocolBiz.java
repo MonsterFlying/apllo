@@ -150,7 +150,7 @@ public class MigrateProtocolBiz {
                     .in("id", transferIdList.toArray())
                     .build();
             List<UserThirdAccount> userThirdAccountList = userThirdAccountService.findList(specification);
-            userThirdAccountList.stream().filter(userThirdAccount -> userThirdAccount.getAutoTransferState() != 1).forEach(userThirdAccount -> {
+            userThirdAccountList.stream().filter(userThirdAccount -> !userThirdAccount.getAutoTransferState().equals(1)).forEach(userThirdAccount -> {
                 userThirdAccount.setAutoTransferState(1);
                 userThirdAccount.setAutoTransferBondOrderId(transferMap.get(userThirdAccount.getId()));
             });
@@ -234,7 +234,7 @@ public class MigrateProtocolBiz {
 
 
             for (UserThirdAccount item : userThirdAccountList) {
-                if (item.getAutoTransferState() != 1) {  // 自动债权转让
+                if (!item.getAutoTransferState().equals(1)) {  // 自动债权转让
                     try {
                         String orderId = System.currentTimeMillis() + RandomHelper.generateNumberCode(10);
                         StringBuffer text = new StringBuffer();
@@ -254,7 +254,7 @@ public class MigrateProtocolBiz {
                         log.error("债权转让迁移错误");
                     }
                 }
-                if (item.getAutoTenderState() != 1) {
+                if (!item.getAutoTenderState().equals(1)) {
                     try {
                         String orderId = System.currentTimeMillis() + RandomHelper.generateNumberCode(14);
                         StringBuffer text = new StringBuffer();

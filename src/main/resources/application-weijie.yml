@@ -49,8 +49,8 @@ jwt: #JWT 安全配置
   expiration: 2592000
   prefix: Bearer
   local-des-key : 2l0IYbNnRcShWOM9Q5Ej0A3gCGOFOBAO #和风车理财交互时 平台的关键字段加密key值
-    #七牛
 
+#七牛
 qiniu:
   domain: http://test.img.gofobao.com/
   bucket: test
@@ -91,7 +91,7 @@ jixin: #银行存管
 gofobao:
   dev: true # 开发环境
   javaDomain: http://t191fqp.hk1.mofasuidao.cn
-  h5Domain: http://18164xy341.51mypc.cn
+  h5Domain: http://192.168.1.119:8000
   imageDomain : http://www.gofobao.com
   pcDomain: http://gofobao.55555.io
   adminDomain: http://m7ocvas9.gofobao.com  #管理员后台地址
