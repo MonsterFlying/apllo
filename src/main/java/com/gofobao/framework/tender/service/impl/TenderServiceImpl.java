@@ -70,9 +70,7 @@ public class TenderServiceImpl implements TenderService {
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @SuppressWarnings("all")
     public List<VoBorrowTenderUserRes> findBorrowTenderUser(TenderUserReq tenderUserReq) {
-        final long[] tenderCount = {0};
         Long borrowId = tenderUserReq.getBorrowId();
         Borrow borrow = borrowRepository.findOne(borrowId);
         if (ObjectUtils.isEmpty(borrow)) {
@@ -89,11 +87,11 @@ public class TenderServiceImpl implements TenderService {
                         TenderConstans.TRANSFER_PART_YES).toArray())
                 .build();
         Page<Tender> tenderPage = tenderRepository.findAll(tenderSpecification, pageRequest);
+        //Optional<List<Tender>> listOptional = Optional.ofNullable(tenderList);
         List<Tender> tenderList = tenderPage.getContent();
         if (CollectionUtils.isEmpty(tenderList)) {
             return Collections.EMPTY_LIST;
         }
-
         Users sendUser = usersRepository.findOne(tenderUserReq.getUserId());
         //获取当前用户类型
         String userType = "";
@@ -108,7 +106,7 @@ public class TenderServiceImpl implements TenderService {
         String finalUserType = userType;
         tenderList.stream().forEach(item -> {
             VoBorrowTenderUserRes tenderUserRes = new VoBorrowTenderUserRes();
-            tenderUserRes.setValidMoney(StringHelper.formatMon(item.getValidMoney()/100D ) + MoneyConstans.RMB);
+            tenderUserRes.setValidMoney(StringHelper.formatMon(item.getValidMoney() / 100d) + MoneyConstans.RMB);
             tenderUserRes.setDate(DateHelper.dateToString(item.getCreatedAt(), DateHelper.DATE_FORMAT_YMDHMS));
             // 此处进行优化
             if (item.getIsAuto()) {
@@ -135,15 +133,14 @@ public class TenderServiceImpl implements TenderService {
                 tenderUserRes.setType(tenderPlatform);
             }
 
-
             Users user = usersRepository.findOne(new Long(item.getUserId()));
             //如果当前用户是管理员或者本人 用户名可见
             tenderUserRes.setUserName(finalUserType.equals("manager")
                     ? user.getPhone()
                     : UserHelper.hideChar(user.getPhone(), UserHelper.PHONE_NUM)
             );
+            tenderUserResList.add(tenderUserRes);
         });
-        Collections.sort(tenderUserResList,Comparator.comparing(VoBorrowTenderUserRes::getDate).reversed());
         return Optional.empty().ofNullable(tenderUserResList).orElse(Collections.emptyList());
     }
 
