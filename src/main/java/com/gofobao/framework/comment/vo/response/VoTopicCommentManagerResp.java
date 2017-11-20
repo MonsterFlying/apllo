@@ -16,6 +16,9 @@ public class VoTopicCommentManagerResp {
     @ApiModelProperty("回复用户id")
     private Long forUserId;
 
+    @ApiModelProperty("回复用户名")
+    private String forUserName;
+
     @ApiModelProperty("用户id")
     private Long userId;
 

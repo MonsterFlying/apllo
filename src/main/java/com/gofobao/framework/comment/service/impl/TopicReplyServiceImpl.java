@@ -20,6 +20,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import com.google.common.base.Preconditions;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 
@@ -129,7 +130,8 @@ public class TopicReplyServiceImpl implements TopicReplyService {
         Preconditions.checkNotNull(reply, "reply is fail");
 
         // 回复成功修改回复总数
-        topicComment.setContentTotalNum(topicComment.getTopTotalNum() + 1);
+        int contentTotalNum = topicComment.getContentTotalNum() + 1;
+        topicComment.setContentTotalNum(contentTotalNum);
         topicComment.setUpdateDate(nowDate);
 
         topicCommentRepository.save(topicComment);
@@ -144,8 +146,9 @@ public class TopicReplyServiceImpl implements TopicReplyService {
     }
 
     @Override
+    @Transactional
     public void batchUpdateRedundancy(Long userId, String username, String avatar) throws Exception {
-        if (StringUtils.isEmpty(username) || StringUtils.isEmpty(avatar)) {
+        if (StringUtils.isEmpty(username) && StringUtils.isEmpty(avatar)) {
             throw new Exception("参数错误!");
         }
         if (!StringUtils.isEmpty(username)) {

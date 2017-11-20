@@ -1,12 +1,13 @@
 package com.gofobao.framework.comment.controller;
 
 import com.gofobao.framework.comment.biz.TopicsUsersBiz;
-import com.gofobao.framework.comment.vo.request.VoTopicReq;
 import com.gofobao.framework.comment.vo.request.VoUpdateUsernameReq;
-import com.gofobao.framework.comment.vo.response.*;
+import com.gofobao.framework.comment.vo.response.VoAvatarResp;
+import com.gofobao.framework.comment.vo.response.VoTopicCommentManagerListResp;
+import com.gofobao.framework.comment.vo.response.VoTopicListResp;
+import com.gofobao.framework.comment.vo.response.VoTopicMemberCenterResp;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.security.contants.SecurityContants;
-import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;

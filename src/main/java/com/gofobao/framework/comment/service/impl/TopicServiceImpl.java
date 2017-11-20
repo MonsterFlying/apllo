@@ -38,6 +38,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
+import redis.clients.jedis.Jedis;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.Date;
@@ -446,7 +447,6 @@ public class TopicServiceImpl implements TopicService {
         } catch (ExecutionException e) {
             e.printStackTrace();
         }
-        //Topic topic = topicRepository.findByIdAndDel(topicId, 0);
         VoTopicResp voTopicResp = VoBaseResp.ok("查询主题成功", VoTopicResp.class);
         voTopicResp.setTitle(topic.getTitle());
         voTopicResp.setContent(topic.getContent());
@@ -507,8 +507,9 @@ public class TopicServiceImpl implements TopicService {
     }
 
     @Override
+    @Transactional
     public void batchUpdateRedundancy(@NonNull Long userId, String username, String avatar) throws Exception {
-        if (StringUtils.isEmpty(username) || StringUtils.isEmpty(avatar)) {
+        if (StringUtils.isEmpty(username) && StringUtils.isEmpty(avatar)) {
             throw new Exception("参数错误!");
         }
 

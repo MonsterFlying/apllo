@@ -37,4 +37,6 @@ public interface TopicCommentRepository extends JpaRepository<TopicComment, Long
     @Modifying
     @Query(value = "update gfb_topics_comment set del = 1 where topic_comment_id = ?1", nativeQuery = true)
     Integer updateOneComment(Long topicCommentId);
+
+    List<TopicComment> findByTopicIdAndDel(Long topicId, int i, Pageable pageable);
 }

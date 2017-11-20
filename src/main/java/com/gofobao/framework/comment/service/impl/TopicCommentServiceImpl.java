@@ -6,7 +6,6 @@ import com.github.wenhao.jpa.Specifications;
 import com.gofobao.framework.comment.biz.TopicTopRecordBiz;
 import com.gofobao.framework.comment.biz.TopicsNoticesBiz;
 import com.gofobao.framework.comment.biz.TopisIntegralBiz;
-import com.gofobao.framework.comment.controller.TopicController;
 import com.gofobao.framework.comment.entity.*;
 import com.gofobao.framework.comment.repository.TopicCommentRepository;
 import com.gofobao.framework.comment.repository.TopicReplyRepository;
@@ -20,19 +19,19 @@ import com.gofobao.framework.comment.vo.response.VoTopicCommentItem;
 import com.gofobao.framework.comment.vo.response.VoTopicCommentListResp;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.helper.DateHelper;
-import com.gofobao.framework.member.entity.UserCache;
 import com.gofobao.framework.security.helper.JwtTokenHelper;
-import com.google.common.base.Functions;
 import com.google.common.base.Preconditions;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
+import com.google.common.collect.Lists;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -43,10 +42,9 @@ import org.springframework.util.StringUtils;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.*;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
-
-import static com.sun.tools.internal.xjc.reader.Ring.add;
 
 /**
  * Created by xin on 2017/11/10.
@@ -98,13 +96,51 @@ public class TopicCommentServiceImpl implements TopicCommentService {
                 }
             });
 
+    LoadingCache<Long, Topic> topicCache = CacheBuilder
+            .newBuilder()
+            .expireAfterAccess(5, TimeUnit.MINUTES)
+            .maximumSize(1024)
+            .build(new CacheLoader<Long, Topic>() {
+                @Override
+                public Topic load(Long topicId) throws Exception {
+                    Topic topic = topicRepository.findByIdAndDel(topicId, 0);
+                    return topic;
+                }
+            });
+
+    LoadingCache<String, List<TopicComment>> topicCommentCache = CacheBuilder
+            .newBuilder()
+            .expireAfterAccess(5, TimeUnit.MINUTES)
+            .maximumSize(1024)
+            .build(new CacheLoader<String, List<TopicComment>>() {
+                @Override
+                public List<TopicComment> load(String s) throws Exception {
+                    String comments[] = s.split(":");
+                    PageRequest pageable = new PageRequest(Integer.valueOf(comments[1]), 10);
+                    List<TopicComment> commentList = topicCommentRepository.findByTopicIdAndDelOrderByIdAsc(Long.valueOf(comments[0]),
+                            0, pageable);
+                    return commentList;
+                }
+            });
+
+    LoadingCache<Long, TopicComment> lastCommentCache = CacheBuilder
+            .newBuilder()
+            .expireAfterAccess(5, TimeUnit.MINUTES)
+            .maximumSize(1024)
+            .build(new CacheLoader<Long, TopicComment>() {
+                @Override
+                public TopicComment load(Long userId) throws Exception {
+                    TopicComment topicComment = topicCommentRepository.findTopByUserIdOrderByIdDesc(userId);
+                    return topicComment;
+                }
+            });
 
     @Override
     @Transactional
     public ResponseEntity<VoBaseResp> publishComment(@NonNull VoTopicCommentReq voTopicCommentReq,
                                                      @NonNull Long userId) {
         // 判断用户
-        TopicsUsers topicsUsers = null;
+        TopicsUsers topicsUsers;
         try {
             topicsUsers = userCache.get(userId);
             //topicsUsers = topicsUsersService.findByUserId(userId);
@@ -119,7 +155,14 @@ public class TopicCommentServiceImpl implements TopicCommentService {
         }
 
         //判断话题id是否存在?
-        Topic topic = topicRepository.findByIdAndDel(voTopicCommentReq.getTopicId(), 0);
+        Topic topic = null;
+        try {
+            topic = topicCache.get(voTopicCommentReq.getTopicId());
+        } catch (ExecutionException e) {
+            e.printStackTrace();
+        }
+
+        //Topic topic = topicRepository.findByIdAndDel(voTopicCommentReq.getTopicId(), 0);
         Preconditions.checkNotNull(topic, "topic is not exist");
 
         Date nowDate = new Date();
@@ -134,7 +177,13 @@ public class TopicCommentServiceImpl implements TopicCommentService {
         // 用户内容铭感词过滤
         FilteredResult filteredResult = WordFilterUtil.filterText(voTopicCommentReq.getContent(), '*');
         topicComment.setContent(filteredResult.getFilteredContent());
-        TopicComment lastComment = topicCommentRepository.findTopByUserIdOrderByIdDesc(userId);
+        TopicComment lastComment = null;
+        try {
+            lastComment = lastCommentCache.get(userId);
+        } catch (ExecutionException e) {
+            e.printStackTrace();
+        }
+        //TopicComment lastComment = topicCommentRepository.findTopByUserIdOrderByIdDesc(userId);
         if (!ObjectUtils.isEmpty(lastComment)) {
             Date createDate = lastComment.getCreateDate();
             createDate = ObjectUtils.isArray(createDate) ? nowDate : createDate;
@@ -153,6 +202,10 @@ public class TopicCommentServiceImpl implements TopicCommentService {
         topicsNoticesBiz.noticesByComment(topicComment);
         // 发送积分
         topisIntegralBiz.publishComment(topicComment);
+        //发布评论之后清除缓存
+        topicCache.invalidateAll();
+        topicCommentCache.invalidateAll();
+        lastCommentCache.invalidateAll();
         return ResponseEntity.ok(VoBaseResp.ok("发布成功", VoBaseResp.class));
     }
 
@@ -162,8 +215,9 @@ public class TopicCommentServiceImpl implements TopicCommentService {
     }
 
     @Override
+    @Transactional
     public void batchUpdateRedundancy(Long userId, String username, String avatar) throws Exception {
-        if (StringUtils.isEmpty(username) || StringUtils.isEmpty(avatar)) {
+        if (StringUtils.isEmpty(username) && StringUtils.isEmpty(avatar)) {
             throw new Exception("参数错误!");
         }
         if (!StringUtils.isEmpty(username)) {
@@ -179,10 +233,22 @@ public class TopicCommentServiceImpl implements TopicCommentService {
     }
 
     @Override
-    public ResponseEntity<VoTopicCommentListResp> listDetail(HttpServletRequest httpServletRequest, Long topicId, Integer pageIndex) {
+    public ResponseEntity<VoTopicCommentListResp> listDetail(HttpServletRequest httpServletRequest,
+                                                             Long topicId, Integer pageIndex, boolean hot) {
         pageIndex = pageIndex - 1;
-        Pageable pageable = new PageRequest(pageIndex, 10);
-        List<TopicComment> topicComments = topicCommentRepository.findByTopicIdAndDelOrderByIdAsc(topicId, 0, pageable);
+        List<TopicComment> topicComments;
+        if (hot) {
+            //如果是热点评论进行先根据点赞数排序,然后根据评论数排序
+            Sort sorts = new Sort(Sort.Direction.ASC, "topTotalNum")
+                    .and(new Sort(Sort.Direction.ASC, "contentTotalNum"));
+            Pageable pageable = new PageRequest(pageIndex, 10, sorts);
+            topicComments = topicCommentRepository.findByTopicIdAndDel(topicId, 0, pageable);
+        } else {
+            Pageable pageable = new PageRequest(pageIndex, 10);
+            topicComments = topicCommentRepository.findByTopicIdAndDelOrderByIdAsc(topicId, 0, pageable);
+        }
+
+
         VoTopicCommentListResp voTopicCommentListResp = VoBaseResp.ok("操作成功", VoTopicCommentListResp.class);
         List<VoTopicCommentItem> result = voTopicCommentListResp.getVoTopicCommentItemList();
 
@@ -250,6 +316,8 @@ public class TopicCommentServiceImpl implements TopicCommentService {
                     TopicTopRecord topicTopRecord = topicTopRecordMap.get(item.getCommentId());
                     if (!ObjectUtils.isEmpty(topicTopRecord)) {
                         item.setTopState(true);
+                        //点赞后清除topic缓存
+                        topicCache.invalidateAll();
                     }
                 }
             }
@@ -284,7 +352,12 @@ public class TopicCommentServiceImpl implements TopicCommentService {
         if (ObjectUtils.isEmpty(updateReplyCount)) {
             return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "删除评论失败", VoBaseResp.class));
         }
+        //删除评论成功后清除topic缓存
+        topicCache.invalidateAll();
+        //清除comment缓存
+        topicCommentCache.invalidateAll();
 
         return ResponseEntity.ok(VoBaseResp.ok("删除评论成功", VoBaseResp.class));
     }
+
 }
