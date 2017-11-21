@@ -266,7 +266,8 @@ class SearcheThred implements Runnable {
                 // 账户可用
                 String availBal = balanceQueryResponse.getAvailBal();
                 long currBarFen = MoneyHelper.yuanToFen(currBal);
-                long intavalMoney = currBarFen - (asset.getNoUseMoney() + asset.getUseMoney());
+                // 2017.11.21 资金计算增加计划资金
+                long intavalMoney = currBarFen - (asset.getNoUseMoney() + asset.getUseMoney() + asset.getFinancePlanMoney());
 
                 if (intavalMoney != 0) {
                     RealtimeAsset realtimeAsset = new RealtimeAsset();
@@ -275,7 +276,7 @@ class SearcheThred implements Runnable {
                     realtimeAsset.setCreateTime(new Date());
                     realtimeAsset.setJixinTotalAmount(new BigDecimal(currBal).doubleValue());
                     realtimeAsset.setJixinUseAmount(new BigDecimal(availBal).doubleValue());
-                    realtimeAsset.setLocalTotalAmount(MoneyHelper.divide(asset.getNoUseMoney() + asset.getUseMoney(), 100, 2));
+                    realtimeAsset.setLocalTotalAmount(MoneyHelper.divide(asset.getNoUseMoney() + asset.getUseMoney() + asset.getFinancePlanMoney(), 100, 2));
                     realtimeAsset.setLocalUseAmount(MoneyHelper.divide(asset.getUseMoney(), 100, 2));
                     realtimeAsset.setIntevalMoney(MoneyHelper.divide(intavalMoney, 100, 2));
                     realtimeAsset.setPhone(userThirdAccount.getMobile());
