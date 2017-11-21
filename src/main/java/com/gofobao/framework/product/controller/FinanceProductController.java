@@ -29,6 +29,19 @@ public class FinanceProductController {
     private ProductBiz productBiz;
 
     /**
+     * 收藏列表
+     */
+
+
+    /**
+     * 收藏商品
+     */
+
+    /**
+     * 取消收藏商品
+     */
+
+    /**
      * 取消订单
      */
     @PostMapping("/v2/product/order/cancel")

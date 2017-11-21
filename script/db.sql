@@ -1336,3 +1336,11 @@ CREATE TABLE `gfb_product_order_buy_log` (
   `updated_at` datetime DEFAULT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=23 DEFAULT CHARSET=utf8 COMMENT='商品子表与sku的关联表';
+
+DROP TABLE IF EXISTS `gfb_product_collect`;
+CREATE TABLE `gfb_product_collect` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `product_item_id` int(11) DEFAULT NULL COMMENT '子商品id',
+  `user_id` int(11) DEFAULT NULL COMMENT '用户id',
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=31 DEFAULT CHARSET=utf8 COMMENT='商品收藏表';
