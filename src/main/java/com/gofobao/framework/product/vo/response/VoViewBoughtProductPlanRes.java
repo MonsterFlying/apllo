@@ -30,7 +30,7 @@ public class VoViewBoughtProductPlanRes extends VoBaseResp {
     @ApiModelProperty("显示购买金额")
     private String showLowest;
     @ApiModelProperty("购买金额")
-    private String buyMoney;
+    private String lowest;
     @ApiModelProperty("额外收益")
     private String earnings;
     @ApiModelProperty("显示可用余额")

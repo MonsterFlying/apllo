@@ -28,7 +28,7 @@ public class Lend {
     @Column(name = "status")
     private Integer status;
     @Basic
-    @Column(name = "buyMoney")
+    @Column(name = "lowest")
     private Integer lowest;
     @Basic
     @Column(name = "apr")

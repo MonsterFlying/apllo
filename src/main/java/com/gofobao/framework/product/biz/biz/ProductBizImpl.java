@@ -169,6 +169,7 @@ public class ProductBizImpl implements ProductBiz {
             default:
         }
 
+
         List<Map<String,Object>> resultList = jdbcTemplate.queryForList(querySql);;
         if (!CollectionUtils.isEmpty(resultList)) {
             Set<String> orderNumberSet = new HashSet<>();
@@ -647,7 +648,7 @@ public class ProductBizImpl implements ProductBiz {
         res.setExistAddress(existAddress);
         res.setTitle(product.getTitle());
         res.setImgUrl(!ObjectUtils.isEmpty(productItem.getImgUrl()) ? product.getImgUrl() : productItem.getImgUrl());
-        res.setBuyMoney(StringHelper.formatDouble(productPlan.getLowest(), 100, false));
+        res.setLowest(StringHelper.formatDouble(productPlan.getLowest(), 100, false));
         res.setShowLowest(StringHelper.formatDouble(productPlan.getLowest(), 100, true));
         res.setPlanName(productPlan.getName());
         res.setUseMoney(StringHelper.formatDouble(asset.getUseMoney(), 100, false));

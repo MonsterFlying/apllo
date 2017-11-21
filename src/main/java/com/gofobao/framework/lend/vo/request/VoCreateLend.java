@@ -29,7 +29,7 @@ public class VoCreateLend {
     @Max(value = LendContants.MAX_APR , message = "年利率不能高于" + LendContants.MAX_APR / 100 + "%!")
     private Integer apr; //年利率
 
-    @ApiModelProperty(name = "buyMoney", value = "最低金额(分) min:1000|max:借款金额", required = true)
+    @ApiModelProperty(name = "lowest", value = "最低金额(分) min:1000|max:借款金额", required = true)
     @NotNull(message = "最低金额不能为空!")
     @Min(value = LendContants.MIN_LOWEST / 100, message = "最低金额不能低于" + LendContants.MIN_LOWEST / 100 + "元!")
     private Double lowest; //最低金额

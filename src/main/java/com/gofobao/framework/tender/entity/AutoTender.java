@@ -27,7 +27,7 @@ public class AutoTender {
     @Column(name = "status")
     private Boolean status;
     @Basic
-    @Column(name = "buyMoney")
+    @Column(name = "lowest")
     private Integer lowest;
     @Basic
     @Column(name = "borrow_types")

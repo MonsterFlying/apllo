@@ -122,7 +122,7 @@ public class TenderProvider {
                     money = String.valueOf(voFindAutoTender.get("mode")).equals("1") ? NumberHelper.toInt(voFindAutoTender.get("tenderMoney")) : useMoney;
                     money = Math.min(useMoney - NumberHelper.toInt(voFindAutoTender.get("saveMoney")), money);
                     // 最小投标金额
-                    lowest = NumberHelper.toLong(voFindAutoTender.get("buyMoney"));
+                    lowest = NumberHelper.toLong(voFindAutoTender.get("lowest"));
                     if ((money < lowest)) {
                         continue;
                     }
