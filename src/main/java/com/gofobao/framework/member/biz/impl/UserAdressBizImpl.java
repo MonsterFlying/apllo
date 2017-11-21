@@ -65,6 +65,7 @@ public class UserAdressBizImpl implements UserAddressBiz {
         userAddress.setUserId(userId);
         userAddress.setName(voAddUserAddress.getName());
         userAddress.setPhone(voAddUserAddress.getPhone());
+        userAddress.setProvince(voAddUserAddress.getProvince());
         userAddress.setCountry(voAddUserAddress.getCountry());
         userAddress.setCity(voAddUserAddress.getCity());
         userAddress.setDistrict(voAddUserAddress.getDistrict());
@@ -118,6 +119,7 @@ public class UserAdressBizImpl implements UserAddressBiz {
         userAddress.setPhone(voUpdateUserAddress.getPhone());
         userAddress.setCountry(voUpdateUserAddress.getCountry());
         userAddress.setCity(voUpdateUserAddress.getCity());
+        userAddress.setProvince(voUpdateUserAddress.getProvince());
         userAddress.setDistrict(voUpdateUserAddress.getDistrict());
         userAddress.setDetailedAddress(voUpdateUserAddress.getDetailedAddress());
         userAddress.setCreateAt(nowDate);

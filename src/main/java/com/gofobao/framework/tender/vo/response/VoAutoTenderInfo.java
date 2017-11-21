@@ -17,7 +17,7 @@ public class VoAutoTenderInfo extends VoBaseResp {
     @ApiModelProperty(name = "status", value = "false禁用 true启用", dataType = "int", required = true)
     private Boolean status;
 
-    @ApiModelProperty(name = "lowest", value = "最低投标金额 分 不填写默认0", dataType = "int", required = false)
+    @ApiModelProperty(name = "buyMoney", value = "最低投标金额 分 不填写默认0", dataType = "int", required = false)
     private String lowest = "0";
     @ApiModelProperty(name = "showLowest", value = "最低投标金额 分 不填写默认0", dataType = "int", required = false)
     private String showLowest = "0";

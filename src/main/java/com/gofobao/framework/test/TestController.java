@@ -21,6 +21,8 @@ import com.gofobao.framework.api.model.batch_query.BatchQueryReq;
 import com.gofobao.framework.api.model.batch_query.BatchQueryResp;
 import com.gofobao.framework.api.model.bid_apply_query.BidApplyQueryRequest;
 import com.gofobao.framework.api.model.bid_apply_query.BidApplyQueryResponse;
+import com.gofobao.framework.api.model.card_bind_details_query.CardBindDetailsQueryRequest;
+import com.gofobao.framework.api.model.card_bind_details_query.CardBindDetailsQueryResponse;
 import com.gofobao.framework.api.model.credit_details_query.CreditDetailsQueryRequest;
 import com.gofobao.framework.api.model.credit_details_query.CreditDetailsQueryResponse;
 import com.gofobao.framework.api.model.credit_invest_query.CreditInvestQueryReq;
@@ -360,6 +362,22 @@ public class TestController {
         return super.equals(obj);
     }
 
+    @ApiOperation("个人账户银行卡查询")
+    @RequestMapping("/pub/bank/find")
+    @Transactional(rollbackFor = Exception.class)
+    public void bankQuery(@RequestParam("accountId") Object accountId) {
+        CardBindDetailsQueryRequest cardBindDetailsQueryRequest = new CardBindDetailsQueryRequest();
+        cardBindDetailsQueryRequest.setAccountId(String.valueOf(accountId));
+        cardBindDetailsQueryRequest.setState("1");
+        CardBindDetailsQueryResponse cardBindDetailsQueryResponse = jixinManager.send(JixinTxCodeEnum.CARD_BIND_DETAILS_QUERY,
+                cardBindDetailsQueryRequest,
+                CardBindDetailsQueryResponse.class);
+
+        log.info("=========================================================================================");
+        log.info("个人账户银行卡查询:");
+        log.info("=========================================================================================");
+        log.info(GSON.toJson(cardBindDetailsQueryResponse));
+    }
 
     @ApiOperation("个人账户查询")
     @RequestMapping("/pub/account/find")
@@ -370,7 +388,7 @@ public class TestController {
         AccountIdQueryResponse accountIdQueryResponse = jixinManager.send(JixinTxCodeEnum.ACCOUNT_ID_QUERY,
                 accountIdQueryRequest, AccountIdQueryResponse.class);
         log.info("=========================================================================================");
-        log.info("即信批次状态查询:");
+        log.info("个人账户查询:");
         log.info("=========================================================================================");
         log.info(GSON.toJson(accountIdQueryResponse));
     }

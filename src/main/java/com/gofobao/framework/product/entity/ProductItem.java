@@ -22,6 +22,8 @@ public class ProductItem {
     private String afterSalesService;
     private String imgUrl;
     private String details;
+    @Column(name = "q_and_a")
+    private String qAndA;
     private Integer inventory;
     private Boolean isDel;
     private Boolean isEnable;

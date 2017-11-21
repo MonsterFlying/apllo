@@ -63,8 +63,10 @@ import com.gofobao.framework.marketing.entity.MarketingData;
 import com.gofobao.framework.marketing.entity.MarketingRedpackRecord;
 import com.gofobao.framework.marketing.service.MarketingRedpackRecordService;
 import com.gofobao.framework.member.biz.UserThirdBiz;
+import com.gofobao.framework.member.entity.UserInfo;
 import com.gofobao.framework.member.entity.UserThirdAccount;
 import com.gofobao.framework.member.entity.Users;
+import com.gofobao.framework.member.service.UserInfoService;
 import com.gofobao.framework.member.service.UserService;
 import com.gofobao.framework.member.service.UserThirdAccountService;
 import com.gofobao.framework.member.vo.request.UserAccountThirdTxReq;
@@ -162,6 +164,8 @@ public class UserThirdBizImpl implements UserThirdBiz {
 
     @Autowired
     OpenAccountBizImpl openAccountBiz;
+    @Autowired
+    private UserInfoService userInfoService;
 
 
     //用户来源
@@ -350,6 +354,23 @@ public class UserThirdBizImpl implements UserThirdBiz {
         user.setCardId(voOpenAccountReq.getIdNo());
         user.setUpdatedAt(nowDate);
         userService.save(user);
+        //10. 更新userInfo
+        UserInfo userInfo = userInfoService.info(userId);
+        String cardNo = voOpenAccountReq.getCardNo();
+        int idxSexStart = 16;
+        int birthYearSpan = 4;
+        //如果是15位的证件号码
+        if (cardNo.length() == 15) {
+            idxSexStart = 14;
+            birthYearSpan = 2;
+        }
+        //出生日期
+        String year = (birthYearSpan == 2 ? "19" : "") + cardNo.substring(6, 6 + birthYearSpan);
+        String month = cardNo.substring(6 + birthYearSpan, 6 + birthYearSpan + 2);
+        String day = cardNo.substring(8 + birthYearSpan, 8 + birthYearSpan + 2);
+        userInfo.setBirthdayY(NumberHelper.toInt(year));
+        userInfo.setBirthdayMd(NumberHelper.toInt(month + day));
+        userInfoService.save(userInfo);
 
         VoOpenAccountResp voOpenAccountResp = VoBaseResp.ok("开户成功", VoOpenAccountResp.class);
         voOpenAccountResp.setOpenAccountBankName("江西银行");
@@ -360,6 +381,25 @@ public class UserThirdBizImpl implements UserThirdBiz {
         return ResponseEntity.ok(voOpenAccountResp);
     }
 
+    public static void main(String[] args) {
+
+        String certificateNo = "360733199508260910";
+
+        int idxSexStart = 16;
+        int birthYearSpan = 4;
+        //如果是15位的证件号码
+        if (certificateNo.length() == 15) {
+            idxSexStart = 14;
+            birthYearSpan = 2;
+        }
+
+        //出生日期
+        String year = (birthYearSpan == 2 ? "19" : "") + certificateNo.substring(6, 6 + birthYearSpan);
+        String month = certificateNo.substring(6 + birthYearSpan, 6 + birthYearSpan + 2);
+        String day = certificateNo.substring(8 + birthYearSpan, 8 + birthYearSpan + 2);
+        String birthday = year + '-' + month + '-' + day;
+        System.out.println(birthday);
+    }
 
     /**
      * 开户前置检测
@@ -1940,7 +1980,7 @@ public class UserThirdBizImpl implements UserThirdBiz {
         log.info("================================");
 
 
-        CardBindDetailsQueryRequest cardBindDetailsQueryRequest = new CardBindDetailsQueryRequest() ;
+        CardBindDetailsQueryRequest cardBindDetailsQueryRequest = new CardBindDetailsQueryRequest();
         cardBindDetailsQueryRequest.setAccountId(userThirdAccount.getAccountId());
         cardBindDetailsQueryRequest.setState("0");
         CardBindDetailsQueryResponse cardBindDetailsQueryResponse = jixinManager.send(JixinTxCodeEnum.CARD_BIND_DETAILS_QUERY, cardBindDetailsQueryRequest, CardBindDetailsQueryResponse.class);

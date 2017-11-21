@@ -13,7 +13,7 @@ import java.util.List;
  */
 @ApiModel
 @Data
-public class VoProductPlanDetail extends VoBaseResp {
+public class VoFindProductDetail {
     @ApiModelProperty("商品id")
     private Long productId;
 }

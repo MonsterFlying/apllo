@@ -20,6 +20,4 @@ public class ProductItemSkuRef {
     private Long id;
     private Long productItemId;
     private Long skuId;
-    private Date createAt;
-    private Date updateAt;
 }

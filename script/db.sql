@@ -755,6 +755,9 @@ INSERT INTO `gfb_sms_template` ( `ALIAS_CODE`, `TEMPLATE`, `IS_DEL`, `IS_ACTIVE`
 INSERT INTO `gfb_sms_template` (`ALIAS_CODE`, `TEMPLATE`, `IS_DEL`, `IS_ACTIVE`, `TYPE`, `CREATE_TIME`, `CREATE_ID`, `UPDATE_TIME`, `UPDATE_ID`) VALUES ('SMS_BORROW_CANCEL_BORROW', '【广富宝】你发布的[编号：{id}][借款：{name}]，在{timestamp}停止募集，已取消', '0', '1', '0', '2017-09-12 16:07:36', '0', '2017-09-12 16:07:44', '0');
 
 ALTER TABLE gfb_borrow ADD `lend_repay_status` int(11) DEFAULT '0' COMMENT '放款即信通信状态 0.未处理 1.处理中 2.处理失败 3.处理成功';
+
+ALTER TABLE gfb_borrow ADD `first_most` int(10) DEFAULT '0' COMMENT '第一笔限额';
+
 ALTER TABLE gfb_borrow_repayment ADD   `repay_status` int(11) DEFAULT '0' COMMENT '还款即信通信状态 0.未处理 1.处理中 2.处理失败 3.处理成功';
 
 
