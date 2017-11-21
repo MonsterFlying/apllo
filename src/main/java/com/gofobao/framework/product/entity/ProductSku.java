@@ -15,9 +15,12 @@ import java.util.Date;
 public class ProductSku {
     @Id
     @GeneratedValue
-    private int id;
-    private Integer scId;
+    private Long id;
+    private Integer type;
+    private Long scId;
     private String name;
+    private Integer no;
+    private Long planId;
     private Boolean isDel;
     private Date createAt;
     private Date updateAt;

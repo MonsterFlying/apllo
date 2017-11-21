@@ -278,6 +278,7 @@ public class FinancePlanBizImpl implements FinancePlanBiz {
      * @return
      */
     @Transactional(rollbackFor = Exception.class)
+    @Override
     public ResponseEntity<VoBaseResp> tenderFinancePlan(VoTenderFinancePlan voTenderFinancePlan) throws Exception {
         voTenderFinancePlan.setMoney(voTenderFinancePlan.getMoney() * 100);
         String orderId = JixinHelper.getOrderId(JixinHelper.BALANCE_FREEZE_PREFIX);/* 购买理财计划解冻id */

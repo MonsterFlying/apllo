@@ -52,11 +52,6 @@ public class TenderServiceImpl implements TenderService {
     @Autowired
     private UsersRepository usersRepository;
 
-    @Autowired
-    private UserService userService;
-
-    public static final Long SHOW_LIMIT=10000L;
-
 
     @PersistenceContext
     private EntityManager entityManager;

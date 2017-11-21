@@ -40,10 +40,19 @@ public enum AssetChangeTypeEnum {
     offlineRecharge("线下转账", "offline_recharge", "7820", "add@useMoney", "add@rechargeTotal", "D"),
 
     /**
-     * 资金冻结冻结
+     * 资金冻结
      */
     freeze("资金冻结", "freeze", "0", "sub@useMoney,add@noUseMoney", "", "B"),
 
+    /**
+     * 广富送资金冻结
+     */
+    buyProductFreeze("购买广富送冻结资金", "buyProductFreeze", "0", "sub@useMoney,add@noUseMoney", "", "B"),
+
+    /**
+     * 广富送资金冻结
+     */
+    buyProductUnFreeze("购买广富送取消订单冻结资金", "buyProductFreeze", "0", "add@useMoney,sub@noUseMoney", "", "B"),
 
     /**
      * 理财计划冻结

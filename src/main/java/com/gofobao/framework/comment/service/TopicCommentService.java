@@ -25,6 +25,7 @@ public interface TopicCommentService {
 
     /**
      * 发现评论
+     *
      * @param id
      * @return
      */
@@ -32,6 +33,7 @@ public interface TopicCommentService {
 
     /**
      * 批量修改冗余数据
+     *
      * @param userId
      * @param username
      * @param avatar
@@ -42,18 +44,21 @@ public interface TopicCommentService {
 
     /**
      * 查询话题评论
+     *
      * @param httpServletRequest
      * @param topicId
      * @param pageIndex
      * @return
      */
-    ResponseEntity<VoTopicCommentListResp> listDetail(HttpServletRequest httpServletRequest, Long topicId, Integer pageIndex);
+    ResponseEntity<VoTopicCommentListResp> listDetail(HttpServletRequest httpServletRequest, Long topicId, Integer pageIndex, boolean hot);
 
     /**
      * 删除评论
+     *
      * @param topicCommentId
      * @param userId
      * @return
      */
     ResponseEntity<VoBaseResp> delComment(Long topicCommentId, Long userId);
+
 }

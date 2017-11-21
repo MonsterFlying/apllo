@@ -170,11 +170,15 @@ public class TopicsUsersBizImpl implements TopicsUsersBiz {
         Preconditions.checkNotNull(topicsUsers, "topicsUsers is empty");
         Users user = userService.findById(userId);
         Preconditions.checkNotNull(user, "user record is empty");
-        if (!topicsUsers.getUsername().equals(user.getUsername())
+        /*if (!topicsUsers.getUsername().equals(user.getUsername())
                 && !topicsUsers.getUsername().startsWith("a_z_")) {
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "用户只有一次修改用户名的权利!"));
+        }*/
+        //判断用户名不能重复
+        if (topicsUsers.getUsername().equals(voUpdateUsernameReq.getUsername())){
+            return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR,"用户名已存在",VoBaseResp.class));
         }
         Date nowDate = new Date();
         topicsUsers.setUsername(voUpdateUsernameReq.getUsername());

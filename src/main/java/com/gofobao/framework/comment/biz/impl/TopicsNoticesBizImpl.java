@@ -47,7 +47,7 @@ public class TopicsNoticesBizImpl implements TopicsNoticesBiz {
                 .<TopicsNotices>and()
                 .eq("userId", userId)
                 .eq("sourceType", sourceType)
-                .eq("del", veiwState ? 1 : 0)
+                .eq("viewState", veiwState ? 1 : 0)
                 .build();
 
         return topicsNoticesService.count(topicsReplyNoticesSpecification);

@@ -25,6 +25,9 @@ import com.gofobao.framework.member.service.UserThirdAccountService;
 import com.gofobao.framework.security.helper.JwtTokenHelper;
 import com.gofobao.framework.system.biz.FileManagerBiz;
 import com.google.common.base.Preconditions;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
 import com.google.common.collect.Lists;
 import lombok.NonNull;
 import org.apache.commons.beanutils.PropertyUtils;
@@ -44,6 +47,8 @@ import javax.servlet.http.HttpServletRequest;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 
 @Service
 public class TopicsUsersServiceImpl implements TopicsUsersService {
@@ -73,6 +78,9 @@ public class TopicsUsersServiceImpl implements TopicsUsersService {
     private TopicsNoticesRepository topicsNoticesRepository;
 
     @Autowired
+    private TopicsUsersService topicsUsersService;
+
+    @Autowired
     JwtTokenHelper jwtTokenHelper;
 
     public static final Integer CONTENT_COMMENT_LIMIT = 999;
@@ -82,7 +90,21 @@ public class TopicsUsersServiceImpl implements TopicsUsersService {
     public static final Integer CONTENT_TOP_LIMIT = 999;
 
     @Autowired
-    UserThirdAccountService userThirdAccountService ;
+    UserThirdAccountService userThirdAccountService;
+
+    LoadingCache<Long, TopicsUsers> userCache = CacheBuilder
+            .newBuilder()
+            .expireAfterAccess(5, TimeUnit.MINUTES)
+            .maximumSize(1024)
+            .build(new CacheLoader<Long, TopicsUsers>() {
+                @Override
+                public TopicsUsers load(Long userId) throws Exception {
+                    //查询当前登录用户
+                    TopicsUsers topicsUsers = topicsUsersService.findByUserId(userId);
+                    return topicsUsers;
+                }
+            });
+
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -97,8 +119,8 @@ public class TopicsUsersServiceImpl implements TopicsUsersService {
         if (ObjectUtils.isEmpty(topicsUsers)) {
             // 判断用户是否开户
             UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(userId);
-            if(ObjectUtils.isEmpty(userThirdAccount)){
-                throw new Exception("禁止未开户用户操作社区") ;
+            if (ObjectUtils.isEmpty(userThirdAccount)) {
+                throw new Exception("禁止未开户用户操作社区");
             }
             Date nowDate = new Date();
             TopicsUsers save = new TopicsUsers();
@@ -130,19 +152,10 @@ public class TopicsUsersServiceImpl implements TopicsUsersService {
     @SuppressWarnings("all")
     public ResponseEntity<VoTopicListResp> listUserTopic(Long topicTypeId, Long userId, Integer pageable,
                                                          HttpServletRequest httpServletRequest) {
-//        Topic topic1 = new Topic();
-//        topic1.setTopicTypeId(topicTypeId);
-//        topic1.setDel(0);
-//        Example<Topic> example = Example.of(topic1);
-//        if (pageable <= 0) {
-//            pageable = 1;
-//        }
         PageRequest pageRequest = new PageRequest(pageable - 1, 10,
                 new Sort(new Sort.Order(Sort.Direction.DESC, "id")));
 
-        //Page<Topic> page = topicRepository.findAll(example, pageRequest);
-//        List<Topic> topics = page.getContent();
-        List<Topic> topics = topicRepository.findByTopicTypeIdAndDelAndUserIdOrderByCreateDateDesc(topicTypeId, 0, userId,pageRequest);
+        List<Topic> topics = topicRepository.findByTopicTypeIdAndDelAndUserIdOrderByCreateDateDesc(topicTypeId, 0, userId, pageRequest);
         VoTopicListResp voTopicListResp = VoBaseResp.ok("查询主题成功", VoTopicListResp.class);
         //点赞集合
         List<Long> ids = Lists.newArrayList();
@@ -222,26 +235,49 @@ public class TopicsUsersServiceImpl implements TopicsUsersService {
     public ResponseEntity<VoTopicCommentManagerListResp> listComment(Integer sourceType, HttpServletRequest httpServletRequest,
                                                                      Integer pageable, Long userId) {
 
-        VoTopicCommentManagerListResp voTopicCommentManagerListResp = VoBaseResp.ok("查询成功",VoTopicCommentManagerListResp.class);
-        if(sourceType == 0) {
+        VoTopicCommentManagerListResp voTopicCommentManagerListResp = VoBaseResp.ok("查询成功", VoTopicCommentManagerListResp.class);
+        if (sourceType == 0) {
             //我的评论
             List<TopicsNotices> topicsNotices = topicsNoticesRepository.findByForUserIdAndSourceType(userId, sourceType);
             for (TopicsNotices notices : topicsNotices) {
                 VoTopicCommentManagerResp voTopicCommentManagerResp = new VoTopicCommentManagerResp();
                 voTopicCommentManagerResp.setTopicId(notices.getSourceId());
                 voTopicCommentManagerResp.setContent(notices.getContent());
+                voTopicCommentManagerResp.setForUserId(notices.getUserId());
+                voTopicCommentManagerResp.setUserId(notices.getForUserId());
+                voTopicCommentManagerResp.setUserName(notices.getForUserName());
+                TopicsUsers topicsUsers = null;
+                try {
+                    topicsUsers = userCache.get(notices.getUserId());
+                } catch (ExecutionException e) {
+                    e.printStackTrace();
+                }
+
+                voTopicCommentManagerResp.setForUserName(topicsUsers.getUsername());
                 //评论时间
                 voTopicCommentManagerResp.setTime(DateHelper.getPastTime(notices.getCreateDate().getTime()));
                 voTopicCommentManagerListResp.getVoTopicCommentManagerRespList().add(voTopicCommentManagerResp);
             }
 
-        }else {
+        } else {
             //我的回复
             List<TopicsNotices> topicsNotices = topicsNoticesRepository.findByForUserIdAndSourceType(userId, sourceType);
             for (TopicsNotices notices : topicsNotices) {
                 VoTopicCommentManagerResp voTopicCommentManagerResp = new VoTopicCommentManagerResp();
+
                 voTopicCommentManagerResp.setContent(notices.getContent());
                 voTopicCommentManagerResp.setCommentId(notices.getSourceId());
+                voTopicCommentManagerResp.setForUserId(notices.getUserId());
+                voTopicCommentManagerResp.setUserId(notices.getForUserId());
+                voTopicCommentManagerResp.setUserName(notices.getForUserName());
+                TopicsUsers topicsUsers = null;
+                try {
+                    topicsUsers = userCache.get(notices.getUserId());
+                } catch (ExecutionException e) {
+                    e.printStackTrace();
+                }
+
+                voTopicCommentManagerResp.setForUserName(topicsUsers.getUsername());
                 //评论时间
                 voTopicCommentManagerResp.setTime(DateHelper.getPastTime(notices.getCreateDate().getTime()));
                 voTopicCommentManagerResp.setForUserId(notices.getUserId());

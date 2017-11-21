@@ -42,6 +42,11 @@ public class RabbitMQConfig {
     }
 
     @Bean
+    public Queue productRabbitmq() {
+        return new Queue(MqQueueEnum.RABBITMQ_PRODUCT.getValue(), true);
+    }
+
+    @Bean
     public Queue userActiveRabbitmq() {
         return new Queue(MqQueueEnum.RABBITMQ_USER_ACTIVE.getValue(), true);
     }
@@ -72,7 +77,11 @@ public class RabbitMQConfig {
     }
 
     @Bean
-    public Queue financePlanRabbitmq(){return new Queue(MqQueueEnum.RABBITMQ_FINANCE_PLAN.getValue(),true);};
+    public Queue financePlanRabbitmq() {
+        return new Queue(MqQueueEnum.RABBITMQ_FINANCE_PLAN.getValue(), true);
+    }
+
+    ;
 
     @Bean
     DirectExchange delayExchange() {

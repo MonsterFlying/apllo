@@ -26,11 +26,12 @@ public class TopicCommentController {
     @GetMapping("/pub/comment/topic-comment/list/{topicId}/{pageIndex}")
     public ResponseEntity<VoTopicCommentListResp> listComment(HttpServletRequest httpServletRequest,
                                                               @PathVariable Long topicId,
-                                                              @PathVariable Integer pageIndex) {
+                                                              @PathVariable Integer pageIndex,
+                                                              @RequestParam(value = "hot",defaultValue = "false") Boolean hot) {
         if (ObjectUtils.isEmpty(pageIndex) || pageIndex <= 0) {
             pageIndex = 1;
         }
-        return topicCommentService.listDetail(httpServletRequest, topicId, pageIndex);
+        return topicCommentService.listDetail(httpServletRequest, topicId, pageIndex, hot);
     }
 
     @PostMapping("/comment/topic/comment/publish")
@@ -42,7 +43,8 @@ public class TopicCommentController {
     @GetMapping("/comment/topic/comment/delete/{topicCommentId}")
     public ResponseEntity<VoBaseResp> delComment(@PathVariable Long topicCommentId,
                                                  @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
-        return topicCommentService.delComment(topicCommentId,userId);
+        return topicCommentService.delComment(topicCommentId, userId);
     }
+
 
 }

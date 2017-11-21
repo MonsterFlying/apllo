@@ -7,6 +7,7 @@ import com.google.common.collect.Lists;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.util.List;
@@ -30,8 +31,9 @@ public class TopicsNoticesServiceImpl implements TopicsNoticesService {
     }
 
     @Override
+    @Transactional
     public void batchUpdateRedundancy(Long userId, String username, String avatar) throws Exception {
-        if (StringUtils.isEmpty(username) || StringUtils.isEmpty(avatar)) {
+        if (StringUtils.isEmpty(username) && StringUtils.isEmpty(avatar)) {
             throw new Exception("参数错误!");
         }
         if (!StringUtils.isEmpty(username)) {
