@@ -1,9 +1,11 @@
 package com.gofobao.framework.comment.entity;
 
+import com.vdurmont.emoji.EmojiParser;
 import lombok.Data;
 import org.hibernate.annotations.DynamicInsert;
 import org.hibernate.annotations.DynamicUpdate;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.util.StringUtils;
 
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
@@ -23,15 +25,15 @@ import java.util.Date;
 public class TopicReply implements Serializable {
     @Id
     @GeneratedValue
-    private Integer id;
+    private Long id;
 
-    private Integer topicId;
+    private Long topicId;
 
-    private Integer topicComentId;
+    private Long topicCommentId;
 
-    private Integer topicTypeId;
+    private Long topicTypeId;
 
-    private Integer topicReplyId;
+    private Long topicReplyId;
 
     private Integer replyType;
 
@@ -39,13 +41,13 @@ public class TopicReply implements Serializable {
 
     private Integer topTotalNum;
 
-    private Integer userId;
+    private Long userId;
 
     private String userName;
 
     private String userIconUrl;
 
-    private Integer forUserId;
+    private Long forUserId;
 
     private String forUserName;
 
@@ -56,5 +58,21 @@ public class TopicReply implements Serializable {
     private Date createDate;
 
     private Date updateDate;
+
+    public String getContent() {
+        if (!StringUtils.isEmpty(this.content)) {
+            return EmojiParser.parseToUnicode(this.content);
+        } else {
+            return content;
+        }
+    }
+
+    public void setContent(String content) {
+        if (!StringUtils.isEmpty(content)) {
+            this.content = EmojiParser.parseToAliases(content);
+        } else {
+            this.content = content;
+        }
+    }
 
 }

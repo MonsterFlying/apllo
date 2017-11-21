@@ -22,8 +22,7 @@ public class VoTopicReq  {
     private Long topicTypeId  ;
 
     @ApiModelProperty("主题内容")
-    @NotBlank(message = "内容不能为空")
-    @Length(max = 120,message = "内容最多为140字")
+    @Length(max = 140,message = "内容最多为140字")
     private String content;
 
 }

@@ -322,7 +322,7 @@ public class UserBizImpl implements UserBiz {
             voBasicUserInfoResp.setSubbranch(StringUtils.isEmpty(userThirdAccount.getBankName()) ? "" : userThirdAccount.getBankName());
             voBasicUserInfoResp.setBankState(!StringUtils.isEmpty(userThirdAccount.getCardNo()));
             voBasicUserInfoResp.setAutoTenderState(userThirdAccount.getAutoTenderState().equals(1));
-            voBasicUserInfoResp.setAutoTranferState(userThirdAccount.getAutoTransferState().equals(1));
+            voBasicUserInfoResp.setAutoTranferState(userThirdAccount.getAutoTransferState().equals(1));  // 审核
            /* try {
                 assetSynBiz.doAssetSyn(user.getId());
             } catch (Exception e) {
@@ -549,7 +549,7 @@ public class UserBizImpl implements UserBiz {
         voOpenAccountInfo.setRealName(String.format("*%s", userThirdAccount.getName().substring(1)));
         voOpenAccountInfo.setPasswordState(userThirdAccount.getPasswordState() == 1);
         voOpenAccountInfo.setPhone(userThirdAccount.getMobile().replaceAll("(\\d{3})\\d{4}(\\d{4})", "$1****$2"));
-        voOpenAccountInfo.setSignedState(userThirdAccount.getAutoTransferState() == 1 && userThirdAccount.getAutoTransferState() == 1);
+        voOpenAccountInfo.setSignedState(userThirdAccount.getAutoTransferState() == 1 && userThirdAccount.getAutoTransferState() == 1); // 审核
         if (userThirdAccount.getCardNoBindState() == 1) {
             voOpenAccountInfo.setBankName(userThirdAccount.getBankName());
             voOpenAccountInfo.setBankLogo(String.format("%s%s", javaDomain, userThirdAccount.getBankLogo()));

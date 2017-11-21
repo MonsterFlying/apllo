@@ -33,7 +33,11 @@ spring:
     mode: LEGACYHTML5
   profiles:
     active: def
-
+  http:
+    multipart:
+      max-file-size: 2MB
+      max-request-size: 20MB
+      enabled: true
 jwt: #JWT 安全配置
   header: Authorization
   secret: WWW.gOf0b@o.c0m@0701

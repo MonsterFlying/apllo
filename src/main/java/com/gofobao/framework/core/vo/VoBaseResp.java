@@ -48,7 +48,14 @@ public class VoBaseResp implements Serializable {
     /**
      * 自动签约指令
      */
-    public static final long ERROR_CREDIT = -3;
+    public static final long ERROR_CREDIT_TENDER = -3;
+
+
+    /**
+     * 自动债权转让
+     */
+    public static final long ERROR_CREDIT_TRNSFER = -5;
+
 
     /**
      * 请先绑定银行

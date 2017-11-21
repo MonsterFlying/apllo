@@ -82,6 +82,7 @@ public class TenderServiceImpl implements TenderService {
                         TenderConstans.TRANSFER_PART_YES).toArray())
                 .build();
         Page<Tender> tenderPage = tenderRepository.findAll(tenderSpecification, pageRequest);
+        //Optional<List<Tender>> listOptional = Optional.ofNullable(tenderList);
         List<Tender> tenderList = tenderPage.getContent();
         if (CollectionUtils.isEmpty(tenderList)) {
             return Collections.EMPTY_LIST;

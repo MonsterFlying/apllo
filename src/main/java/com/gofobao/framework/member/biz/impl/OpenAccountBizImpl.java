@@ -72,12 +72,18 @@ public class OpenAccountBizImpl implements OpenAccountBiz {
             // 查询自动投标签约状况
             boolean autoTenderState = findAutoTenderStateByUserId(userThirdAccount);
             if (autoTenderState) {
+                /*String title = "广富宝开户结果页面";
+                String errorMessage = "开户成功!";
+                String buttonMessage = "返回资产中心";
+                return generateCommon(title, errorMessage, buttonMessage, model, true);*/
+
+
                 boolean autoTransferState = findAutoTransferStateByUserId(userThirdAccount);
                 if (autoTransferState) {  // 开户成功
                     String title = "广富宝开户结果页面";
                     String errorMessage = "开户成功!";
                     String buttonMessage = "返回资产中心";
-                    return  generateCommon(title, errorMessage, buttonMessage, model, true) ;
+                    return generateCommon(title, errorMessage, buttonMessage, model, true);
                 } else {
                     if ("autoTender".equals(process)) { // 自动投标成功千万自动债权转让
                         String title = "自动债权转让签约";
@@ -124,21 +130,22 @@ public class OpenAccountBizImpl implements OpenAccountBiz {
                 String title = "存管开户";
                 String errorMessage = "开户出现未知异常, 请联系平台客服!";
                 String buttonMessage = "返回";
-                return  generateCommon(title, errorMessage, buttonMessage, model, false) ;
+                return generateCommon(title, errorMessage, buttonMessage, model, false);
             }
         }
     }
 
     /**
      * 生成通用页面
+     *
      * @param title
      * @param errorMessage
      * @param buttonMessage
      * @param model
-     *@param isSuccess  @return
+     * @param isSuccess     @return
      */
     private String generateCommon(String title, String errorMessage, String buttonMessage, Model model, boolean isSuccess) {
-        String url = String.format("%s/#/user", h5Domain) ;
+        String url = String.format("%s/#/user", h5Domain);
         model.addAttribute("title", title);
         model.addAttribute("message", errorMessage);
         model.addAttribute("action", url);
@@ -260,7 +267,7 @@ public class OpenAccountBizImpl implements OpenAccountBiz {
         model.addAttribute("message", errorMessage);
         model.addAttribute("action", url);
         model.addAttribute("buttonMessage", buttonMessage);
-        return  "openAccount/formSuccess"  ;
+        return "openAccount/formSuccess";
     }
 
 
@@ -273,7 +280,7 @@ public class OpenAccountBizImpl implements OpenAccountBiz {
      * @return true: 已经设置: false: 未设置
      */
     private boolean findAutoTransferStateByUserId(UserThirdAccount userThirdAccount) {
-        if (1 == userThirdAccount.getAutoTransferState()) {
+        if (userThirdAccount.getAutoTransferState().equals(1)) {  // 审核
             return true;
         }
 
@@ -317,18 +324,25 @@ public class OpenAccountBizImpl implements OpenAccountBiz {
             return true;
         }
 
-        // 进一步查询即信自动投标状态, 当平台与存管不一致, 会进行同步
         CreditAuthQueryRequest creditAuthQueryRequest = new CreditAuthQueryRequest();
-        creditAuthQueryRequest.setAccountId(userThirdAccount.getAccountId());
-        creditAuthQueryRequest.setType("1");
-        creditAuthQueryRequest.setChannel(ChannelContant.APP);
-        CreditAuthQueryResponse creditAuthQueryResponse = jixinManager
-                .send(JixinTxCodeEnum.CREDIT_AUTH_QUERY, creditAuthQueryRequest, CreditAuthQueryResponse.class);
+        int looper = 5;
+        do {
+            looper--;
+            creditAuthQueryRequest.setTxDate(null);
+            creditAuthQueryRequest.setTxTime(null);
+            creditAuthQueryRequest.setSeqNo(null);
+            creditAuthQueryRequest.setAccountId(userThirdAccount.getAccountId());
+            creditAuthQueryRequest.setType("1");
+            creditAuthQueryRequest.setChannel(ChannelContant.APP);
+            CreditAuthQueryResponse creditAuthQueryResponse = jixinManager
+                    .send(JixinTxCodeEnum.CREDIT_AUTH_QUERY, creditAuthQueryRequest, CreditAuthQueryResponse.class);
+            if (JixinResultContants.isNetWordError(creditAuthQueryResponse)
+                    || JixinResultContants.isBusy(creditAuthQueryResponse)) {
+                continue;
+            }
 
-        if ((!ObjectUtils.isEmpty(creditAuthQueryResponse))
-                && (creditAuthQueryResponse.getRetCode().equalsIgnoreCase(JixinResultContants.SUCCESS))) {
-            if (creditAuthQueryResponse.getState().equalsIgnoreCase("1")) {
-                // 同步信息
+            if (JixinResultContants.SUCCESS.equalsIgnoreCase(creditAuthQueryResponse.getRetCode())
+                    && ("1".equalsIgnoreCase(creditAuthQueryResponse.getState()))) {
                 userThirdAccount.setUpdateAt(new Date());
                 userThirdAccount.setAutoTenderState(1);
                 userThirdAccount.setAutoTenderOrderId(creditAuthQueryResponse.getOrderId());
@@ -339,12 +353,9 @@ public class OpenAccountBizImpl implements OpenAccountBiz {
             } else {
                 return false;
             }
-        } else {
-            String msg = ObjectUtils.isArray(creditAuthQueryResponse) ?
-                    "查询自动投标签约状态异常" : creditAuthQueryResponse.getRetMsg();
-            log.error(String.format("查询即信自动投标状态异: %s", msg));
-            return false;
-        }
+        } while (looper > 0);
+
+        return false;
     }
 
 
@@ -367,7 +378,7 @@ public class OpenAccountBizImpl implements OpenAccountBiz {
                 passwordSetQueryRequest,
                 PasswordSetQueryResponse.class);
         if (ObjectUtils.isEmpty(passwordSetQueryResponse)
-                ||!JixinResultContants.SUCCESS.equals(passwordSetQueryResponse.getRetCode())) {
+                || !JixinResultContants.SUCCESS.equals(passwordSetQueryResponse.getRetCode())) {
             String msg = ObjectUtils.isEmpty(passwordSetQueryResponse) ?
                     "请求即信通讯异常" : passwordSetQueryResponse.getRetMsg();
             log.error(String.format("OpenAccountBizImpl.findPasswordStateInitByUserId: %s", msg));

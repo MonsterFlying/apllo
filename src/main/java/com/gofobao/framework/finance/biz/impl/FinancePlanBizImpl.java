@@ -738,8 +738,7 @@ public class FinancePlanBizImpl implements FinancePlanBiz {
                 .build();
         List<FinancePlan> financePlans = financePlanService.findList(specification,
                 new PageRequest(page.getPageIndex(), page.getPageSize(),
-                        new Sort(Sort.Direction.ASC, "status")));
-
+                        new Sort(Sort.Direction.ASC, Lists.newArrayList("status", "id"))));
         warpRes.setTotalCount(10);
         if (CollectionUtils.isEmpty(financePlans)) {
             return ResponseEntity.ok(warpRes);
@@ -757,6 +756,7 @@ public class FinancePlanBizImpl implements FinancePlanBiz {
             plan.setPlanName(p.getName());
             planLists.add(plan);
         });
+        planLists.stream().sorted(Comparator.comparing(PlanList::getStatus).reversed());
         warpRes.setPlanLists(planLists);
         return ResponseEntity.ok(warpRes);
     }
@@ -780,7 +780,11 @@ public class FinancePlanBizImpl implements FinancePlanBiz {
     /*            .eq("successAt",null)*/
                 .eq("status", 1)
                 .build();
-        List<FinancePlan> financePlans = financePlanService.findList(specification, new PageRequest(page.getPageIndex(), page.getPageSize(), new Sort(Sort.Direction.DESC, "id")));
+        List<FinancePlan> financePlans = financePlanService.findList(specification,
+                new PageRequest(page.getPageIndex(),
+                        page.getPageSize(),
+                        new Sort(Sort.Direction.DESC,
+                                Lists.newArrayList("status", "id"))));
         warpRes.setTotalCount(10);
         if (CollectionUtils.isEmpty(financePlans)) {
             return ResponseEntity.ok(warpRes);
@@ -798,6 +802,9 @@ public class FinancePlanBizImpl implements FinancePlanBiz {
             financeServerPlan.setPlanName(p.getName());
             planLists.add(financeServerPlan);
         });
+        planLists.stream()
+                .sorted(Comparator.comparing(FinanceServerPlan::getStatus)
+                        .reversed());
         warpRes.setFinanceServerPlanList(planLists);
         return ResponseEntity.ok(warpRes);
     }

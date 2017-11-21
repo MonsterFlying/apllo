@@ -1,5 +1,7 @@
 package com.gofobao.framework.comment.entity;
 
+import cn.jiguang.common.utils.StringUtils;
+import com.vdurmont.emoji.EmojiParser;
 import lombok.Data;
 import org.hibernate.annotations.DynamicInsert;
 import org.hibernate.annotations.DynamicUpdate;
@@ -22,15 +24,15 @@ import java.util.Date;
 public class TopicComment implements Serializable {
     @Id
     @GeneratedValue
-    private long id;
+    private Long id;
 
-    private long topicId;
+    private Long topicId;
 
-    private long topicTypeId;
+    private Long topicTypeId;
 
     private String content;
 
-    private long userId;
+    private Long userId;
 
     private String userName;
 
@@ -46,5 +48,20 @@ public class TopicComment implements Serializable {
 
     private Date updateDate;
 
+    public String getContent() {
+        if (!org.springframework.util.StringUtils.isEmpty(this.content)) {
+            return EmojiParser.parseToUnicode(this.content);
+        } else {
+            return content;
+        }
+    }
+
+    public void setContent(String content) {
+        if (!org.springframework.util.StringUtils.isEmpty(content)) {
+            this.content = EmojiParser.parseToAliases(content);
+        } else {
+            this.content = content;
+        }
+    }
 
 }
