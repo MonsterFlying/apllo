@@ -72,13 +72,13 @@ public class OpenAccountBizImpl implements OpenAccountBiz {
             // 查询自动投标签约状况
             boolean autoTenderState = findAutoTenderStateByUserId(userThirdAccount);
             if (autoTenderState) {
-                /*String title = "广富宝开户结果页面";
+                String title = "广富宝开户结果页面";
                 String errorMessage = "开户成功!";
                 String buttonMessage = "返回资产中心";
-                return generateCommon(title, errorMessage, buttonMessage, model, true);*/
+                return generateCommon(title, errorMessage, buttonMessage, model, true);
 
 
-                boolean autoTransferState = findAutoTransferStateByUserId(userThirdAccount);
+              /*  boolean autoTransferState = findAutoTransferStateByUserId(userThirdAccount);
                 if (autoTransferState) {  // 开户成功
                     String title = "广富宝开户结果页面";
                     String errorMessage = "开户成功!";
@@ -98,7 +98,7 @@ public class OpenAccountBizImpl implements OpenAccountBiz {
                         return generateAutoTransfer(userThirdAccount, httpServletRequest, model,
                                 title, errorMessage, buttonMessage, false);
                     }
-                }
+                }*/
             } else {
                 if ("initPassword".equals(process)) { // 设置密码成功, 前往自动投标签约
                     String title = "自动投标签约";
