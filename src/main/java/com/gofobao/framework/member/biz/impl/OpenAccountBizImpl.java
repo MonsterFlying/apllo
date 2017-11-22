@@ -72,31 +72,34 @@ public class OpenAccountBizImpl implements OpenAccountBiz {
             // 查询自动投标签约状况
             boolean autoTenderState = findAutoTenderStateByUserId(userThirdAccount);
             if (autoTenderState) {
-                /*String title = "广富宝开户结果页面";
-                String errorMessage = "开户成功!";
-                String buttonMessage = "返回资产中心";
-                return generateCommon(title, errorMessage, buttonMessage, model, true);*/
-
-
-                boolean autoTransferState = findAutoTransferStateByUserId(userThirdAccount);
-                if (autoTransferState) {  // 开户成功
-                    String title = "广富宝开户结果页面";
+                if(!"financer".equalsIgnoreCase(users.getType())){
+                    // 金服用户不需要债权转让
+                    String title = "开户结果页面";
                     String errorMessage = "开户成功!";
                     String buttonMessage = "返回资产中心";
                     return generateCommon(title, errorMessage, buttonMessage, model, true);
-                } else {
-                    if ("autoTender".equals(process)) { // 自动投标成功千万自动债权转让
-                        String title = "自动债权转让签约";
-                        String errorMessage = "自动投标签约成功!";
-                        String buttonMessage = "前往自动债权转让签约";
-                        return generateAutoTransfer(userThirdAccount, httpServletRequest, model,
-                                title, errorMessage, buttonMessage, true);
-                    } else { // 重新发起自动债权转让签约
-                        String title = "自动债权转让签约";
-                        String errorMessage = "自动债权转让签约失败, 重新签约!";
-                        String buttonMessage = "前往自动债权转让签约";
-                        return generateAutoTransfer(userThirdAccount, httpServletRequest, model,
-                                title, errorMessage, buttonMessage, false);
+                }else{
+                    // 是理财用户必须签约
+                    boolean autoTransferState = findAutoTransferStateByUserId(userThirdAccount);
+                    if (autoTransferState) {  // 开户成功
+                        String title = "开户结果页面";
+                        String errorMessage = "开户成功!";
+                        String buttonMessage = "返回资产中心";
+                        return generateCommon(title, errorMessage, buttonMessage, model, true);
+                    } else {
+                        if ("autoTender".equals(process)) { // 自动投标成功千万自动债权转让
+                            String title = "自动债权转让签约";
+                            String errorMessage = "自动投标签约成功!";
+                            String buttonMessage = "前往自动债权转让签约";
+                            return generateAutoTransfer(userThirdAccount, httpServletRequest, model,
+                                    title, errorMessage, buttonMessage, true);
+                        } else { // 重新发起自动债权转让签约
+                            String title = "自动债权转让签约";
+                            String errorMessage = "自动债权转让签约失败, 重新签约!";
+                            String buttonMessage = "前往自动债权转让签约";
+                            return generateAutoTransfer(userThirdAccount, httpServletRequest, model,
+                                    title, errorMessage, buttonMessage, false);
+                        }
                     }
                 }
             } else {
@@ -281,34 +284,40 @@ public class OpenAccountBizImpl implements OpenAccountBiz {
      */
     private boolean findAutoTransferStateByUserId(UserThirdAccount userThirdAccount) {
         if (userThirdAccount.getAutoTransferState().equals(1)) {  // 审核
+            log.info("[查询自动债权转让] 已经签署");
             return true;
         }
-
-        // 进一步查询即信自动债权转让状态, 当平台与存管不一致, 会进行同步
         CreditAuthQueryRequest creditAuthQueryRequest = new CreditAuthQueryRequest();
-        creditAuthQueryRequest.setAccountId(userThirdAccount.getAccountId());
-        creditAuthQueryRequest.setType("2");
-        creditAuthQueryRequest.setChannel(ChannelContant.APP);
-        CreditAuthQueryResponse creditAuthQueryResponse = jixinManager
-                .send(JixinTxCodeEnum.CREDIT_AUTH_QUERY, creditAuthQueryRequest, CreditAuthQueryResponse.class);
-        if ((!ObjectUtils.isEmpty(creditAuthQueryResponse))
-                && (creditAuthQueryResponse.getRetCode().equalsIgnoreCase(JixinResultContants.SUCCESS))) {
-            if (creditAuthQueryResponse.getState().equalsIgnoreCase("1")) {
+        int looper = 5;
+        do {
+            creditAuthQueryRequest.setTxTime(null);
+            creditAuthQueryRequest.setTxDate(null);
+            creditAuthQueryRequest.setSeqNo(null);
+            creditAuthQueryRequest.setAccountId(userThirdAccount.getAccountId());
+            creditAuthQueryRequest.setType("2");
+            creditAuthQueryRequest.setChannel(ChannelContant.APP);
+            CreditAuthQueryResponse creditAuthQueryResponse = jixinManager
+                    .send(JixinTxCodeEnum.CREDIT_AUTH_QUERY, creditAuthQueryRequest, CreditAuthQueryResponse.class);
+
+            if (JixinResultContants.isNetWordError(creditAuthQueryResponse)
+                    || JixinResultContants.isBusy(creditAuthQueryResponse)) {
+                log.error("[查询自动债权转让] 网络异常");
+                continue;
+            }
+
+            if (JixinResultContants.SUCCESS.equalsIgnoreCase(creditAuthQueryResponse.getRetCode())
+                    && creditAuthQueryResponse.getState().equalsIgnoreCase("1")) {
+                log.info("[查询自动债权转让] 执行同步");
                 userThirdAccount.setUpdateAt(new Date());
                 userThirdAccount.setAutoTransferState(1);
                 userThirdAccount.setAutoTransferBondOrderId(creditAuthQueryResponse.getOrderId());
                 userThirdAccountService.save(userThirdAccount);
                 return true;
-            } else {
-                return false;
             }
-        } else {
-            String msg = ObjectUtils.isArray(creditAuthQueryResponse) ?
-                    "查询自动投标签约状态异常" : creditAuthQueryResponse.getRetMsg();
-            log.error(String.format("查询即信自动投标状态异: %s", msg));
-            return false;
-        }
-
+            log.warn("[查询自动债权转让] failure");
+            break;
+        } while (looper > 0);
+        return false;
     }
 
     /**
@@ -323,7 +332,6 @@ public class OpenAccountBizImpl implements OpenAccountBiz {
         if (1 == userThirdAccount.getAutoTenderState()) {
             return true;
         }
-
         CreditAuthQueryRequest creditAuthQueryRequest = new CreditAuthQueryRequest();
         int looper = 5;
         do {
@@ -338,11 +346,13 @@ public class OpenAccountBizImpl implements OpenAccountBiz {
                     .send(JixinTxCodeEnum.CREDIT_AUTH_QUERY, creditAuthQueryRequest, CreditAuthQueryResponse.class);
             if (JixinResultContants.isNetWordError(creditAuthQueryResponse)
                     || JixinResultContants.isBusy(creditAuthQueryResponse)) {
+                log.warn("[自动投标协议查询] 网络异常, 重试");
                 continue;
             }
 
             if (JixinResultContants.SUCCESS.equalsIgnoreCase(creditAuthQueryResponse.getRetCode())
                     && ("1".equalsIgnoreCase(creditAuthQueryResponse.getState()))) {
+                log.warn("[自动投标协议查询] 同步自动投标协议");
                 userThirdAccount.setUpdateAt(new Date());
                 userThirdAccount.setAutoTenderState(1);
                 userThirdAccount.setAutoTenderOrderId(creditAuthQueryResponse.getOrderId());
@@ -350,11 +360,10 @@ public class OpenAccountBizImpl implements OpenAccountBiz {
                 userThirdAccount.setAutoTenderTxAmount(999999999L);
                 userThirdAccountService.save(userThirdAccount);
                 return true;
-            } else {
-                return false;
             }
+            log.warn("[自动投标协议查询] failure");
+            break;
         } while (looper > 0);
-
         return false;
     }
 
@@ -371,27 +380,37 @@ public class OpenAccountBizImpl implements OpenAccountBiz {
         if (userThirdAccount.getPasswordState() == 1) {
             return true;
         }
-        // 对于未同步, 需要查询即信进行进一步确定密码设置情况; 如果遇到不一致,进行本地同步
         PasswordSetQueryRequest passwordSetQueryRequest = new PasswordSetQueryRequest();
-        passwordSetQueryRequest.setAccountId(userThirdAccount.getAccountId());
-        PasswordSetQueryResponse passwordSetQueryResponse = jixinManager.send(JixinTxCodeEnum.PASSWORD_SET_QUERY,
-                passwordSetQueryRequest,
-                PasswordSetQueryResponse.class);
-        if (ObjectUtils.isEmpty(passwordSetQueryResponse)
-                || !JixinResultContants.SUCCESS.equals(passwordSetQueryResponse.getRetCode())) {
-            String msg = ObjectUtils.isEmpty(passwordSetQueryResponse) ?
-                    "请求即信通讯异常" : passwordSetQueryResponse.getRetMsg();
-            log.error(String.format("OpenAccountBizImpl.findPasswordStateInitByUserId: %s", msg));
-            return false;
-        }
+        int looper = 5;
+        Date nowDate = new Date();
+        do {
+            --looper;
+            passwordSetQueryRequest.setTxDate(null);
+            passwordSetQueryRequest.setTxTime(null);
+            passwordSetQueryRequest.setSeqNo(null);
+            passwordSetQueryRequest.setAccountId(userThirdAccount.getAccountId());
+            PasswordSetQueryResponse passwordSetQueryResponse = jixinManager.send(JixinTxCodeEnum.PASSWORD_SET_QUERY,
+                    passwordSetQueryRequest,
+                    PasswordSetQueryResponse.class);
+            if (JixinResultContants.isBusy(passwordSetQueryResponse)
+                    || JixinResultContants.isNetWordError(passwordSetQueryResponse)) {
+                log.error(String.format("[查询开户密码]: 尝试再次查询 %s", passwordSetQueryResponse.getRetMsg()));
+                continue;
+            }
 
-        String pinFlag = passwordSetQueryResponse.getPinFlag();
-        if ("1".equals(pinFlag)) { // 已经设置过密码, 同步数据库
-            userThirdAccount.setPasswordState(1);
-            userThirdAccountService.save(userThirdAccount);
-            return true;
-        }
-
+            if (JixinResultContants.SUCCESS.equalsIgnoreCase(passwordSetQueryResponse.getRetCode())) {
+                String pinFlag = passwordSetQueryResponse.getPinFlag();
+                if ("1".equals(pinFlag)) { // 已经设置过密码, 同步数据库
+                    log.info("[查询开户密码] 主动进行密码设置同步");
+                    userThirdAccount.setPasswordState(1);
+                    userThirdAccount.setUpdateAt(nowDate);
+                    userThirdAccountService.save(userThirdAccount);
+                    return true;
+                }
+            }
+            log.warn(String.format("[查询开户密码] %s", passwordSetQueryResponse.getRetMsg()));
+            break;
+        } while (looper > 0);
         return false;
     }
 }

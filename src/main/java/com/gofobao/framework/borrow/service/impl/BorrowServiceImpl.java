@@ -363,6 +363,8 @@ public class BorrowServiceImpl implements BorrowService {
                                 BorrowContants.NO_PASS + "," +
                                 BorrowContants.RECHECK_NO_PASS + "," +
                                 BorrowContants.PENDING + ") " +
+                    "AND "+
+                        " b.is_finance = 0 " +
                     "AND " +
                         "b.verify_at IS Not NULL " +
                     "AND " +

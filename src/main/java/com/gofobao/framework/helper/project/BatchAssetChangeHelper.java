@@ -94,7 +94,7 @@ public class BatchAssetChangeHelper {
                 .eq("batchAssetChangeId", batchAssetChange.getId())
                 .eq("state", 0)
                 .build();
-        List<BatchAssetChangeItem> batchAssetChangeItemList = batchAssetChangeItemService.findList(bacis,new Sort("userId"));
+        List<BatchAssetChangeItem> batchAssetChangeItemList = batchAssetChangeItemService.findList(bacis);
         Preconditions.checkState(!CollectionUtils.isEmpty(batchAssetChangeItemList), batchNo + "债权转让资金变动子记录不存在!");
 
         // 所有的资金变动

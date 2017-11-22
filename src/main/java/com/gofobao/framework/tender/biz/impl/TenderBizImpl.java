@@ -744,8 +744,8 @@ public class TenderBizImpl implements TenderBiz {
      * @return
      * @throws Exception
      */
-    @Transactional(rollbackFor = Exception.class)
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public ResponseEntity<VoBaseResp> endThirdTender(long userId) throws Exception {
         //1.用户本地前置校验（例如是否锁定什么的）
         /*用户对象*/

@@ -1,26 +1,27 @@
 package com.gofobao.framework.product.entity;
 
+import io.swagger.annotations.ApiModel;
 import lombok.Data;
+import org.hibernate.annotations.DynamicInsert;
+import org.hibernate.annotations.DynamicUpdate;
 
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.Table;
-import java.util.Date;
 
 /**
- * Created by Zeke on 2017/11/9.
+ * Created by Zeke on 2017/11/21.
  */
 @Entity
-@Table(name = "gfb_product_item_plan_ref")
 @Data
-public class ProductItemPlanRef {
+@DynamicInsert
+@DynamicUpdate
+@Table(name = "gfb_product_collect")
+public class ProductCollect {
     @Id
     @GeneratedValue
     private Long id;
     private Long productItemId;
-    private Long planId;
-    private Boolean isDel;
-    private Date createAt;
-    private Date updateAt;
+    private Long userId;
 }

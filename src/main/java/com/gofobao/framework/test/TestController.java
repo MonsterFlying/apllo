@@ -7,6 +7,8 @@ import com.gofobao.framework.api.helper.JixinManager;
 import com.gofobao.framework.api.helper.JixinTxCodeEnum;
 import com.gofobao.framework.api.model.account_details_query.AccountDetailsQueryRequest;
 import com.gofobao.framework.api.model.account_details_query.AccountDetailsQueryResponse;
+import com.gofobao.framework.api.model.account_id_query.AccountIdQueryRequest;
+import com.gofobao.framework.api.model.account_id_query.AccountIdQueryResponse;
 import com.gofobao.framework.api.model.balance_query.BalanceQueryRequest;
 import com.gofobao.framework.api.model.balance_query.BalanceQueryResponse;
 import com.gofobao.framework.api.model.balance_un_freeze.BalanceUnfreezeReq;
@@ -19,6 +21,8 @@ import com.gofobao.framework.api.model.batch_query.BatchQueryReq;
 import com.gofobao.framework.api.model.batch_query.BatchQueryResp;
 import com.gofobao.framework.api.model.bid_apply_query.BidApplyQueryRequest;
 import com.gofobao.framework.api.model.bid_apply_query.BidApplyQueryResponse;
+import com.gofobao.framework.api.model.card_bind_details_query.CardBindDetailsQueryRequest;
+import com.gofobao.framework.api.model.card_bind_details_query.CardBindDetailsQueryResponse;
 import com.gofobao.framework.api.model.credit_details_query.CreditDetailsQueryRequest;
 import com.gofobao.framework.api.model.credit_details_query.CreditDetailsQueryResponse;
 import com.gofobao.framework.api.model.credit_invest_query.CreditInvestQueryReq;
@@ -45,6 +49,7 @@ import com.gofobao.framework.helper.project.IntegralChangeHelper;
 import com.gofobao.framework.member.service.UserCacheService;
 import com.gofobao.framework.member.service.UserService;
 import com.gofobao.framework.member.service.UserThirdAccountService;
+import com.gofobao.framework.member.vo.response.VoOpenAccountResp;
 import com.gofobao.framework.repayment.service.BorrowRepaymentService;
 import com.gofobao.framework.system.biz.ThirdBatchDealBiz;
 import com.gofobao.framework.system.biz.ThirdBatchDealLogBiz;
@@ -71,6 +76,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -354,6 +360,37 @@ public class TestController {
     @Override
     public boolean equals(Object obj) {
         return super.equals(obj);
+    }
+
+    @ApiOperation("个人账户银行卡查询")
+    @RequestMapping("/pub/bank/find")
+    @Transactional(rollbackFor = Exception.class)
+    public void bankQuery(@RequestParam("accountId") Object accountId) {
+        CardBindDetailsQueryRequest cardBindDetailsQueryRequest = new CardBindDetailsQueryRequest();
+        cardBindDetailsQueryRequest.setAccountId(String.valueOf(accountId));
+        cardBindDetailsQueryRequest.setState("1");
+        CardBindDetailsQueryResponse cardBindDetailsQueryResponse = jixinManager.send(JixinTxCodeEnum.CARD_BIND_DETAILS_QUERY,
+                cardBindDetailsQueryRequest,
+                CardBindDetailsQueryResponse.class);
+
+        log.info("=========================================================================================");
+        log.info("个人账户银行卡查询:");
+        log.info("=========================================================================================");
+        log.info(GSON.toJson(cardBindDetailsQueryResponse));
+    }
+
+    @ApiOperation("个人账户查询")
+    @RequestMapping("/pub/account/find")
+    @Transactional(rollbackFor = Exception.class)
+    public void accountQuery(@RequestParam("idNo") Object idNo) {
+        AccountIdQueryRequest accountIdQueryRequest = new AccountIdQueryRequest();
+        accountIdQueryRequest.setIdNo(StringHelper.toString(idNo));
+        AccountIdQueryResponse accountIdQueryResponse = jixinManager.send(JixinTxCodeEnum.ACCOUNT_ID_QUERY,
+                accountIdQueryRequest, AccountIdQueryResponse.class);
+        log.info("=========================================================================================");
+        log.info("个人账户查询:");
+        log.info("=========================================================================================");
+        log.info(GSON.toJson(accountIdQueryResponse));
     }
 
     @ApiOperation("批次查询")

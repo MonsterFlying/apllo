@@ -2,10 +2,7 @@ package com.gofobao.framework.product.entity;
 
 import lombok.Data;
 
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.Id;
-import javax.persistence.Table;
+import javax.persistence.*;
 import java.util.Date;
 
 /**
@@ -18,9 +15,13 @@ public class Product {
     @Id
     @GeneratedValue
     private Long id;
+    private Long type;
+    private Long pcId;
     private String name;
     private String title;
     private String imgUrl;
+    @Column(name = "q_and_a")
+    private String qAndA;
     private String afterSalesService;
     private String details;
     private Boolean isDel;

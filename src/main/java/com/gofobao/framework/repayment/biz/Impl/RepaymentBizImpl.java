@@ -2980,7 +2980,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
         //5. 垫付金额 = sum(垫付本金 + 垫付利息)
         double txAmount = 0d;
         for (CreditInvest creditInvest : creditInvestList) {
-            txAmount = MoneyHelper.add(txAmount, MoneyHelper.round(NumberHelper.toDouble(creditInvest.getTxAmount()), 0));
+            txAmount = MoneyHelper.add(txAmount, NumberHelper.toDouble(creditInvest.getTxAmount()));
         }
         //6. 生成名义借款人垫付批次资产变更记录
         addBatchAssetChangeItemByAdvance(batchAssetChange.getId(), titularBorrowAccount.getUserId(), borrowRepayment, borrow, lateInterest, groupSeqNo);
@@ -3032,7 +3032,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
             thirdBatchDealLogBiz.recordThirdBatchDealLog(batchNo, borrowRepayment.getId(),
                     ThirdBatchDealLogContants.SEND_REQUEST, true, ThirdBatchLogContants.BATCH_BAIL_REPAY, "");
         } catch (Exception e) {
-            log.error("垫付失败!",e);
+            log.error("垫付失败!", e);
             // 申请即信还款解冻
             String unfreezeOrderId = JixinHelper.getOrderId(JixinHelper.BALANCE_UNFREEZE_PREFIX);
             BalanceUnfreezeReq balanceUnfreezeReq = new BalanceUnfreezeReq();
@@ -3082,7 +3082,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
             Transfer transfer = transferMaps.get(tender.getId());
             TransferBuyLog transferBuyLog = null;
             if (!ObjectUtils.isEmpty(transfer)) {
-                transferBuyLogMaps.get(transfer.getId());
+                transferBuyLog = transferBuyLogMaps.get(transfer.getId());
             }
 
             //投标人银行存管账户

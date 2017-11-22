@@ -7,21 +7,19 @@ import lombok.Data;
 import java.util.List;
 
 /**
- * Created by Zeke on 2017/11/13.
+ * Created by Zeke on 2017/11/21.
  */
 @ApiModel
 @Data
-public class VoProductPlanDetail {
+public class VoProductCollect {
     @ApiModelProperty("商品名")
     private String name;
-    @ApiModelProperty("子标题")
+    @ApiModelProperty("商品标题")
     private String title;
-    @ApiModelProperty("库存")
-    private String inventory;
-    @ApiModelProperty("标识价格")
-    private String price;
-    @ApiModelProperty("折扣价格")
-    private String discountPrice;
+    @ApiModelProperty("图片路径")
+    private String imgUrl;
+    @ApiModelProperty("购买金额")
+    private String lowest;
     @ApiModelProperty("sku集合")
     private List<VoSku> skuList;
 }

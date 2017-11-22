@@ -1,7 +1,6 @@
 package com.gofobao.framework.product.service;
 
-import com.gofobao.framework.product.entity.ProductItemPlanRef;
-import com.gofobao.framework.product.entity.ProductPlan;
+import com.gofobao.framework.product.entity.ProductClassify;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
@@ -11,14 +10,14 @@ import java.util.List;
 /**
  * Created by Zeke on 2017/11/9.
  */
-public interface ProductItemPlanRefService {
+public interface ProductClassifyService {
     /**
      * 根据id查询商品计划关联
      *
      * @param id
      * @return
      */
-    ProductItemPlanRef findById(long id);
+    ProductClassify findById(long id);
 
     /**
      * 带锁查询商品计划关联
@@ -26,7 +25,7 @@ public interface ProductItemPlanRefService {
      * @param id
      * @return
      */
-    ProductItemPlanRef findByIdLock(long id);
+    ProductClassify findByIdLock(long id);
 
     /**
      * 查询商品计划关联列表
@@ -34,7 +33,7 @@ public interface ProductItemPlanRefService {
      * @param specification
      * @return
      */
-    List<ProductItemPlanRef> findList(Specification<ProductItemPlanRef> specification);
+    List<ProductClassify> findList(Specification<ProductClassify> specification);
 
     /**
      * 查询商品计划关联列表
@@ -42,7 +41,7 @@ public interface ProductItemPlanRefService {
      * @param specification
      * @return
      */
-    List<ProductItemPlanRef> findList(Specification<ProductItemPlanRef> specification, Sort sort);
+    List<ProductClassify> findList(Specification<ProductClassify> specification, Sort sort);
 
     /**
      * 查询商品计划关联列表
@@ -50,7 +49,7 @@ public interface ProductItemPlanRefService {
      * @param specification
      * @return
      */
-    List<ProductItemPlanRef> findList(Specification<ProductItemPlanRef> specification, Pageable pageable);
+    List<ProductClassify> findList(Specification<ProductClassify> specification, Pageable pageable);
 
     /**
      * 查询商品计划关联总数
@@ -58,7 +57,7 @@ public interface ProductItemPlanRefService {
      * @param specification
      * @return
      */
-    long count(Specification<ProductItemPlanRef> specification);
+    long count(Specification<ProductClassify> specification);
 
     /**
      * 保存商品计划关联
@@ -66,7 +65,7 @@ public interface ProductItemPlanRefService {
      * @param Product
      * @return
      */
-    ProductItemPlanRef save(ProductItemPlanRef Product);
+    ProductClassify save(ProductClassify Product);
 
     /**
      * 保存一组商品计划关联
@@ -74,5 +73,5 @@ public interface ProductItemPlanRefService {
      * @param ProductList
      * @return
      */
-    List<ProductItemPlanRef> save(List<ProductItemPlanRef> ProductList);
+    List<ProductClassify> save(List<ProductClassify> ProductList);
 }

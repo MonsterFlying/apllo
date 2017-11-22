@@ -18,9 +18,12 @@ public class ProductPlan {
     @Id
     @GeneratedValue
     private Long id;
+    private Integer type;
+    private String name;
     private Integer timeLimit;
     private Long lowest;
     private Integer apr;
+    private Integer feeRatio;
     private Boolean isOpen;
     private Date startAt;
     private Date endAt;

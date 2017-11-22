@@ -19,7 +19,7 @@ public class LeSpecification<T> extends BaseSpecification<T> {
     public Predicate toPredicate(Root<T> root, CriteriaQuery<?> criteriaQuery, CriteriaBuilder criteriaBuilder) {
         From from = this.getRoot(this.property, root);
         String field = this.getProperty(this.property);
-        return criteriaBuilder.lessThan(from.get(field), dataObject.getVal());
+        return criteriaBuilder.lessThanOrEqualTo(from.get(field), dataObject.getVal());
     }
 
 }
