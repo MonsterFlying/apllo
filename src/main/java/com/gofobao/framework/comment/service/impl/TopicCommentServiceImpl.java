@@ -280,6 +280,7 @@ public class TopicCommentServiceImpl implements TopicCommentService {
             voTopicCommentItem.setContent(topicComment.getContent());
             voTopicCommentItem.setUserName(topicComment.getUserName());
             voTopicCommentItem.setCommentId(topicComment.getId());
+            voTopicCommentItem.setTopTotalNum(topicComment.getTopTotalNum().toString());
             voTopicCommentItem.setUserIconUrl(imgDomain + "/" + topicComment.getUserIconUrl());
             if (!CollectionUtils.isEmpty(commentIdsMap)) {
                 List<TopicReply> topicReplies = commentIdsMap.get(topicComment.getId());

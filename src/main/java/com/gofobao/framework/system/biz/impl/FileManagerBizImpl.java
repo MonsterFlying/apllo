@@ -62,10 +62,7 @@ public class FileManagerBizImpl implements FileManagerBiz {
         if (!(imgPrefix.equals("png") || imgPrefix.equals("jpg"))) {
             throw new Exception("上传图片只支持png,jpg!");
         }
-        //图片压缩处理
-//                ImgHelper.scale("C:\\Users\\xin\\Desktop\\10.jpg",
-//                "C:\\Users\\xin\\Desktop\\yasuo.jpg", 180, 240, true);//等比例缩放  输出缩放图片
-        // 文件后缀名
+
         String extendType = getextendType(originalFilename);
         Preconditions.checkNotNull(extendType, "upload file extend type is empty");
         UploadManager uploadManager = getUploadManager();

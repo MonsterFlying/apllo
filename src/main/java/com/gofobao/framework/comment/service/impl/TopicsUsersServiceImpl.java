@@ -356,4 +356,11 @@ public class TopicsUsersServiceImpl implements TopicsUsersService {
         }
         return ResponseEntity.ok(voTopicCommentManagerListResp);
     }
+
+    @Override
+    public TopicsUsers findTopByUsername(@NonNull  String username) {
+
+        return topicsUsersRepository.findTopByUsername(username);
+    }
+
 }

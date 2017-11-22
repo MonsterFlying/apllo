@@ -26,6 +26,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
+import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 
 import javax.servlet.http.HttpServletRequest;
@@ -98,6 +99,7 @@ public class TopicsUsersBizImpl implements TopicsUsersBiz {
         List<String> strings;
         try {
             strings = fileManagerBiz.multiUpload(userId, httpServletRequest, "file");
+            
         } catch (Exception e) {
             log.error("avatar save exception", e);
             return ResponseEntity
@@ -170,14 +172,17 @@ public class TopicsUsersBizImpl implements TopicsUsersBiz {
         Preconditions.checkNotNull(topicsUsers, "topicsUsers is empty");
         Users user = userService.findById(userId);
         Preconditions.checkNotNull(user, "user record is empty");
-        /*if (!topicsUsers.getUsername().equals(user.getUsername())
+        if (!topicsUsers.getUsername().equals(user.getUsername())
                 && !topicsUsers.getUsername().startsWith("a_z_")) {
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "用户只有一次修改用户名的权利!"));
-        }*/
+        }
         //判断用户名不能重复
-        if (topicsUsers.getUsername().equals(voUpdateUsernameReq.getUsername())){
+
+         TopicsUsers users = topicsUsersService.findTopByUsername(username);
+
+        if (!ObjectUtils.isEmpty(users)){
             return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR,"用户名已存在",VoBaseResp.class));
         }
         Date nowDate = new Date();

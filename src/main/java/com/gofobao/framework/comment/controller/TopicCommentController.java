@@ -4,6 +4,7 @@ import com.gofobao.framework.comment.service.TopicCommentService;
 import com.gofobao.framework.comment.vo.request.VoTopicCommentReq;
 import com.gofobao.framework.comment.vo.response.VoTopicCommentListResp;
 import com.gofobao.framework.core.vo.VoBaseResp;
+import com.gofobao.framework.helper.RedisHelper;
 import com.gofobao.framework.security.contants.SecurityContants;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -13,7 +14,6 @@ import springfox.documentation.annotations.ApiIgnore;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
-import java.util.Comparator;
 
 /**
  * Created by xin on 2017/11/10.

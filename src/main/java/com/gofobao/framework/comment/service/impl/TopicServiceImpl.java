@@ -458,6 +458,7 @@ public class TopicServiceImpl implements TopicService {
         voTopicResp.setContent(topic.getContent());
         voTopicResp.setUserName(topic.getUserName());
         voTopicResp.setUserIconUrl(topic.getUserIconUrl());
+        voTopicResp.setId(topic.getId());
         //判断用户未登录或者是否是发帖用户
         if (topic.getUserId().equals(userId)) {
             voTopicResp.setTopicUser(true);
@@ -475,16 +476,17 @@ public class TopicServiceImpl implements TopicService {
         if (!StringUtils.isEmpty(token)
                 && !CollectionUtils.isEmpty(ids)) {
             Map<Long, TopicTopRecord> map = topicTopRecordBiz.findTopState(0, userId, ids);
-            TopicTopRecord topicTopRecord = map.get(0);
+            TopicTopRecord topicTopRecord = map.get(topicId);
             if (ObjectUtils.isEmpty(topicTopRecord)) {
                 voTopicResp.setTopState(false);
             } else {
                 voTopicResp.setTopState(true);
-                //删除成功清除topicCache topicId缓存
-                topicCache.invalidateAll();
-                //清除帖子列表详情
-                topicsCache.invalidateAll();
             }
+
+            //删除成功清除topicCache topicId缓存
+            topicCache.invalidateAll();
+            //清除帖子列表详情
+            topicsCache.invalidateAll();
         }
 
         //内容评论数显示
