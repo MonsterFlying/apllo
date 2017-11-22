@@ -203,11 +203,12 @@ public class TopicServiceImpl implements TopicService {
         } catch (Exception e) {
             log.error(e.getMessage());
             return ResponseEntity
-                    .badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "文件保存失败", VoBaseResp.class));
+                    .badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, e.getMessage(), VoBaseResp.class));
         }
 
         //如果发布的内容何图片都是空,不能发布
-        if (StringUtils.isEmpty(voTopicReq.getContent()) && ObjectUtils.isEmpty(files)) {
+        if (StringUtils.isEmpty(voTopicReq.getContent()) && ObjectUtils.isEmpty(files)
+                && StringUtils.isEmpty(voTopicReq.getContent().trim())) {
             return ResponseEntity
                     .badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "发布内容不能为空!", VoBaseResp.class));
         }
@@ -254,7 +255,7 @@ public class TopicServiceImpl implements TopicService {
         if (!ObjectUtils.isEmpty(lastTopic)) {
             Date createDate = lastTopic.getCreateDate();
             createDate = ObjectUtils.isArray(createDate) ? nowDate : createDate;
-            if (nowDate.getTime() - (createDate.getTime() + DateHelper.MILLIS_PER_HOUR) < 0) {
+            if (nowDate.getTime() - (createDate.getTime() + DateHelper.MILLIS_PER_MINUTE*2) < 0) {
                 return ResponseEntity
                         .badRequest()
                         .body(VoBaseResp.error(VoBaseResp.ERROR, "发帖过于频繁, 请1小时后再试!"));
@@ -271,6 +272,7 @@ public class TopicServiceImpl implements TopicService {
         clearLastTopicCache(userId);
         //清除帖子列表详情
         topicsCache.invalidateAll();
+        topicCache.invalidateAll();
 
 
         return ResponseEntity.ok(VoBaseResp.ok("发布主题成功", VoBaseResp.class));
@@ -412,6 +414,10 @@ public class TopicServiceImpl implements TopicService {
                     TopicTopRecord topicTopRecord = map.get(item.getId());
                     if (ObjectUtils.isEmpty(topicTopRecord)) {
                         item.setTopState(false);
+                        //删除成功清除topicCache topicId缓存
+                        topicCache.invalidateAll();
+                        //清除帖子列表详情
+                        topicsCache.invalidateAll();
                     } else {
                         item.setTopState(true);
                         //删除成功清除topicCache topicId缓存

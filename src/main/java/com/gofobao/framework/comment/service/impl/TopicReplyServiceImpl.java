@@ -67,7 +67,7 @@ public class TopicReplyServiceImpl implements TopicReplyService {
             return ResponseEntity.ok(VoBaseResp.ok("用户已被禁止发言", VoBaseResp.class));
         }
         //判断用户上次回复时间,设置回复时间间隔为1分钟
-        TopicReply topicReply = topicReplyRepository.findTopByUserIdOrderById(userId);
+        TopicReply topicReply = topicReplyRepository.findTopByUserIdOrderByIdDesc(userId);
         if (!ObjectUtils.isEmpty(topicReply)&&(nowDate.getTime() -
                 topicReply.getCreateDate().getTime())< DateHelper.MILLIS_PER_MINUTE){
             return ResponseEntity

@@ -1,6 +1,7 @@
 package com.gofobao.framework.comment.repository;
 
 import com.gofobao.framework.comment.entity.TopicComment;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
@@ -39,4 +40,9 @@ public interface TopicCommentRepository extends JpaRepository<TopicComment, Long
     Integer updateOneComment(Long topicCommentId);
 
     List<TopicComment> findByTopicIdAndDel(Long topicId, int i, Pageable pageable);
+
+    List<TopicComment> findByUserId(Long userId, Pageable pageable);
+
+    @Query(value = "select * from gfb_topics_comment where topic_id in ?1 ORDER BY id DESC limit ?2,10", nativeQuery = true)
+    List<TopicComment> findByTopicIdOrderByIdDesc(List<Long> topicIds, int i);
 }

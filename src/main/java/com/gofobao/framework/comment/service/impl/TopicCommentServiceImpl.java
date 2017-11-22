@@ -206,6 +206,8 @@ public class TopicCommentServiceImpl implements TopicCommentService {
         topicCache.invalidateAll();
         topicCommentCache.invalidateAll();
         lastCommentCache.invalidateAll();
+        //评论完之后推送消息给发帖人
+
         return ResponseEntity.ok(VoBaseResp.ok("发布成功", VoBaseResp.class));
     }
 

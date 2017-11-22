@@ -1,5 +1,6 @@
 package com.gofobao.framework.comment.vo.response;
 
+import com.gofobao.framework.core.vo.VoBaseResp;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
@@ -30,6 +31,9 @@ public class VoTopicCommentManagerResp {
 
     @ApiModelProperty("评论者名称")
     private String userName = "";
+
+    @ApiModelProperty("评论者/回复者头像")
+    private String avatar;
 
     @ApiModelProperty("回复时间")
     private String time = "";

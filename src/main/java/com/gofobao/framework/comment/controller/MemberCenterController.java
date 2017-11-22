@@ -52,22 +52,22 @@ public class MemberCenterController {
     public ResponseEntity<VoTopicListResp> listUserTopic(@PathVariable Long topicTypeId, HttpServletRequest httpServletRequest,
                                                          @PathVariable(name = "page") Integer pageable,
                                                          @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
-        return topicsUsersBiz.listUserTopic(topicTypeId, userId,pageable,httpServletRequest);
+        return topicsUsersBiz.listUserTopic(topicTypeId, userId, pageable, httpServletRequest);
     }
 
     @ApiOperation("我的评论回复管理")
     @GetMapping("/member-center/comment/list/{sourceType}/{page}")
     public ResponseEntity<VoTopicCommentManagerListResp> listUserComment(@PathVariable Integer sourceType, HttpServletRequest httpServletRequest,
-                                                                     @PathVariable(name = "page") Integer pageable,
-                                                                     @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId ){
-       return topicsUsersBiz.listComment(sourceType,httpServletRequest,pageable,userId);
+                                                                         @PathVariable(name = "page") Integer pageable,
+                                                                         @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
+        return topicsUsersBiz.listComment(sourceType, httpServletRequest, pageable, userId);
     }
 
     @ApiOperation("@我的评论回复管理")
     @GetMapping("/member-center/bycomment/list/{sourceType}/{page}")
     public ResponseEntity<VoTopicCommentManagerListResp> listUserByComment(@PathVariable Integer sourceType, HttpServletRequest httpServletRequest,
-                                                                         @PathVariable(name = "page") Integer pageable,
-                                                                         @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId ){
-        return topicsUsersBiz.listByComment(sourceType,httpServletRequest,pageable,userId);
+                                                                           @PathVariable(name = "page") Integer pageable,
+                                                                           @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
+        return topicsUsersBiz.listByComment(sourceType, httpServletRequest, pageable, userId);
     }
 }
