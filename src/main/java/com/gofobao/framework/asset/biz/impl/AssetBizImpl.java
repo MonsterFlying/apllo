@@ -588,14 +588,14 @@ public class AssetBizImpl implements AssetBiz {
             } else {
                 return ResponseEntity
                         .badRequest()
-                        .body(VoBaseResp.error(VoBaseResp.ERROR, String.format("充值失败, %s", msg)));
+                        .body(VoBaseResp.error(VoBaseResp.ERROR, String.format("银行提示[%s]", msg)));
             }
         } catch (Exception e) {
             log.error("联机充值异常", e);
             exceptionEmailHelper.sendException("联机充值异常", e);
             return ResponseEntity
                     .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, "充值失败, 请及时联系平台客服!"));
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "平台系统异常, 请联系平台!"));
         }
 
     }
