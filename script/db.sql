@@ -1307,10 +1307,7 @@ CREATE TABLE `gfb_product_order` (
   `order_number` varchar(255) NOT NULL DEFAULT '' COMMENT '订单编号',
   `pay_number` varchar(255) DEFAULT NULL COMMENT '支付流水号',
   `pay_type` int(11) DEFAULT NULL COMMENT '支付方式：0在线支付 ',
-  `product_item_id` int(11) DEFAULT NULL COMMENT '子商品id',
-  `plan_id` int(11) DEFAULT NULL COMMENT '套餐id',
   `product_address_id` int(11) DEFAULT NULL COMMENT '商品配送地址id',
-  `plan_money` int(11) DEFAULT NULL COMMENT '计划金额',
   `pay_money` int(11) DEFAULT NULL COMMENT '实付款',
   `product_money` int(11) DEFAULT NULL COMMENT '商品金额',
   `discounts_money` int(11) DEFAULT NULL COMMENT '折扣金额',
@@ -1344,3 +1341,15 @@ CREATE TABLE `gfb_product_collect` (
   `user_id` int(11) DEFAULT NULL COMMENT '用户id',
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=31 DEFAULT CHARSET=utf8 COMMENT='商品收藏表';
+
+
+ALTER TABLE `gfb_product_order`
+  ADD COLUMN `remark` varchar(1024) NULL DEFAULT '' COMMENT '订单备注' AFTER `pay_at`;
+
+ALTER TABLE `gfb_product_order_buy_log`
+  ADD COLUMN `plan_id` INT(11) NOT NULL COMMENT '订单id' AFTER `id`;
+ALTER TABLE `gfb_product_order_buy_log`
+  ADD COLUMN `plan_money` INT(11) NULL DEFAULT 0  COMMENT '订单购买金额' AFTER `id`;
+ALTER TABLE `gfb_product_order_buy_log`
+  ADD COLUMN `pay_money` INT(11) NULL DEFAULT 0  COMMENT '订单购买金额' AFTER `plan_money`;
+

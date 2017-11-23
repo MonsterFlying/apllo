@@ -115,8 +115,6 @@ public class ProductOrderBizImpl implements ProductOrderBiz {
         /*订单记录*/
         ProductOrder productOrder = productOrderService.findByOrderNumberLock(orderNumber);
         Preconditions.checkNotNull(productOrder, "订单不存在!支付失败!");
-        /*广富送计划*/
-        ProductPlan productPlan = productPlanService.findById(productOrder.getPlanId());
         /*订单需要支付金额*/
         long payMoney = productOrder.getPayMoney();
         //验证订单状态
@@ -147,7 +145,7 @@ public class ProductOrderBizImpl implements ProductOrderBiz {
             assetChange.setType(AssetChangeTypeEnum.buyProductFreeze);
             assetChange.setUserId(userId);
             assetChange.setMoney(payMoney);
-            assetChange.setRemark(String.format("购买产品[%s],冻结可用资金%s元", productPlan.getName(), StringHelper.formatDouble(payMoney / 100D, true)));
+            assetChange.setRemark(String.format("支付订单[%s],冻结可用资金%s元", productOrder.getOrderNumber(), StringHelper.formatDouble(payMoney / 100D, true)));
             assetChange.setSourceId(productOrder.getId());
             assetChange.setSeqNo(seqNo);
             assetChange.setGroupSeqNo(assetChangeProvider.getGroupSeqNo());
@@ -204,6 +202,9 @@ public class ProductOrderBizImpl implements ProductOrderBiz {
         List<ProductOrderBuyLog> productOrderBuyLogList = productOrderBuyLogService.findList(pobls);
         Preconditions.checkState(!CollectionUtils.isEmpty(productOrderBuyLogList), "查询失败，订单商品不存在!");
         Set<Long> productItemIds = productOrderBuyLogList.stream().map(ProductOrderBuyLog::getProductItemId).collect(toSet());
+        /*购买商品总商品价格*/
+        long sumProductMoney = productOrderBuyLogList.stream().mapToLong(ProductOrderBuyLog::getProductMoney).sum();
+
          /*子商品记录*/
         Specification<ProductItem> pis = Specifications
                 .<ProductItem>and()
@@ -275,7 +276,7 @@ public class ProductOrderBizImpl implements ProductOrderBiz {
         res.setEarnings(StringHelper.formatDouble(productOrder.getEarnings(), 100, true));
         res.setPayNumber(productOrder.getPayNumber());
         res.setLogisticsAddress(getAddressStr(productLogistics));
-        res.setBuyMoney(StringHelper.formatDouble(productOrder.getPlanMoney(), 100, true));
+        res.setBuyMoney(StringHelper.formatDouble(sumProductMoney, 100, true));
         res.setExpressName(productLogistics.getExpressName());
         res.setExpressNumber(productLogistics.getExpressNumber());
         res.setFee(StringHelper.formatDouble(productOrder.getFee(), 100, true));
@@ -356,9 +357,6 @@ public class ProductOrderBizImpl implements ProductOrderBiz {
         String orderNumber = voCancelOrder.getOrderNumber();
         ProductOrder productOrder = productOrderService.findByOrderNumberLock(orderNumber);
         Preconditions.checkNotNull(productOrder, "订单记录不存在!");
-        /*商品计划*/
-        ProductPlan productPlan = productPlanService.findById(productOrder.getPlanId());
-        Preconditions.checkNotNull(productOrder, "订单记录不存在!");
         //验证订单是否可以取消
         int orderStatus = productOrder.getStatus();
         Set<Integer> passStatusSet = ImmutableSet.of(1, 2);
@@ -375,7 +373,7 @@ public class ProductOrderBizImpl implements ProductOrderBiz {
             assetChange.setType(AssetChangeTypeEnum.buyProductFreeze);
             assetChange.setUserId(userId);
             assetChange.setMoney(payMoney);
-            assetChange.setRemark(String.format("取消购买产品[%s],冻结可用资金%s元", productPlan.getName(), StringHelper.formatDouble(payMoney / 100D, true)));
+            assetChange.setRemark(String.format("取消订单[%s],解除冻结可用资金%s元", productOrder.getOrderNumber(), StringHelper.formatDouble(payMoney / 100D, true)));
             assetChange.setSourceId(productOrder.getId());
             assetChange.setSeqNo(seqNo);
             assetChange.setGroupSeqNo(assetChangeProvider.getGroupSeqNo());

@@ -149,12 +149,10 @@ public class ProductBizImpl implements ProductBiz {
         order.setUserId(userId);
         order.setDiscountsMoney(0L);
         order.setEarnings(earnings);
-        order.setPlanMoney(productPlan.getLowest());
         order.setFee(0L);
         order.setType(productPlan.getType());
         order.setIsDel(false);
         order.setOrderNumber(orderNumber);
-        order.setPlanId(productPlan.getId());
         order.setProductMoney(productItem.getDiscountPrice());
         order.setStatus(1);
         order.setUpdatedAt(nowDate);
@@ -164,6 +162,9 @@ public class ProductBizImpl implements ProductBiz {
         ProductOrderBuyLog productOrderBuyLog = new ProductOrderBuyLog();
         productOrderBuyLog.setProductItemId(productItemId);
         productOrderBuyLog.setProductOrderId(order.getId());
+        productOrderBuyLog.setProductMoney(productItem.getDiscountPrice());
+        productOrderBuyLog.setPlanId(planId);
+        productOrderBuyLog.setPayMoney(productPlan.getLowest());
         productOrderBuyLog.setProductMoney(productItem.getDiscountPrice());
         productOrderBuyLog.setDiscountsMoney(0L);
         productOrderBuyLog.setUpdatedAt(nowDate);

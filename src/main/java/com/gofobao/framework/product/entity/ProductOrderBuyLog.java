@@ -20,8 +20,11 @@ public class ProductOrderBuyLog {
     @Id
     @GeneratedValue
     private Long id;
+    private Long planId;
     private Long productItemId;
     private Long productOrderId;
+    private Long payMoney;
+    private Long planMoney;
     private Long productMoney;
     private Long discountsMoney;
     private Boolean isDel;
