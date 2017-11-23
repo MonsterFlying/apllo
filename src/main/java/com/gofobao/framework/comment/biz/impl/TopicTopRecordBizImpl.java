@@ -142,13 +142,13 @@ public class TopicTopRecordBizImpl implements TopicTopRecordBiz {
             topic.setTopTotalNum(topic.getTopTotalNum() + value < 0 ? 0 : topic.getTopTotalNum() + value);
             topic.setUpdateDate(nowDate);
             topicService.save(topic);
-        } else if (TOP_TYPE_REPLY.equals(sourceType)) {
+        } else if (TOP_TYPE_COMMENT.equals(sourceType)) {
             TopicComment topicComment = topicCommentService.findById(soucreId);
             Preconditions.checkNotNull(topicComment, "topicComment record is empty");
             topicComment.setTopTotalNum(topicComment.getTopTotalNum() + value < 0 ? 0 : topicComment.getTopTotalNum() + value);
             topicComment.setUpdateDate(nowDate);
             topicCommentService.save(topicComment);
-        } else if (TOP_TYPE_COMMENT.equals(sourceType)) {
+        } else if (TOP_TYPE_REPLY.equals(sourceType)) {
             TopicReply topicReply = topicReplyService.findById(soucreId);
             Preconditions.checkNotNull(topicReply, "topicReply record is empty");
             topicReply.setTopTotalNum(topicReply.getTopTotalNum() + value < 0 ? 0 : topicReply.getTopTotalNum() + value);

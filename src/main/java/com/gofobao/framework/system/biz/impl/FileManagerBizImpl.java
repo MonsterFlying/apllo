@@ -1,6 +1,7 @@
 package com.gofobao.framework.system.biz.impl;
 
 import com.gofobao.framework.core.vo.VoBaseResp;
+import com.gofobao.framework.helper.ImgHelper;
 import com.gofobao.framework.system.biz.FileManagerBiz;
 import com.gofobao.framework.system.vo.response.FileUploadResp;
 import com.google.common.base.Preconditions;
@@ -53,7 +54,15 @@ public class FileManagerBizImpl implements FileManagerBiz {
     public String upload(Long userId, MultipartFile file) throws Exception {
         // 原始文件名
         String originalFilename = file.getOriginalFilename();
-        // 文件后缀名
+        //对上传的文件进行判断 png,jpg
+        String imgPrefix = originalFilename.substring(originalFilename.lastIndexOf(".") + 1);
+        if (file.getSize() >= 1024 * 1024 * 2) {
+            throw new Exception("图片大小超过2M!");
+        }
+        if (!(imgPrefix.equals("png") || imgPrefix.equals("jpg"))) {
+            throw new Exception("上传图片只支持png,jpg!");
+        }
+
         String extendType = getextendType(originalFilename);
         Preconditions.checkNotNull(extendType, "upload file extend type is empty");
         UploadManager uploadManager = getUploadManager();
@@ -112,16 +121,12 @@ public class FileManagerBizImpl implements FileManagerBiz {
                 boolean itemSuccess = false;
                 do {
                     looper--;
-                    try {
-                        String key = upload(userId, file);
-                        if (!StringUtils.isEmpty(key)) {
-                            // 成功
-                            keys.add(key);
-                            itemSuccess = true;
-                            break;
-                        }
-                    } catch (Exception e) {
-                        log.error("文件上传异常", e);
+                    String key = upload(userId, file);
+                    if (!StringUtils.isEmpty(key)) {
+                        // 成功
+                        keys.add(key);
+                        itemSuccess = true;
+                        break;
                     }
                 } while (looper > 0);
 

@@ -25,7 +25,7 @@ public interface TopicsNoticesRepository extends JpaRepository<TopicsNotices, Lo
     @Query(value = "UPDATE gfb_topics_notices SET for_user_icon_url = ?2 WHERE for_user_id = ?1", nativeQuery = true)
     Integer batchUpateAvatarByForUserId(Long userId, String avatar);
 
-    List<TopicsNotices> findByUserIdAndSourceType(Long userId, Integer sourceType);
+    List<TopicsNotices> findByForUserIdAndSourceTypeOrderByIdDesc(Long userId, Integer sourceType);
 
-    List<TopicsNotices> findByForUserIdAndSourceType(Long userId, Integer sourceType);
+    List<TopicsNotices> findByUserIdAndSourceTypeOrderByIdDesc(Long userId, Integer sourceType);
 }

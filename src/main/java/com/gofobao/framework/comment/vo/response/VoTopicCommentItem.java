@@ -27,10 +27,10 @@ public class VoTopicCommentItem {
     private String userIconUrl = "";
 
     @ApiModelProperty("点赞总数")
-    private String topTotalNum = "";
+    private String topTotalNum = "0";
 
     @ApiModelProperty("回复总数")
-    private String contentTotalNum = "";
+    private String contentTotalNum = "0";
 
     @ApiModelProperty("回复时间")
     private String time = "";

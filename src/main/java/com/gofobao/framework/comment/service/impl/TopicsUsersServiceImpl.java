@@ -2,13 +2,10 @@ package com.gofobao.framework.comment.service.impl;
 
 import com.github.wenhao.jpa.Specifications;
 import com.gofobao.framework.comment.biz.TopicTopRecordBiz;
-import com.gofobao.framework.comment.entity.Topic;
-import com.gofobao.framework.comment.entity.TopicTopRecord;
-import com.gofobao.framework.comment.entity.TopicsNotices;
-import com.gofobao.framework.comment.entity.TopicsUsers;
+import com.gofobao.framework.comment.entity.*;
 import com.gofobao.framework.comment.repository.TopicCommentRepository;
+import com.gofobao.framework.comment.repository.TopicReplyRepository;
 import com.gofobao.framework.comment.repository.TopicRepository;
-import com.gofobao.framework.comment.repository.TopicsNoticesRepository;
 import com.gofobao.framework.comment.repository.TopicsUsersRepository;
 import com.gofobao.framework.comment.service.TopicsUsersService;
 import com.gofobao.framework.comment.vo.response.VoTopicCommentManagerListResp;
@@ -23,17 +20,18 @@ import com.gofobao.framework.member.entity.Users;
 import com.gofobao.framework.member.service.UserService;
 import com.gofobao.framework.member.service.UserThirdAccountService;
 import com.gofobao.framework.security.helper.JwtTokenHelper;
-import com.gofobao.framework.system.biz.FileManagerBiz;
 import com.google.common.base.Preconditions;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.common.collect.Lists;
 import lombok.NonNull;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.beanutils.PropertyUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.ResponseEntity;
@@ -51,6 +49,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
 @Service
+@Slf4j
 public class TopicsUsersServiceImpl implements TopicsUsersService {
 
     @Autowired
@@ -62,9 +61,6 @@ public class TopicsUsersServiceImpl implements TopicsUsersService {
     @Autowired
     TopicRepository topicRepository;
 
-    @Autowired
-    FileManagerBiz fileManagerBiz;
-
     @Value("${qiniu.domain}")
     private String imgPrefix;
 
@@ -75,10 +71,10 @@ public class TopicsUsersServiceImpl implements TopicsUsersService {
     private TopicCommentRepository topicCommentRepository;
 
     @Autowired
-    private TopicsNoticesRepository topicsNoticesRepository;
+    private TopicsUsersService topicsUsersService;
 
     @Autowired
-    private TopicsUsersService topicsUsersService;
+    private TopicReplyRepository topicReplyRepository;
 
     @Autowired
     JwtTokenHelper jwtTokenHelper;
@@ -149,7 +145,6 @@ public class TopicsUsersServiceImpl implements TopicsUsersService {
     }
 
     @Override
-    @SuppressWarnings("all")
     public ResponseEntity<VoTopicListResp> listUserTopic(Long topicTypeId, Long userId, Integer pageable,
                                                          HttpServletRequest httpServletRequest) {
         PageRequest pageRequest = new PageRequest(pageable - 1, 10,
@@ -235,88 +230,137 @@ public class TopicsUsersServiceImpl implements TopicsUsersService {
     public ResponseEntity<VoTopicCommentManagerListResp> listComment(Integer sourceType, HttpServletRequest httpServletRequest,
                                                                      Integer pageable, Long userId) {
 
-        VoTopicCommentManagerListResp voTopicCommentManagerListResp = VoBaseResp.ok("查询成功", VoTopicCommentManagerListResp.class);
+        VoTopicCommentManagerListResp voTopicCommentManagerListResp = VoBaseResp.ok("查询成功",
+                VoTopicCommentManagerListResp.class);
+        if (pageable <= 0) {
+            pageable = 1;
+        }
         if (sourceType == 0) {
             //我的评论
-            List<TopicsNotices> topicsNotices = topicsNoticesRepository.findByForUserIdAndSourceType(userId, sourceType);
-            for (TopicsNotices notices : topicsNotices) {
+            Pageable pageable1 = new PageRequest(pageable - 1, 10, Sort.Direction.DESC, "id");
+            List<TopicComment> topicComments = topicCommentRepository.findByUserId(userId,
+                    pageable1);
+            topicComments.stream().forEach((comment) -> {
                 VoTopicCommentManagerResp voTopicCommentManagerResp = new VoTopicCommentManagerResp();
-                voTopicCommentManagerResp.setTopicId(notices.getSourceId());
-                voTopicCommentManagerResp.setContent(notices.getContent());
-                voTopicCommentManagerResp.setForUserId(notices.getUserId());
-                voTopicCommentManagerResp.setUserId(notices.getForUserId());
-                voTopicCommentManagerResp.setUserName(notices.getForUserName());
+                voTopicCommentManagerResp.setContent(comment.getContent());
+                //查询发帖用户
+                Topic topic = topicRepository.findOne(comment.getTopicId());
+                voTopicCommentManagerResp.setTopicId(topic.getId());
+                voTopicCommentManagerResp.setCommentId(comment.getId());
+                voTopicCommentManagerResp.setForUserId(topic.getUserId());
+                voTopicCommentManagerResp.setUserId(userId);
+
                 TopicsUsers topicsUsers = null;
                 try {
-                    topicsUsers = userCache.get(notices.getUserId());
+                    topicsUsers = userCache.get(userId);
+                    Preconditions.checkNotNull(topicsUsers);
                 } catch (ExecutionException e) {
                     e.printStackTrace();
+                    log.info("用户不存在!!");
                 }
-
-                voTopicCommentManagerResp.setForUserName(topicsUsers.getUsername());
+                voTopicCommentManagerResp.setUserName(topicsUsers.getUsername());
+                voTopicCommentManagerResp.setForUserName(topic.getUserName());
+                //我的头像
+                voTopicCommentManagerResp.setAvatar(imgPrefix + comment.getUserIconUrl());
                 //评论时间
-                voTopicCommentManagerResp.setTime(DateHelper.getPastTime(notices.getCreateDate().getTime()));
+                voTopicCommentManagerResp.setTime(DateHelper.getPastTime(comment.getCreateDate().getTime()));
                 voTopicCommentManagerListResp.getVoTopicCommentManagerRespList().add(voTopicCommentManagerResp);
-            }
+            });
 
         } else {
             //我的回复
-            List<TopicsNotices> topicsNotices = topicsNoticesRepository.findByForUserIdAndSourceType(userId, sourceType);
-            for (TopicsNotices notices : topicsNotices) {
+            Pageable pageable1 = new PageRequest(pageable - 1, 10, Sort.Direction.DESC, "id");
+            List<TopicReply> replys = topicReplyRepository.findByUserId(userId,
+                    pageable1);
+            replys.stream().forEach((reply) -> {
                 VoTopicCommentManagerResp voTopicCommentManagerResp = new VoTopicCommentManagerResp();
 
-                voTopicCommentManagerResp.setContent(notices.getContent());
-                voTopicCommentManagerResp.setCommentId(notices.getSourceId());
-                voTopicCommentManagerResp.setForUserId(notices.getUserId());
-                voTopicCommentManagerResp.setUserId(notices.getForUserId());
-                voTopicCommentManagerResp.setUserName(notices.getForUserName());
-                TopicsUsers topicsUsers = null;
-                try {
-                    topicsUsers = userCache.get(notices.getUserId());
-                } catch (ExecutionException e) {
-                    e.printStackTrace();
-                }
-
-                voTopicCommentManagerResp.setForUserName(topicsUsers.getUsername());
+                voTopicCommentManagerResp.setContent(reply.getContent());
+                voTopicCommentManagerResp.setCommentId(reply.getTopicCommentId());
+                voTopicCommentManagerResp.setForUserId(reply.getForUserId());
+                voTopicCommentManagerResp.setUserId(reply.getUserId());
+                voTopicCommentManagerResp.setUserName(reply.getUserName());
+                //我的头像
+                voTopicCommentManagerResp.setAvatar(imgPrefix + reply.getUserIconUrl());
+                voTopicCommentManagerResp.setForUserName(reply.getForUserName());
                 //评论时间
-                voTopicCommentManagerResp.setTime(DateHelper.getPastTime(notices.getCreateDate().getTime()));
-                voTopicCommentManagerResp.setForUserId(notices.getUserId());
+                voTopicCommentManagerResp.setTime(DateHelper.getPastTime(reply.getCreateDate().getTime()));
                 voTopicCommentManagerListResp.getVoTopicCommentManagerRespList().add(voTopicCommentManagerResp);
-            }
+            });
         }
 
         return ResponseEntity.ok(voTopicCommentManagerListResp);
     }
 
     @Override
-    public ResponseEntity<VoTopicCommentManagerListResp> listByComment(Integer sourceType, HttpServletRequest httpServletRequest, Integer pageable, Long userId) {
-        VoTopicCommentManagerResp voTopicCommentManagerResp = new VoTopicCommentManagerResp();
-        VoTopicCommentManagerListResp voTopicCommentManagerListResp = VoBaseResp.ok("查询成功", VoTopicCommentManagerListResp.class);
+    public ResponseEntity<VoTopicCommentManagerListResp> listByComment(Integer sourceType,
+                                                                       HttpServletRequest httpServletRequest, Integer pageable, Long userId) {
+        VoTopicCommentManagerListResp voTopicCommentManagerListResp =
+                VoBaseResp.ok("查询成功", VoTopicCommentManagerListResp.class);
+
+        if (pageable <= 0) {
+            pageable = 1;
+        }
         if (sourceType == 0) {
             //评论我的
-            List<TopicsNotices> topicsNotices = topicsNoticesRepository.findByUserIdAndSourceType(userId, sourceType);
-            for (TopicsNotices notices : topicsNotices) {
-                voTopicCommentManagerResp.setContent(notices.getContent());
+            List<Topic> topics = topicRepository.findByUserId(userId);
+            List<Long> topicIds = Lists.newArrayList();
+            for (Topic topic : topics) {
+                topicIds.add(topic.getId());
+            }
+            List<TopicComment> byComments = topicCommentRepository.findByTopicIdOrderByIdDesc(topicIds,
+                    pageable - 1);
+            TopicsUsers topicsUsers = null;
+            try {
+                topicsUsers = topicsUsersService.findByUserId(userId);
+                Preconditions.checkNotNull(topicsUsers);
+            } catch (Exception e) {
+                e.printStackTrace();
+                log.error("用户不存在!!");
+            }
+
+            for (TopicComment comment : byComments) {
+                VoTopicCommentManagerResp voTopicCommentManagerResp = new VoTopicCommentManagerResp();
+                voTopicCommentManagerResp.setTopicId(comment.getTopicId());
+                voTopicCommentManagerResp.setCommentId(comment.getId());
+                voTopicCommentManagerResp.setContent(comment.getContent());
+                voTopicCommentManagerResp.setUserId(userId);
+                voTopicCommentManagerResp.setUserName(comment.getUserName());
+                voTopicCommentManagerResp.setForUserName(topicsUsers.getUsername());
+                voTopicCommentManagerResp.setForUserId(userId);
+                //评论者头像
+                voTopicCommentManagerResp.setAvatar(imgPrefix + comment.getUserIconUrl());
                 //评论时间
-                voTopicCommentManagerResp.setTime(DateHelper.getPastTime(notices.getCreateDate().getTime()));
-                voTopicCommentManagerResp.setTopicId(notices.getSourceId());
+                voTopicCommentManagerResp.setTime(DateHelper.getPastTime(comment.getCreateDate().getTime()));
                 voTopicCommentManagerListResp.getVoTopicCommentManagerRespList().add(voTopicCommentManagerResp);
             }
         } else {
             //回复我的
-            List<TopicsNotices> topicsNotices = topicsNoticesRepository.findByUserIdAndSourceType(userId, sourceType);
-            for (TopicsNotices notices : topicsNotices) {
-                voTopicCommentManagerResp.setContent(notices.getContent());
+            Pageable pageable1 = new PageRequest(pageable - 1, 10, Sort.Direction.DESC, "id");
+            List<TopicReply> topicReplies = topicReplyRepository.findByForUserId(userId,
+                    pageable1);
+            topicReplies.stream().forEach((reply) -> {
+                VoTopicCommentManagerResp voTopicCommentManagerResp = new VoTopicCommentManagerResp();
+                voTopicCommentManagerResp.setContent(reply.getContent());
                 //评论时间
-                voTopicCommentManagerResp.setTime(DateHelper.getPastTime(notices.getCreateDate().getTime()));
-                TopicsUsers topicsUsers = topicsUsersRepository.findByUserId(notices.getUserId());
-
-                voTopicCommentManagerResp.setUserName(topicsUsers.getUsername());
-                voTopicCommentManagerResp.setCommentId(notices.getSourceId());
-
+                voTopicCommentManagerResp.setTime(DateHelper.getPastTime(reply.getCreateDate().getTime()));
+                voTopicCommentManagerResp.setCommentId(reply.getTopicCommentId());
+                voTopicCommentManagerResp.setUserId(reply.getUserId());
+                voTopicCommentManagerResp.setUserName(reply.getUserName());
+                voTopicCommentManagerResp.setForUserId(userId);
+                voTopicCommentManagerResp.setForUserName(reply.getForUserName());
+                //回复者头像
+                voTopicCommentManagerResp.setAvatar(imgPrefix + reply.getUserIconUrl());
                 voTopicCommentManagerListResp.getVoTopicCommentManagerRespList().add(voTopicCommentManagerResp);
-            }
+            });
         }
         return ResponseEntity.ok(voTopicCommentManagerListResp);
     }
+
+    @Override
+    public TopicsUsers findTopByUsername(@NonNull  String username) {
+
+        return topicsUsersRepository.findTopByUsername(username);
+    }
+
 }

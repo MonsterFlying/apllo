@@ -1,6 +1,8 @@
 package com.gofobao.framework.comment.repository;
 
 import com.gofobao.framework.comment.entity.TopicReply;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Modifying;
@@ -45,5 +47,9 @@ public interface TopicReplyRepository extends JpaRepository<TopicReply, Long>, J
     @Query(value = "update gfb_topics_reply set del = 1 where id = ?1", nativeQuery = true)
     Integer updateOneReply(Long topicReplyId);
 
-    TopicReply findTopByUserIdOrderById(Long userId);
+    TopicReply findTopByUserIdOrderByIdDesc(Long userId);
+
+    List<TopicReply> findByUserId(Long userId, Pageable pageable);
+
+    List<TopicReply> findByForUserId(Long userId, Pageable pageable);
 }

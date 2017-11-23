@@ -72,31 +72,34 @@ public class OpenAccountBizImpl implements OpenAccountBiz {
             // 查询自动投标签约状况
             boolean autoTenderState = findAutoTenderStateByUserId(userThirdAccount);
             if (autoTenderState) {
-                /*String title = "广富宝开户结果页面";
-                String errorMessage = "开户成功!";
-                String buttonMessage = "返回资产中心";
-                return generateCommon(title, errorMessage, buttonMessage, model, true);*/
-
-
-                boolean autoTransferState = findAutoTransferStateByUserId(userThirdAccount);
-                if (autoTransferState) {  // 开户成功
-                    String title = "广富宝开户结果页面";
+                if(!"financer".equalsIgnoreCase(users.getType())){
+                    // 金服用户不需要债权转让
+                    String title = "开户结果页面";
                     String errorMessage = "开户成功!";
                     String buttonMessage = "返回资产中心";
                     return generateCommon(title, errorMessage, buttonMessage, model, true);
-                } else {
-                    if ("autoTender".equals(process)) { // 自动投标成功千万自动债权转让
-                        String title = "自动债权转让签约";
-                        String errorMessage = "自动投标签约成功!";
-                        String buttonMessage = "前往自动债权转让签约";
-                        return generateAutoTransfer(userThirdAccount, httpServletRequest, model,
-                                title, errorMessage, buttonMessage, true);
-                    } else { // 重新发起自动债权转让签约
-                        String title = "自动债权转让签约";
-                        String errorMessage = "自动债权转让签约失败, 重新签约!";
-                        String buttonMessage = "前往自动债权转让签约";
-                        return generateAutoTransfer(userThirdAccount, httpServletRequest, model,
-                                title, errorMessage, buttonMessage, false);
+                }else{
+                    // 是理财用户必须签约
+                    boolean autoTransferState = findAutoTransferStateByUserId(userThirdAccount);
+                    if (autoTransferState) {  // 开户成功
+                        String title = "开户结果页面";
+                        String errorMessage = "开户成功!";
+                        String buttonMessage = "返回资产中心";
+                        return generateCommon(title, errorMessage, buttonMessage, model, true);
+                    } else {
+                        if ("autoTender".equals(process)) { // 自动投标成功千万自动债权转让
+                            String title = "自动债权转让签约";
+                            String errorMessage = "自动投标签约成功!";
+                            String buttonMessage = "前往自动债权转让签约";
+                            return generateAutoTransfer(userThirdAccount, httpServletRequest, model,
+                                    title, errorMessage, buttonMessage, true);
+                        } else { // 重新发起自动债权转让签约
+                            String title = "自动债权转让签约";
+                            String errorMessage = "自动债权转让签约失败, 重新签约!";
+                            String buttonMessage = "前往自动债权转让签约";
+                            return generateAutoTransfer(userThirdAccount, httpServletRequest, model,
+                                    title, errorMessage, buttonMessage, false);
+                        }
                     }
                 }
             } else {

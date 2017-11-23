@@ -56,4 +56,11 @@ public interface TopicsUsersService {
      * @return
      */
     ResponseEntity<VoTopicCommentManagerListResp> listByComment(Integer sourceType, HttpServletRequest httpServletRequest, Integer pageable, Long userId);
+
+    /**
+     * 查询用户名是否重复
+     * @param username
+     * @return
+     */
+    TopicsUsers findTopByUsername(String username);
 }
