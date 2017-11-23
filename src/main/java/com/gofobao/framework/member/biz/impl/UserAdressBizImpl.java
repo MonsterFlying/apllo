@@ -16,6 +16,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -63,13 +64,13 @@ public class UserAdressBizImpl implements UserAddressBiz {
 
         UserAddress userAddress = new UserAddress();
         userAddress.setUserId(userId);
-        userAddress.setName(voAddUserAddress.getName());
-        userAddress.setPhone(voAddUserAddress.getPhone());
-        userAddress.setProvince(voAddUserAddress.getProvince());
-        userAddress.setCountry(voAddUserAddress.getCountry());
-        userAddress.setCity(voAddUserAddress.getCity());
-        userAddress.setDistrict(voAddUserAddress.getDistrict());
-        userAddress.setDetailedAddress(voAddUserAddress.getDetailedAddress());
+        userAddress.setName(StringUtils.isEmpty(voAddUserAddress.getName()) ? "" : voAddUserAddress.getName());
+        userAddress.setPhone(StringUtils.isEmpty(voAddUserAddress.getPhone()) ? "" : voAddUserAddress.getPhone());
+        userAddress.setCountry(StringUtils.isEmpty(voAddUserAddress.getCountry()) ? "" : voAddUserAddress.getCountry());
+        userAddress.setCity(StringUtils.isEmpty(voAddUserAddress.getCity()) ? "" : voAddUserAddress.getCity());
+        userAddress.setProvince(StringUtils.isEmpty(voAddUserAddress.getProvince()) ? "" : voAddUserAddress.getProvince());
+        userAddress.setDistrict(StringUtils.isEmpty(voAddUserAddress.getDistrict()) ? "" : voAddUserAddress.getDistrict());
+        userAddress.setDetailedAddress(StringUtils.isEmpty(voAddUserAddress.getDetailedAddress()) ? "" : voAddUserAddress.getDetailedAddress());
         userAddress.setCreateAt(nowDate);
         userAddress.setUpdateAt(nowDate);
         //判断是否存在有效的收货地址，没有则设置为默认
@@ -115,13 +116,13 @@ public class UserAdressBizImpl implements UserAddressBiz {
 
         Date nowDate = new Date();
 
-        userAddress.setName(voUpdateUserAddress.getName());
-        userAddress.setPhone(voUpdateUserAddress.getPhone());
-        userAddress.setCountry(voUpdateUserAddress.getCountry());
-        userAddress.setCity(voUpdateUserAddress.getCity());
-        userAddress.setProvince(voUpdateUserAddress.getProvince());
-        userAddress.setDistrict(voUpdateUserAddress.getDistrict());
-        userAddress.setDetailedAddress(voUpdateUserAddress.getDetailedAddress());
+        userAddress.setName(StringUtils.isEmpty(voUpdateUserAddress.getName()) ? "" : voUpdateUserAddress.getName());
+        userAddress.setPhone(StringUtils.isEmpty(voUpdateUserAddress.getPhone()) ? "" : voUpdateUserAddress.getPhone());
+        userAddress.setCountry(StringUtils.isEmpty(voUpdateUserAddress.getCountry()) ? "" : voUpdateUserAddress.getCountry());
+        userAddress.setCity(StringUtils.isEmpty(voUpdateUserAddress.getCity()) ? "" : voUpdateUserAddress.getCity());
+        userAddress.setProvince(StringUtils.isEmpty(voUpdateUserAddress.getProvince()) ? "" : voUpdateUserAddress.getProvince());
+        userAddress.setDistrict(StringUtils.isEmpty(voUpdateUserAddress.getDistrict()) ? "" : voUpdateUserAddress.getDistrict());
+        userAddress.setDetailedAddress(StringUtils.isEmpty(voUpdateUserAddress.getDetailedAddress()) ? "" : voUpdateUserAddress.getDetailedAddress());
         userAddress.setCreateAt(nowDate);
         userAddress.setUpdateAt(nowDate);
         //判断是否存在有效的收货地址，没有则设置为默认

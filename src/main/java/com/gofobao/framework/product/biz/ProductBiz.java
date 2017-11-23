@@ -11,6 +11,11 @@ import org.springframework.http.ResponseEntity;
 public interface ProductBiz {
 
     /**
+     * 删除订单
+     */
+    ResponseEntity<VoBaseResp> delOrder(VoDelOrder voDelOrder) throws Exception;
+
+    /**
      * 取消订单
      */
     ResponseEntity<VoBaseResp> cancelOrder(VoCancelOrder voCancelOrder) throws Exception;

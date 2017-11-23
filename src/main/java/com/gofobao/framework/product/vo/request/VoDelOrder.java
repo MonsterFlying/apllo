@@ -1,24 +1,24 @@
 package com.gofobao.framework.product.vo.request;
 
-import com.gofobao.framework.core.vo.VoBaseResp;
-import com.gofobao.framework.product.vo.response.VoSku;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
-import java.util.List;
+import javax.validation.constraints.NotNull;
 
 /**
- * Created by Zeke on 2017/11/13.
+ * Created by Zeke on 2017/11/20.
  */
-@ApiModel
 @Data
-public class VoFindProductDetail {
+@ApiModel
+public class VoDelOrder {
     /**
      * 会员Id
      */
     @ApiModelProperty(name = "userId", hidden = true)
     private Long userId;
-    @ApiModelProperty("商品id")
-    private Long productId;
+
+    @ApiModelProperty("订单编号")
+    @NotNull(message = "订单编号不能为空")
+    private String orderNumber;
 }

@@ -36,4 +36,6 @@ public class VoProductItemDetail {
     private String afterSalesService;
     @ApiModelProperty("Q&A 问答")
     private String qAndA;
+    @ApiModelProperty("是否收藏")
+    private Boolean isCollect;
 }

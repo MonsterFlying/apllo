@@ -82,6 +82,36 @@ public class ProductBizImpl implements ProductBiz {
     private ProductOrderBuyLogService productOrderBuyLogService;
     @Autowired
     private JdbcTemplate jdbcTemplate;
+    @Autowired
+    private ProductCollectService productCollectService;
+
+
+    /**
+     * 删除订单
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public ResponseEntity<VoBaseResp> delOrder(VoDelOrder voDelOrder) throws Exception {
+         /*用户id*/
+        long userId = voDelOrder.getUserId();
+        Asset asset = assetService.findByUserIdLock(userId);
+        Preconditions.checkNotNull(asset, "资产记录不存在!");
+        /*订单id*/
+        String orderNumber = voDelOrder.getOrderNumber();
+        ProductOrder productOrder = productOrderService.findByOrderNumberLock(orderNumber);
+        Preconditions.checkNotNull(productOrder, "订单记录不存在!");
+        //验证订单是否可以删除
+        int orderStatus = productOrder.getStatus();
+        Set<Integer> passStatusSet = ImmutableSet.of(5, 6);
+        if (!passStatusSet.contains(orderStatus)) {
+            return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "请先取消订单!"));
+        }
+        //取消订单
+        productOrder.setIsDel(true);
+        productOrder.setUpdatedAt(new Date());
+        productOrderService.save(productOrder);
+        return ResponseEntity.ok(VoBaseResp.ok("删除成功!"));
+    }
 
     /**
      * 取消订单
@@ -144,11 +174,11 @@ public class ProductBizImpl implements ProductBiz {
         /*搜索关键字*/
         String searchStr = voFindProductOrderList.getSearchStr();
         /*查询sql*/
-        String querySql = "select t1.type,t1.status,t3.img_url as itemImgUrl,t4.img_url as imgUrl,t4.name,t4.title,t1.pay_money as payMoney,t1.order_number as orderNumber" +
+        String querySql = "select distinct t1.type,t1.status,t3.img_url as itemImgUrl,t4.img_url as imgUrl,t4.name,t4.title,t1.pay_money as payMoney,t1.order_number as orderNumber" +
                 " from gfb_product_order t1 " +
-                " left join gfb_product_order_buy_log t2 on t1.id = t2.product_order_id " +
-                " left join gfb_product_item t3 on t2.product_item_id = t3.id" +
-                " left join gfb_product t4 on t3.product_id = t4.id where t1.user_id =" + userId + " and t1.is_del = 0 ";
+                " inner join gfb_product_order_buy_log t2 on t1.id = t2.product_order_id " +
+                " inner join gfb_product_item t3 on t2.product_item_id = t3.id" +
+                " inner join gfb_product t4 on t3.product_id = t4.id where t1.user_id =" + userId + " and t1.is_del = 0 ";
         if (!StringUtils.isEmpty(searchStr)) {
             querySql += "and ( t1.order_number like '%" + searchStr + "%' or t4.name like '%" + searchStr + "%') ";
         }
@@ -169,17 +199,19 @@ public class ProductBizImpl implements ProductBiz {
             default:
         }
 
+        //分页
+        Integer pageIndex = voFindProductOrderList.getPageIndex();
+        Integer pageSize = voFindProductOrderList.getPageSize();
+        querySql += " limit " + pageIndex * pageSize + "," + pageSize;
 
-        List<Map<String,Object>> resultList = jdbcTemplate.queryForList(querySql);;
+        List<Map<String, Object>> resultList = jdbcTemplate.queryForList(querySql);
+        ;
         if (!CollectionUtils.isEmpty(resultList)) {
             Set<String> orderNumberSet = new HashSet<>();
             resultList.stream().forEach(objMap -> {
                 String imgUrl = StringHelper.toString(objMap.get("imgUrl"));
                 String itemImgUrl = StringHelper.toString(objMap.get("itemImgUrl"));
                 String orderNumber = StringHelper.toString(objMap.get("orderNumber"));
-
-                ProductOrder productOrder = productOrderService.findByOrderNumber(orderNumber);
-
                 if (!orderNumberSet.contains(orderNumber)) {
                     //填充订单商品
                     List<VoProductItem> productItems = new ArrayList<>();
@@ -729,6 +761,8 @@ public class ProductBizImpl implements ProductBiz {
         VoViewFindProductItemDetailsRes voViewFindProductItemDetailsRes = VoBaseResp.ok("查询成功!", VoViewFindProductItemDetailsRes.class);
         List<VoProductItemDetail> productItemDetailList = new ArrayList<>();
         voViewFindProductItemDetailsRes.setProductItemDetailList(productItemDetailList);
+        /*用户id*/
+        long userId = voFindProductDetail.getUserId();
         /*商品id*/
         long productId = voFindProductDetail.getProductId();
         /*商品记录*/
@@ -797,12 +831,39 @@ public class ProductBizImpl implements ProductBiz {
                     voProductItemDetail.setProductItemId(productItem.getId());
                     voProductItemDetail.setQAndA(ObjectUtils.isEmpty(productItem.getQAndA()) ? product.getQAndA() : productItem.getQAndA());
                     voProductItemDetail.setAfterSalesService(ObjectUtils.isEmpty(productItem.getAfterSalesService()) ? product.getAfterSalesService() : productItem.getAfterSalesService());
+                    //判断是否收藏
+                    voProductItemDetail.setIsCollect(isCollect(userId, productItem.getId()));
                     productItemDetailList.add(voProductItemDetail);
                 }
             }
         }
 
         return ResponseEntity.ok(voViewFindProductItemDetailsRes);
+    }
+
+    /**
+     * 判断商品是否收藏
+     *
+     * @param userId
+     * @param productItemId
+     * @return
+     */
+    private boolean isCollect(long userId, long productItemId) {
+        if (userId < 1 || productItemId < 1) {
+            return false;
+        }
+
+        Specification<ProductCollect> pcs = Specifications
+                .<ProductCollect>and()
+                .eq("userId", userId)
+                .eq("productItemId", productItemId)
+                .build();
+        long count = productCollectService.count(pcs);
+        if (count > 0) {
+            return true;
+        } else {
+            return false;
+        }
     }
 
     /**
