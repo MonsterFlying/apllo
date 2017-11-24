@@ -1353,3 +1353,5 @@ ALTER TABLE `gfb_product_order_buy_log`
 ALTER TABLE `gfb_product_order_buy_log`
   ADD COLUMN `pay_money` INT(11) NULL DEFAULT 0  COMMENT '订单购买金额' AFTER `plan_money`;
 
+ALTER TABLE `gfb_topics`
+  CHANGE COLUMN `titel` `title` varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT '' COMMENT '标的' AFTER `id`;
