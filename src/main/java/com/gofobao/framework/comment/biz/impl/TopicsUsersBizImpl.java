@@ -20,6 +20,7 @@ import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
@@ -70,7 +71,7 @@ public class TopicsUsersBizImpl implements TopicsUsersBiz {
         } catch (Exception e) {
             return ResponseEntity
                     .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, e.getMessage(), VoTopicMemberCenterResp.class)) ;
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, e.getMessage(), VoTopicMemberCenterResp.class));
         }
         VoTopicMemberCenterResp response = VoBaseResp.ok("成功", VoTopicMemberCenterResp.class);
         response.setUsername(topicsUsers.getUsername());
@@ -99,14 +100,14 @@ public class TopicsUsersBizImpl implements TopicsUsersBiz {
         } catch (Exception e) {
             return ResponseEntity
                     .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, e.getMessage(), VoAvatarResp.class)) ;
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, e.getMessage(), VoAvatarResp.class));
         }
-//        ResponseEntity<VoBaseResp> deleteResult = fileManagerBiz.deleteFile(userId,userId+"-"+topicsUsers.getAvatar());
-//        if (deleteResult.getStatusCodeValue() != 200) {
-//            return ResponseEntity
-//                    .badRequest()
-//                    .body(VoBaseResp.error(VoBaseResp.ERROR, "网络异常", VoAvatarResp.class));
-//        }
+        ResponseEntity<VoBaseResp> deleteResult = fileManagerBiz.deleteFile(userId, topicsUsers.getAvatar());
+        if (deleteResult.getStatusCode().equals(HttpStatus.OK)) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "网络异常", VoAvatarResp.class));
+        }
         try {
             strings = fileManagerBiz.multiUpload(userId, httpServletRequest, "file");
 
@@ -169,7 +170,7 @@ public class TopicsUsersBizImpl implements TopicsUsersBiz {
         } catch (Exception e) {
             return ResponseEntity
                     .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, e.getMessage(), VoAvatarResp.class)) ;
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, e.getMessage(), VoAvatarResp.class));
         }
         Preconditions.checkNotNull(topicsUsers, "topicsUsers is empty");
         Users user = userService.findById(userId);
@@ -183,10 +184,10 @@ public class TopicsUsersBizImpl implements TopicsUsersBiz {
         //判断用户名不能重复
 
 
-         TopicsUsers users = topicsUsersService.findTopByUsername(username);
+        TopicsUsers users = topicsUsersService.findTopByUsername(username);
 
-        if (!ObjectUtils.isEmpty(users)){
-            return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR,"用户名已存在",VoBaseResp.class));
+        if (!ObjectUtils.isEmpty(users)) {
+            return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "用户名已存在", VoBaseResp.class));
         }
         Date nowDate = new Date();
         topicsUsers.setUsername(voUpdateUsernameReq.getUsername());

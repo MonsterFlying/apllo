@@ -44,7 +44,7 @@ public interface TopicsUsersBiz {
      * 评论管理
      * @param sourceType
      * @param httpServletRequest
-     * @param pageable
+     * @param pageIndex
      * @param userId
      * @return
      */

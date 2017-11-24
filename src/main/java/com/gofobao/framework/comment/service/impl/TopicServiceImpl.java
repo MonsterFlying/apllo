@@ -184,7 +184,7 @@ public class TopicServiceImpl implements TopicService {
         if (!ObjectUtils.isEmpty(lastTopic)) {
             Date createDate = lastTopic.getCreateDate();
             createDate = ObjectUtils.isArray(createDate) ? nowDate : createDate;
-            if (nowDate.getTime() - (createDate.getTime() + DateHelper.MILLIS_PER_HOUR) < 0) {
+            if (nowDate.getTime() - (createDate.getTime() + DateHelper.MILLIS_PER_MINUTE*2) < 0) {
                 return ResponseEntity
                         .badRequest()
                         .body(VoBaseResp.error(VoBaseResp.ERROR, "发帖过于频繁, 请1小时后再试!"));
@@ -429,7 +429,7 @@ public class TopicServiceImpl implements TopicService {
         voTopicResp.setTitle(topic.getTitle());
         voTopicResp.setContent(topic.getContent());
         voTopicResp.setUserName(topic.getUserName());
-        voTopicResp.setUserIconUrl(imgPrefix+topic.getUserIconUrl());
+        voTopicResp.setUserIconUrl(imgPrefix+"/"+topic.getUserIconUrl());
         voTopicResp.setId(topic.getId());
         //判断用户未登录或者是否是发帖用户
         if (topic.getUserId().equals(userId)) {

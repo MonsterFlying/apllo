@@ -43,9 +43,9 @@ public interface TopicRepository extends JpaRepository<Topic, Long>, JpaSpecific
 
     Topic findTopByUserIdOrderByIdDesc(Long userId);
 
-    List<Topic> findByUserId(Long userId);
-
     @Modifying
     @Query(value = "update gfb_topics set content_total_num = content_total_num-1 where id=?1", nativeQuery = true)
     Integer delToTalComment(Long topicId);
+
+    List<Topic> findByUserIdAndDel(Long userId, int i);
 }
