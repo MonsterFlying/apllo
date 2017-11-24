@@ -48,7 +48,7 @@ public interface TopicsUsersBiz {
      * @param userId
      * @return
      */
-    ResponseEntity<VoTopicCommentManagerListResp> listComment(Integer sourceType, HttpServletRequest httpServletRequest, Integer pageable, Long userId);
+    ResponseEntity<VoTopicCommentManagerListResp> listComment(Integer sourceType, HttpServletRequest httpServletRequest, Integer pageIndex, Long userId);
 
     /**
      * 被评论管理

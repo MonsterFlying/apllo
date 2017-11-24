@@ -102,7 +102,7 @@ AssetSynBizImpl implements AssetSynBiz {
         Preconditions.checkNotNull(user, "资金同步: 查询用户为空");
         Asset asset = assetService.findByUserIdLock(userId);  // 用户资产
         Preconditions.checkNotNull(asset, "资金同步: 查询用户资产为空");
-        UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(userId);
+        UserThirdAccount userThirdAccount = userThirdAccountService.findByUserIdAndDel(userId);
         ResponseEntity<VoBaseResp> conditionResponse = ThirdAccountHelper.allConditionCheck(userThirdAccount);
         if (!conditionResponse.getStatusCode().equals(HttpStatus.OK)) {
             log.error("当前用户未开户");

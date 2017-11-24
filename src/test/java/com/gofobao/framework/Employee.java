@@ -1,11 +1,13 @@
 package com.gofobao.framework;
 
+import org.apache.poi.ss.formula.functions.T;
+
 import java.io.Serializable;
 
 /**
  * Created by xin on 2017/11/7.
  */
-public class Employee implements Serializable {
+public class Employee implements Serializable,EmployeeInterface {
     private  int id;
     private String name;
     private int age;
@@ -48,5 +50,10 @@ public class Employee implements Serializable {
         return "Employee{" +
                 "name='" + name + '\'' +
                 '}';
+    }
+
+    @Override
+    public Employee get() {
+        return null;
     }
 }

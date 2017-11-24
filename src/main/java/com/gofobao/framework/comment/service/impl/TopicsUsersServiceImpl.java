@@ -47,6 +47,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 @Service
 @Slf4j
@@ -168,6 +169,7 @@ public class TopicsUsersServiceImpl implements TopicsUsersService {
             }
             voTopicResp.setContent(content);
             voTopicResp.setUserName(topic.getUserName());
+            voTopicResp.setTopicUser(true);
             //发帖者图像
             if (StringUtils.isEmpty(voTopicResp.getUserIconUrl())) {
                 voTopicResp.setUserIconUrl(imgPrefix + "/" + topic.getUserIconUrl());
@@ -228,18 +230,18 @@ public class TopicsUsersServiceImpl implements TopicsUsersService {
 
     @Override
     public ResponseEntity<VoTopicCommentManagerListResp> listComment(Integer sourceType, HttpServletRequest httpServletRequest,
-                                                                     Integer pageable, Long userId) {
+                                                                     Integer pageIndex, Long userId) {
 
         VoTopicCommentManagerListResp voTopicCommentManagerListResp = VoBaseResp.ok("查询成功",
                 VoTopicCommentManagerListResp.class);
-        if (pageable <= 0) {
-            pageable = 1;
+        if (pageIndex <= 0) {
+            pageIndex = 1;
         }
         if (sourceType == 0) {
             //我的评论
-            Pageable pageable1 = new PageRequest(pageable - 1, 10, Sort.Direction.DESC, "id");
-            List<TopicComment> topicComments = topicCommentRepository.findByUserId(userId,
-                    pageable1);
+            Pageable pageable = new PageRequest(pageIndex - 1, 10, Sort.Direction.DESC, "id");
+            List<TopicComment> topicComments = topicCommentRepository.findByUserIdAndDel(userId, 0,
+                    pageable);
             topicComments.stream().forEach((comment) -> {
                 VoTopicCommentManagerResp voTopicCommentManagerResp = new VoTopicCommentManagerResp();
                 voTopicCommentManagerResp.setContent(comment.getContent());
@@ -249,7 +251,7 @@ public class TopicsUsersServiceImpl implements TopicsUsersService {
                 voTopicCommentManagerResp.setCommentId(comment.getId());
                 voTopicCommentManagerResp.setForUserId(topic.getUserId());
                 voTopicCommentManagerResp.setUserId(userId);
-
+                voTopicCommentManagerResp.setOwn(true);
                 TopicsUsers topicsUsers = null;
                 try {
                     topicsUsers = userCache.get(userId);
@@ -269,9 +271,9 @@ public class TopicsUsersServiceImpl implements TopicsUsersService {
 
         } else {
             //我的回复
-            Pageable pageable1 = new PageRequest(pageable - 1, 10, Sort.Direction.DESC, "id");
-            List<TopicReply> replys = topicReplyRepository.findByUserId(userId,
-                    pageable1);
+            Pageable pageable = new PageRequest(pageIndex - 1, 10, Sort.Direction.DESC, "id");
+            List<TopicReply> replys = topicReplyRepository.findByUserIdAndDel(userId, 0,
+                    pageable);
             replys.stream().forEach((reply) -> {
                 VoTopicCommentManagerResp voTopicCommentManagerResp = new VoTopicCommentManagerResp();
 
@@ -283,6 +285,8 @@ public class TopicsUsersServiceImpl implements TopicsUsersService {
                 //我的头像
                 voTopicCommentManagerResp.setAvatar(imgPrefix + reply.getUserIconUrl());
                 voTopicCommentManagerResp.setForUserName(reply.getForUserName());
+                voTopicCommentManagerResp.setTopicReplyId(reply.getId().toString());
+                voTopicCommentManagerResp.setOwn(true);
                 //评论时间
                 voTopicCommentManagerResp.setTime(DateHelper.getPastTime(reply.getCreateDate().getTime()));
                 voTopicCommentManagerListResp.getVoTopicCommentManagerRespList().add(voTopicCommentManagerResp);
@@ -294,12 +298,13 @@ public class TopicsUsersServiceImpl implements TopicsUsersService {
 
     @Override
     public ResponseEntity<VoTopicCommentManagerListResp> listByComment(Integer sourceType,
-                                                                       HttpServletRequest httpServletRequest, Integer pageable, Long userId) {
+                                                                       HttpServletRequest httpServletRequest,
+                                                                       Integer pageIndex, Long userId) {
         VoTopicCommentManagerListResp voTopicCommentManagerListResp =
                 VoBaseResp.ok("查询成功", VoTopicCommentManagerListResp.class);
 
-        if (pageable <= 0) {
-            pageable = 1;
+        if (pageIndex <= 0) {
+            pageIndex = 1;
         }
         if (sourceType == 0) {
             //评论我的
@@ -308,8 +313,10 @@ public class TopicsUsersServiceImpl implements TopicsUsersService {
             for (Topic topic : topics) {
                 topicIds.add(topic.getId());
             }
-            List<TopicComment> byComments = topicCommentRepository.findByTopicIdOrderByIdDesc(topicIds,
-                    pageable - 1);
+            topicIds = topicIds.stream().distinct().collect(Collectors.toList());
+
+            Pageable commentPageable = new PageRequest(pageIndex - 1, 10);
+            List<TopicComment> byComments = topicCommentRepository.findByTopicIdInOrderByIdDesc(topicIds, commentPageable);
             TopicsUsers topicsUsers = null;
             try {
                 topicsUsers = topicsUsersService.findByUserId(userId);
@@ -336,9 +343,9 @@ public class TopicsUsersServiceImpl implements TopicsUsersService {
             }
         } else {
             //回复我的
-            Pageable pageable1 = new PageRequest(pageable - 1, 10, Sort.Direction.DESC, "id");
+            Pageable pageable = new PageRequest(pageIndex - 1, 10, Sort.Direction.DESC, "id");
             List<TopicReply> topicReplies = topicReplyRepository.findByForUserId(userId,
-                    pageable1);
+                    pageable);
             topicReplies.stream().forEach((reply) -> {
                 VoTopicCommentManagerResp voTopicCommentManagerResp = new VoTopicCommentManagerResp();
                 voTopicCommentManagerResp.setContent(reply.getContent());
@@ -358,7 +365,7 @@ public class TopicsUsersServiceImpl implements TopicsUsersService {
     }
 
     @Override
-    public TopicsUsers findTopByUsername(@NonNull  String username) {
+    public TopicsUsers findTopByUsername(@NonNull String username) {
 
         return topicsUsersRepository.findTopByUsername(username);
     }

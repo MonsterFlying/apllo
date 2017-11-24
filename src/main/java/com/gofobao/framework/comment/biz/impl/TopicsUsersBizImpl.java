@@ -4,8 +4,6 @@ import alex.zhrenjie04.wordfilter.WordFilterUtil;
 import alex.zhrenjie04.wordfilter.result.FilteredResult;
 import com.gofobao.framework.comment.biz.TopicsNoticesBiz;
 import com.gofobao.framework.comment.biz.TopicsUsersBiz;
-import com.gofobao.framework.comment.entity.TopicReport;
-import com.gofobao.framework.comment.entity.TopicsNotices;
 import com.gofobao.framework.comment.entity.TopicsUsers;
 import com.gofobao.framework.comment.service.*;
 import com.gofobao.framework.comment.vo.request.VoUpdateUsernameReq;
@@ -13,7 +11,6 @@ import com.gofobao.framework.comment.vo.response.VoAvatarResp;
 import com.gofobao.framework.comment.vo.response.VoTopicCommentManagerListResp;
 import com.gofobao.framework.comment.vo.response.VoTopicListResp;
 import com.gofobao.framework.comment.vo.response.VoTopicMemberCenterResp;
-import com.gofobao.framework.comment.vo.response.VoTopicMemberIntegralResp;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.member.entity.Users;
 import com.gofobao.framework.member.service.UserService;
@@ -47,9 +44,6 @@ public class TopicsUsersBizImpl implements TopicsUsersBiz {
     String qiniuDomain;
 
     @Autowired
-    FileManagerBiz fileManagerBiz;
-
-    @Autowired
     UserService userService;
 
     @Autowired
@@ -62,10 +56,11 @@ public class TopicsUsersBizImpl implements TopicsUsersBiz {
     TopicReplyService topicReplyService;
 
     @Autowired
-    TopicReportService topicReportService;
+    TopicsNoticesService topicsNoticesService;
 
     @Autowired
-    TopicsNoticesService topicsNoticesService;
+    FileManagerBiz fileManagerBiz;
+
 
     @Override
     public ResponseEntity<VoTopicMemberCenterResp> memberCenter(@NonNull Long userId) {
@@ -97,9 +92,24 @@ public class TopicsUsersBizImpl implements TopicsUsersBiz {
     @Override
     public ResponseEntity<VoAvatarResp> avatar(HttpServletRequest httpServletRequest, @NonNull Long userId) {
         List<String> strings;
+        //删除七牛上更改前的头像
+        TopicsUsers topicsUsers = null;
+        try {
+            topicsUsers = topicsUsersService.findByUserId(userId);
+        } catch (Exception e) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, e.getMessage(), VoAvatarResp.class)) ;
+        }
+//        ResponseEntity<VoBaseResp> deleteResult = fileManagerBiz.deleteFile(userId,userId+"-"+topicsUsers.getAvatar());
+//        if (deleteResult.getStatusCodeValue() != 200) {
+//            return ResponseEntity
+//                    .badRequest()
+//                    .body(VoBaseResp.error(VoBaseResp.ERROR, "网络异常", VoAvatarResp.class));
+//        }
         try {
             strings = fileManagerBiz.multiUpload(userId, httpServletRequest, "file");
-            
+
         } catch (Exception e) {
             log.error("avatar save exception", e);
             return ResponseEntity
@@ -115,14 +125,6 @@ public class TopicsUsersBizImpl implements TopicsUsersBiz {
         }
 
         Date nowDate = new Date();
-        TopicsUsers topicsUsers = null;
-        try {
-            topicsUsers = topicsUsersService.findByUserId(userId);
-        } catch (Exception e) {
-            return ResponseEntity
-                    .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, e.getMessage(), VoAvatarResp.class)) ;
-        }
         Preconditions.checkNotNull(topicsUsers, "topicsUsers record is empty");
         topicsUsers.setAvatar(strings.get(0));
         topicsUsers.setUpdateDate(nowDate);
@@ -180,6 +182,7 @@ public class TopicsUsersBizImpl implements TopicsUsersBiz {
         }
         //判断用户名不能重复
 
+
          TopicsUsers users = topicsUsersService.findTopByUsername(username);
 
         if (!ObjectUtils.isEmpty(users)){
@@ -206,9 +209,9 @@ public class TopicsUsersBizImpl implements TopicsUsersBiz {
     }
 
     @Override
-    public ResponseEntity<VoTopicCommentManagerListResp> listComment(Integer sourceType, HttpServletRequest httpServletRequest, Integer pageable,
+    public ResponseEntity<VoTopicCommentManagerListResp> listComment(Integer sourceType, HttpServletRequest httpServletRequest, Integer pageIndex,
                                                                      Long userId) {
-        return topicsUsersService.listComment(sourceType, httpServletRequest, pageable, userId);
+        return topicsUsersService.listComment(sourceType, httpServletRequest, pageIndex, userId);
     }
 
     @Override

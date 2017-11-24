@@ -63,12 +63,6 @@ public class TopicServiceImpl implements TopicService {
     private TopicCommentRepository topicCommentRepository;
 
     @Autowired
-    private UsersRepository usersRepository;
-
-    @Autowired
-    private TopicsUsersRepository topicsUsersRepository;
-
-    @Autowired
     private TopicTopRecordBiz topicTopRecordBiz;
 
     @Autowired
@@ -122,19 +116,19 @@ public class TopicServiceImpl implements TopicService {
                 }
             });
 
-    LoadingCache<Long,Topic> topicCache = CacheBuilder
+    LoadingCache<Long, Topic> topicCache = CacheBuilder
             .newBuilder()
             .expireAfterAccess(5, TimeUnit.MINUTES)
             .maximumSize(1024)
             .build(new CacheLoader<Long, Topic>() {
                 @Override
                 public Topic load(Long topicId) throws Exception {
-                    Topic topic = topicRepository.findByIdAndDel(topicId,0);
+                    Topic topic = topicRepository.findByIdAndDel(topicId, 0);
                     return topic;
                 }
             });
 
-    LoadingCache<Long,Topic> lastTopicCache = CacheBuilder
+    LoadingCache<Long, Topic> lastTopicCache = CacheBuilder
             .newBuilder()
             .expireAfterAccess(5, TimeUnit.MINUTES)
             .maximumSize(1024)
@@ -147,7 +141,7 @@ public class TopicServiceImpl implements TopicService {
                 }
             });
 
-    LoadingCache<String,List<Topic>> topicsCache = CacheBuilder
+    LoadingCache<String, List<Topic>> topicsCache = CacheBuilder
             .newBuilder()
             .build(new CacheLoader<String, List<Topic>>() {
                 @Override
@@ -161,7 +155,7 @@ public class TopicServiceImpl implements TopicService {
                     Example<Topic> example = Example.of(topic1);
                     PageRequest pageRequest = new PageRequest(pageable - 1, 10,
                             new Sort(new Sort.Order(Sort.Direction.DESC, "id")));
-                    Page<Topic> page = topicRepository.findAll(example,pageRequest);
+                    Page<Topic> page = topicRepository.findAll(example, pageRequest);
                     return page.getContent();
                 }
             });
@@ -185,15 +179,22 @@ public class TopicServiceImpl implements TopicService {
         }
 
         Date nowDate = new Date();
-        // 判断板块id存在否？
-        TopicType topicType = null;
-        try {
-            topicType = topicTypeCache.get(voTopicReq.getTopicTypeId());
-        } catch (ExecutionException e) {
-            e.printStackTrace();
+        //查询用户上次发帖时间
+        Topic lastTopic = topicRepository.findTopByUserIdOrderByIdDesc(userId);
+        if (!ObjectUtils.isEmpty(lastTopic)) {
+            Date createDate = lastTopic.getCreateDate();
+            createDate = ObjectUtils.isArray(createDate) ? nowDate : createDate;
+            if (nowDate.getTime() - (createDate.getTime() + DateHelper.MILLIS_PER_HOUR) < 0) {
+                return ResponseEntity
+                        .badRequest()
+                        .body(VoBaseResp.error(VoBaseResp.ERROR, "发帖过于频繁, 请1小时后再试!"));
+            }
         }
-        //TopicType topicType = topicTypeRepository.findById(voTopicReq.getTopicTypeId());
+        // 判断板块id存在否？
+
+        TopicType topicType = topicTypeRepository.findById(voTopicReq.getTopicTypeId());
         Preconditions.checkNotNull(topicType, "topicType is not exist");
+
 
         // 图片获取
         List<String> files = null;
@@ -216,10 +217,9 @@ public class TopicServiceImpl implements TopicService {
         // 用户内容铭感词过滤
         FilteredResult filteredResult = null;
         String filteredContent = "";
-        if (!StringUtils.isEmpty(voTopicReq.getContent())) {
-            filteredResult = WordFilterUtil.filterText(voTopicReq.getContent(), '*');
+        if (!StringUtils.isEmpty(voTopicReq.getContent().trim())) {
+            filteredResult = WordFilterUtil.filterText(voTopicReq.getContent().trim(), '*');
             filteredContent = filteredResult.getFilteredContent();
-
         }
 
         // 保存数据
@@ -244,24 +244,6 @@ public class TopicServiceImpl implements TopicService {
             topic.setContent(filteredResult.getFilteredContent());
         }
 
-        //查询用上次发帖时间
-        Topic lastTopic = null;
-        try {
-            lastTopic = lastTopicCache.get(userId);
-        } catch (ExecutionException e) {
-            e.printStackTrace();
-        }
-        //Topic lastTopic = topicRepository.findTopByUserIdOrderByIdDesc(userId);
-        if (!ObjectUtils.isEmpty(lastTopic)) {
-            Date createDate = lastTopic.getCreateDate();
-            createDate = ObjectUtils.isArray(createDate) ? nowDate : createDate;
-            if (nowDate.getTime() - (createDate.getTime() + DateHelper.MILLIS_PER_MINUTE*2) < 0) {
-                return ResponseEntity
-                        .badRequest()
-                        .body(VoBaseResp.error(VoBaseResp.ERROR, "发帖过于频繁, 请1小时后再试!"));
-            }
-        }
-
         Topic saveTopic = topicRepository.save(topic);
         Preconditions.checkNotNull(saveTopic, "topic record is empty");
         // 发帖后相应版块下数量改变
@@ -271,9 +253,12 @@ public class TopicServiceImpl implements TopicService {
         //发布帖子成功,清除lastTopic缓存
         clearLastTopicCache(userId);
         //清除帖子列表详情
-        topicsCache.invalidateAll();
-        topicCache.invalidateAll();
-
+        if (!ObjectUtils.isEmpty(topicsCache)) {
+            topicsCache.invalidateAll();
+        }
+        if (!ObjectUtils.isEmpty(topicsCache)) {
+            topicCache.invalidateAll();
+        }
 
         return ResponseEntity.ok(VoBaseResp.ok("发布主题成功", VoBaseResp.class));
     }
@@ -281,13 +266,7 @@ public class TopicServiceImpl implements TopicService {
     @Override
     @Transactional(noRollbackFor = Exception.class)
     public ResponseEntity<VoBaseResp> delTopic(long id, long userId) {
-        //Topic topic = topicRepository.findOne(id);
-        Topic topic = null;
-        try {
-             topic = topicCache.get(id);
-        } catch (ExecutionException e) {
-            e.printStackTrace();
-        }
+        Topic topic = topicRepository.findOne(id);
         if (ObjectUtils.isEmpty(topic)) {
             return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "无权删除", VoBaseResp.class));
         }
@@ -342,13 +321,11 @@ public class TopicServiceImpl implements TopicService {
         }
         List<Topic> topics = null;
         try {
-             topics = topicsCache.get(topicTypeId+":"+pageable);
+            topics = topicsCache.get(topicTypeId + ":" + pageable);
         } catch (ExecutionException e) {
             e.printStackTrace();
         }
-        //Page<Topic> page = topicRepository.findAll(example, pageRequest);
-        //List<Topic> topics = page.getContent();
-        //List<Topic> topics = topicRepository.findByTopicTypeIdAndDelOrderByCreateDateDesc(topicTypeId,0, new PageRequest(pageable - 1, 10));
+
         VoTopicListResp voTopicListResp = VoBaseResp.ok("查询主题成功", VoTopicListResp.class);
         //点赞集合
         List<Long> ids = Lists.newArrayList();
@@ -447,12 +424,7 @@ public class TopicServiceImpl implements TopicService {
                             VoTopicResp.class));
         }
         userId = jwtTokenHelper.getUserIdFromToken(token);
-        Topic topic = null;
-        try {
-            topic = topicCache.get(topicId);
-        } catch (ExecutionException e) {
-            e.printStackTrace();
-        }
+        Topic topic = topicRepository.findByIdAndDel(topicId, 0);
         VoTopicResp voTopicResp = VoBaseResp.ok("查询主题成功", VoTopicResp.class);
         voTopicResp.setTitle(topic.getTitle());
         voTopicResp.setContent(topic.getContent());
@@ -484,9 +456,13 @@ public class TopicServiceImpl implements TopicService {
             }
 
             //删除成功清除topicCache topicId缓存
-            topicCache.invalidateAll();
-            //清除帖子列表详情
-            topicsCache.invalidateAll();
+            if (!ObjectUtils.isEmpty(topicCache)) {
+                topicCache.invalidateAll();
+            }
+            if (!ObjectUtils.isEmpty(topicsCache)) {
+                //清除帖子列表详情
+                topicsCache.invalidateAll();
+            }
         }
 
         //内容评论数显示
@@ -537,9 +513,10 @@ public class TopicServiceImpl implements TopicService {
 
     /**
      * 清除上次发帖的缓存
+     *
      * @param userId
      */
-    public void clearLastTopicCache(Long userId){
+    public void clearLastTopicCache(Long userId) {
         lastTopicCache.invalidate(userId);
     }
 }

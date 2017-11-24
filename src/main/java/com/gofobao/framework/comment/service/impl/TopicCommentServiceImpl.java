@@ -143,7 +143,6 @@ public class TopicCommentServiceImpl implements TopicCommentService {
         TopicsUsers topicsUsers;
         try {
             topicsUsers = userCache.get(userId);
-            //topicsUsers = topicsUsersService.findByUserId(userId);
         } catch (Exception e) {
             return ResponseEntity
                     .badRequest()
@@ -153,37 +152,13 @@ public class TopicCommentServiceImpl implements TopicCommentService {
         if (topicsUsers.getForceState() != 0) {
             return ResponseEntity.ok(VoBaseResp.ok("用户已被禁言", VoBaseResp.class));
         }
-
         //判断话题id是否存在?
-        Topic topic = null;
-        try {
-            topic = topicCache.get(voTopicCommentReq.getTopicId());
-        } catch (ExecutionException e) {
-            e.printStackTrace();
+        Topic topic = topicRepository.findByIdAndDel(voTopicCommentReq.getTopicId(), 0);
+        if (ObjectUtils.isEmpty(topic)){
+            return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR,"话题不存在,请重试!"));
         }
-
-        //Topic topic = topicRepository.findByIdAndDel(voTopicCommentReq.getTopicId(), 0);
-        Preconditions.checkNotNull(topic, "topic is not exist");
-
         Date nowDate = new Date();
-        TopicComment topicComment = new TopicComment();
-        topicComment.setTopicId(voTopicCommentReq.getTopicId());
-        topicComment.setUserId(userId);
-        topicComment.setUserName(topicsUsers.getUsername());
-        topicComment.setUserIconUrl(topicsUsers.getAvatar());
-        topicComment.setCreateDate(nowDate);
-        topicComment.setUpdateDate(nowDate);
-        topicComment.setTopicTypeId(topic.getTopicTypeId());
-        // 用户内容铭感词过滤
-        FilteredResult filteredResult = WordFilterUtil.filterText(voTopicCommentReq.getContent(), '*');
-        topicComment.setContent(filteredResult.getFilteredContent());
-        TopicComment lastComment = null;
-        try {
-            lastComment = lastCommentCache.get(userId);
-        } catch (ExecutionException e) {
-            e.printStackTrace();
-        }
-        //TopicComment lastComment = topicCommentRepository.findTopByUserIdOrderByIdDesc(userId);
+        TopicComment lastComment = topicCommentRepository.findTopByUserIdOrderByIdDesc(userId);
         if (!ObjectUtils.isEmpty(lastComment)) {
             Date createDate = lastComment.getCreateDate();
             createDate = ObjectUtils.isArray(createDate) ? nowDate : createDate;
@@ -194,6 +169,18 @@ public class TopicCommentServiceImpl implements TopicCommentService {
             }
         }
 
+        TopicComment topicComment = new TopicComment();
+        topicComment.setTopicId(voTopicCommentReq.getTopicId());
+        topicComment.setUserId(userId);
+        topicComment.setUserName(topicsUsers.getUsername());
+        topicComment.setUserIconUrl(topicsUsers.getAvatar());
+        topicComment.setCreateDate(nowDate);
+        topicComment.setUpdateDate(nowDate);
+        topicComment.setTopicTypeId(topic.getTopicTypeId());
+        // 用户内容铭感词过滤
+        FilteredResult filteredResult = WordFilterUtil.filterText(voTopicCommentReq.getContent().trim(), '*');
+        topicComment.setContent(filteredResult.getFilteredContent());
+
         TopicComment commentResult = topicCommentRepository.save(topicComment);
         Preconditions.checkNotNull(commentResult, "comment is fail");
         //发布成功修改评论总数
@@ -203,9 +190,10 @@ public class TopicCommentServiceImpl implements TopicCommentService {
         // 发送积分
         topisIntegralBiz.publishComment(topicComment);
         //发布评论之后清除缓存
-        topicCache.invalidateAll();
-        topicCommentCache.invalidateAll();
-        lastCommentCache.invalidateAll();
+        if (!ObjectUtils.isEmpty(topicCommentCache)) {
+            topicCommentCache.invalidateAll();
+        }
+
         //评论完之后推送消息给发帖人
 
         return ResponseEntity.ok(VoBaseResp.ok("发布成功", VoBaseResp.class));
@@ -337,11 +325,17 @@ public class TopicCommentServiceImpl implements TopicCommentService {
     }
 
     @Override
+    @Transactional
     public ResponseEntity<VoBaseResp> delComment(Long topicCommentId, Long userId) {
         if (ObjectUtils.isEmpty(userId)) {
             return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "无权删除", VoBaseResp.class));
         }
-        TopicsUsers topicsUsers = topicsUsersRepository.findByUserId(userId);
+        TopicsUsers topicsUsers = null;
+        try {
+            topicsUsers = topicsUsersService.findByUserId(userId);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         Preconditions.checkNotNull(topicsUsers, "用户不存在");
         if (!topicsUsers.getUserId().equals(userId)) {
             return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "无权删除", VoBaseResp.class));
@@ -350,15 +344,24 @@ public class TopicCommentServiceImpl implements TopicCommentService {
         if (ObjectUtils.isEmpty(updateCommentCount)) {
             return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "删除评论失败", VoBaseResp.class));
         }
+        TopicComment topicComment = topicCommentRepository.findOne(topicCommentId);
+        //删除评论后修改帖子下评论数
+        Integer count = topicRepository.delToTalComment(topicComment.getTopicId());
+        Preconditions.checkNotNull(count, "删除评论失败");
         //成功删除评论后删除评论下的所有回复
         Integer updateReplyCount = topicReplyRepository.updateByComment(topicCommentId);
         if (ObjectUtils.isEmpty(updateReplyCount)) {
             return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "删除评论失败", VoBaseResp.class));
         }
         //删除评论成功后清除topic缓存
-        topicCache.invalidateAll();
+        if (!ObjectUtils.isEmpty(topicCache)) {
+            topicCache.invalidateAll();
+        }
+
         //清除comment缓存
-        topicCommentCache.invalidateAll();
+        if (!ObjectUtils.isEmpty(topicCommentCache)) {
+            topicCommentCache.invalidateAll();
+        }
 
         return ResponseEntity.ok(VoBaseResp.ok("删除评论成功", VoBaseResp.class));
     }

@@ -35,6 +35,12 @@ public class VoTopicCommentManagerResp {
     @ApiModelProperty("评论者/回复者头像")
     private String avatar;
 
+    @ApiModelProperty("话题回复id")
+    private String topicReplyId;
+
     @ApiModelProperty("回复时间")
     private String time = "";
+
+    @ApiModelProperty("是否是本人")
+    private boolean own = false;
 }

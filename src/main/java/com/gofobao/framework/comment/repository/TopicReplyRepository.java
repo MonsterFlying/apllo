@@ -49,7 +49,7 @@ public interface TopicReplyRepository extends JpaRepository<TopicReply, Long>, J
 
     TopicReply findTopByUserIdOrderByIdDesc(Long userId);
 
-    List<TopicReply> findByUserId(Long userId, Pageable pageable);
+    List<TopicReply> findByUserIdAndDel(Long userId, int i, Pageable pageable);
 
     List<TopicReply> findByForUserId(Long userId, Pageable pageable);
 }
