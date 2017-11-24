@@ -149,8 +149,6 @@ public class AplloApplicationTests {
     @Autowired
     private TransferBuyLogService transferBuyLogService;
     @Autowired
-    private TenderService tenderService;
-    @Autowired
     private JdbcTemplate jdbcTemplate;
 
 
@@ -577,7 +575,8 @@ public class AplloApplicationTests {
 
     @Autowired
     private BorrowBiz borrowBiz;
-
+    @Autowired
+    private TenderService tenderService;
 
     @Autowired
     private ThirdBatchDealLogBiz thirdBatchDealLogBiz;
@@ -586,9 +585,26 @@ public class AplloApplicationTests {
     @Test
     @Transactional
     public void test() {
-        String resultStr = OKHttpHelper.postJson("http://m7ocvas9.gofobao.com/api/open/finance-plan/auto-match", GSON.toJson(new HashMap<>()), null);
-        log.info(" 理财计划债权转让复审 url:" + "http://m7ocvas9.gofobao.com/api/open/finance-plan/auto-match\n");
-        log.info(" 理财计划债权转让复审 调用后台返回响应:" + resultStr);
+
+        Transfer transfer = transferService.findById(149);
+        Tender tender = tenderService.findById(transfer.getTenderId());
+        Borrow borrow = borrowService.findById(transfer.getBorrowId());
+        Specification<TransferBuyLog> tbls = Specifications
+                .<TransferBuyLog>and()
+                .eq("transferId", transfer.getId())
+                .eq("state", 0)
+                .build();
+        List<TransferBuyLog> transferBuyLogList = transferBuyLogService.findList(tbls);/* 购买理财计划债权转让记录 */
+
+        log.info("理财计划债权匹配购买生成子tender开始！");
+        //理财计划债权匹配购买生成子tender
+        List<Tender> childTenderList = transferBiz.addFinanceChildTender(new Date(), transfer, tender, transferBuyLogList);
+        log.info("理财计划债权匹配购买生成子tender结束！");
+        try {
+            transferBiz.addFinanceChildTenderCollection(new Date(), transfer, borrow, childTenderList);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         //购买债权转让有效金额 本金
 
 
@@ -630,7 +646,7 @@ public class AplloApplicationTests {
         //batchQuery();
         //freezeDetailsQuery();
         //批次详情查询
-        batchDetailsQuery();
+        //batchDetailsQuery();
         //查询投标申请
         //bidApplyQuery();
         //转让标复审回调
