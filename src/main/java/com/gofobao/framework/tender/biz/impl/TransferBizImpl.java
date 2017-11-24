@@ -302,6 +302,7 @@ public class TransferBizImpl implements TransferBiz {
         return ResponseEntity.ok(VoBaseResp.ok("结束债权转让成功!"));
     }
 
+
     /**
      * 理财计划债权转让复审
      *
@@ -492,7 +493,7 @@ public class TransferBizImpl implements TransferBiz {
                 }
 
                 //如果是理财计划借款不需要生成利息
-                if (childTender.getType().intValue() == 1) {
+                if (childTender.getType().intValue() == 1 || (parentBorrow.getIsFinance() && (childTender.getUserId().longValue() == 22002))) {
                     interest = 0;
                 }
 
@@ -509,9 +510,9 @@ public class TransferBizImpl implements TransferBiz {
                 borrowCollection.setInterest(interest);
                 borrowCollection.setCreatedAt(nowDate);
                 borrowCollection.setUpdatedAt(nowDate);
-                borrowCollection.setCollectionMoneyYes(0l);
+                borrowCollection.setCollectionMoneyYes(0L);
                 borrowCollection.setLateDays(0);
-                borrowCollection.setLateInterest(0l);
+                borrowCollection.setLateInterest(0L);
                 borrowCollection.setBorrowId(parentBorrow.getId());
                 childTenderCollectionList.add(borrowCollection);
 
@@ -544,7 +545,7 @@ public class TransferBizImpl implements TransferBiz {
             Tender childTender = new Tender();
             UserThirdAccount buyUserThirdAccount = userThirdAccountService.findByUserId(transferBuyLog.getUserId());
 
-            childTender.setUserId(transferBuyLog.getUserId());
+            childTender.setUserId(22002L);
             childTender.setStatus(1);
             childTender.setType(transferBuyLog.getType());
             childTender.setBorrowId(transfer.getBorrowId());
@@ -554,7 +555,7 @@ public class TransferBizImpl implements TransferBiz {
             childTender.setMoney(transferBuyLog.getBuyMoney());
             childTender.setValidMoney(transferBuyLog.getPrincipal());
             childTender.setTransferFlag(0);
-            childTender.setTUserId(buyUserThirdAccount.getUserId());
+            childTender.setTUserId(22002L);
             childTender.setParentId(parentTender.getId());
             childTender.setState(2);
             childTender.setFinanceBuyId(transferBuyLog.getFinanceBuyId());
