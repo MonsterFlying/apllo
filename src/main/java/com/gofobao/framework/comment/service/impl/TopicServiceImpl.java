@@ -23,6 +23,7 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.common.collect.Lists;
+import io.jsonwebtoken.lang.Strings;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.beanutils.PropertyUtils;
@@ -217,7 +218,7 @@ public class TopicServiceImpl implements TopicService {
         // 用户内容铭感词过滤
         FilteredResult filteredResult = null;
         String filteredContent = "";
-        if (!StringUtils.isEmpty(voTopicReq.getContent().trim())) {
+        if (!StringUtils.isEmpty(Strings.trimAllWhitespace(voTopicReq.getContent()))) {
             filteredResult = WordFilterUtil.filterText(voTopicReq.getContent().trim(), '*');
             filteredContent = filteredResult.getFilteredContent();
         }
