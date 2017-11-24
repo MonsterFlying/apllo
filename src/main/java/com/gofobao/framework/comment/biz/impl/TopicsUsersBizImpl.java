@@ -102,15 +102,9 @@ public class TopicsUsersBizImpl implements TopicsUsersBiz {
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, e.getMessage(), VoAvatarResp.class));
         }
-        ResponseEntity<VoBaseResp> deleteResult = fileManagerBiz.deleteFile(userId, topicsUsers.getAvatar());
-        if (deleteResult.getStatusCode().equals(HttpStatus.OK)) {
-            return ResponseEntity
-                    .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, "网络异常", VoAvatarResp.class));
-        }
+        fileManagerBiz.deleteFile(userId, topicsUsers.getAvatar());
         try {
             strings = fileManagerBiz.multiUpload(userId, httpServletRequest, "file");
-
         } catch (Exception e) {
             log.error("avatar save exception", e);
             return ResponseEntity
