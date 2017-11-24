@@ -95,16 +95,19 @@ public class TopicReplyServiceImpl implements TopicReplyService {
         TopicReply parentTopicReply = null;
         if (voTopicReplyReq.getTopicReplyId() != 0) {
             parentTopicReply = topicReplyRepository.findOne(voTopicReplyReq.getTopicReplyId());
-            if (topicsUsers.getUserId().equals(parentTopicReply.getUserId())) {
-                return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "不能对自己回复",
-                        VoBaseResp.class));
+            Preconditions.checkNotNull(parentTopicReply, "parentTopicReply record is empty");
+            if (parentTopicReply.getUserId().equals(userId)) {
+                return ResponseEntity
+                        .badRequest()
+                        .body(VoBaseResp.error(VoBaseResp.ERROR, "不能对自己回复", VoBaseResp.class));
             }
         }
 
         //用户不能自己对自己进行回复
-        if (topicsUsers.getUserId().equals(topicComment.getUserId())) {
-            return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "不能对自己回复",
-                    VoBaseResp.class));
+        if (topicComment.getUserId().equals(userId)) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "不能对自己回复", VoBaseResp.class));
         }
 
 
