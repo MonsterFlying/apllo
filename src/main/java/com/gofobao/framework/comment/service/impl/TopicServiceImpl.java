@@ -430,7 +430,7 @@ public class TopicServiceImpl implements TopicService {
         voTopicResp.setTitle(topic.getTitle());
         voTopicResp.setContent(topic.getContent());
         voTopicResp.setUserName(topic.getUserName());
-        voTopicResp.setUserIconUrl(topic.getUserIconUrl());
+        voTopicResp.setUserIconUrl(imgPrefix + "/" + topic.getUserIconUrl());
         voTopicResp.setId(topic.getId());
         //判断用户未登录或者是否是发帖用户
         if (topic.getUserId().equals(userId)) {
