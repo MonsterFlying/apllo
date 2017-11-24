@@ -69,7 +69,7 @@ public class TopicReplyServiceImpl implements TopicReplyService {
         }
         //判断评论是否已被删除
         TopicComment topicComment = topicCommentRepository.findOne(voTopicReplyReq.getTopicCommentId());
-        if (voTopicReplyReq.getTopicReplyId().equals(0) && topicComment.getDel().equals(1)) {
+        if (topicComment.getDel().equals(1)) {
             return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "回复失败,评论已被删除!", VoBaseResp.class));
         }
         //判断回复id是否存在
@@ -102,7 +102,7 @@ public class TopicReplyServiceImpl implements TopicReplyService {
                         .badRequest()
                         .body(VoBaseResp.error(VoBaseResp.ERROR, "不能对自己回复", VoBaseResp.class));
             }
-        }else{
+        } else {
             // 评论的回复
             if (topicComment.getUserId().equals(userId)) {
                 return ResponseEntity
