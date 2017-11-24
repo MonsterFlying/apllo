@@ -74,4 +74,10 @@ public interface ProductCollectService {
      * @return
      */
     List<ProductCollect> save(List<ProductCollect> productCollectList);
+
+    /**
+     * 删除
+     * @param productCollect
+     */
+    void del(ProductCollect productCollect);
 }

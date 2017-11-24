@@ -11,26 +11,6 @@ import org.springframework.http.ResponseEntity;
 public interface ProductBiz {
 
     /**
-     * 取消订单
-     */
-    ResponseEntity<VoBaseResp> cancelOrder(VoCancelOrder voCancelOrder) throws Exception;
-
-    /**
-     * 付款接口
-     */
-    ResponseEntity<VoBaseResp> orderPay(VoFindOrderPay voFindOrderPay) throws Exception;
-
-    /**
-     * 订单详情页面
-     */
-    ResponseEntity<VoViewProductOrderDetailRes> findProductOrderDetail(VoFindProductOrderDetail voFindProductOrderDetail);
-
-    /**
-     * 我的订单列表页面
-     */
-    ResponseEntity<VoViewProductOrderListRes> findProductOrderList(VoFindProductOrderList voFindProductOrderList);
-
-    /**
      * 下单页面
      */
     ResponseEntity<VoViewBoughtProductPlanRes> boughtProductPlan(VoBoughtProductPlan voBoughtProductPlan);

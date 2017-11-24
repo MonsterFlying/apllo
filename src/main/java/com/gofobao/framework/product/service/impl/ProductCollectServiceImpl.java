@@ -17,7 +17,7 @@ import java.util.List;
  * Created by master on 2017/10/23.
  */
 @Service
-public class ProductCollectServiceImpl implements ProductCollectService{
+public class ProductCollectServiceImpl implements ProductCollectService {
     @Autowired
     ProductCollectRepository productCollectRepository;
 
@@ -60,5 +60,10 @@ public class ProductCollectServiceImpl implements ProductCollectService{
     @Override
     public List<ProductCollect> save(List<ProductCollect> productSkuList) {
         return productCollectRepository.save(productSkuList);
+    }
+
+    @Override
+    public void del(ProductCollect productCollect) {
+        productCollectRepository.delete(productCollect);
     }
 }

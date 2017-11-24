@@ -12,6 +12,10 @@ import java.util.List;
 @ApiModel
 @Data
 public class VoProductCollect {
+    @ApiModelProperty("商品id")
+    private Long productItemId;
+    @ApiModelProperty("是否上架")
+    private Boolean isEnable;
     @ApiModelProperty("商品名")
     private String name;
     @ApiModelProperty("商品标题")

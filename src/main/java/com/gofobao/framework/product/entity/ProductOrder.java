@@ -29,15 +29,14 @@ public class ProductOrder {
     private String orderNumber;
     private String payNumber;
     private Integer payType;
-    private Long planId;
     private Long productAddressId;
     private Long payMoney;
-    private Long planMoney;
     private Long productMoney;
     private Long discountsMoney;
     private Long fee;
     private Long earnings;
     private Boolean isDel;
+    private String remark;
     private Date payAt;
     private Date createdAt;
     private Date updatedAt;

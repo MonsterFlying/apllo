@@ -24,7 +24,9 @@ import com.gofobao.framework.helper.*;
 import com.gofobao.framework.member.entity.UserThirdAccount;
 import com.gofobao.framework.member.service.UserThirdAccountService;
 import com.gofobao.framework.product.entity.ProductOrder;
+import com.gofobao.framework.product.entity.ProductOrderBuyLog;
 import com.gofobao.framework.product.entity.ProductPlan;
+import com.gofobao.framework.product.service.ProductOrderBuyLogService;
 import com.gofobao.framework.product.service.ProductOrderService;
 import com.gofobao.framework.product.service.ProductPlanService;
 import com.gofobao.framework.repayment.entity.BorrowRepayment;
@@ -71,14 +73,15 @@ public class ProductProvider {
     private FinancePlanService financePlanService;
     @Autowired
     private FinancePlanBiz financePlanBiz;
+    @Autowired
+    private ProductOrderBuyLogService productOrderBuyLogService;
 
     final Gson gson = new GsonBuilder().create();
 
     /**
      * @param msg
      * @return
-     * @throws Exception
-     * 生成广富送计划启动
+     * @throws Exception 生成广富送计划启动
      */
     public boolean generateProductPlan(Map<String, String> msg) throws Exception {
         log.info(String.format("生成广富送计划启动: %s", gson.toJson(msg)));
@@ -88,33 +91,47 @@ public class ProductProvider {
         /*广富送订单记录*/
         ProductOrder productOrder = productOrderService.findByOrderNumberLock(orderNumber);
         /*广富送商品计划*/
-        ProductPlan productPlan = productPlanService.findById(productOrder.getPlanId());
-        //生成理财计划
-        String sql = "SELECT count(1) FROM gfb_finance_plan WHERE date(created_at) = '%s' and time_limit = %s";
-        //周期
-        int period = jdbcTemplate.queryForObject(String.format(sql, DateHelper.dateToString(new Date(), DateHelper.DATE_FORMAT_YMD), productPlan.getTimeLimit()), Integer.class);
-        period++;
-        FinancePlan financePlan = new FinancePlan();
-        financePlan.setName(String.format("优质车贷标-%s-%s月-%s", DateHelper.dateToString(new Date(), DateHelper.DATE_FORMAT_YMD_NUM), productPlan.getTimeLimit(), period));
-        financePlan.setStatus(0);
-        financePlan.setBaseApr(productPlan.getApr());
-        financePlan.setMoney(productOrder.getPayMoney());
-        financePlan.setCreateId(productOrder.getUserId());
-        financePlan.setUpdateId(productOrder.getUserId());
-        financePlan.setLockPeriod(productPlan.getTimeLimit());
-        financePlanService.save(financePlan);
-        financePlan.setContractNo(String.format("LCJH%s&s", DateHelper.dateToString(new Date(), DateHelper.DATE_FORMAT_YMD_NUM), financePlan.getId()));
-        financePlan.setCreatedAt(nowDate);
-        financePlan.setUpdatedAt(nowDate);
-        financePlanService.save(financePlan);
-        //生成理财计划购买记录
-        VoTenderFinancePlan voTenderFinancePlan = new VoTenderFinancePlan();
-        voTenderFinancePlan.setUserId(productOrder.getUserId());
-        voTenderFinancePlan.setFinancePlanId(financePlan.getId());
-        voTenderFinancePlan.setMoney(MoneyHelper.divide(productOrder.getPayMoney(), 100));
-        voTenderFinancePlan.setRemark("商品计划");
-        financePlanBiz.tenderFinancePlan(voTenderFinancePlan);
-
+        Specification<ProductOrderBuyLog> pobls = Specifications
+                .<ProductOrderBuyLog>and()
+                .eq("productOrderId", productOrder.getId())
+                .build();
+        List<ProductOrderBuyLog> productOrderBuyLogList = productOrderBuyLogService.findList(pobls);
+        /*计划id集合*/
+        Set<Long> planIds = productOrderBuyLogList.stream().map(ProductOrderBuyLog::getPlanId).collect(Collectors.toSet());
+        Specification<ProductPlan> pps = Specifications
+                .<ProductPlan>and()
+                .in("id", planIds.toArray())
+                .build();
+        List<ProductPlan> productPlanList = productPlanService.findList(pps);
+        Map<Long, ProductPlan> productPlanMap = productPlanList.stream().collect(Collectors.toMap(ProductPlan::getId, Function.identity()));
+        for (ProductOrderBuyLog productOrderBuyLog : productOrderBuyLogList) {
+            ProductPlan productPlan = productPlanMap.get(productOrderBuyLog.getPlanId());
+            //生成理财计划
+            String sql = "SELECT count(1) FROM gfb_finance_plan WHERE date(created_at) = '%s' and time_limit = %s";
+            //周期
+            int period = jdbcTemplate.queryForObject(String.format(sql, DateHelper.dateToString(new Date(), DateHelper.DATE_FORMAT_YMD), productPlan.getTimeLimit()), Integer.class);
+            period++;
+            FinancePlan financePlan = new FinancePlan();
+            financePlan.setName(String.format("优质车贷标-%s-%s月-%s", DateHelper.dateToString(new Date(), DateHelper.DATE_FORMAT_YMD_NUM), productPlan.getTimeLimit(), period));
+            financePlan.setStatus(0);
+            financePlan.setBaseApr(productPlan.getApr());
+            financePlan.setMoney(productOrder.getPayMoney());
+            financePlan.setCreateId(productOrder.getUserId());
+            financePlan.setUpdateId(productOrder.getUserId());
+            financePlan.setLockPeriod(productPlan.getTimeLimit());
+            financePlanService.save(financePlan);
+            financePlan.setContractNo(String.format("LCJH%s&s", DateHelper.dateToString(new Date(), DateHelper.DATE_FORMAT_YMD_NUM), financePlan.getId()));
+            financePlan.setCreatedAt(nowDate);
+            financePlan.setUpdatedAt(nowDate);
+            financePlanService.save(financePlan);
+            //生成理财计划购买记录
+            VoTenderFinancePlan voTenderFinancePlan = new VoTenderFinancePlan();
+            voTenderFinancePlan.setUserId(productOrder.getUserId());
+            voTenderFinancePlan.setFinancePlanId(financePlan.getId());
+            voTenderFinancePlan.setMoney(MoneyHelper.divide(productOrder.getPayMoney(), 100));
+            voTenderFinancePlan.setRemark("商品计划");
+            financePlanBiz.tenderFinancePlan(voTenderFinancePlan);
+        }
         return true;
     }
 
