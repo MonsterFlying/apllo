@@ -451,7 +451,8 @@ public class ProductOrderBizImpl implements ProductOrderBiz {
                     //填充订单显示
                     VoProductOrder voProductOrder = new VoProductOrder();
                     voProductOrder.setType(NumberHelper.toInt(objMap.get("type")));
-                    voProductOrder.setStatus(NumberHelper.toInt(objMap.get("status")));
+                    int orderStatus = NumberHelper.toInt(objMap.get("status"));
+                    voProductOrder.setStatus(orderStatus == 2 ? 3 : orderStatus);
                     voProductOrder.setPayMoney(StringHelper.formatDouble(NumberHelper.toDouble(objMap.get("payMoney")), 100, true));
                     voProductOrder.setNumber(productItems.size());
                     voProductOrder.setProductItemList(productItems);
