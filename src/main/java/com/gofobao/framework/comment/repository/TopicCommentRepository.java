@@ -36,13 +36,12 @@ public interface TopicCommentRepository extends JpaRepository<TopicComment, Long
     TopicComment findTopByUserIdOrderByIdDesc(Long userId);
 
     @Modifying
-    @Query(value = "update gfb_topics_comment set del = 1 where topic_comment_id = ?1", nativeQuery = true)
+    @Query(value = "update gfb_topics_comment set del = 1 where id = ?1", nativeQuery = true)
     Integer updateOneComment(Long topicCommentId);
 
     List<TopicComment> findByTopicIdAndDel(Long topicId, int i, Pageable pageable);
 
-    List<TopicComment> findByUserId(Long userId, Pageable pageable);
+    List<TopicComment> findByUserIdAndDel(Long userId, int i, Pageable pageable);
 
-    @Query(value = "select * from gfb_topics_comment where topic_id in ?1 ORDER BY id DESC limit ?2,10", nativeQuery = true)
-    List<TopicComment> findByTopicIdOrderByIdDesc(List<Long> topicIds, int i);
+    List<TopicComment> findByTopicIdInOrderByIdDesc(List<Long> topicIds, Pageable i);
 }

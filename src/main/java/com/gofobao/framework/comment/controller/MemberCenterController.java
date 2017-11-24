@@ -58,9 +58,9 @@ public class MemberCenterController {
     @ApiOperation("我的评论回复管理")
     @GetMapping("/member-center/comment/list/{sourceType}/{page}")
     public ResponseEntity<VoTopicCommentManagerListResp> listUserComment(@PathVariable Integer sourceType, HttpServletRequest httpServletRequest,
-                                                                         @PathVariable(name = "page") Integer pageable,
+                                                                         @PathVariable(name = "page") Integer pageIndex,
                                                                          @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
-        return topicsUsersBiz.listComment(sourceType, httpServletRequest, pageable, userId);
+        return topicsUsersBiz.listComment(sourceType, httpServletRequest, pageIndex, userId);
     }
 
     @ApiOperation("@我的评论回复管理")

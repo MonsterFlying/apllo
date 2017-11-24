@@ -28,11 +28,10 @@ public interface TopicRepository extends JpaRepository<Topic, Long>, JpaSpecific
     @Modifying
     @Query(value = "UPDATE gfb_topics SET user_icon_url = ?2 WHERE user_id = ?1", nativeQuery = true)
     Integer batchUpateAvatarByUserId(Long userId, String avatar);
+
     @Modifying
     @Query(value = "update gfb_topics set content_total_num = content_total_num+1 where id=?1", nativeQuery = true)
     void updateToTalComment(long topicId);
-
-    List<Topic> findByTopicTypeIdAndDelOrderByCreateDateDesc(long topicTypeId, int i, PageRequest pageRequest);
 
     Topic findByIdAndDel(long topicId, int i);
 
@@ -45,4 +44,8 @@ public interface TopicRepository extends JpaRepository<Topic, Long>, JpaSpecific
     Topic findTopByUserIdOrderByIdDesc(Long userId);
 
     List<Topic> findByUserId(Long userId);
+
+    @Modifying
+    @Query(value = "update gfb_topics set content_total_num = content_total_num-1 where id=?1", nativeQuery = true)
+    Integer delToTalComment(Long topicId);
 }
