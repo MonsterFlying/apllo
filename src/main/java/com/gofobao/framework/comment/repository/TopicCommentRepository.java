@@ -43,5 +43,5 @@ public interface TopicCommentRepository extends JpaRepository<TopicComment, Long
 
     List<TopicComment> findByUserIdAndDel(Long userId, int i, Pageable pageable);
 
-    List<TopicComment> findByTopicIdInOrderByIdDesc(List<Long> topicIds, Pageable i);
+    List<TopicComment> findByTopicIdInAndDelOrderByIdDesc(List<Long> topicIds, int i, Pageable commentPageable);
 }

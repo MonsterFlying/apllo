@@ -69,7 +69,7 @@ public class FileManagerBizImpl implements FileManagerBiz {
         Auth auth = Auth.create(accessKey, secretKey);
         String upToken = auth.uploadToken(bucket);
         String uuid = UUID.randomUUID().toString();
-        String uploadFileName = String.format("%s-%s%s", userId, uuid, extendType);
+        String uploadFileName = String.format("bbs/%s-%s%s", userId, uuid, extendType);
         log.info(uploadFileName);
         try {
             Response response = uploadManager.put(file.getBytes(), uploadFileName, upToken);
@@ -84,7 +84,7 @@ public class FileManagerBizImpl implements FileManagerBiz {
 
     @Override
     public ResponseEntity<VoBaseResp> deleteFile(@NonNull Long userId, @NonNull String key) {
-        boolean state = key.startsWith(userId + "-");
+        boolean state = key.contains(userId + "-");
         if (!state) {
             return ResponseEntity
                     .badRequest()

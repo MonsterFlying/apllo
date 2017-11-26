@@ -23,6 +23,7 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.common.collect.Lists;
+import io.jsonwebtoken.lang.Strings;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.beanutils.PropertyUtils;
@@ -184,7 +185,7 @@ public class TopicServiceImpl implements TopicService {
         if (!ObjectUtils.isEmpty(lastTopic)) {
             Date createDate = lastTopic.getCreateDate();
             createDate = ObjectUtils.isArray(createDate) ? nowDate : createDate;
-            if (nowDate.getTime() - (createDate.getTime() + DateHelper.MILLIS_PER_HOUR) < 0) {
+            if (nowDate.getTime() - (createDate.getTime() + DateHelper.MILLIS_PER_MINUTE*2) < 0) {
                 return ResponseEntity
                         .badRequest()
                         .body(VoBaseResp.error(VoBaseResp.ERROR, "发帖过于频繁, 请1小时后再试!"));
@@ -217,7 +218,7 @@ public class TopicServiceImpl implements TopicService {
         // 用户内容铭感词过滤
         FilteredResult filteredResult = null;
         String filteredContent = "";
-        if (!StringUtils.isEmpty(voTopicReq.getContent().trim())) {
+        if (!StringUtils.isEmpty(Strings.trimAllWhitespace(voTopicReq.getContent()))) {
             filteredResult = WordFilterUtil.filterText(voTopicReq.getContent().trim(), '*');
             filteredContent = filteredResult.getFilteredContent();
         }
@@ -429,7 +430,7 @@ public class TopicServiceImpl implements TopicService {
         voTopicResp.setTitle(topic.getTitle());
         voTopicResp.setContent(topic.getContent());
         voTopicResp.setUserName(topic.getUserName());
-        voTopicResp.setUserIconUrl(topic.getUserIconUrl());
+        voTopicResp.setUserIconUrl(imgPrefix+"/"+topic.getUserIconUrl());
         voTopicResp.setId(topic.getId());
         //判断用户未登录或者是否是发帖用户
         if (topic.getUserId().equals(userId)) {

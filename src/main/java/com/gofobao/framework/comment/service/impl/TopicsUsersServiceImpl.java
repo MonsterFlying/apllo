@@ -263,7 +263,7 @@ public class TopicsUsersServiceImpl implements TopicsUsersService {
                 voTopicCommentManagerResp.setUserName(topicsUsers.getUsername());
                 voTopicCommentManagerResp.setForUserName(topic.getUserName());
                 //我的头像
-                voTopicCommentManagerResp.setAvatar(imgPrefix + comment.getUserIconUrl());
+                voTopicCommentManagerResp.setAvatar(imgPrefix +"/"+ comment.getUserIconUrl());
                 //评论时间
                 voTopicCommentManagerResp.setTime(DateHelper.getPastTime(comment.getCreateDate().getTime()));
                 voTopicCommentManagerListResp.getVoTopicCommentManagerRespList().add(voTopicCommentManagerResp);
@@ -283,7 +283,7 @@ public class TopicsUsersServiceImpl implements TopicsUsersService {
                 voTopicCommentManagerResp.setUserId(reply.getUserId());
                 voTopicCommentManagerResp.setUserName(reply.getUserName());
                 //我的头像
-                voTopicCommentManagerResp.setAvatar(imgPrefix + reply.getUserIconUrl());
+                voTopicCommentManagerResp.setAvatar(imgPrefix +"/"+ reply.getUserIconUrl());
                 voTopicCommentManagerResp.setForUserName(reply.getForUserName());
                 voTopicCommentManagerResp.setTopicReplyId(reply.getId().toString());
                 voTopicCommentManagerResp.setOwn(true);
@@ -308,7 +308,7 @@ public class TopicsUsersServiceImpl implements TopicsUsersService {
         }
         if (sourceType == 0) {
             //评论我的
-            List<Topic> topics = topicRepository.findByUserId(userId);
+            List<Topic> topics = topicRepository.findByUserIdAndDel(userId,0);
             List<Long> topicIds = Lists.newArrayList();
             for (Topic topic : topics) {
                 topicIds.add(topic.getId());
@@ -316,7 +316,7 @@ public class TopicsUsersServiceImpl implements TopicsUsersService {
             topicIds = topicIds.stream().distinct().collect(Collectors.toList());
 
             Pageable commentPageable = new PageRequest(pageIndex - 1, 10);
-            List<TopicComment> byComments = topicCommentRepository.findByTopicIdInOrderByIdDesc(topicIds, commentPageable);
+            List<TopicComment> byComments = topicCommentRepository.findByTopicIdInAndDelOrderByIdDesc(topicIds,0, commentPageable);
             TopicsUsers topicsUsers = null;
             try {
                 topicsUsers = topicsUsersService.findByUserId(userId);
@@ -336,7 +336,7 @@ public class TopicsUsersServiceImpl implements TopicsUsersService {
                 voTopicCommentManagerResp.setForUserName(topicsUsers.getUsername());
                 voTopicCommentManagerResp.setForUserId(userId);
                 //评论者头像
-                voTopicCommentManagerResp.setAvatar(imgPrefix + comment.getUserIconUrl());
+                voTopicCommentManagerResp.setAvatar(imgPrefix +"/"+ comment.getUserIconUrl());
                 //评论时间
                 voTopicCommentManagerResp.setTime(DateHelper.getPastTime(comment.getCreateDate().getTime()));
                 voTopicCommentManagerListResp.getVoTopicCommentManagerRespList().add(voTopicCommentManagerResp);
@@ -344,7 +344,7 @@ public class TopicsUsersServiceImpl implements TopicsUsersService {
         } else {
             //回复我的
             Pageable pageable = new PageRequest(pageIndex - 1, 10, Sort.Direction.DESC, "id");
-            List<TopicReply> topicReplies = topicReplyRepository.findByForUserId(userId,
+            List<TopicReply> topicReplies = topicReplyRepository.findByForUserIdAndDel(userId, 0,
                     pageable);
             topicReplies.stream().forEach((reply) -> {
                 VoTopicCommentManagerResp voTopicCommentManagerResp = new VoTopicCommentManagerResp();
@@ -356,8 +356,9 @@ public class TopicsUsersServiceImpl implements TopicsUsersService {
                 voTopicCommentManagerResp.setUserName(reply.getUserName());
                 voTopicCommentManagerResp.setForUserId(userId);
                 voTopicCommentManagerResp.setForUserName(reply.getForUserName());
+                voTopicCommentManagerResp.setTopicReplyId(reply.getId().toString());
                 //回复者头像
-                voTopicCommentManagerResp.setAvatar(imgPrefix + reply.getUserIconUrl());
+                voTopicCommentManagerResp.setAvatar(imgPrefix +"/"+ reply.getUserIconUrl());
                 voTopicCommentManagerListResp.getVoTopicCommentManagerRespList().add(voTopicCommentManagerResp);
             });
         }

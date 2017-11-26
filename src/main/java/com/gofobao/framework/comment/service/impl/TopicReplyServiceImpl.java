@@ -69,8 +69,15 @@ public class TopicReplyServiceImpl implements TopicReplyService {
         }
         //判断评论是否已被删除
         TopicComment topicComment = topicCommentRepository.findOne(voTopicReplyReq.getTopicCommentId());
-        if (voTopicReplyReq.getTopicReplyId() == 0 && topicComment.getDel() == 1) {
+        if (voTopicReplyReq.getTopicReplyId().equals(0) && topicComment.getDel().equals(1)) {
             return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "回复失败,评论已被删除!", VoBaseResp.class));
+        }
+        //判断回复id是否存在
+        if (voTopicReplyReq.getTopicReplyId() != 0) {
+            TopicReply topicReply = topicReplyRepository.findOne(voTopicReplyReq.getTopicReplyId());
+            if (ObjectUtils.isEmpty(topicReply) || topicReply.getDel().equals(1)) {
+                return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "回复失败,回复已被删除!", VoBaseResp.class));
+            }
         }
 
         //判断用户上次回复时间,设置回复时间间隔为1分钟
@@ -82,29 +89,26 @@ public class TopicReplyServiceImpl implements TopicReplyService {
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "回复过于频繁,请1分钟后再试"));
         }
 
-        //判断回复id是否存在
-        if (voTopicReplyReq.getTopicReplyId() != 0) {
-            TopicReply topicReply = topicReplyRepository.findOne(voTopicReplyReq.getTopicReplyId());
-            if (ObjectUtils.isEmpty(topicReply) || topicReply.getDel() == 1) {
-                return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "回复失败,回复已被删除!", VoBaseResp.class));
-            }
-        }
 
         // 回复ID
-        //判断是回复评论还是回复评论的回复
+
+        // 回复的回复
         TopicReply parentTopicReply = null;
         if (voTopicReplyReq.getTopicReplyId() != 0) {
             parentTopicReply = topicReplyRepository.findOne(voTopicReplyReq.getTopicReplyId());
-            if (topicsUsers.getUserId().equals(parentTopicReply.getUserId())) {
-                return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "不能对自己回复",
-                        VoBaseResp.class));
+            Preconditions.checkNotNull(parentTopicReply, "parentTopicReply record is empty");
+            if (parentTopicReply.getUserId().equals(userId)) {
+                return ResponseEntity
+                        .badRequest()
+                        .body(VoBaseResp.error(VoBaseResp.ERROR, "不能对自己回复", VoBaseResp.class));
             }
-        }
-
-        //用户不能自己对自己进行回复
-        if (topicsUsers.getUserId().equals(topicComment.getUserId())) {
-            return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "不能对自己回复",
-                    VoBaseResp.class));
+        }else{
+            // 评论的回复
+            if (topicComment.getUserId().equals(userId)) {
+                return ResponseEntity
+                        .badRequest()
+                        .body(VoBaseResp.error(VoBaseResp.ERROR, "不能对自己回复", VoBaseResp.class));
+            }
         }
 
 

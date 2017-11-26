@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.*;
 import springfox.documentation.annotations.ApiIgnore;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 
 /**
@@ -39,7 +40,9 @@ public class TopicController {
     @GetMapping("/pub/comment/topic/list/{topicTypeId}/{page}")
     public ResponseEntity<VoTopicListResp> listTopic(HttpServletRequest httpServletRequest,
                                                      @PathVariable long topicTypeId,
-                                                     @PathVariable(name = "page") Integer pageable) {
+                                                     @PathVariable(name = "page") Integer pageable,
+                                                     HttpServletResponse response) {
+
         return topicService.listTopic(httpServletRequest, topicTypeId, pageable);
     }
 
