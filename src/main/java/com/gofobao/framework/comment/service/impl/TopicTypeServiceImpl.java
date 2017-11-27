@@ -24,10 +24,7 @@ import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 
-import javax.persistence.criteria.CriteriaBuilder;
-import javax.persistence.criteria.CriteriaQuery;
-import javax.persistence.criteria.Predicate;
-import javax.persistence.criteria.Root;
+import javax.persistence.criteria.*;
 import javax.transaction.Transactional;
 import java.util.List;
 import java.util.Map;
@@ -50,7 +47,6 @@ public class TopicTypeServiceImpl implements TopicTypeService {
                 || StringUtils.isEmpty(voDoAgainVerifyReq.getSign())
                 || !SecurityHelper.checkSign(voDoAgainVerifyReq.getSign(), voDoAgainVerifyReq.getParamStr())) {
             return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR,"非法访问",VoBaseResp.class));
-
         }
         Map<String, VoTopicTypeReq> paramMap = new Gson().fromJson(voDoAgainVerifyReq.getParamStr(), new TypeToken<Map<String, String>>() {
         }.getType()) ;
