@@ -19,6 +19,9 @@ import com.gofobao.framework.api.model.batch_details_query.BatchDetailsQueryReq;
 import com.gofobao.framework.api.model.batch_details_query.BatchDetailsQueryResp;
 import com.gofobao.framework.api.model.batch_query.BatchQueryReq;
 import com.gofobao.framework.api.model.batch_query.BatchQueryResp;
+import com.gofobao.framework.api.model.batch_repay.BatchRepayReq;
+import com.gofobao.framework.api.model.batch_repay.BatchRepayResp;
+import com.gofobao.framework.api.model.batch_repay.Repay;
 import com.gofobao.framework.api.model.bid_apply_query.BidApplyQueryRequest;
 import com.gofobao.framework.api.model.bid_apply_query.BidApplyQueryResponse;
 import com.gofobao.framework.api.model.card_bind_details_query.CardBindDetailsQueryRequest;
@@ -65,6 +68,7 @@ import com.gofobao.framework.tender.service.TransferService;
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.reflect.TypeToken;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
@@ -158,7 +162,6 @@ public class TestController {
             log.error("变动异常：", e);
         }
     }
-
 
     @ApiOperation("获取自动投标列表")
     @RequestMapping("/pub/batch/deal")
