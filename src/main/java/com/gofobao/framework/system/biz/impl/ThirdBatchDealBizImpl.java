@@ -196,7 +196,7 @@ public class ThirdBatchDealBizImpl implements ThirdBatchDealBiz {
         List<String> otherOrderIds = new ArrayList<>();
         detailsQueryRespList.forEach(obj -> {
             if ("F".equalsIgnoreCase(obj.getTxState())) {
-                Set<String> allowOrderSet = ImmutableSet.of("GFBLR_1509092581849851604141", "GFBLR_1509093387392347016546", "GFBLR_1509093387389569383511");
+                Set<String> allowOrderSet = ImmutableSet.of("GFBR_1511658026692054001177", "GFBR_1511658026692299701585", "GFBR_1511658026692754922475");
                 if (!allowOrderSet.contains(obj.getOrderId())) {
                     failureOrderIds.add(obj.getOrderId());
                     failureErrorMsgList.add(obj.getFailMsg());
@@ -937,12 +937,15 @@ public class ThirdBatchDealBizImpl implements ThirdBatchDealBiz {
             Preconditions.checkState(!CollectionUtils.isEmpty(transferList), "理财计划债权批次回调处理: 查询债权转让记录不存在!");
             Map<Long, List<TransferBuyLog>> transferByLogMap = failureTransferBuyLogList.stream().collect(Collectors.groupingBy(TransferBuyLog::getTransferId));
             for (Transfer transfer : transferList) {
+                /* 债权转让购买记录 */
                 List<TransferBuyLog> transferBuyLogList = transferByLogMap.get(transfer.getId());
+                Set<Long> transferBuyLogIds = transferBuyLogList.stream().map(TransferBuyLog::getFinanceBuyId).collect(Collectors.toSet());
                 //查询理财计划购买记录
                 Set<Long> userIds = transferBuyLogList.stream().map(TransferBuyLog::getUserId).collect(Collectors.toSet());
                 Specification<FinancePlanBuyer> fpbs = Specifications
                         .<FinancePlanBuyer>and()
                         .in("userId", userIds.toArray())
+                        .in("id", transferBuyLogIds.toArray())
                         .build();
                 List<FinancePlanBuyer> financePlanBuyerList = financePlanBuyerService.findList(fpbs);
                 Map<Long/*userId*/, FinancePlanBuyer> financePlanBuyerMap = financePlanBuyerList.stream().collect(Collectors.toMap(FinancePlanBuyer::getUserId, Function.identity()));
@@ -983,23 +986,6 @@ public class ThirdBatchDealBizImpl implements ThirdBatchDealBiz {
             if ((resp.getBody().getState().getCode() == VoBaseResp.OK)) { //只有全部转让才会触发结束债权
                 //更新批次状态
                 thirdBatchLogBiz.updateBatchLogState(String.valueOf(batchNo), transferId, 3, ThirdBatchLogContants.BATCH_FINANCE_CREDIT_INVEST);
-                /*if (transfer.getTransferMoneyYes() >= transfer.getTransferMoney()) {
-                    //推送队列结束债权
-                    MqConfig mqConfig = new MqConfig();
-                    mqConfig.setQueue(MqQueueEnum.RABBITMQ_CREDIT);
-                    mqConfig.setTag(MqTagEnum.END_CREDIT_BY_TRANSFER);
-                    mqConfig.setSendTime(DateHelper.addMinutes(new Date(), 1));
-                    ImmutableMap<String, String> body = ImmutableMap
-                            .of(MqConfig.MSG_BORROW_ID, StringHelper.toString(transfer.getBorrowId()), MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
-                    mqConfig.setMsg(body);
-                    try {
-                        log.info(String.format("thirdBatchProvider financeCreditInvestDeal send mq %s", GSON.toJson(body)));
-                        mqHelper.convertAndSend(mqConfig);
-                    } catch (Throwable e) {
-                        log.error("thirdBatchProvider financeCreditInvestDeal send mq exception", e);
-                    }
-                }*/
-
                 log.info("理财计划批量债权转让复审: 成功");
             } else {
                 log.error("理财计划批量债权转让复审: 失败");

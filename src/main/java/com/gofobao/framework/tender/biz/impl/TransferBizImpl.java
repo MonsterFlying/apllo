@@ -545,7 +545,7 @@ public class TransferBizImpl implements TransferBiz {
             Tender childTender = new Tender();
             UserThirdAccount buyUserThirdAccount = userThirdAccountService.findByUserId(transferBuyLog.getUserId());
 
-            childTender.setUserId(22002L);
+            childTender.setUserId(transferBuyLog.getUserId());
             childTender.setStatus(1);
             childTender.setType(transferBuyLog.getType());
             childTender.setBorrowId(transfer.getBorrowId());
@@ -555,7 +555,7 @@ public class TransferBizImpl implements TransferBiz {
             childTender.setMoney(transferBuyLog.getBuyMoney());
             childTender.setValidMoney(transferBuyLog.getPrincipal());
             childTender.setTransferFlag(0);
-            childTender.setTUserId(22002L);
+            childTender.setTUserId(transferBuyLog.getUserId());
             childTender.setParentId(parentTender.getId());
             childTender.setState(2);
             childTender.setFinanceBuyId(transferBuyLog.getFinanceBuyId());

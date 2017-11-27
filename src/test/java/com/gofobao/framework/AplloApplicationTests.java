@@ -23,6 +23,7 @@ import com.gofobao.framework.api.model.batch_details_query.BatchDetailsQueryReq;
 import com.gofobao.framework.api.model.batch_details_query.BatchDetailsQueryResp;
 import com.gofobao.framework.api.model.batch_query.BatchQueryReq;
 import com.gofobao.framework.api.model.batch_query.BatchQueryResp;
+import com.gofobao.framework.api.model.batch_repay.Repay;
 import com.gofobao.framework.api.model.bid_apply_query.BidApplyQueryRequest;
 import com.gofobao.framework.api.model.bid_apply_query.BidApplyQueryResponse;
 import com.gofobao.framework.api.model.credit_auth_query.CreditAuthQueryRequest;
@@ -585,28 +586,6 @@ public class AplloApplicationTests {
     @Test
     @Transactional
     public void test() {
-
-        Transfer transfer = transferService.findById(149);
-        Tender tender = tenderService.findById(transfer.getTenderId());
-        Borrow borrow = borrowService.findById(transfer.getBorrowId());
-        Specification<TransferBuyLog> tbls = Specifications
-                .<TransferBuyLog>and()
-                .eq("transferId", transfer.getId())
-                .eq("state", 0)
-                .build();
-        List<TransferBuyLog> transferBuyLogList = transferBuyLogService.findList(tbls);/* 购买理财计划债权转让记录 */
-
-        log.info("理财计划债权匹配购买生成子tender开始！");
-        //理财计划债权匹配购买生成子tender
-        List<Tender> childTenderList = transferBiz.addFinanceChildTender(new Date(), transfer, tender, transferBuyLogList);
-        log.info("理财计划债权匹配购买生成子tender结束！");
-        try {
-            transferBiz.addFinanceChildTenderCollection(new Date(), transfer, borrow, childTenderList);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        //购买债权转让有效金额 本金
-
 
 
         /*try {

@@ -83,6 +83,7 @@ public class ProductBizImpl implements ProductBiz {
 
     /**
      * 立即购买
+     * @// TODO: 2017/11/24 如果sku没有套餐则算作现金购买
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -193,6 +194,7 @@ public class ProductBizImpl implements ProductBiz {
 
     /**
      * 下单页面
+     *
      */
     @Override
     public ResponseEntity<VoViewBoughtProductPlanRes> boughtProductPlan(VoBoughtProductPlan voBoughtProductPlan) {
