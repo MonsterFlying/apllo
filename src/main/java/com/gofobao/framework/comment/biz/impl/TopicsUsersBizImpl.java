@@ -133,7 +133,7 @@ public class TopicsUsersBizImpl implements TopicsUsersBiz {
         }
 
         VoAvatarResp voAvatarResp = VoBaseResp.ok("成功", VoAvatarResp.class);
-        voAvatarResp.setImg(String.format("%s%s", qiniuDomain, strings.get(0)));
+        voAvatarResp.setImg(String.format("%s/%s", qiniuDomain, strings.get(0)));
         return ResponseEntity.ok(voAvatarResp);
     }
 
