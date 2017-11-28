@@ -196,7 +196,7 @@ public class ThirdBatchDealBizImpl implements ThirdBatchDealBiz {
         List<String> otherOrderIds = new ArrayList<>();
         detailsQueryRespList.forEach(obj -> {
             if ("F".equalsIgnoreCase(obj.getTxState())) {
-                Set<String> allowOrderSet = ImmutableSet.of("GFBR_1511658026692054001177", "GFBR_1511658026692299701585", "GFBR_1511658026692754922475");
+                Set<String> allowOrderSet = ImmutableSet.of("GFBLR_1511701205449526197374", "GFBR_1511658026692299701585", "GFBR_1511658026692754922475");
                 if (!allowOrderSet.contains(obj.getOrderId())) {
                     failureOrderIds.add(obj.getOrderId());
                     failureErrorMsgList.add(obj.getFailMsg());
