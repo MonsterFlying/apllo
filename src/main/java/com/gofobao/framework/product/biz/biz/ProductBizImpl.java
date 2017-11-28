@@ -279,6 +279,8 @@ public class ProductBizImpl implements ProductBiz {
             ProductSkuClassify productSkuClassify = productSkuClassifyMap.get(productSku.getScId());
             //sku 对象
             VoSku sku = new VoSku();
+            sku.setId(String.valueOf(productItemSkuRef.getId()));
+            sku.setClassId(String.valueOf(productSkuClassify.getId()));
             sku.setName(productSku.getName());
             sku.setClassNo(String.valueOf(productSkuClassify.getNo()));
             sku.setNo(String.valueOf(productSku.getNo()));
@@ -430,6 +432,8 @@ public class ProductBizImpl implements ProductBiz {
                         ProductSku productSku = productSkuMap.get(productItemSkuRef.getSkuId());
                         ProductSkuClassify classify = productSkuClassifyMap.get(productSku.getScId());
                         VoSku voSku = new VoSku();
+                        voSku.setId(String.valueOf(productItemSkuRef.getId()));
+                        voSku.setClassId(String.valueOf(classify.getId()));
                         voSku.setName(productSku.getName());
                         voSku.setClassNo(String.valueOf(classify.getNo()));
                         voSku.setNo(String.valueOf(productSku.getNo()));
