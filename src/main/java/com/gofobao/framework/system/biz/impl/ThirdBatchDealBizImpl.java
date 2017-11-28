@@ -919,7 +919,7 @@ public class ThirdBatchDealBizImpl implements ThirdBatchDealBiz {
         //查询失败日志
         if (!CollectionUtils.isEmpty(failureThirdTransferOrderIds)) {
             log.info(String.format("理财计划批量债权回调: 取消失败债权购买: %s", gson.toJson(failureThirdTransferOrderIds)));
-            //失败批次对应债权
+            /*//失败批次对应债权
             Specification<TransferBuyLog> tbls = Specifications
                     .<TransferBuyLog>and()
                     .in("thirdTransferOrderId", failureThirdTransferOrderIds.toArray())
@@ -937,7 +937,7 @@ public class ThirdBatchDealBizImpl implements ThirdBatchDealBiz {
             Preconditions.checkState(!CollectionUtils.isEmpty(transferList), "理财计划债权批次回调处理: 查询债权转让记录不存在!");
             Map<Long, List<TransferBuyLog>> transferByLogMap = failureTransferBuyLogList.stream().collect(Collectors.groupingBy(TransferBuyLog::getTransferId));
             for (Transfer transfer : transferList) {
-                /* 债权转让购买记录 */
+                *//* 债权转让购买记录 *//*
                 List<TransferBuyLog> transferBuyLogList = transferByLogMap.get(transfer.getId());
                 Set<Long> transferBuyLogIds = transferBuyLogList.stream().map(TransferBuyLog::getFinanceBuyId).collect(Collectors.toSet());
                 //查询理财计划购买记录
@@ -948,7 +948,7 @@ public class ThirdBatchDealBizImpl implements ThirdBatchDealBiz {
                         .in("id", transferBuyLogIds.toArray())
                         .build();
                 List<FinancePlanBuyer> financePlanBuyerList = financePlanBuyerService.findList(fpbs);
-                Map<Long/*userId*/, FinancePlanBuyer> financePlanBuyerMap = financePlanBuyerList.stream().collect(Collectors.toMap(FinancePlanBuyer::getUserId, Function.identity()));
+                Map<Long*//*userId*//*, FinancePlanBuyer> financePlanBuyerMap = financePlanBuyerList.stream().collect(Collectors.toMap(FinancePlanBuyer::getUserId, Function.identity()));
                 for (TransferBuyLog transferBuyLog : transferBuyLogList) {
                     //修改理财计划购买记录
                     FinancePlanBuyer financePlanBuyer = financePlanBuyerMap.get(transferBuyLog.getUserId());
@@ -971,7 +971,7 @@ public class ThirdBatchDealBizImpl implements ThirdBatchDealBiz {
             //更新批次日志状态
             updateThirdBatchLogState(batchNo, transferId, ThirdBatchLogContants.BATCH_FINANCE_CREDIT_INVEST, 4);
             transferService.save(transferList);
-            transferBuyLogService.save(failureTransferBuyLogList);
+            transferBuyLogService.save(failureTransferBuyLogList);*/
         }
 
         //1.判断失败orderId集合为空
