@@ -2054,12 +2054,12 @@ public class TransferBizImpl implements TransferBiz {
 
         BorrowInfoRes borrowInfoRes = VoBaseResp.ok("查询成功", BorrowInfoRes.class);
         borrowInfoRes.setApr(StringHelper.formatMon(borrow.getApr() / 100d));
-        borrowInfoRes.setLowest(StringHelper.formatMon(borrow.getLowest() / 100d));
+        borrowInfoRes.setLowest(StringHelper.formatMon(transfer.getLowest() / 100d));
         long surplusMoney = transfer.getTransferMoney() - transfer.getTransferMoneyYes();
         borrowInfoRes.setViewSurplusMoney(StringHelper.formatMon(surplusMoney / 100D));
         borrowInfoRes.setHideSurplusMoney(surplusMoney);
 
-        if (borrow.getType() == com.gofobao.framework.borrow.contants.BorrowContants.REPAY_FASHION_ONCE) {
+        if (borrow.getType().equals(com.gofobao.framework.borrow.contants.BorrowContants.REPAY_FASHION_ONCE)) {
             borrowInfoRes.setTimeLimit(transfer.getTimeLimit() + com.gofobao.framework.borrow.contants.BorrowContants.DAY);
         } else {
             borrowInfoRes.setTimeLimit(transfer.getTimeLimit() + com.gofobao.framework.borrow.contants.BorrowContants.MONTH);

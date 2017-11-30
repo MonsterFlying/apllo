@@ -547,6 +547,7 @@ public class FinancePlanBizImpl implements FinancePlanBiz {
      * @return
      */
     @Transactional(rollbackFor = Exception.class)
+    @Override
     public ResponseEntity<String> financePlanTender(VoFinancePlanTender voFinancePlanTender) throws Exception {
 
         Date nowDate = new Date();
@@ -591,6 +592,9 @@ public class FinancePlanBizImpl implements FinancePlanBiz {
         if (validMoney <= 0) {
             throw new Exception("匹配失败! 购买债权有效金额小于0!");
         }
+        /**
+         * @// TODO: 2017/11/29 判断是否超出finance_plan_money
+         */
         //理财计划购买债权转让
         TransferBuyLog transferBuyLog = financePlanBuyTransfer(nowDate, money, transferId, userId, financePlanBuyer, financePlan, transfer, validMoney);
         if (transfer.getTransferMoneyYes() >= transfer.getTransferMoney()) {
@@ -630,6 +634,38 @@ public class FinancePlanBizImpl implements FinancePlanBiz {
         }
         /* 理财计划债权转让记录 */
         Transfer transfer = transferService.findByIdLock(transferId);
+        Date nowDate = new Date();
+        //生成回购记录
+        if (BooleanUtils.toBoolean(isRepurchase)) {
+            /* 理财计划回购债权转让记录 */
+            //默认zfh为回购人
+            long repurchaseUserId = 22002L;
+            //回购金额
+            long principal = transfer.getPrincipal();
+            /* 债权购买记录 */
+            TransferBuyLog transferBuyLog = new TransferBuyLog();
+            transferBuyLog.setTransferId(transferId);
+            transferBuyLog.setState(0);
+            transferBuyLog.setAlreadyInterest(0L);
+            transferBuyLog.setBuyMoney(principal);
+            transferBuyLog.setValidMoney(principal);
+            transferBuyLog.setPrincipal(principal);
+            transferBuyLog.setUserId(repurchaseUserId);
+            transferBuyLog.setAuto(false);
+            transferBuyLog.setAutoOrder(0);
+            transferBuyLog.setDel(false);
+            transferBuyLog.setSource(0);
+            transferBuyLog.setType(0);
+            transferBuyLog.setCreatedAt(nowDate);
+            transferBuyLog.setUpdatedAt(nowDate);
+            transferBuyLogService.save(transferBuyLog);
+
+            transfer.setTransferMoneyYes(principal);
+            transfer.setUpdatedAt(nowDate);
+            transfer.setTenderCount(transfer.getTenderCount() + 1);
+            transferService.save(transfer);
+        }
+
         if (transfer.getTransferMoneyYes() > 0 && transfer.getType().intValue() == 1 && transfer.getState().intValue() == 1) {
             MqConfig mqConfig = new MqConfig();
             mqConfig.setQueue(MqQueueEnum.RABBITMQ_FINANCE_PLAN);

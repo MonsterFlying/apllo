@@ -10,8 +10,8 @@ import lombok.Data;
 @ApiModel
 @Data
 public class VoProductPlan {
-    @ApiModelProperty("商品id")
-    private Long productId;
+    @ApiModelProperty("子商品id")
+    private Long productItemId;
     @ApiModelProperty("商品名")
     private String name;
     @ApiModelProperty("小标题")

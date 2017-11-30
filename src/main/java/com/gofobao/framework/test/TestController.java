@@ -15,6 +15,9 @@ import com.gofobao.framework.api.model.balance_un_freeze.BalanceUnfreezeReq;
 import com.gofobao.framework.api.model.balance_un_freeze.BalanceUnfreezeResp;
 import com.gofobao.framework.api.model.batch_cancel.BatchCancelReq;
 import com.gofobao.framework.api.model.batch_cancel.BatchCancelResp;
+import com.gofobao.framework.api.model.batch_credit_invest.BatchCreditInvestReq;
+import com.gofobao.framework.api.model.batch_credit_invest.BatchCreditInvestResp;
+import com.gofobao.framework.api.model.batch_credit_invest.CreditInvest;
 import com.gofobao.framework.api.model.batch_details_query.BatchDetailsQueryReq;
 import com.gofobao.framework.api.model.batch_details_query.BatchDetailsQueryResp;
 import com.gofobao.framework.api.model.batch_query.BatchQueryReq;
@@ -36,7 +39,9 @@ import com.gofobao.framework.asset.service.BatchAssetChangeItemService;
 import com.gofobao.framework.asset.service.BatchAssetChangeService;
 import com.gofobao.framework.asset.service.NewAssetLogService;
 import com.gofobao.framework.borrow.biz.BorrowBiz;
+import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.borrow.service.BorrowService;
+import com.gofobao.framework.collection.entity.BorrowCollection;
 import com.gofobao.framework.collection.service.BorrowCollectionService;
 import com.gofobao.framework.common.assets.AssetChange;
 import com.gofobao.framework.common.assets.AssetChangeProvider;
@@ -49,6 +54,7 @@ import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.helper.*;
 import com.gofobao.framework.helper.project.BatchAssetChangeHelper;
 import com.gofobao.framework.helper.project.IntegralChangeHelper;
+import com.gofobao.framework.listener.providers.FinancePlanProvider;
 import com.gofobao.framework.member.service.UserCacheService;
 import com.gofobao.framework.member.service.UserService;
 import com.gofobao.framework.member.service.UserThirdAccountService;
@@ -62,6 +68,8 @@ import com.gofobao.framework.tender.biz.AutoTenderBiz;
 import com.gofobao.framework.tender.biz.TenderBiz;
 import com.gofobao.framework.tender.biz.TransferBiz;
 import com.gofobao.framework.tender.entity.Tender;
+import com.gofobao.framework.tender.entity.Transfer;
+import com.gofobao.framework.tender.entity.TransferBuyLog;
 import com.gofobao.framework.tender.service.TenderService;
 import com.gofobao.framework.tender.service.TransferBuyLogService;
 import com.gofobao.framework.tender.service.TransferService;
@@ -151,10 +159,62 @@ public class TestController {
     private BorrowRepaymentService borrowRepaymentService;
     @Autowired
     private TransferBuyLogService transferBuyLogService;
+    @Autowired
+    private FinancePlanProvider financePlanProvider;
+
+    @RequestMapping("/pub/test/xiufu/transfer")
+    @Transactional(rollbackFor = Exception.class)
+    public void xiufuCall() throws Exception {
+        Date nowDate= new Date();
+        /* 理财计划回购债权转让id */
+        long transferId = 613L;
+        /* 理财计划回购债权转让记录 */
+        Transfer transfer = transferService.findByIdLock(transferId);
+        //默认zfh为回购人
+        long repurchaseUserId = 22002L;
+        //回购金额
+        long principal = transfer.getPrincipal();
+        /* 债权购买记录 */
+        TransferBuyLog transferBuyLog = new TransferBuyLog();
+        transferBuyLog.setTransferId(transferId);
+        transferBuyLog.setState(0);
+        transferBuyLog.setAlreadyInterest(0L);
+        transferBuyLog.setBuyMoney(principal);
+        transferBuyLog.setValidMoney(principal);
+        transferBuyLog.setPrincipal(principal);
+        transferBuyLog.setUserId(repurchaseUserId);
+        transferBuyLog.setAuto(false);
+        transferBuyLog.setAutoOrder(0);
+        transferBuyLog.setDel(false);
+        transferBuyLog.setSource(0);
+        transferBuyLog.setType(0);
+        transferBuyLog.setCreatedAt(nowDate);
+        transferBuyLog.setUpdatedAt(nowDate);
+        transferBuyLogService.save(transferBuyLog);
+
+        transfer.setTransferMoneyYes(principal);
+        transfer.setUpdatedAt(nowDate);
+        transfer.setTenderCount(transfer.getTenderCount() + 1);
+        transferService.save(transfer);
+
+        //理财计划回购债权转让
+        if (transfer.getTransferMoneyYes() >= transfer.getTransferMoney()) {
+            ImmutableMap<String, String> body = ImmutableMap
+                    .of(MqConfig.MSG_TRANSFER_ID, StringHelper.toString(transferId),
+                            MqConfig.IS_REPURCHASE, "true",
+                            MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
+            Boolean result = financePlanProvider.againVerifyFinanceTransfer(body);
+            if (!result) {
+                throw new Exception("回购失败!");
+            }
+        }
+
+    }
 
     @RequestMapping("/pub/test/asset/change")
     @Transactional(rollbackFor = Exception.class)
-    public void repairCall(@RequestParam("sourceId") Object sourceId, @RequestParam("batchNo") Object batchNo, @RequestParam("type") Object type) {
+    public void repairCall(@RequestParam("sourceId") Object sourceId, @RequestParam("batchNo") Object
+            batchNo, @RequestParam("type") Object type) {
         //2.处理资金还款人、收款人资金变动
         try {
             batchAssetChangeHelper.batchAssetChangeDeal(NumberHelper.toLong(sourceId), String.valueOf(batchNo), NumberHelper.toInt(type));
@@ -198,7 +258,8 @@ public class TestController {
     @ApiOperation("获取自动投标列表")
     @RequestMapping("/pub/credit/invest/query")
     @Transactional(rollbackFor = Exception.class)
-    public void creditInvestQuery(@RequestParam("accountId") Object accountId, @RequestParam("orgOrderId") Object orgOrderId) {
+    public void creditInvestQuery(@RequestParam("accountId") Object accountId, @RequestParam("orgOrderId") Object
+            orgOrderId) {
         CreditInvestQueryReq request = new CreditInvestQueryReq();
         request.setChannel(ChannelContant.HTML);
         request.setAccountId(String.valueOf(accountId));
@@ -290,7 +351,8 @@ public class TestController {
     @ApiOperation("冻结查询")
     @RequestMapping("/pub/freeze/find")
     @Transactional(rollbackFor = Exception.class)
-    public void findFreeze(@RequestParam("accountId") Object accountId, @RequestParam("startDate") Object startDate,
+    public void findFreeze(@RequestParam("accountId") Object accountId, @RequestParam("startDate") Object
+            startDate,
                            @RequestParam("endDate") Object endDate) {
         FreezeDetailsQueryRequest freezeDetailsQueryRequest = new FreezeDetailsQueryRequest();
         freezeDetailsQueryRequest.setChannel(ChannelContant.HTML);
@@ -310,7 +372,8 @@ public class TestController {
     @ApiOperation("用户债权列表查询")
     @RequestMapping("/pub/bid/find/all")
     @Transactional(rollbackFor = Exception.class)
-    public void findBidList(@RequestParam("accountId") Object accountId, @RequestParam("startDate") Object startDate, @RequestParam("productId") Object productId) {
+    public void findBidList(@RequestParam("accountId") Object accountId, @RequestParam("startDate") Object
+            startDate, @RequestParam("productId") Object productId) {
         CreditDetailsQueryRequest creditDetailsQueryRequest = new CreditDetailsQueryRequest();
         creditDetailsQueryRequest.setAccountId(String.valueOf(accountId));
         creditDetailsQueryRequest.setStartDate(String.valueOf(startDate));
@@ -348,7 +411,8 @@ public class TestController {
     @ApiOperation("用户债权列表查询")
     @RequestMapping("/pub/test/batch/cancel")
     @Transactional(rollbackFor = Exception.class)
-    public void cancelBatch(@RequestParam("batchNo") Object batchNo, @RequestParam("txAmount") Object txAmount, @RequestParam("count") Object count) {
+    public void cancelBatch(@RequestParam("batchNo") Object batchNo, @RequestParam("txAmount") Object
+            txAmount, @RequestParam("count") Object count) {
         BatchCancelReq batchCancelReq = new BatchCancelReq();
         batchCancelReq.setBatchNo(String.valueOf(batchNo));
         batchCancelReq.setTxAmount(String.valueOf(txAmount));

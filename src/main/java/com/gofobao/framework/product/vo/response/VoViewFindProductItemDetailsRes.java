@@ -6,6 +6,7 @@ import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * Created by Zeke on 2017/11/14.
@@ -13,6 +14,8 @@ import java.util.List;
 @ApiModel
 @Data
 public class VoViewFindProductItemDetailsRes extends VoBaseResp {
+    @ApiModelProperty("商品sku集合")
+    List<SkuSiftKey> siftKey;
     @ApiModelProperty("子商品详情列表")
-    List<VoProductItemDetail> productItemDetailList;
+    List<VoProductItemDetail> skuData;
 }

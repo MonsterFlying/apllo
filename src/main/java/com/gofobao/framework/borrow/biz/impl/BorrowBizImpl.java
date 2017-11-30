@@ -1545,7 +1545,7 @@ public class BorrowBizImpl implements BorrowBiz {
 
             return ResponseEntity
                     .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, "借款标不是车贷标或净值标!", VoHtmlResp.class));
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "借款标不是车贷标或渠道标!", VoHtmlResp.class));
         }
 
         //受托支付
