@@ -580,7 +580,7 @@ public class ProductBizImpl implements ProductBiz {
                             voProductPlan.setProductItemId(productItem.getId());
                             voProductPlan.setName(product.getName());
                             voProductPlan.setShowPrice(formatPrice(productItem.getDiscountPrice()));
-                            voProductPlan.setImgUrl(productItem.getImgUrl());
+                            voProductPlan.setImgUrl(ObjectUtils.isEmpty(product.getImgUrl()) ? productItem.getImgUrl() : product.getImgUrl());
                             voProductPlan.setTitle(product.getTitle());
                             showProductPlanList.add(voProductPlan);
                         }

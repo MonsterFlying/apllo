@@ -595,6 +595,16 @@ public class FinancePlanBizImpl implements FinancePlanBiz {
         /**
          * @// TODO: 2017/11/29 判断是否超出finance_plan_money
          */
+        //查询正在匹配的购买债权转让金额
+        Specification<TransferBuyLog> tbls = Specifications
+                .<TransferBuyLog>and()
+                .eq("userId", userId)
+                .eq("state", 0)
+                .eq("type", 1)
+                .build();
+        List<TransferBuyLog> transferBuyLogList = transferBuyLogService.findList(tbls);
+        long sumBuyMoney = transferBuyLogList.stream().mapToLong(TransferBuyLog::getValidMoney).sum();
+
         //理财计划购买债权转让
         TransferBuyLog transferBuyLog = financePlanBuyTransfer(nowDate, money, transferId, userId, financePlanBuyer, financePlan, transfer, validMoney);
         if (transfer.getTransferMoneyYes() >= transfer.getTransferMoney()) {

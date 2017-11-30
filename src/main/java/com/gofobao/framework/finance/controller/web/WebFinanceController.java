@@ -38,7 +38,7 @@ public class WebFinanceController {
      * @return
      * @throws Exception
      */
-    @ApiOperation("理财计划匹配债权转让")
+    @ApiOperation("理财计划回购")
     @PostMapping("/v2/pub/finance/plan/repurchase")
     public ResponseEntity<VoBaseResp> financeRepurchase(VoFinanceRepurchase voFinanceRepurchase) {
         try {
