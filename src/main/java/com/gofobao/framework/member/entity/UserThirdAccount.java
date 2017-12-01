@@ -1,9 +1,11 @@
 package com.gofobao.framework.member.entity;
 
+import com.google.common.base.Objects;
 import com.qiniu.util.StringUtils;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 import org.hibernate.annotations.DynamicInsert;
 
 import javax.persistence.*;
@@ -18,6 +20,7 @@ import java.util.Date;
 @Table(name = "gfb_user_third_account")
 @NoArgsConstructor
 @AllArgsConstructor
+@ToString
 public class UserThirdAccount {
     @Id
     @Column(name = "id")
@@ -85,6 +88,7 @@ public class UserThirdAccount {
         if (!StringUtils.isNullOrEmpty(idNo)) {
             this.idNo = idNo.toUpperCase();
         }
-
     }
+
+
 }

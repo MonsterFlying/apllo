@@ -12,8 +12,8 @@ import com.gofobao.framework.api.model.account_open.AccountOpenRequest;
 import com.gofobao.framework.api.model.account_open.AccountOpenResponse;
 import com.gofobao.framework.api.model.account_query_by_mobile.AccountQueryByMobileRequest;
 import com.gofobao.framework.api.model.account_query_by_mobile.AccountQueryByMobileResponse;
-import com.gofobao.framework.api.model.auto_bid_auth_plus.AutoBidAuthRequest;
-import com.gofobao.framework.api.model.auto_bid_auth_plus.AutoBidAuthResponse;
+import com.gofobao.framework.api.model.auto_bid_auth_plus.AutoBidAuthPlusRequest;
+import com.gofobao.framework.api.model.auto_bid_auth_plus.AutoBidAuthPlusResponse;
 import com.gofobao.framework.api.model.auto_credit_invest_auth.AutoCreditInvestAuthRequest;
 import com.gofobao.framework.api.model.auto_credit_invest_auth.AutoCreditInvestAuthResponse;
 import com.gofobao.framework.api.model.balance_query.BalanceQueryRequest;
@@ -354,7 +354,7 @@ public class WebUserThirdBizImpl implements WebUserThirdBiz {
 
     @Override
     public ResponseEntity<String> autoTenderCallback(HttpServletRequest request, HttpServletResponse response) {
-        AutoBidAuthResponse autoBidAuthResponse = jixinManager.callback(request, new TypeToken<AutoBidAuthResponse>() {
+        AutoBidAuthPlusResponse autoBidAuthResponse = jixinManager.callback(request, new TypeToken<AutoBidAuthPlusResponse>() {
         });
 
         if (ObjectUtils.isEmpty(autoBidAuthResponse)) {
@@ -449,7 +449,7 @@ public class WebUserThirdBizImpl implements WebUserThirdBiz {
         }
 
 
-        AutoBidAuthRequest autoBidAuthRequest = new AutoBidAuthRequest();
+        AutoBidAuthPlusRequest autoBidAuthRequest = new AutoBidAuthPlusRequest();
         autoBidAuthRequest.setAccountId(userThirdAccount.getAccountId());
         autoBidAuthRequest.setOrderId(System.currentTimeMillis() + RandomHelper.generateNumberCode(6));
         autoBidAuthRequest.setTxAmount("999999999");

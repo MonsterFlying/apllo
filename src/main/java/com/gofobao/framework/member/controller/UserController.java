@@ -47,7 +47,6 @@ public class UserController {
     @Autowired
     UserBiz userBiz;
 
-
     @Value("${qiniu.sk}")
     private String secretKey;
 

@@ -16,8 +16,8 @@ import com.gofobao.framework.api.model.account_open_plus.AccountOpenPlusRequest;
 import com.gofobao.framework.api.model.account_open_plus.AccountOpenPlusResponse;
 import com.gofobao.framework.api.model.account_query_by_mobile.AccountQueryByMobileRequest;
 import com.gofobao.framework.api.model.account_query_by_mobile.AccountQueryByMobileResponse;
-import com.gofobao.framework.api.model.auto_bid_auth_plus.AutoBidAuthRequest;
-import com.gofobao.framework.api.model.auto_bid_auth_plus.AutoBidAuthResponse;
+import com.gofobao.framework.api.model.auto_bid_auth_plus.AutoBidAuthPlusRequest;
+import com.gofobao.framework.api.model.auto_bid_auth_plus.AutoBidAuthPlusResponse;
 import com.gofobao.framework.api.model.auto_credit_invest_auth.AutoCreditInvestAuthRequest;
 import com.gofobao.framework.api.model.auto_credit_invest_auth.AutoCreditInvestAuthResponse;
 import com.gofobao.framework.api.model.balance_query.BalanceQueryRequest;
@@ -653,7 +653,7 @@ public class UserThirdBizImpl implements UserThirdBiz {
 
     @Override
     public ResponseEntity<String> autoTenderCallback(HttpServletRequest request, HttpServletResponse response) {
-        AutoBidAuthResponse autoBidAuthResponse = jixinManager.callback(request, new TypeToken<AutoBidAuthResponse>() {
+        AutoBidAuthPlusResponse autoBidAuthResponse = jixinManager.callback(request, new TypeToken<AutoBidAuthPlusResponse>() {
         });
 
         if (ObjectUtils.isEmpty(autoBidAuthResponse)) {
@@ -748,7 +748,7 @@ public class UserThirdBizImpl implements UserThirdBiz {
         }
 
 
-        AutoBidAuthRequest autoBidAuthRequest = new AutoBidAuthRequest();
+        AutoBidAuthPlusRequest autoBidAuthRequest = new AutoBidAuthPlusRequest();
         autoBidAuthRequest.setAccountId(userThirdAccount.getAccountId());
         autoBidAuthRequest.setOrderId(System.currentTimeMillis() + RandomHelper.generateNumberCode(6));
         autoBidAuthRequest.setTxAmount("999999999");
@@ -824,20 +824,20 @@ public class UserThirdBizImpl implements UserThirdBiz {
             }
             log.info("查询用户自动债权转让协议结束");
         }
-        AutoCreditInvestAuthRequest autoCreditInvestAuthPlusRequest = new AutoCreditInvestAuthRequest();
-        autoCreditInvestAuthPlusRequest.setAccountId(userThirdAccount.getAccountId());
-        autoCreditInvestAuthPlusRequest.setOrderId(System.currentTimeMillis() + RandomHelper.generateNumberCode(6));
-        autoCreditInvestAuthPlusRequest.setForgotPwdUrl(thirdAccountPasswordHelper.getThirdAcccountResetPasswordUrl(httpServletRequest, userId));
+        AutoCreditInvestAuthRequest autoCreditInvestAuthRequest = new AutoCreditInvestAuthRequest();
+        autoCreditInvestAuthRequest.setAccountId(userThirdAccount.getAccountId());
+        autoCreditInvestAuthRequest.setOrderId(System.currentTimeMillis() + RandomHelper.generateNumberCode(6));
+        autoCreditInvestAuthRequest.setForgotPwdUrl(thirdAccountPasswordHelper.getThirdAcccountResetPasswordUrl(httpServletRequest, userId));
         // autoCreditInvestAuthPlusRequest.setRetUrl(String.format("%s%s%s", javaDomain, "/pub/autoTranfer/show/", userId));
-        autoCreditInvestAuthPlusRequest.setRetUrl(String.format("%s/pub/openAccount/callback/%s/autoTranfer", javaDomain, userThirdAccount.getUserId()));
-        autoCreditInvestAuthPlusRequest.setNotifyUrl(String.format("%s/%s", javaDomain, "/pub/user/third/autoTranfer/callback"));
-        autoCreditInvestAuthPlusRequest.setAcqRes(userId.toString());
-        autoCreditInvestAuthPlusRequest.setChannel(ChannelContant.getchannel(httpServletRequest));
+        autoCreditInvestAuthRequest.setRetUrl(String.format("%s/pub/openAccount/callback/%s/autoTranfer", javaDomain, userThirdAccount.getUserId()));
+        autoCreditInvestAuthRequest.setNotifyUrl(String.format("%s/%s", javaDomain, "/pub/user/third/autoTranfer/callback"));
+        autoCreditInvestAuthRequest.setAcqRes(userId.toString());
+        autoCreditInvestAuthRequest.setChannel(ChannelContant.getchannel(httpServletRequest));
 
 
         String html = null;
         try {
-            html = jixinManager.getHtml(JixinTxCodeEnum.AUTO_CREDIT_INVEST_AUTH, autoCreditInvestAuthPlusRequest);
+            html = jixinManager.getHtml(JixinTxCodeEnum.AUTO_CREDIT_INVEST_AUTH, autoCreditInvestAuthRequest);
         } catch (Throwable e) {
             log.error("UserThirdBizImpl autoTranfter get redis exception ", e);
             return ResponseEntity
