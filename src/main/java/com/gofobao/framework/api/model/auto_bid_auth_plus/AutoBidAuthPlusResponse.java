@@ -7,7 +7,7 @@ import lombok.Data;
  * Created by Zeke on 2017/5/16.
  */
 @Data
-public class AutoBidAuthResponse extends JixinBaseResponse {
+public class AutoBidAuthPlusResponse extends JixinBaseResponse {
     private String accountId;
 
     private String orderId ;
