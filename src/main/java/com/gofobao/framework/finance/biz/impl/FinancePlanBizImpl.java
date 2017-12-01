@@ -579,6 +579,9 @@ public class FinancePlanBizImpl implements FinancePlanBiz {
         /* 理财计划购买人存管账户 */
         UserThirdAccount buyUserAccount = userThirdAccountService.findByUserId(userId);
         ThirdAccountHelper.allConditionCheck(buyUserAccount);
+        /* 理财计划购买人资金记录 */
+        Asset asset = assetService.findByUserId(userId);
+        Preconditions.checkNotNull(asset, "理财计划购买人资金记录不存在!");
         //判断是否是购买人操作
         if (financePlanBuyer.getUserId() != userId) {
             throw new Exception("匹配失败! 债权转让匹配非本人操作!");
@@ -592,9 +595,6 @@ public class FinancePlanBizImpl implements FinancePlanBiz {
         if (validMoney <= 0) {
             throw new Exception("匹配失败! 购买债权有效金额小于0!");
         }
-        /**
-         * @// TODO: 2017/11/29 判断是否超出finance_plan_money
-         */
         //查询正在匹配的购买债权转让金额
         Specification<TransferBuyLog> tbls = Specifications
                 .<TransferBuyLog>and()
@@ -604,6 +604,9 @@ public class FinancePlanBizImpl implements FinancePlanBiz {
                 .build();
         List<TransferBuyLog> transferBuyLogList = transferBuyLogService.findList(tbls);
         long sumBuyMoney = transferBuyLogList.stream().mapToLong(TransferBuyLog::getValidMoney).sum();
+        if ((sumBuyMoney + validMoney) > asset.getFinancePlanMoney()) {
+            throw new Exception("匹配失败!总购买金额大于剩余计划金额，请检查理财计划购买记录是否出现误差");
+        }
 
         //理财计划购买债权转让
         TransferBuyLog transferBuyLog = financePlanBuyTransfer(nowDate, money, transferId, userId, financePlanBuyer, financePlan, transfer, validMoney);

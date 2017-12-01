@@ -456,7 +456,7 @@ public class LoanServiceImpl implements LoanService {
         List<LoanStatistics> statisticss = Lists.newArrayList();
         borrowRepayments.stream().forEach(p -> {
             LoanStatistics loanStatistics = new LoanStatistics();
-            loanStatistics.setId(p.getId());
+            loanStatistics.setId(p.getBorrowId());
             Users user = usersMap.get(p.getUserId());
             loanStatistics.setUserName(StringUtils.isEmpty(user.getUsername()) ? user.getPhone() : user.getUsername());
             loanStatistics.setCollectionAt(DateHelper.dateToString(p.getRepayAt()));

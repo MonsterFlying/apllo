@@ -157,6 +157,7 @@ public class ProductBizImpl implements ProductBiz {
         order.setOrderNumber(orderNumber);
         order.setProductMoney(productItem.getDiscountPrice());
         order.setStatus(1);
+        order.setPayMoney(productPlan.getLowest());
         order.setUpdatedAt(nowDate);
         order.setCreatedAt(nowDate);
         productOrderService.save(order);
