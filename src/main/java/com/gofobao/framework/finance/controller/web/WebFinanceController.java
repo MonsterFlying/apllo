@@ -33,7 +33,7 @@ public class WebFinanceController {
 
     /**
      * 理财计划回购
-     *
+     * @// TODO: 2017/11/30 后台未接
      * @param voFinanceRepurchase
      * @return
      * @throws Exception

@@ -22,6 +22,7 @@ import com.gofobao.framework.helper.NumberHelper;
 import com.gofobao.framework.helper.StringHelper;
 import com.gofobao.framework.repayment.entity.BorrowRepayment;
 import com.gofobao.framework.repayment.service.BorrowRepaymentService;
+import com.gofobao.framework.tender.contants.TenderConstans;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -115,7 +116,7 @@ public class BorrowCollectionServiceImpl implements BorrowCollectionService {
         String totalSql = "select count(b.id) from BorrowCollection AS b where b.userId=:userId and b.transferFlag=:transferFlag and b.status=0  GROUP BY date_format(b.collectionAt,'%Y%m%d') ";
         Query totalEm = entityManager.createQuery(totalSql, Long.class);
         totalEm.setParameter("userId", orderListReq.getUserId());
-        totalEm.setParameter("transferFlag",BorrowCollectionContants.TRANSFER_FLAG_NO);
+        totalEm.setParameter("transferFlag", BorrowCollectionContants.TRANSFER_FLAG_NO);
         List<Long> totalResult = totalEm.getResultList();
         Integer totalCount = totalResult.size();
         resultMaps.put("totalCount", totalCount);
@@ -123,7 +124,7 @@ public class BorrowCollectionServiceImpl implements BorrowCollectionService {
         String sql = "select date_format(b.collectionAt,'%Y-%m-%d'),sum(b.collectionMoney),sum(b.principal),sum(b.interest),count(b.id) from BorrowCollection AS b where b.userId=:userId and b.transferFlag=:transferFlag and b.status=0 GROUP BY date_format(b.collectionAt,'%Y-%m-%d') ORDER BY  b.collectionAt ASC";
         Query query = entityManager.createQuery(sql);
         query.setParameter("userId", orderListReq.getUserId());
-        query.setParameter("transferFlag",BorrowCollectionContants.TRANSFER_FLAG_NO);
+        query.setParameter("transferFlag", BorrowCollectionContants.TRANSFER_FLAG_NO);
         query.setFirstResult(orderListReq.getPageIndex() * orderListReq.getPageSize());
         query.setMaxResults(orderListReq.getPageSize());
         List resultList = query.getResultList();
@@ -155,9 +156,10 @@ public class BorrowCollectionServiceImpl implements BorrowCollectionService {
      */
     @Override
     public List<CollectionList> toExecl(OrderListReq listReq) {
-        String sql = "select date_format(b.collectionAt,'%Y-%m-%d'),sum(b.collectionMoney),sum(b.principal),sum(b.interest),count(b.id) from BorrowCollection AS b where b.userId=:userId  and b.status=0 GROUP BY date_format(b.collectionAt,'%Y-%m-%d') ORDER BY  b.collectionAt ASC";
+        String sql = "select date_format(b.collectionAt,'%Y-%m-%d'),sum(b.collectionMoney),sum(b.principal),sum(b.interest),count(b.id) from BorrowCollection AS b where b.userId=:userId  and b.transferFlag=:transferFlag  and b.status=0 GROUP BY date_format(b.collectionAt,'%Y-%m-%d') ORDER BY  b.collectionAt ASC";
         Query query = entityManager.createQuery(sql);
         query.setParameter("userId", listReq.getUserId());
+        query.setParameter("transferFlag", BorrowCollectionContants.TRANSFER_FLAG_NO);
         List resultList = query.getResultList();
 
         if (CollectionUtils.isEmpty(resultList)) {
@@ -189,7 +191,7 @@ public class BorrowCollectionServiceImpl implements BorrowCollectionService {
         Specification specification = Specifications.<BorrowCollection>and()
                 .eq("userId", listReq.getUserId())
                 .eq("status", BorrowCollectionContants.STATUS_NO)
-                .eq("transferFlag",0)
+                .eq("transferFlag", 0)
                 .between("collectionAt", new Range<>(beginAt, endAt))
                 .build();
         Page<BorrowCollection> collectionPage = borrowCollectionRepository.findAll(specification,
@@ -210,7 +212,7 @@ public class BorrowCollectionServiceImpl implements BorrowCollectionService {
         Set<Long> borrowIds = borrowCollections.stream().map(p -> p.getBorrowId()).collect(Collectors.toSet());
         List<Borrow> borrowList = borrowRepository.findByIdIn(new ArrayList<>(borrowIds));
         Map<Long, Borrow> borrowMaps = borrowList.stream().collect(Collectors.toMap(Borrow::getId, Function.identity()));
-
+        Date flagAt = DateHelper.stringToDate("2017-11-1 00:00:00", DateHelper.DATE_FORMAT_YMDHMS);
         borrowCollections.stream().forEach(p -> {
             Collection collection = new Collection();
             Borrow borrow = borrowMaps.get(p.getBorrowId());
@@ -219,8 +221,9 @@ public class BorrowCollectionServiceImpl implements BorrowCollectionService {
             collection.setPrincipal(StringHelper.formatMon(p.getPrincipal() / 100D));
             collection.setCollectionAt(DateHelper.dateToString(p.getCollectionAt()));
             collection.setOrder(p.getOrder() + 1);
-            collection.setTimeLimit(BorrowContants.REPAY_FASHION_ONCE == borrow.getRepayFashion() ? BorrowContants.REPAY_FASHION_ONCE : borrow.getTimeLimit());
-            if (borrow.getType().intValue() == 0 || borrow.getType().intValue() == 4) { //官标
+            collection.setTimeLimit(BorrowContants.REPAY_FASHION_ONCE.equals(borrow.getRepayFashion()) ? BorrowContants.REPAY_FASHION_ONCE : borrow.getTimeLimit());
+            if ((borrow.getType().intValue() == 0 || borrow.getType().intValue() == 4)
+                    && flagAt.getTime() > borrow.getRecheckAt().getTime()) { //官标并且是2017-11-1 00:00:00之前的标的
                 collection.setEarnings(StringHelper.formatMon((p.getInterest() * 0.9) / 100D));
             } else {
                 collection.setEarnings(StringHelper.formatMon(p.getInterest() / 100D));

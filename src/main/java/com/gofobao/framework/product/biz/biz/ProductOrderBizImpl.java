@@ -258,6 +258,8 @@ public class ProductOrderBizImpl implements ProductOrderBiz {
                 ProductSkuClassify productSkuClassify = productSkuClassifyMap.get(productSku.getScId());
                 //sku 对象
                 VoSku sku = new VoSku();
+                sku.setId(String.valueOf(productItemSkuRef.getId()));
+                sku.setClassId(String.valueOf(productSkuClassify.getId()));
                 sku.setName(productSku.getName());
                 sku.setClassNo(String.valueOf(productSkuClassify.getNo()));
                 sku.setClassName(productSkuClassify.getName());

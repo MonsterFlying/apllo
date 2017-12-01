@@ -292,6 +292,7 @@ public class PaymentBizImpl implements PaymentBiz {
                         Function.identity()));
 
         CollectionDetail collectionDetail = null;
+        Date flagAt = DateHelper.stringToDate("2017-11-1 00:00:00", DateHelper.DATE_FORMAT_YMDHMS);
         for (BorrowCollection borrowCollection : borrowCollectionList) {
             for (Borrow borrow : borrowList) {
                 if (String.valueOf(borrowCollection.getBorrowId()).equals(String.valueOf(borrow.getId()))) {
@@ -303,7 +304,7 @@ public class PaymentBizImpl implements PaymentBiz {
                             : users.getUsername());
                     collectionDetail.setCollectionAt(DateHelper.dateToString(borrowCollection.getCollectionAt(), DateHelper.DATE_FORMAT_YMD));
                     collectionDetail.setPrincipal(StringHelper.formatDouble(borrowCollection.getPrincipal(), 100, false));
-                    if (borrow.getType().intValue() == 0 || borrow.getType().intValue() == 4) {
+                    if ((borrow.getType().intValue() == 0 || borrow.getType().intValue() == 4) && flagAt.getTime() > borrow.getRecheckAt().getTime()) {
                         collectionDetail.setEarnings(StringHelper.formatMon((borrowCollection.getInterest() * 0.9) / 100D));
                     } else {
                         collectionDetail.setEarnings(StringHelper.formatMon(borrowCollection.getInterest() / 100D));

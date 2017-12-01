@@ -545,7 +545,7 @@ public class TransferBizImpl implements TransferBiz {
             Tender childTender = new Tender();
             UserThirdAccount buyUserThirdAccount = userThirdAccountService.findByUserId(transferBuyLog.getUserId());
 
-            childTender.setUserId(22002L);
+            childTender.setUserId(transferBuyLog.getUserId());
             childTender.setStatus(1);
             childTender.setType(transferBuyLog.getType());
             childTender.setBorrowId(transfer.getBorrowId());
@@ -555,7 +555,7 @@ public class TransferBizImpl implements TransferBiz {
             childTender.setMoney(transferBuyLog.getBuyMoney());
             childTender.setValidMoney(transferBuyLog.getPrincipal());
             childTender.setTransferFlag(0);
-            childTender.setTUserId(22002L);
+            childTender.setTUserId(transferBuyLog.getUserId());
             childTender.setParentId(parentTender.getId());
             childTender.setState(2);
             childTender.setFinanceBuyId(transferBuyLog.getFinanceBuyId());
@@ -2054,12 +2054,12 @@ public class TransferBizImpl implements TransferBiz {
 
         BorrowInfoRes borrowInfoRes = VoBaseResp.ok("查询成功", BorrowInfoRes.class);
         borrowInfoRes.setApr(StringHelper.formatMon(borrow.getApr() / 100d));
-        borrowInfoRes.setLowest(StringHelper.formatMon(borrow.getLowest() / 100d));
+        borrowInfoRes.setLowest(StringHelper.formatMon(transfer.getLowest() / 100d));
         long surplusMoney = transfer.getTransferMoney() - transfer.getTransferMoneyYes();
         borrowInfoRes.setViewSurplusMoney(StringHelper.formatMon(surplusMoney / 100D));
         borrowInfoRes.setHideSurplusMoney(surplusMoney);
 
-        if (borrow.getType() == com.gofobao.framework.borrow.contants.BorrowContants.REPAY_FASHION_ONCE) {
+        if (borrow.getType().equals(com.gofobao.framework.borrow.contants.BorrowContants.REPAY_FASHION_ONCE)) {
             borrowInfoRes.setTimeLimit(transfer.getTimeLimit() + com.gofobao.framework.borrow.contants.BorrowContants.DAY);
         } else {
             borrowInfoRes.setTimeLimit(transfer.getTimeLimit() + com.gofobao.framework.borrow.contants.BorrowContants.MONTH);

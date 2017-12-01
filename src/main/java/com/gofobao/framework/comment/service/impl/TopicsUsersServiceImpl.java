@@ -336,7 +336,7 @@ public class TopicsUsersServiceImpl implements TopicsUsersService {
                 voTopicCommentManagerResp.setForUserName(topicsUsers.getUsername());
                 voTopicCommentManagerResp.setForUserId(userId);
                 //评论者头像
-                voTopicCommentManagerResp.setAvatar(imgPrefix + comment.getUserIconUrl());
+                voTopicCommentManagerResp.setAvatar(imgPrefix +"/"+ comment.getUserIconUrl());
                 //评论时间
                 voTopicCommentManagerResp.setTime(DateHelper.getPastTime(comment.getCreateDate().getTime()));
                 voTopicCommentManagerListResp.getVoTopicCommentManagerRespList().add(voTopicCommentManagerResp);
@@ -358,7 +358,7 @@ public class TopicsUsersServiceImpl implements TopicsUsersService {
                 voTopicCommentManagerResp.setForUserName(reply.getForUserName());
                 voTopicCommentManagerResp.setTopicReplyId(reply.getId().toString());
                 //回复者头像
-                voTopicCommentManagerResp.setAvatar(imgPrefix + reply.getUserIconUrl());
+                voTopicCommentManagerResp.setAvatar(imgPrefix +"/"+ reply.getUserIconUrl());
                 voTopicCommentManagerListResp.getVoTopicCommentManagerRespList().add(voTopicCommentManagerResp);
             });
         }

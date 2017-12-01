@@ -5,7 +5,10 @@ import alex.zhrenjie04.wordfilter.result.FilteredResult;
 import com.gofobao.framework.comment.biz.TopicTopRecordBiz;
 import com.gofobao.framework.comment.biz.TopisIntegralBiz;
 import com.gofobao.framework.comment.entity.*;
-import com.gofobao.framework.comment.repository.*;
+import com.gofobao.framework.comment.repository.TopicCommentRepository;
+import com.gofobao.framework.comment.repository.TopicReplyRepository;
+import com.gofobao.framework.comment.repository.TopicRepository;
+import com.gofobao.framework.comment.repository.TopicTypeRepository;
 import com.gofobao.framework.comment.service.TopicService;
 import com.gofobao.framework.comment.service.TopicsUsersService;
 import com.gofobao.framework.comment.vo.request.VoTopicReq;
@@ -13,12 +16,9 @@ import com.gofobao.framework.comment.vo.response.VoTopicListResp;
 import com.gofobao.framework.comment.vo.response.VoTopicResp;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.helper.DateHelper;
-import com.gofobao.framework.member.entity.Users;
-import com.gofobao.framework.member.repository.UsersRepository;
 import com.gofobao.framework.security.helper.JwtTokenHelper;
 import com.gofobao.framework.system.biz.FileManagerBiz;
 import com.google.common.base.Preconditions;
-import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
@@ -39,7 +39,6 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
-import redis.clients.jedis.Jedis;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.Date;
@@ -185,10 +184,10 @@ public class TopicServiceImpl implements TopicService {
         if (!ObjectUtils.isEmpty(lastTopic)) {
             Date createDate = lastTopic.getCreateDate();
             createDate = ObjectUtils.isArray(createDate) ? nowDate : createDate;
-            if (nowDate.getTime() - (createDate.getTime() + DateHelper.MILLIS_PER_MINUTE*2) < 0) {
+            if (nowDate.getTime() - (createDate.getTime() + DateHelper.MILLIS_PER_MINUTE * 20) < 0) {
                 return ResponseEntity
                         .badRequest()
-                        .body(VoBaseResp.error(VoBaseResp.ERROR, "发帖过于频繁, 请1小时后再试!"));
+                        .body(VoBaseResp.error(VoBaseResp.ERROR, "发帖过于频繁, 请20分钟后再试!"));
             }
         }
         // 判断板块id存在否？
@@ -430,7 +429,7 @@ public class TopicServiceImpl implements TopicService {
         voTopicResp.setTitle(topic.getTitle());
         voTopicResp.setContent(topic.getContent());
         voTopicResp.setUserName(topic.getUserName());
-        voTopicResp.setUserIconUrl(imgPrefix+"/"+topic.getUserIconUrl());
+        voTopicResp.setUserIconUrl(imgPrefix + "/" + topic.getUserIconUrl());
         voTopicResp.setId(topic.getId());
         //判断用户未登录或者是否是发帖用户
         if (topic.getUserId().equals(userId)) {

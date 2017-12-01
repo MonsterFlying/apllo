@@ -10,10 +10,14 @@ import lombok.Data;
 @ApiModel
 @Data
 public class VoSku {
+    @ApiModelProperty("id")
+    private String classId;
     @ApiModelProperty("classNo")
     private String classNo;
     @ApiModelProperty("sku名")
     private String name;
+    @ApiModelProperty("skuId")
+    private String id;
     @ApiModelProperty("序号")
     private String no;
     @ApiModelProperty("分类名")
