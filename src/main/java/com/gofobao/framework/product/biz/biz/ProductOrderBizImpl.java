@@ -314,6 +314,7 @@ public class ProductOrderBizImpl implements ProductOrderBiz {
         res.setExpressmanName("");
         res.setExpressmanPhone("");
         res.setStatus("0");
+        res.setSkipAt(DateHelper.dateToString(productLogistics.getShipAt()));
         res.setProductLogisticsList(new ArrayList<>());
         return ResponseEntity.ok(res);
     }
