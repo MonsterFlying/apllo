@@ -68,6 +68,12 @@ public class WindmillStatisticsBizImpl implements WindmillStatisticsBiz {
     @Autowired
     private AssetBiz assetBiz;
 
+    @Value("${gofobao.h5Domain}")
+    private String h5Domain;
+
+
+    private static final String DETAILS_PATH = "/#/finder/article/detail/";
+
 
     /**
      * 查询每日的汇总数据
@@ -140,7 +146,7 @@ public class WindmillStatisticsBizImpl implements WindmillStatisticsBiz {
             accountStatistics.setEarned_interest(voAssetIndexResp.getAccruedMoney());
             //活期金额
             accountStatistics.setPf_user_id(userId.toString());
-            accountStatistics.setCurrent_money(userCache.getCashTotal()+"");
+            accountStatistics.setCurrent_money(userCache.getCashTotal() + "");
             //奖励余额
             String reward = "";
             if (!CollectionUtils.isEmpty(assetLogs)) {
@@ -204,7 +210,7 @@ public class WindmillStatisticsBizImpl implements WindmillStatisticsBiz {
             notices.setId(p.getId());
             notices.setRelease_time(DateHelper.dateToString(p.getCreatedAt()));
             notices.setTitle(p.getTitle());
-            notices.setUrl("");
+            notices.setUrl(h5Domain + DETAILS_PATH + p.getId());
             all_notices.add(notices);
         });
         voNoticesRes.setRetcode(VoBaseResp.OK);

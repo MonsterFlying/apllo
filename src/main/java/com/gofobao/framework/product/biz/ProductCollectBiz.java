@@ -26,10 +26,6 @@ public interface ProductCollectBiz {
     /**
      * 收藏商品
      */
-
-    /**
-     * 收藏商品
-     */
     ResponseEntity<VoBaseResp> collectProduct(VoCollectProduct voCollectProduct);
 
     /**

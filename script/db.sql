@@ -1358,3 +1358,6 @@ ALTER TABLE `gfb_topics`
 
 ALTER TABLE `gfb_product_order`
   ADD COLUMN `ship_at` datetime NULL COMMENT '发货时间' AFTER `pay_at`;
+
+ALTER TABLE `gfb_finance_plan`
+  ADD COLUMN `order_number` varchar(255) DEFAULT NULL COMMENT '订单编号' AFTER `end_lock_at`

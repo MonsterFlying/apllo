@@ -143,7 +143,7 @@ public class ProductBizImpl implements ProductBiz {
 
         //计算额外收益
         BorrowCalculatorHelper borrowCalculatorHelper = new BorrowCalculatorHelper(new Double(productPlan.getLowest()), new Double(productPlan.getApr()), productPlan.getTimeLimit(), null);
-        Map<String, Object> rsMap = borrowCalculatorHelper.ycxhbfx();
+        Map<String, Object> rsMap = borrowCalculatorHelper.dqhbayfx();
         long earnings = NumberHelper.toLong(rsMap.get("earnings"));
         //生成订单
         String orderNumber = RandomHelper.generateNumberCode(18);
@@ -292,7 +292,7 @@ public class ProductBizImpl implements ProductBiz {
 
         /*计算额外收益*/
         BorrowCalculatorHelper borrowCalculatorHelper = new BorrowCalculatorHelper(new Double(productPlan.getLowest()), new Double(productPlan.getApr()), productPlan.getTimeLimit(), null);
-        Map<String, Object> rsMap = borrowCalculatorHelper.ycxhbfx();
+        Map<String, Object> rsMap = borrowCalculatorHelper.dqhbayfx();
 
         res.setPlanId(String.valueOf(productPlan.getId()));
         res.setProductItemId(String.valueOf(productItem.getId()));
@@ -300,7 +300,7 @@ public class ProductBizImpl implements ProductBiz {
         res.setSkuList(skuList);
         res.setExistAddress(existAddress);
         res.setTitle(product.getTitle());
-        res.setImgUrl(!ObjectUtils.isEmpty(productItem.getImgUrl()) ? product.getImgUrl() : productItem.getImgUrl());
+        res.setImgUrl(ObjectUtils.isEmpty(productItem.getImgUrl()) ? product.getImgUrl() : productItem.getImgUrl());
         res.setLowest(StringHelper.formatDouble(productPlan.getLowest(), 100, false));
         res.setShowLowest(StringHelper.formatDouble(productPlan.getLowest(), 100, true));
         res.setPlanName(productPlan.getName());
@@ -577,10 +577,12 @@ public class ProductBizImpl implements ProductBiz {
                             List<ProductItem> productItems = productItemMaps.get(product.getId());
                             Collections.sort(productItems, Comparator.comparing(ProductItem::getDiscountPrice));
                             ProductItem productItem = productItems.get(0);
+                            /*广富送计划记录*/
+                            ProductPlan productPlan = getProductPlan(productItem.getId());
                             VoProductPlan voProductPlan = new VoProductPlan();
                             voProductPlan.setProductItemId(productItem.getId());
                             voProductPlan.setName(product.getName());
-                            voProductPlan.setShowPrice(formatPrice(productItem.getDiscountPrice()));
+                            voProductPlan.setShowPrice(formatPrice(productPlan.getLowest()));
                             voProductPlan.setImgUrl(ObjectUtils.isEmpty(product.getImgUrl()) ? productItem.getImgUrl() : product.getImgUrl());
                             voProductPlan.setTitle(product.getTitle());
                             showProductPlanList.add(voProductPlan);

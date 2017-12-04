@@ -102,7 +102,9 @@ public class FinancePlanBizImpl implements FinancePlanBiz {
     private String adminDomain;
 
 
-    //过滤掉 状态; 1:发标待审 ；2：初审不通过；4：复审不通过；5：已取消
+    /**
+     * 过滤掉 状态; 1:发标待审 ；2：初审不通过；4：复审不通过；5：已取消
+     */
     private static List<Integer> statusArray = Lists.newArrayList(FinannceContants.CANCEL,
             FinannceContants.CHECKED_NO_PASS,
             FinannceContants.NO_PASS,
@@ -180,6 +182,7 @@ public class FinancePlanBizImpl implements FinancePlanBiz {
      * @throws Exception
      */
     @Transactional(rollbackFor = Exception.class)
+    @Override
     public ResponseEntity<VoBaseResp> financePlanAssetChange(VoFinancePlanAssetChange voFinancePlanAssetChange) throws Exception {
         String paramStr = voFinancePlanAssetChange.getParamStr();
         if (!SecurityHelper.checkSign(voFinancePlanAssetChange.getSign(), paramStr)) {

@@ -1495,38 +1495,22 @@ public class RepaymentBizImpl implements RepaymentBiz {
             advanceLogService.save(advanceLog);
         }
         try {
-            //把回款的用户中是否有车轮用户
-            Set<Long> userIds = tenderList.stream()
-                    .map(p -> p.getUserId())
-                    .collect(Collectors.toSet());
-            List<Users> usersList = userService.findByIdIn(new ArrayList<>(userIds));
-            List<Users> tempUserList = usersList.stream()
-                    .filter(p -> !StringUtils.isEmpty(p.getWheelId()))
-                    .collect(Collectors.toList());
-            List<Long> tenderUserIds = tempUserList.stream()
-                    .map(p -> p.getId())
-                    .collect(Collectors.toList());
-            //过滤用户
-            List<Tender> tenders = tenderList.stream()
-                    .filter(tender -> tenderUserIds.contains(tender.getUserId()))
-                    .collect(Collectors.toList());
-            //通知车轮
-            if (!CollectionUtils.isEmpty(tenders)) {
-                tenders.forEach(tender -> {
-                    wheelBorrowBiz.investNotice(tender);
-                });
-            }
-            Set<Long> borrowIds = tenderList.stream()
-                    .map(tender -> tender.getId())
-                    .collect(Collectors.toSet());
-            List<Borrow> borrows = borrowService.findByBorrowIds(new ArrayList<>(borrowIds));
-            if (!CollectionUtils.isEmpty(borrows)) {
-                borrows.forEach(borrow -> {
-                    if (!borrow.getIsWindmill()) {
-                        return;
-                    }
-                    wheelBorrowBiz.borrowUpdateNotice(borrow);
-                });
+            if (parentBorrow.getIsWindmill()) {
+                Set<Long> userIds = tenderList.stream()
+                        .map(p -> p.getUserId())
+                        .collect(Collectors.toSet());
+                List<Users> usersList = userService.findByIdIn(new ArrayList<>(userIds));
+                List<Users> tempUserList = usersList.stream()
+                        .filter(p -> !StringUtils.isEmpty(p.getWheelId()))
+                        .collect(Collectors.toList());
+                if (!CollectionUtils.isEmpty(tempUserList)) {
+                    tenderList.forEach(tender -> {
+                        if (tempUserList.contains(tender.getUserId())) {
+                            wheelBorrowBiz.investNotice(tender);
+                        }
+                    });
+                }
+                wheelBorrowBiz.borrowUpdateNotice(parentBorrow);
             }
         } catch (Exception e) {
             log.error("回款通知车轮失败", e);
