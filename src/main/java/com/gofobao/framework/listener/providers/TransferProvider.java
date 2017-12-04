@@ -176,13 +176,13 @@ public class TransferProvider {
             //查询自动投标投资人的资产记录
             as = Specifications
                     .<Asset>and()
-                    .in("userId", userIds)
+                    .in("userId", userIds.toArray())
                     .build();
             assetMaps = assetService.findList(as).stream().collect(Collectors.toMap(Asset::getUserId, Function.identity()));
             //查询自动投标投资人的存管账户记录
             utas = Specifications
                     .<UserThirdAccount>and()
-                    .in("userId", userIds)
+                    .in("userId", userIds.toArray())
                     .build();
             userThirdAccountMaps = userThirdAccountService.findList(utas).stream().collect(Collectors.toMap(UserThirdAccount::getUserId, Function.identity()));
 

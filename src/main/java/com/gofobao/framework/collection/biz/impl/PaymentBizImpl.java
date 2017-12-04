@@ -233,7 +233,7 @@ public class PaymentBizImpl implements PaymentBiz {
     }
 
     @Override
-    public ResponseEntity<VoViewCollectionDaysWarpRes> collectionDays(String date, Long userId) {
+    public ResponseEntity<VoViewCollectionDaysWarpRes>  collectionDays(String date, Long userId) {
         VoViewCollectionDaysWarpRes collectionDayWarpRes = VoBaseResp.ok("查询成功", VoViewCollectionDaysWarpRes.class);
         try {
             List<Integer> result = borrowCollectionService.collectionDay(date, userId);

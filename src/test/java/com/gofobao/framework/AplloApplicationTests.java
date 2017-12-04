@@ -586,8 +586,9 @@ public class AplloApplicationTests {
     @Test
     @Transactional
     public void test() {
-
-
+        for (int i = 0; i < 6; i++) {
+            userService.repairWaitExpenditureInterestManage();
+        }
         /*try {
             testTransaction.test();
         } catch (Exception e) {
