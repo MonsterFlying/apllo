@@ -218,7 +218,7 @@ public class UserServiceImpl implements UserService {
                 repairNum = NumberHelper.toInt(repairMap.get(repairNumKey));
             }
 
-            if (System.currentTimeMillis() > DateHelper.addMinutes(repairDate, 20).getTime() || repairNum > 4) {
+            if (System.currentTimeMillis() > DateHelper.addMinutes(repairDate, 20).getTime() || repairNum >= 1) {
 
                 String sql = "UPDATE gfb_user_cache p1 RIGHT JOIN\n" +
                         "  (\n" +
