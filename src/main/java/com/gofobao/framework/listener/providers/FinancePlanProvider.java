@@ -234,7 +234,7 @@ public class FinancePlanProvider {
         }
         batchAssetChangeItem.setUserId(transfer.getUserId());
         batchAssetChangeItem.setMoney(transferPrincipal + transfer.getAlreadyInterest());
-        batchAssetChangeItem.setRemark(String.format("出售理财计划匹配债权[%s]获得待收本金和应计利息%s元", transfer.getTitle(),
+        batchAssetChangeItem.setRemark(String.format("出售债权[%s]获得待收本金和应计利息%s元", transfer.getTitle(),
                 StringHelper.formatDouble((transferPrincipal + transfer.getAlreadyInterest()), 100D, true)));
         batchAssetChangeItem.setCreatedAt(nowDate);
         batchAssetChangeItem.setUpdatedAt(nowDate);
@@ -258,7 +258,7 @@ public class FinancePlanProvider {
             batchAssetChangeItem.setForUserId(transfer.getUserId());
             batchAssetChangeItem.setBatchAssetChangeId(batchAssetChangeId);
             batchAssetChangeItem.setMoney(transferBuyLog.getValidMoney());
-            batchAssetChangeItem.setRemark(String.format("购买理财计划匹配债权[%s], 成功扣除资金%s元", transfer.getTitle(),
+            batchAssetChangeItem.setRemark(String.format("购买债权[%s], 成功扣除资金%s元", transfer.getTitle(),
                     StringHelper.formatDouble(transferBuyLog.getValidMoney(), 100D, true)));
             batchAssetChangeItem.setCreatedAt(nowDate);
             batchAssetChangeItem.setUpdatedAt(nowDate);

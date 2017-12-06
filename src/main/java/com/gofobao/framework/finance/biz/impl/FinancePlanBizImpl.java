@@ -31,6 +31,7 @@ import com.gofobao.framework.finance.biz.FinancePlanBiz;
 import com.gofobao.framework.finance.constants.FinannceContants;
 import com.gofobao.framework.finance.entity.FinancePlan;
 import com.gofobao.framework.finance.entity.FinancePlanBuyer;
+import com.gofobao.framework.finance.repository.FinancePlanRepository;
 import com.gofobao.framework.finance.service.FinancePlanBuyerService;
 import com.gofobao.framework.finance.service.FinancePlanService;
 import com.gofobao.framework.finance.vo.request.*;
@@ -100,7 +101,8 @@ public class FinancePlanBizImpl implements FinancePlanBiz {
     private FinancePlanProvider financePlanProvider;
     @Value("${gofobao.adminDomain}")
     private String adminDomain;
-
+    @Autowired
+    private FinancePlanRepository financePlanRepository;
 
     /**
      * 过滤掉 状态; 1:发标待审 ；2：初审不通过；4：复审不通过；5：已取消
@@ -250,10 +252,21 @@ public class FinancePlanBizImpl implements FinancePlanBiz {
                 VoucherPayResponse response = jixinManager.send(JixinTxCodeEnum.SEND_RED_PACKET, voucherPayRequest, VoucherPayResponse.class);
                 if ((ObjectUtils.isEmpty(response)) || (!JixinResultContants.SUCCESS.equals(response.getRetCode()))) {
                     String msg = ObjectUtils.isEmpty(response) ? "当前网络不稳定，请稍候重试" : response.getRetMsg();
-
                     log.error("redPacket" + msg);
                     throw new Exception(msg);
                 }
+
+                // 红包账户发送红包
+                assetChange = new AssetChange();
+                assetChange.setMoney(money);
+                assetChange.setType(AssetChangeTypeEnum.publishRedpack);
+                assetChange.setUserId(redpackAccountId);
+                assetChange.setRemark(String.format("投资人到期收回本息 %s元", StringHelper.formatDouble(money / 100D, true)));
+                assetChange.setGroupSeqNo(assetChangeProvider.getGroupSeqNo());
+                assetChange.setSeqNo(assetChangeProvider.getSeqNo());
+                assetChange.setForUserId(userId);
+                assetChange.setSourceId(financePlanBuyer.getId());
+                assetChangeProvider.commonAssetChange(assetChange);
             }
         } catch (Throwable t) {
             String newOrderId = JixinHelper.getOrderId(JixinHelper.BALANCE_UNFREEZE_PREFIX);/* 购买债权转让冻结金额 orderid */
@@ -415,7 +428,7 @@ public class FinancePlanBizImpl implements FinancePlanBiz {
         assetChange.setForUserId(financePlanBuyer.getUserId());
         assetChange.setUserId(financePlanBuyer.getUserId());
         assetChange.setType(AssetChangeTypeEnum.financePlanFreeze);
-        assetChange.setRemark(String.format("成功购买理财计划[%s]%s元", financePlan.getName(), StringHelper.formatDouble(validateMoney / 100D, true)));
+        assetChange.setRemark(String.format("成功购买[%s]%s元", financePlan.getName(), StringHelper.formatDouble(validateMoney / 100D, true)));
         assetChange.setSeqNo(assetChangeProvider.getSeqNo());
         assetChange.setMoney(validateMoney);
         assetChange.setGroupSeqNo(assetChangeProvider.getGroupSeqNo());
@@ -769,7 +782,6 @@ public class FinancePlanBizImpl implements FinancePlanBiz {
         return transferBuyLog;
     }
 
-
     /**
      * 理财列表
      *
@@ -783,14 +795,8 @@ public class FinancePlanBizImpl implements FinancePlanBiz {
             return ResponseEntity.ok(warpRes);
         }
         page.setPageSize(10);
-        Specification<FinancePlan> specification = Specifications.<FinancePlan>and()
-                .notIn("status", statusArray.toArray())
-             /*   .eq("successAt",null)*/
-                .eq("type", 0)
-                .build();
-        List<FinancePlan> financePlans = financePlanService.findList(specification,
-                new PageRequest(page.getPageIndex(), page.getPageSize(),
-                        new Sort(Sort.Direction.ASC, Lists.newArrayList("status", "id"))));
+        List<FinancePlan> financePlans = financePlanRepository.indexList(statusArray, 0, new PageRequest(page.getPageIndex(), page.getPageSize()));
+
         warpRes.setTotalCount(10);
         if (CollectionUtils.isEmpty(financePlans)) {
             return ResponseEntity.ok(warpRes);
@@ -826,17 +832,8 @@ public class FinancePlanBizImpl implements FinancePlanBiz {
             return ResponseEntity.ok(warpRes);
         }
         page.setPageSize(10);
-        Specification<FinancePlan> specification = Specifications.<FinancePlan>and()
-                .notIn("status", statusArray.toArray())
-                .eq("type", 1)
-    /*            .eq("successAt",null)*/
-                .eq("status", 1)
-                .build();
-        List<FinancePlan> financePlans = financePlanService.findList(specification,
-                new PageRequest(page.getPageIndex(),
-                        page.getPageSize(),
-                        new Sort(Sort.Direction.DESC,
-                                Lists.newArrayList("status", "id"))));
+        List<FinancePlan> financePlans = financePlanRepository.indexList(statusArray, 1, new PageRequest(page.getPageIndex(), page.getPageSize()));
+
         warpRes.setTotalCount(10);
         if (CollectionUtils.isEmpty(financePlans)) {
             return ResponseEntity.ok(warpRes);
