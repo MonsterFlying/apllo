@@ -6,6 +6,7 @@ import com.qiniu.util.StringUtils;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
+import springfox.documentation.annotations.ApiIgnore;
 
 import javax.validation.constraints.NotNull;
 
@@ -43,6 +44,9 @@ public class VoCreateTenderReq extends VoBaseReq {
 
     @ApiModelProperty(hidden = true)
     private String requestSource = "0";
+
+    @ApiModelProperty(name = "isCheckNimiety", hidden = true ,value = "是否需要投标频率检查")
+    private Boolean isCheckNimiety = true;
 
 
     public Double getTenderMoney() {
