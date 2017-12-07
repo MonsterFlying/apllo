@@ -11,6 +11,8 @@ import com.gofobao.framework.api.helper.JixinTxDateHelper;
 import com.gofobao.framework.api.model.account_details_query.AccountDetailsQueryItem;
 import com.gofobao.framework.api.model.account_details_query.AccountDetailsQueryRequest;
 import com.gofobao.framework.api.model.account_details_query.AccountDetailsQueryResponse;
+import com.gofobao.framework.api.model.account_details_query2.AccountDetailsQuery2Request;
+import com.gofobao.framework.api.model.account_details_query2.AccountDetailsQuery2Response;
 import com.gofobao.framework.api.model.account_query_by_mobile.AccountQueryByMobileRequest;
 import com.gofobao.framework.api.model.account_query_by_mobile.AccountQueryByMobileResponse;
 import com.gofobao.framework.api.model.balance_query.BalanceQueryRequest;
@@ -209,9 +211,6 @@ public class AplloApplicationTests {
         borrowBiz.touchMarketingByTender(tender);
 
     }
-
-    @Autowired
-    TestTransaction testTransaction;
 
 
     @Test
@@ -469,6 +468,17 @@ public class AplloApplicationTests {
         System.out.println(response);
     }
 
+    public void accountDetailsQuery2() {
+
+        AccountDetailsQuery2Request request = new AccountDetailsQuery2Request();
+        request.setAccountId("6212462190000090196");
+        request.setStartDate("20171002");
+        request.setEndDate("20171207");
+        request.setChannel(ChannelContant.HTML);
+        request.setType("0"); // 转入
+        AccountDetailsQuery2Response response = jixinManager.send(JixinTxCodeEnum.ACCOUNT_DETAILS_QUERY2, request, AccountDetailsQuery2Response.class);
+        System.out.println(response);
+    }
 
     /**
      * 复审债权转让的
@@ -586,16 +596,9 @@ public class AplloApplicationTests {
     @Test
     @Transactional
     public void test() {
-        for (int i = 0; i < 6; i++) {
-            userService.repairWaitExpenditureInterestManage();
-        }
-        /*try {
-            testTransaction.test();
-        } catch (Exception e) {
-            System.out.println(e.getMessage());
-        }*/
-       /* //批次处理
-       batchDeal();
+        accountDetailsQuery2();
+        /* //批次处理
+        batchDeal();
         //unfrozee();
         //查询存管账户资金信息
         balanceQuery();

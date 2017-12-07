@@ -436,7 +436,7 @@ public class TransferServiceImpl implements TransferService {
         Integer repayFashion = borrow.getRepayFashion();
         borrowMap.put("repayFashion", repayFashion);
         borrowMap.put("id", transfer.getBorrowId());
-        borrowMap.put("money", StringHelper.formatMon(transfer.getTransferMoney() / 100D));
+        borrowMap.put("money", StringHelper.formatMon(transfer.getTransferMoneyYes() / 100D));
         borrowMap.put("monthAsReimbursement", StringUtils.isEmpty(transfer.getRecheckAt()) ? null : "每月" + DateHelper.dateToString(transfer.getRecheckAt(), DateHelper.DATE_FORMAT_YMD));
         borrowMap.put("borrowExpireAtStr", DateHelper.dateToString(DateHelper.endOfDate(DateHelper.addDays(transfer.getReleaseAt(), 1))));
         Integer timeLimit = transfer.getTimeLimit();
@@ -449,9 +449,12 @@ public class TransferServiceImpl implements TransferService {
         List<Map<String, Object>> tenderMapList = Lists.newArrayList();
         Map<String, Object> tenderMap = Maps.newHashMap();
         Long buyMoney = transferBuyLog.getBuyMoney();
+        Long principal = transferBuyLog.getPrincipal();
         tenderMap.put("username", StringUtils.isEmpty(buyUsers.getUsername()) ? buyUsers.getPhone() : buyUsers.getUsername());
         tenderMap.put("validMoney", StringHelper.formatMon(buyMoney / 100D));
-        BorrowCalculatorHelper borrowCalculatorHelper = new BorrowCalculatorHelper(NumberHelper.toDouble(buyMoney), new Double(apr), timeLimit, null);
+        tenderMap.put("principal", StringHelper.formatMon(principal / 100D));
+        tenderMap.put("alreadyInterest", StringHelper.formatMon(transferBuyLog.getAlreadyInterest() / 100D));
+        BorrowCalculatorHelper borrowCalculatorHelper = new BorrowCalculatorHelper(NumberHelper.toDouble(principal), new Double(apr), timeLimit, null);
         Map<String, Object> calculatorMap = borrowCalculatorHelper.simpleCount(repayFashion);
         calculatorMap.put("earnings", StringHelper.formatMon(MoneyHelper.divide(Double.parseDouble(calculatorMap.get("earnings").toString()), 100D)));
         calculatorMap.put("eachRepay", StringHelper.formatMon(MoneyHelper.divide(Double.parseDouble(calculatorMap.get("eachRepay").toString()), 100D)));

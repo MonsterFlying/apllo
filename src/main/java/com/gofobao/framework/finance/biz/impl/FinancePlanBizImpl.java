@@ -647,7 +647,7 @@ public class FinancePlanBizImpl implements FinancePlanBiz {
      */
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public ResponseEntity<VoBaseResp> financeAgainVerifyTransfer(VoFinanceAgainVerifyTransfer voFinanceAgainVerifyTransfer) {
+    public ResponseEntity<VoBaseResp> financeAgainVerifyTransfer(VoFinanceAgainVerifyTransfer voFinanceAgainVerifyTransfer) throws Exception {
         String paramStr = voFinanceAgainVerifyTransfer.getParamStr();
         if (!SecurityHelper.checkSign(voFinanceAgainVerifyTransfer.getSign(), paramStr)) {
             return ResponseEntity
@@ -666,6 +666,7 @@ public class FinancePlanBizImpl implements FinancePlanBiz {
         Date nowDate = new Date();
         //生成回购记录
         if (BooleanUtils.toBoolean(isRepurchase)) {
+
             /* 理财计划回购债权转让记录 */
             //默认zfh为回购人
             long repurchaseUserId = 22002L;
@@ -693,6 +694,16 @@ public class FinancePlanBizImpl implements FinancePlanBiz {
             transfer.setUpdatedAt(nowDate);
             transfer.setTenderCount(transfer.getTenderCount() + 1);
             transferService.save(transfer);
+            //冻结资金
+            AssetChange assetChange = new AssetChange();
+            assetChange.setSourceId(transferBuyLog.getId());
+            assetChange.setGroupSeqNo(assetChangeProvider.getGroupSeqNo());
+            assetChange.setMoney(transferBuyLog.getValidMoney());
+            assetChange.setSeqNo(assetChangeProvider.getSeqNo());
+            assetChange.setRemark(String.format("购买债权转让[%s], 成功冻结资金%s元", transfer.getTitle(), StringHelper.formatDouble(transferBuyLog.getValidMoney() / 100D, true)));
+            assetChange.setType(AssetChangeTypeEnum.freeze);
+            assetChange.setUserId(transferBuyLog.getUserId());
+            assetChangeProvider.commonAssetChange(assetChange);
         }
 
         if (transfer.getTransferMoneyYes() > 0 && transfer.getType().intValue() == 1 && transfer.getState().intValue() == 1) {

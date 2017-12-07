@@ -35,7 +35,14 @@ public interface TransferRepository extends JpaSpecificationExecutor<Transfer>, 
      * @param pageable
      * @return
      */
-    @Query("select transfer from Transfer transfer where (transfer.state=1 or (transfer.state=2 and transfer.apr<1500)) and transfer.type =0")
+    @Query("select transfer from Transfer transfer " +
+            "where " +
+            "(transfer.state=1 or (transfer.state=2 and transfer.apr<1500)) " +
+            "and " +
+            "transfer.type =0 " +
+            "order by " +
+            "transfer.id desc , " +
+            "transfer.transferMoneyYes/transfer.transferMoney ASC ")
     Page<Transfer> findByStateIsOrStateIsAndAprThanLee(Pageable pageable);
 
 }

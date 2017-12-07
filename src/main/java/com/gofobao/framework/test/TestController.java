@@ -7,6 +7,8 @@ import com.gofobao.framework.api.helper.JixinManager;
 import com.gofobao.framework.api.helper.JixinTxCodeEnum;
 import com.gofobao.framework.api.model.account_details_query.AccountDetailsQueryRequest;
 import com.gofobao.framework.api.model.account_details_query.AccountDetailsQueryResponse;
+import com.gofobao.framework.api.model.account_details_query2.AccountDetailsQuery2Request;
+import com.gofobao.framework.api.model.account_details_query2.AccountDetailsQuery2Response;
 import com.gofobao.framework.api.model.account_id_query.AccountIdQueryRequest;
 import com.gofobao.framework.api.model.account_id_query.AccountIdQueryResponse;
 import com.gofobao.framework.api.model.balance_query.BalanceQueryRequest;
@@ -165,7 +167,7 @@ public class TestController {
     @RequestMapping("/pub/test/xiufu/transfer")
     @Transactional(rollbackFor = Exception.class)
     public void xiufuCall() throws Exception {
-        Date nowDate= new Date();
+        Date nowDate = new Date();
         /* 理财计划回购债权转让id */
         long transferId = 613L;
         /* 理财计划回购债权转让记录 */
@@ -283,8 +285,8 @@ public class TestController {
     @RequestMapping("/pub/asset/find")
     @Transactional(rollbackFor = Exception.class)
     public void findAsset(@RequestParam("sourceId") Object sourceId, @RequestParam("startDate") Object startDate,
-                          @RequestParam("endDate") Object endDate, @RequestParam("pageIndex") Object pageIndex,
-                          @RequestParam("pageSize") Object pageSize) {
+                          @RequestParam("endDate") Object endDate, @RequestParam("inpDate") Object inpDate,
+                          @RequestParam("rtnInd") Object rtnInd) {
         BalanceQueryRequest balanceQueryRequest = new BalanceQueryRequest();
         balanceQueryRequest.setChannel(ChannelContant.HTML);
         balanceQueryRequest.setAccountId(String.valueOf(sourceId));
@@ -294,16 +296,16 @@ public class TestController {
         log.info("=========================================================================================");
         log.info(GSON.toJson(balanceQueryResponse));
 
-        AccountDetailsQueryRequest request = new AccountDetailsQueryRequest();
+        AccountDetailsQuery2Request request = new AccountDetailsQuery2Request();
         request.setAccountId(String.valueOf(sourceId));
         request.setStartDate(String.valueOf(startDate));
         request.setEndDate(String.valueOf(endDate));
         request.setChannel(ChannelContant.HTML);
         request.setType("0"); // 转入
         //request.setTranType("7820"); // 线下转账的
-        request.setPageSize(String.valueOf(pageIndex));
-        request.setPageNum(String.valueOf(pageSize));
-        AccountDetailsQueryResponse response = jixinManager.send(JixinTxCodeEnum.ACCOUNT_DETAILS_QUERY, request, AccountDetailsQueryResponse.class);
+        request.setInpDate(String.valueOf(inpDate));
+        request.setRtnInd(String.valueOf(rtnInd));
+        AccountDetailsQuery2Response response = jixinManager.send(JixinTxCodeEnum.ACCOUNT_DETAILS_QUERY2, request, AccountDetailsQuery2Response.class);
         log.info("=========================================================================================");
         log.info("即信用户资产流水查询:");
         log.info("=========================================================================================");

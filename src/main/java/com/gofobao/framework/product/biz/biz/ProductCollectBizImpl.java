@@ -101,7 +101,7 @@ public class ProductCollectBizImpl implements ProductCollectBiz {
      */
     @Override
     public ResponseEntity<VoViewFindProductCollectListRes> findProductCollectList(VoFindProductCollectList voFindProductCollectList) {
-        VoViewFindProductCollectListRes res = new VoViewFindProductCollectListRes();
+        VoViewFindProductCollectListRes res = VoBaseResp.ok("查询成功", VoViewFindProductCollectListRes.class);
         List<VoProductCollect> voProductCollectList = new ArrayList<>();
         res.setProductCollectList(voProductCollectList);
         /*用户id*/

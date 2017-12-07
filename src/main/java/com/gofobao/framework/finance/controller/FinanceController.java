@@ -59,7 +59,12 @@ public class FinanceController {
     @ApiOperation("理财计划复审")
     @PostMapping("/pub/finance/pub/again/verify")
     public ResponseEntity<VoBaseResp> financeAgainVerifyTransfer(@Valid @ModelAttribute VoFinanceAgainVerifyTransfer voFinanceAgainVerifyTransfer) {
-        return financePlanBiz.financeAgainVerifyTransfer(voFinanceAgainVerifyTransfer);
+        try {
+            return financePlanBiz.financeAgainVerifyTransfer(voFinanceAgainVerifyTransfer);
+        } catch (Exception e) {
+            log.error("理财计划复审异常：", e);
+            return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "系统开小差了，请稍后再试!", VoViewFinancePlanTender.class));
+        }
     }
 
     @ApiOperation("理财列表")
