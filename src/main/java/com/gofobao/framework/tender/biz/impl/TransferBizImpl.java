@@ -2048,7 +2048,8 @@ public class TransferBizImpl implements TransferBiz {
 
         BorrowInfoRes borrowInfoRes = VoBaseResp.ok("查询成功", BorrowInfoRes.class);
         borrowInfoRes.setApr(StringHelper.formatMon(borrow.getApr() / 100d));
-        borrowInfoRes.setLowest(StringHelper.formatMon(borrow.getLowest() / 100d));
+        //TODO
+        borrowInfoRes.setLowest(StringHelper.formatMon(transfer.getLowest() / 100d));
         long surplusMoney = transfer.getTransferMoney() - transfer.getTransferMoneyYes();
         borrowInfoRes.setViewSurplusMoney(StringHelper.formatMon(surplusMoney / 100D));
         borrowInfoRes.setHideSurplusMoney(surplusMoney);
@@ -2130,7 +2131,7 @@ public class TransferBizImpl implements TransferBiz {
         borrowInfoRes.setIsImpawn(borrow.getIsImpawn());
         borrowInfoRes.setIsMortgage(borrow.getIsMortgage());
         borrowInfoRes.setIsVouch(borrow.getIsVouch());
-        borrowInfoRes.setHideLowMoney(borrow.getLowest());
+        borrowInfoRes.setHideLowMoney(transfer.getLowest().intValue());
         borrowInfoRes.setIsFlow(true);
         borrowInfoRes.setAvatar(StringUtils.isEmpty(users.getAvatarPath())
                 ? imageDomain + "/images/user/default_avatar.jpg"

@@ -72,7 +72,11 @@ public class UserThirdAccount {
 
     private String bankLogo;
 
-    private Integer activeState ;
+    private Integer activeState;
+
+    private Date openAccountAt;
+
+    private Boolean entrustState;
 
     public String getIdNo() {
         if (!StringUtils.isNullOrEmpty(idNo)) {
