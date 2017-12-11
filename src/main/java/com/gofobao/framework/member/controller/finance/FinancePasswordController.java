@@ -35,6 +35,7 @@ public class FinancePasswordController {
     @PostMapping("/user/finance/password/modify")
     public ResponseEntity<VoBaseResp> modifyPassword(@Valid @ModelAttribute VoModifyPasswordReq voModifyPasswordReq,
                                                      @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
+
         return userPasswordBiz.modifyPassword(userId, voModifyPasswordReq);
     }
 
@@ -46,7 +47,7 @@ public class FinancePasswordController {
      */
     @ApiOperation("用户忘记密码")
     @PostMapping("/pub/user/finance/password/find")
-    public ResponseEntity<VoBaseResp> findPassword(@Valid @ModelAttribute VoFindPasswordReq voFindPasswordReq){
+    public ResponseEntity<VoBaseResp> findPassword(@Valid @ModelAttribute VoFindPasswordReq voFindPasswordReq) {
         return userPasswordBiz.findPassword(voFindPasswordReq);
     }
 
