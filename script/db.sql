@@ -1365,3 +1365,24 @@ ALTER TABLE `gfb_finance_plan`
 
 ALTER TABLE `gfb_users`
   ADD COLUMN `join_company` varchar(255) COLLATE utf8_unicode_ci NOT NULL;
+
+
+CREATE TABLE gfb_product_agent
+(
+  id         INT AUTO_INCREMENT PRIMARY KEY,
+  user_id    INT(10) UNSIGNED NOT NULL COMMENT '用户ID',
+  name       VARCHAR(255)     NOT NULL COMMENT '代理商名称',
+  level      TINYINT(2) UNSIGNED NOT NULL  COMMENT '等级；0：省代，1：市代，2县代，3：零售',
+  parent_id  INT(10) UNSIGNED NOT NULL DEFAULT 0 COMMENT '上级代理',
+  commission_discount INT(3) UNSIGNED NOT NULL DEFAULT 0 COMMENT '上级代理',
+  remark     VARCHAR(255) NOT NULL DEFAULT '' COMMENT '备注',
+  created_at DATETIME         NULL,
+  updated_at DATETIME         NULL,
+  CONSTRAINT product_agent_user_id_foreign
+  FOREIGN KEY (user_id) REFERENCES gfb_users (id)
+    ON UPDATE CASCADE
+    ON DELETE NO ACTION
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;
+
+CREATE INDEX product_agent_user_id_foreign
+  ON gfb_product_agent (user_id);

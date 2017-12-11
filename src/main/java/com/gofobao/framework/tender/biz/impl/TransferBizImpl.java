@@ -56,6 +56,7 @@ import com.gofobao.framework.repayment.entity.BorrowRepayment;
 import com.gofobao.framework.repayment.service.BorrowRepaymentService;
 import com.gofobao.framework.system.biz.IncrStatisticBiz;
 import com.gofobao.framework.system.biz.StatisticBiz;
+import com.gofobao.framework.system.biz.ThirdBatchLogBiz;
 import com.gofobao.framework.system.contants.ThirdBatchLogContants;
 import com.gofobao.framework.system.entity.IncrStatistic;
 import com.gofobao.framework.system.entity.Notices;
@@ -156,6 +157,8 @@ public class TransferBizImpl implements TransferBiz {
     private FinancePlanService financePlanService;
     @Autowired
     private FinancePlanBuyerService financePlanBuyerService;
+    @Autowired
+    private ThirdBatchLogBiz thirdBatchLogBiz;
     @Value("${gofobao.adminDomain}")
     private String adminDomain;
 
@@ -169,6 +172,7 @@ public class TransferBizImpl implements TransferBiz {
      *
      * @return
      */
+    @Override
     public ResponseEntity<VoViewTransferBuyLogList> findTransferBuyLog(VoFindTransferBuyLog voFindTransferBuyLog) {
         /* 债权转让id */
         Long transferId = voFindTransferBuyLog.getTransferId();
@@ -256,10 +260,50 @@ public class TransferBizImpl implements TransferBiz {
         if (!transfer.getUserId().equals(userId)) {
             return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "非本人操作结束债权转让。"));
         }
+        // 2.判断提交还款批次是否多次重复提交
+        ThirdBatchLog thirdBatchLog = thirdBatchLogBiz.getValidLastBatchLog(String.valueOf(transfer.getId()),
+                ThirdBatchLogContants.BATCH_CREDIT_INVEST);
+
+        int flag = thirdBatchLogBiz.checkBatchOftenSubmit(String.valueOf(transfer.getId()),
+                ThirdBatchLogContants.BATCH_CREDIT_INVEST);
+        if (flag == ThirdBatchLogContants.AWAIT) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, StringHelper.toString("债权转让处理中，暂不能取消转让!")));
+        } else if (flag == ThirdBatchLogContants.SUCCESS) {
+            //墊付批次处理
+            //触发处理批次放款处理结果队列
+            //推送批次处理到队列中
+            MqConfig mqConfig = new MqConfig();
+            mqConfig.setQueue(MqQueueEnum.RABBITMQ_THIRD_BATCH);
+            mqConfig.setTag(MqTagEnum.BATCH_DEAL);
+            ImmutableMap<String, String> body = new ImmutableMap.Builder<String, String>()
+                    .put(MqConfig.SOURCE_ID, StringHelper.toString(thirdBatchLog.getSourceId()))
+                    .put(MqConfig.BATCH_NO, thirdBatchLog.getBatchNo())
+                    .put(MqConfig.BATCH_TYPE, String.valueOf(thirdBatchLog.getType()))
+                    .put(MqConfig.MSG_TIME, DateHelper.dateToString(new Date()))
+                    .put(MqConfig.ACQ_RES, thirdBatchLog.getAcqRes())
+                    .put(MqConfig.BATCH_RESP, "")
+                    .build();
+
+            mqConfig.setMsg(body);
+            try {
+                log.info(String.format("transferBizImpl endTransfer send mq %s", GSON.toJson(body)));
+                mqHelper.convertAndSend(mqConfig);
+            } catch (Throwable e) {
+                log.error("transferBizImpl endTransfer send mq exception", e);
+            }
+
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, StringHelper.toString("债权转让处理中，暂不能取消转让!")));
+        }
+
         //2.判断是否存在已经与存管通信的记录
         Specification<TransferBuyLog> tbls = Specifications
                 .<TransferBuyLog>and()
                 .eq("transferId", transfer.getId())
+                .notIn("state", 2)
                 .build();
         List<TransferBuyLog> transferBuyLogList = transferBuyLogService.findList(tbls);
         if (!CollectionUtils.isEmpty(transferBuyLogList)) {
@@ -277,8 +321,13 @@ public class TransferBizImpl implements TransferBiz {
                 return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "已存在售出的债权，无法取消债权转让!"));
             }
             //3.更改债权转让与购买债权转让记录状态
+            /* 总购买金额 */
+            long sumBuyMoney = transferBuyLogList.stream().mapToLong(TransferBuyLog::getBuyMoney).sum();
+
             transfer.setState(4);
             transfer.setUpdatedAt(new Date());
+            transfer.setTransferMoneyYes(transfer.getTransferMoneyYes() - sumBuyMoney);
+            transfer.setTenderCount(transfer.getTenderCount() - transferBuyLogList.size());
             transfer.setSuccessAt(null);
             transferService.save(transfer);
             //4.取消购买债权并解冻金额
@@ -1502,13 +1551,6 @@ public class TransferBizImpl implements TransferBiz {
         tenderService.updateById(tender);
     }
 
-    public static void main(String[] args) {
-        System.out.println(Math.max(DateHelper.diffInDays(new Date(1507478400000l), new Date(1504972800000l), false), 0));
-        System.out.println(DateHelper.diffInDays(new Date(1507564800000l), new Date(1504972800000l), false));
-        System.out.println(MoneyHelper.divide(Math.max(DateHelper.diffInDays(new Date(1507478400000l), new Date(1504972800000l), false), 0),
-                DateHelper.diffInDays(new Date(1507564800000l), new Date(1504972800000l), false)));
-    }
-
     /**
      * 转让中
      *
@@ -2149,7 +2191,7 @@ public class TransferBizImpl implements TransferBiz {
                 //复审中
                 borrowInfoRes.setStatus(6);
                 //已过期
-            } else if (DateHelper.subDays(transfer.getReleaseAt(), 1).getTime() > new Date().getTime()) {
+            } else if (DateHelper.subDays(transfer.getReleaseAt(), 1).getTime() > System.currentTimeMillis()) {
                 borrowInfoRes.setStatus(5);
             } else {
                 //招标中
