@@ -1282,6 +1282,7 @@ public class JixinResultContants {
         result.put("CT9903", "交易超时");
         result.put("CT990300", "交易超时");
         result.put("T2601037", "银行预留手机号有误");
+        result.put("JX100128","当前电子账号已经实名认证过了");
         result.put("JX900001", "交易代码不存在");
         result.put("JX900002", "bean获取异常");
         result.put("JX900003", "请检查银行代码和机构代码");

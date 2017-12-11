@@ -21,6 +21,9 @@ import com.gofobao.framework.common.rabbitmq.MqConfig;
 import com.gofobao.framework.common.rabbitmq.MqHelper;
 import com.gofobao.framework.common.rabbitmq.MqQueueEnum;
 import com.gofobao.framework.common.rabbitmq.MqTagEnum;
+import com.gofobao.framework.contract.entity.BorrowContract;
+import com.gofobao.framework.contract.repository.BorrowContractRepository;
+import com.gofobao.framework.contract.service.ContractService;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.finance.entity.FinancePlanBuyer;
 import com.gofobao.framework.finance.service.FinancePlanBuyerService;
@@ -640,6 +643,10 @@ public class ThirdBatchDealBizImpl implements ThirdBatchDealBiz {
         }
     }
 
+
+    @Autowired
+    private ContractService contractService;
+
     /**
      * 批次放款处理
      *
@@ -779,6 +786,18 @@ public class ThirdBatchDealBizImpl implements ThirdBatchDealBiz {
                 }
                 wheelBorrowBiz.borrowUpdateNotice(borrow);
             }
+            //todo 即信合同生成成功 本地更新合同状态
+      /*      try {
+                if (borrow.getIsContract()) {
+                    List<BorrowContract> borrowContracts = contractService.findByBorrowId(borrow.getId(), batchNo, false);
+                    if (!CollectionUtils.isEmpty(borrowContracts)) {
+                        contractService.updateContractStatus(borrowId, batchNo);
+                    }
+                    log.info("标的放款成功，合同生成成功,打印合同用户的信息：" + GSON.toJson(borrowContracts));
+                }
+            } catch (Exception e) {
+                log.info("标的放款放款成功,合同失败", e);
+            }*/
         } else {
             log.info("非流转标复审失败!");
         }

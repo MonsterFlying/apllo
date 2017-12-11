@@ -361,6 +361,8 @@ public class UserThirdBizImpl implements UserThirdBiz {
         entity.setName(voOpenAccountReq.getName());
         entity.setBankLogo(dictValue.getValue03());
         entity.setBankName(bankName);
+        //todo 开户时间
+        //entity.setOpenAccountAt(nowDate);
         Long id = userThirdAccountService.save(entity);
 
         //  9.保存用户实名信息
@@ -1241,8 +1243,9 @@ public class UserThirdBizImpl implements UserThirdBiz {
         Date nowDate = new Date();
         UserThirdAccount userThirdAccount = userThirdAccountService.findByDelUseid(userId);
         userThirdAccount.setAccountId(accountOpenResponse.getAccountId());
-        userThirdAccount.setUpdateAt(new Date());
+        userThirdAccount.setUpdateAt(nowDate);
         userThirdAccount.setDel(0);
+        // todo userThirdAccount.setOpenAccountAt(nowDate);   //后台开户时间
         userThirdAccountService.save(userThirdAccount);
 
         Users user = userService.findById(userId);
