@@ -1365,3 +1365,43 @@ ALTER TABLE `gfb_finance_plan`
 
 ALTER TABLE `gfb_users`
   ADD COLUMN `join_company` varchar(255) COLLATE utf8_unicode_ci NOT NULL;
+/*
+Navicat MySQL Data Transfer
+
+Source Server         : root
+Source Server Version : 50637
+Source Host           : 192.168.1.5:3306
+Source Database       : gfb0810
+
+Target Server Type    : MYSQL
+Target Server Version : 50637
+File Encoding         : 65001
+
+Date: 2017-12-11 09:35:50
+*/
+
+SET FOREIGN_KEY_CHECKS=0;
+
+-- ----------------------------
+-- Table structure for gfb_borrow_contract
+-- ----------------------------
+DROP TABLE IF EXISTS `gfb_borrow_contract`;
+CREATE TABLE `gfb_borrow_contract` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `borrow_id` int(11) NOT NULL,
+  `user_id` int(11) NOT NULL,
+  `type` smallint(2) NOT NULL,
+  `created_at` datetime NOT NULL,
+  `update_at` timestamp NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
+  `status` smallint(1) NOT NULL DEFAULT '0',
+  `batch_no` varchar(20) CHARACTER SET utf8 NOT NULL,
+  `for_user_id` int(11) DEFAULT NULL,
+  `borrow_name` varchar(200) CHARACTER SET utf8 NOT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf-8;
+
+
+ALTER TABLE gfb_borrow ADD is_contract tinyint(1) DEFAULT '0' COMMENT '是否生成合同';
+
+ALTER TABLE gfb_user_third_account ADD open_account_at datetime DEFAULT NULL COMMENT '合同开户时间';
+ALTER TABLE gfb_user_third_account ADD entrust_state smallint(1) DEFAULT '0' COMMENT '是否签署委托授权协议';
