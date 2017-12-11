@@ -37,11 +37,10 @@ public class TransferCancelSchuduler {
         //1.查询当日以前未审核、未投满的债权转让通过的债券转让
         Date flagAt = new Date();
         flagAt = DateHelper.beginOfDate(flagAt);
-
+        //.predicate(new LeSpecification("createdAt", new DataObject(flagAt)))
         Specification<Transfer> ts = Specifications
                 .<Transfer>and()
                 .eq("type", 0)
-                .predicate(new LeSpecification("createdAt", new DataObject(flagAt)))
                 .in("state", 0, 1)
                 .build();
         List<Transfer> transferList = transferService.findList(ts);

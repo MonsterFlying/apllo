@@ -38,6 +38,7 @@ import com.gofobao.framework.borrow.biz.BorrowBiz;
 import com.gofobao.framework.borrow.biz.BorrowThirdBiz;
 import com.gofobao.framework.borrow.service.BorrowService;
 import com.gofobao.framework.borrow.vo.request.VoQueryThirdBorrowList;
+import com.gofobao.framework.collection.entity.BorrowCollection;
 import com.gofobao.framework.collection.service.BorrowCollectionService;
 import com.gofobao.framework.common.assets.AssetChangeProvider;
 import com.gofobao.framework.common.data.DataObject;
@@ -46,6 +47,7 @@ import com.gofobao.framework.common.rabbitmq.MqConfig;
 import com.gofobao.framework.common.rabbitmq.MqHelper;
 import com.gofobao.framework.common.rabbitmq.MqQueueEnum;
 import com.gofobao.framework.common.rabbitmq.MqTagEnum;
+import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.helper.JixinHelper;
 import com.gofobao.framework.helper.StringHelper;
@@ -88,6 +90,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.http.ResponseEntity;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.transaction.annotation.Transactional;
@@ -461,14 +464,20 @@ public class AplloApplicationTests {
     @Transactional
     public void test() {
 
-        Specification<Transfer> ts = Specifications
-                .<Transfer>and()
-                .eq("type", 0)
-                .predicate(new LeSpecification("createdAt", new DataObject(new Date())))
-                .in("state", 0, 1)
+        Date flagAt = new Date();
+        flagAt = DateHelper.beginOfDate(flagAt);
+        flagAt = DateHelper.subDays(flagAt, 2);
+
+        Specification<BorrowCollection> bcs = Specifications
+                .<BorrowCollection>and()
+                .eq("transferFlag", 0)
+                .eq("status", 0)
+                .predicate(new LeSpecification<>("collectionAt",new DataObject(flagAt)))
                 .build();
-        List<Transfer> transferList = transferService.findList(ts);
-        System.out.println(transferList);
+        long count = borrowCollectionService.count(bcs);
+
+        System.out.println(count);
+        System.out.println(DateHelper.dateToString(flagAt));
         /* //批次处理
         batchDeal();
         //unfrozee();

@@ -29,6 +29,8 @@ import com.gofobao.framework.common.assets.AssetChangeProvider;
 import com.gofobao.framework.common.assets.AssetChangeTypeEnum;
 import com.gofobao.framework.common.constans.MoneyConstans;
 import com.gofobao.framework.common.constans.TypeTokenContants;
+import com.gofobao.framework.common.data.DataObject;
+import com.gofobao.framework.common.data.LeSpecification;
 import com.gofobao.framework.common.rabbitmq.MqConfig;
 import com.gofobao.framework.common.rabbitmq.MqHelper;
 import com.gofobao.framework.common.rabbitmq.MqQueueEnum;
@@ -1152,6 +1154,7 @@ public class TransferBizImpl implements TransferBiz {
      * 4.生成购买债权记录
      */
     @Transactional(rollbackFor = Exception.class)
+    @Override
     public ResponseEntity<VoBaseResp> buyTransfer(VoBuyTransfer voBuyTransfer) throws Exception {
         String msg = null;
         String orderId = JixinHelper.getOrderId(JixinHelper.BALANCE_FREEZE_PREFIX);/* 购买债权转让冻结金额 orderid */
@@ -1212,7 +1215,7 @@ public class TransferBizImpl implements TransferBiz {
                 mqHelper.convertAndSend(mqConfig);
             }
         } catch (Exception e) {
-            String newOrderId = JixinHelper.getOrderId(JixinHelper.BALANCE_UNFREEZE_PREFIX);/* 购买债权转让冻结金额 orderid */
+            String newOrderId = JixinHelper.getOrderId(JixinHelper.BALANCE_UNFREEZE_PREFIX);// 购买债权转让冻结金额 orderid
             //解除存管资金冻结
             BalanceUnfreezeReq balanceUnfreezeReq = new BalanceUnfreezeReq();
             balanceUnfreezeReq.setAccountId(buyUserThirdAccount.getAccountId());
@@ -1385,13 +1388,9 @@ public class TransferBizImpl implements TransferBiz {
      * @throws Exception
      */
     @Transactional(rollbackFor = Exception.class)
+    @Override
     public ResponseEntity<VoBaseResp> newTransferTender(VoTransferTenderReq voTransferTenderReq) throws Exception {
 
-        /*if (true) {
-            return ResponseEntity
-                    .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, "债权转让内测中，敬请期待！"));
-        }*/
         long tenderId = voTransferTenderReq.getTenderId();/* 转让债权id */
         long userId = voTransferTenderReq.getUserId();/* 转让人id */
         boolean isAll = voTransferTenderReq.getIsAll();/* 是否是部分转让 */
@@ -1764,6 +1763,25 @@ public class TransferBizImpl implements TransferBiz {
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "债权至少要一期已回款,才能转让!"));
         }
 
+        //至少剩余2天回款
+        Date flagAt = new Date();
+        flagAt = DateHelper.beginOfDate(flagAt);
+        flagAt = DateHelper.subDays(flagAt, 2);
+
+        bcs = Specifications
+                .<BorrowCollection>and()
+                .eq("tenderId", tender.getId())
+                .eq("transferFlag", 0)
+                .eq("status", 0)
+                .predicate(new LeSpecification<>("collectionAt", new DataObject(flagAt)))
+                .build();
+        count = borrowCollectionService.count(bcs);
+        if (count > 0) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "转让债权离还款日必须大于2天,才能转让!"));
+        }
+
         //判断用户存管信息
         UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(tender.getUserId());
         if (!userThirdAccount.getAutoTransferState().equals(1)) {  // 审核
@@ -2094,10 +2112,10 @@ public class TransferBizImpl implements TransferBiz {
             borrowInfoRes.setTimeLimit(transfer.getTimeLimit() + com.gofobao.framework.borrow.contants.BorrowContants.MONTH);
         }
 
-        //double principal = 10000D * 100;
+        double principal = 10000D * 100;
         double apr = NumberHelper.toDouble(StringHelper.toString(transfer.getApr()));
         BorrowCalculatorHelper borrowCalculatorHelper = new BorrowCalculatorHelper(
-                new Double(transfer.getPrincipal()),
+                principal,
                 apr,
                 transfer.getTimeLimit(),
                 transfer.getRecheckAt());
