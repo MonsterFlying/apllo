@@ -103,6 +103,7 @@ public class FinanceProductOrderColltroller {
     @PostMapping("/v2/product/order/logistics/detail")
     @ApiOperation("查看物流")
     public ResponseEntity<VoViewFindOrderLogisticsDetailRes> findOrderLogisticsDetail(@ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId, @Valid @ModelAttribute VoFindOrderLogisticsDetail voFindOrderLogisticsDetail) {
+        voFindOrderLogisticsDetail.setUserId(userId);
         return productOrderBiz.findOrderLogisticsDetail(voFindOrderLogisticsDetail);
     }
 }

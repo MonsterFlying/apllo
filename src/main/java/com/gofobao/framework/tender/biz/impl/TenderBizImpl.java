@@ -73,6 +73,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -198,10 +199,12 @@ public class TenderBizImpl implements TenderBiz {
         // 借款用户资产判断
         state = verifyUserInfo4Borrow(user, borrow, asset, voCreateTenderReq, resultMap);
         Object msg = resultMap.get("msg");
-        if (!state) {
+        boolean splitFlag = BooleanUtils.toBoolean(StringHelper.toString(resultMap.get("splitFlag")));
+        if (splitFlag) {
+            return ResponseEntity.ok(VoBaseResp.ok("投资成功"));
+        } else if (!state) {
             log.error("标的判断资产不通过");
             return ResponseEntity
-
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, StringHelper.toString(msg)));
         }
@@ -411,7 +414,7 @@ public class TenderBizImpl implements TenderBiz {
      * @param voCreateTenderReq
      * @param resultMap         @return
      */
-    private boolean verifyUserInfo4Borrow(Users user, Borrow borrow, Asset asset, VoCreateTenderReq voCreateTenderReq, Map<String, Object> resultMap) {
+    private boolean verifyUserInfo4Borrow(Users user, Borrow borrow, Asset asset, VoCreateTenderReq voCreateTenderReq, Map<String, Object> resultMap) throws Exception {
         // 判断用户是否已经锁定
         String msg = null;
         if (user.getIsLock()) {
@@ -465,9 +468,22 @@ public class TenderBizImpl implements TenderBiz {
                         .build();
                 long count = tenderService.count(ts);
                 if (count == 0) {
+                    if (invaildataMoney > firstMost) {
+                        voCreateTenderReq.setTenderMoney(MoneyHelper.divide(firstMost, 100));
+                        ResponseEntity<VoBaseResp> voBaseRespResponseEntity = createTender(voCreateTenderReq);
+                        if (voBaseRespResponseEntity.getStatusCode().equals(HttpStatus.OK)) {
+                            voCreateTenderReq.setTenderMoney(MoneyHelper.divide((invaildataMoney - firstMost), 100));
+                            voCreateTenderReq.setIsCheckNimiety(false);
+                            createTender(voCreateTenderReq);
+                            resultMap.put("splitFlag", true);
+                            return false;
+                        } else {
+                            throw new Exception("投标异常：" + voBaseRespResponseEntity.getBody().getState().getMsg());
+                        }
+                    }
+
+                    //首次投不限额
                     invaildataMoney = Math.min(firstMost, invaildataMoney);
-                    msg = String.format("投资金额超过首笔投标限额%s元,超出部分资金返回账户可用余额!", StringHelper.formatDouble(firstMost, 100, true));
-                    resultMap.put("msg", msg);
                     flag = false;
                 }
             }
@@ -589,7 +605,7 @@ public class TenderBizImpl implements TenderBiz {
         }
 
         // 判断投标频繁
-        if (tenderService.checkTenderNimiety(borrow.getId(), user.getId()) && !borrow.getIsNovice()) {
+        if (tenderService.checkTenderNimiety(borrow.getId(), user.getId()) && !borrow.getIsNovice() && voCreateTenderReq.getIsCheckNimiety()) {
             errerMessage.add("投标间隔不能小于一分钟!");
             return false;
         }

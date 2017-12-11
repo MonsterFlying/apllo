@@ -23,6 +23,8 @@ public class VoViewFindOrderLogisticsDetailRes extends VoBaseResp {
     private String expressmanName;
     @ApiModelProperty("派送员电话")
     private String expressmanPhone;
+    @ApiModelProperty("发货时间")
+    private String skipAt;
     @ApiModelProperty("派送节点")
     private List<VoProductLogistics> productLogisticsList;
 }

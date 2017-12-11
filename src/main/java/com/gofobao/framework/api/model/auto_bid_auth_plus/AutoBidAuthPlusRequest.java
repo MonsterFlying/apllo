@@ -11,24 +11,15 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class AutoBidAuthRequest extends JixinBaseRequest {
+public class AutoBidAuthPlusRequest extends JixinBaseRequest {
     private String accountId ;
-
     private String orderId ;
-
     private String txAmount ;
-
     private String totAmount ;
-
     private String forgotPwdUrl ;
-
     private String retUrl ;
-
     private String notifyUrl;
-
     private String lastSrvAuthCode ;
-
     private String smsCode ;
-
     private String acqRes;
 }

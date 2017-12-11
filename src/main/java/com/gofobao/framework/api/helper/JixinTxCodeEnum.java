@@ -225,6 +225,14 @@ public enum JixinTxCodeEnum {
             "电子账户资金交易明细查询"
     ),
     /**
+     * 近两日电子账户资金交易明细查询
+     */
+    ACCOUNT_DETAILS_QUERY2(
+            "accountDetailsQuery2",
+            "/p2p/online",
+            "近两日电子账户资金交易明细查询"
+    ),
+    /**
      * 批次融资人还担保账户垫款
      */
     BATCH_REPAY_BAIL(
@@ -384,7 +392,57 @@ public enum JixinTxCodeEnum {
             "fundTransQuery",
             "/p2p/online",
             "单笔资金类业务交易查询"
-    );
+    ),
+
+    /**
+     * 请求短信验证码接口
+     */
+    CRTDATA_SENDSMS(
+            "sendSms",
+            "/crtdata/sendSms",
+            "请求短信验证码"),
+    /**
+     * 申请主动签署
+     */
+    SIGN_CONTRACT(
+            "createContract",
+            "/crtdata/createContract",
+            "申请主动签署"),
+    /**
+     * 主动签署合同确认
+     */
+    ENTER_ENTRUST("signContract",
+            "/crtdata/signContract",
+            "主动签署合同确认"),
+    /**
+     * 实名认证
+     */
+    REALNAME_AUTH(
+            "authentication",
+            "/crtdata/auth/realNameAuth",
+            "实名认证"),
+    /**
+     * 标的号绑定合同模板
+     */
+    ADD_DEBTTEMPLATE(
+            "addDebtTemplate",
+            "/crtdata/addDebtTemplate",
+            "标的号绑定合同模板"),
+    /**
+     * 获取合同ID列表
+     */
+    FIND_CONTRACT_IDS(
+            "getContracts",
+            "/vouch/contract/getContracts",
+            "获取合同ID列表"),
+    /**
+     * 标的号绑定合同模板
+     */
+    CONTRACT_DETAILS(
+            "getContract",
+            "/vouch/trimps/contract/getContract",
+            "标的号绑定合同模板");
+
 
     private String value;
     private String url;

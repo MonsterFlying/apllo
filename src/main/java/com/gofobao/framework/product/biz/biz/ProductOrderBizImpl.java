@@ -6,6 +6,10 @@ import com.gofobao.framework.asset.service.AssetService;
 import com.gofobao.framework.common.assets.AssetChange;
 import com.gofobao.framework.common.assets.AssetChangeProvider;
 import com.gofobao.framework.common.assets.AssetChangeTypeEnum;
+import com.gofobao.framework.common.rabbitmq.MqConfig;
+import com.gofobao.framework.common.rabbitmq.MqHelper;
+import com.gofobao.framework.common.rabbitmq.MqQueueEnum;
+import com.gofobao.framework.common.rabbitmq.MqTagEnum;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.helper.NumberHelper;
@@ -18,7 +22,9 @@ import com.gofobao.framework.product.service.*;
 import com.gofobao.framework.product.vo.request.*;
 import com.gofobao.framework.product.vo.response.*;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.ResponseEntity;
@@ -40,6 +46,7 @@ import static java.util.stream.Collectors.toSet;
  * Created by Zeke on 2017/11/22.
  */
 @Service
+@Slf4j
 public class ProductOrderBizImpl implements ProductOrderBiz {
 
     @Autowired
@@ -55,7 +62,7 @@ public class ProductOrderBizImpl implements ProductOrderBiz {
     @Autowired
     private ProductOrderService productOrderService;
     @Autowired
-    private ProductPlanService productPlanService;
+    private MqHelper mqHelper;
     @Autowired
     private ProductItemService productItemService;
     @Autowired
@@ -68,6 +75,43 @@ public class ProductOrderBizImpl implements ProductOrderBiz {
     private ProductItemSkuRefService productItemSkuRefService;
     @Autowired
     private ProductSkuClassifyService productSkuClassifyService;
+    @Autowired
+    private ProductOrderBiz productOrderBiz;
+
+
+    /**
+     * 订单审核
+     *
+     * @param voAuditOrder
+     * @return
+     */
+    @Override
+    public ResponseEntity<VoBaseResp> auditOrder(VoAuditOrder voAuditOrder) {
+        String orderNumber = voAuditOrder.getOrderNumber();
+        /*订单记录*/
+        ProductOrder productOrder = productOrderService.findByOrderNumber(orderNumber);
+        Preconditions.checkNotNull(productOrder, "订单记录不存在!");
+        if (productOrder.getStatus() != 2) {
+            return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "订单未支付!"));
+        }
+
+        productOrder.setStatus(3);
+        productOrder.setUpdatedAt(new Date());
+        productOrderService.save(productOrder);
+
+        MqConfig mqConfig = new MqConfig();
+        mqConfig.setQueue(MqQueueEnum.RABBITMQ_PRODUCT);
+        mqConfig.setTag(MqTagEnum.GENERATE_PRODUCT_PLAN);
+        ImmutableMap<String, String> body = ImmutableMap
+                .of(MqConfig.MSG_ORDER_NUMBER, orderNumber, MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
+        mqConfig.setMsg(body);
+        try {
+            mqHelper.convertAndSend(mqConfig);
+        } catch (Throwable e) {
+            log.error("productOrderBizImpl orderPay send mq exception", e);
+        }
+        return ResponseEntity.ok(VoBaseResp.ok("订单审核成功!"));
+    }
 
     /**
      * 获取地址字符串
@@ -75,7 +119,6 @@ public class ProductOrderBizImpl implements ProductOrderBiz {
      * @param productLogistics
      * @return
      */
-
     private String getAddressStr(ProductLogistics productLogistics) {
         StringBuffer addressStr = new StringBuffer();
         if (StringUtils.isEmpty(productLogistics.getCountry())) {
@@ -159,6 +202,11 @@ public class ProductOrderBizImpl implements ProductOrderBiz {
             productOrder.setPayMoney(payMoney);
             productOrder.setPayNumber(seqNo);
             productOrder.setPayType(payType);
+
+            //审核订单
+            VoAuditOrder voAuditOrder = new VoAuditOrder();
+            voAuditOrder.setOrderNumber(orderNumber);
+            productOrderBiz.auditOrder(voAuditOrder);
         } else {
             //预留给其它支付方式
             return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "支付失败，目前仅支持在线支付!", VoViewBuyProductPlanRes.class));
@@ -258,6 +306,8 @@ public class ProductOrderBizImpl implements ProductOrderBiz {
                 ProductSkuClassify productSkuClassify = productSkuClassifyMap.get(productSku.getScId());
                 //sku 对象
                 VoSku sku = new VoSku();
+                sku.setId(String.valueOf(productItemSkuRef.getId()));
+                sku.setClassId(String.valueOf(productSkuClassify.getId()));
                 sku.setName(productSku.getName());
                 sku.setClassNo(String.valueOf(productSkuClassify.getNo()));
                 sku.setClassName(productSkuClassify.getName());
@@ -312,6 +362,7 @@ public class ProductOrderBizImpl implements ProductOrderBiz {
         res.setExpressmanName("");
         res.setExpressmanPhone("");
         res.setStatus("0");
+        res.setSkipAt(DateHelper.dateToString(productLogistics.getShipAt()));
         res.setProductLogisticsList(new ArrayList<>());
         return ResponseEntity.ok(res);
     }

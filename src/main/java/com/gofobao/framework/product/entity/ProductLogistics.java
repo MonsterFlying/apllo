@@ -35,6 +35,7 @@ public class ProductLogistics {
     private String city;
     private String district;
     private String detailedAddress;
+    private Date shipAt;
     private Date createAt;
     private Date updateAt;
 }

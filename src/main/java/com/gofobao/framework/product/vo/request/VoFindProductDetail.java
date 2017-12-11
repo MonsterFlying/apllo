@@ -19,6 +19,6 @@ public class VoFindProductDetail {
      */
     @ApiModelProperty(name = "userId", hidden = true)
     private Long userId;
-    @ApiModelProperty("商品id")
-    private Long productId;
+    @ApiModelProperty("子商品id")
+    private Long productItemId;
 }

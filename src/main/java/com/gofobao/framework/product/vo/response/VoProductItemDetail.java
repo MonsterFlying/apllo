@@ -28,8 +28,6 @@ public class VoProductItemDetail {
     private String price;
     @ApiModelProperty("折扣价格")
     private String discountPrice;
-    @ApiModelProperty("sku集合")
-    private List<VoSku> skuList;
     @ApiModelProperty("商品详情")
     private String details;
     @ApiModelProperty("售后服务")
@@ -38,4 +36,6 @@ public class VoProductItemDetail {
     private String qAndA;
     @ApiModelProperty("是否收藏")
     private Boolean isCollect;
+    @ApiModelProperty("skuIds")
+    private String skuIds;
 }

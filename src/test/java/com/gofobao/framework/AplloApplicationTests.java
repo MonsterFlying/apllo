@@ -2,15 +2,13 @@ package com.gofobao.framework;
 
 import com.github.wenhao.jpa.Specifications;
 import com.gofobao.framework.api.contants.ChannelContant;
-import com.gofobao.framework.api.contants.DesLineFlagContant;
 import com.gofobao.framework.api.contants.JixinResultContants;
 import com.gofobao.framework.api.helper.CertHelper;
 import com.gofobao.framework.api.helper.JixinManager;
 import com.gofobao.framework.api.helper.JixinTxCodeEnum;
 import com.gofobao.framework.api.helper.JixinTxDateHelper;
-import com.gofobao.framework.api.model.account_details_query.AccountDetailsQueryItem;
-import com.gofobao.framework.api.model.account_details_query.AccountDetailsQueryRequest;
-import com.gofobao.framework.api.model.account_details_query.AccountDetailsQueryResponse;
+import com.gofobao.framework.api.model.account_details_query2.AccountDetailsQuery2Request;
+import com.gofobao.framework.api.model.account_details_query2.AccountDetailsQuery2Response;
 import com.gofobao.framework.api.model.account_query_by_mobile.AccountQueryByMobileRequest;
 import com.gofobao.framework.api.model.account_query_by_mobile.AccountQueryByMobileResponse;
 import com.gofobao.framework.api.model.balance_query.BalanceQueryRequest;
@@ -23,7 +21,6 @@ import com.gofobao.framework.api.model.batch_details_query.BatchDetailsQueryReq;
 import com.gofobao.framework.api.model.batch_details_query.BatchDetailsQueryResp;
 import com.gofobao.framework.api.model.batch_query.BatchQueryReq;
 import com.gofobao.framework.api.model.batch_query.BatchQueryResp;
-import com.gofobao.framework.api.model.batch_repay.Repay;
 import com.gofobao.framework.api.model.bid_apply_query.BidApplyQueryRequest;
 import com.gofobao.framework.api.model.bid_apply_query.BidApplyQueryResponse;
 import com.gofobao.framework.api.model.credit_auth_query.CreditAuthQueryRequest;
@@ -35,29 +32,25 @@ import com.gofobao.framework.api.model.freeze_details_query.FreezeDetailsQueryRe
 import com.gofobao.framework.api.model.freeze_details_query.FreezeDetailsQueryResponse;
 import com.gofobao.framework.api.model.trustee_pay_query.TrusteePayQueryReq;
 import com.gofobao.framework.api.model.trustee_pay_query.TrusteePayQueryResp;
-import com.gofobao.framework.api.model.voucher_pay.VoucherPayRequest;
-import com.gofobao.framework.api.model.voucher_pay.VoucherPayResponse;
-import com.gofobao.framework.asset.entity.Asset;
-import com.gofobao.framework.asset.entity.BatchAssetChangeItem;
-import com.gofobao.framework.asset.entity.NewAssetLog;
 import com.gofobao.framework.asset.service.AssetService;
 import com.gofobao.framework.asset.service.NewAssetLogService;
 import com.gofobao.framework.borrow.biz.BorrowBiz;
 import com.gofobao.framework.borrow.biz.BorrowThirdBiz;
-import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.borrow.service.BorrowService;
 import com.gofobao.framework.borrow.vo.request.VoQueryThirdBorrowList;
 import com.gofobao.framework.collection.entity.BorrowCollection;
 import com.gofobao.framework.collection.service.BorrowCollectionService;
-import com.gofobao.framework.common.assets.AssetChange;
 import com.gofobao.framework.common.assets.AssetChangeProvider;
-import com.gofobao.framework.common.assets.AssetChangeTypeEnum;
+import com.gofobao.framework.common.data.DataObject;
+import com.gofobao.framework.common.data.LeSpecification;
 import com.gofobao.framework.common.rabbitmq.MqConfig;
 import com.gofobao.framework.common.rabbitmq.MqHelper;
 import com.gofobao.framework.common.rabbitmq.MqQueueEnum;
 import com.gofobao.framework.common.rabbitmq.MqTagEnum;
-import com.gofobao.framework.helper.*;
-import com.gofobao.framework.helper.project.BorrowCalculatorHelper;
+import com.gofobao.framework.core.vo.VoBaseResp;
+import com.gofobao.framework.helper.DateHelper;
+import com.gofobao.framework.helper.JixinHelper;
+import com.gofobao.framework.helper.StringHelper;
 import com.gofobao.framework.listener.providers.BorrowProvider;
 import com.gofobao.framework.listener.providers.CreditProvider;
 import com.gofobao.framework.listener.providers.TransferProvider;
@@ -65,7 +58,6 @@ import com.gofobao.framework.marketing.biz.MarketingProcessBiz;
 import com.gofobao.framework.member.biz.BrokerBounsBiz;
 import com.gofobao.framework.member.biz.impl.WebUserThirdBizImpl;
 import com.gofobao.framework.member.entity.UserThirdAccount;
-import com.gofobao.framework.member.entity.Users;
 import com.gofobao.framework.member.service.UserCacheService;
 import com.gofobao.framework.member.service.UserService;
 import com.gofobao.framework.member.service.UserThirdAccountService;
@@ -73,34 +65,24 @@ import com.gofobao.framework.migrate.MigrateBorrowBiz;
 import com.gofobao.framework.migrate.MigrateProtocolBiz;
 import com.gofobao.framework.repayment.biz.LoanBiz;
 import com.gofobao.framework.repayment.biz.RepaymentBiz;
-import com.gofobao.framework.repayment.entity.BorrowRepayment;
 import com.gofobao.framework.repayment.service.BorrowRepaymentService;
-import com.gofobao.framework.repayment.vo.request.VoRepayReq;
 import com.gofobao.framework.scheduler.DailyAssetBackupScheduler;
 import com.gofobao.framework.scheduler.DealThirdBatchScheduler;
 import com.gofobao.framework.scheduler.biz.FundStatisticsBiz;
 import com.gofobao.framework.system.biz.ThirdBatchDealBiz;
 import com.gofobao.framework.system.biz.ThirdBatchDealLogBiz;
-import com.gofobao.framework.system.entity.Statistic;
 import com.gofobao.framework.system.service.IncrStatisticService;
 import com.gofobao.framework.system.service.ThirdBatchLogService;
 import com.gofobao.framework.tender.biz.TransferBiz;
-import com.gofobao.framework.tender.biz.impl.TransferBizImpl;
-import com.gofobao.framework.tender.contants.BorrowContants;
 import com.gofobao.framework.tender.entity.Tender;
 import com.gofobao.framework.tender.entity.Transfer;
-import com.gofobao.framework.tender.entity.TransferBuyLog;
 import com.gofobao.framework.tender.service.TenderService;
 import com.gofobao.framework.tender.service.TransferBuyLogService;
 import com.gofobao.framework.tender.service.TransferService;
-import com.gofobao.framework.tender.vo.response.web.TransferBuy;
-import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -108,23 +90,16 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.http.ResponseEntity;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
-import org.springframework.web.bind.annotation.RequestMapping;
 
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import java.util.*;
-import java.util.concurrent.ExecutionException;
-import java.util.function.Function;
-import java.util.stream.Collectors;
-
-import static com.gofobao.framework.helper.DateHelper.isBetween;
-import static java.util.stream.Collectors.groupingBy;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest
@@ -210,102 +185,8 @@ public class AplloApplicationTests {
 
     }
 
-    @Autowired
-    TestTransaction testTransaction;
 
 
-    @Test
-    public void testQueryFeeAccount() {
-        Users users = userService.findById(45217L);
-        UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(users.getId());
-        int pageSize = 20, pageIndex = 1, realSize = 0;
-        String accountId = userThirdAccount.getAccountId();  // 存管账户ID
-        List<AccountDetailsQueryItem> accountDetailsQueryItemList = new ArrayList<>();
-        do {
-            AccountDetailsQueryRequest accountDetailsQueryRequest = new AccountDetailsQueryRequest();
-            accountDetailsQueryRequest.setPageSize(String.valueOf(pageSize));
-            accountDetailsQueryRequest.setPageNum(String.valueOf(pageIndex));
-            accountDetailsQueryRequest.setStartDate(""); // 查询当天数据
-            accountDetailsQueryRequest.setEndDate("20160927");
-            accountDetailsQueryRequest.setType("0");
-            accountDetailsQueryRequest.setAccountId(accountId);
-
-            AccountDetailsQueryResponse accountDetailsQueryResponse = jixinManager.send(JixinTxCodeEnum.ACCOUNT_DETAILS_QUERY,
-                    accountDetailsQueryRequest,
-                    AccountDetailsQueryResponse.class);
-
-            if ((ObjectUtils.isEmpty(accountDetailsQueryResponse)) || (!JixinResultContants.SUCCESS.equals(accountDetailsQueryResponse.getRetCode()))) {
-                String msg = ObjectUtils.isEmpty(accountDetailsQueryResponse) ? "当前网络出现异常, 请稍后尝试！" : accountDetailsQueryResponse.getRetMsg();
-                log.error(msg);
-                break;
-            }
-
-            String subPacks = accountDetailsQueryResponse.getSubPacks();
-            if (StringUtils.isEmpty(subPacks)) {
-                break;
-            }
-
-            Optional<List<AccountDetailsQueryItem>> optional = Optional.ofNullable(GSON.fromJson(accountDetailsQueryResponse.getSubPacks(), new TypeToken<List<AccountDetailsQueryItem>>() {
-            }.getType()));
-            List<AccountDetailsQueryItem> accountDetailsQueryItems = optional.orElse(com.google.common.collect.Lists.newArrayList());
-            realSize = accountDetailsQueryItems.size();
-            accountDetailsQueryItemList.addAll(accountDetailsQueryItems);
-            pageIndex++;
-        } while (realSize == pageSize);
-
-        for (AccountDetailsQueryItem item : accountDetailsQueryItemList) {
-            log.error(GSON.toJson(item));
-        }
-    }
-
-
-    @Test
-    public void testQueryUserInfo() {
-        List<UserThirdAccount> userThirdAccountList = userThirdAccountService.findByAll();
-
-        List<AccountDetailsQueryItem> accountDetailsQueryItemList = new ArrayList<>();
-        for (UserThirdAccount userThirdAccount : userThirdAccountList) {
-            // 查询当天充值记录
-            int pageSize = 20, pageIndex = 1, realSize = 0;
-            String accountId = userThirdAccount.getAccountId();  // 存管账户ID
-            do {
-                AccountDetailsQueryRequest accountDetailsQueryRequest = new AccountDetailsQueryRequest();
-                accountDetailsQueryRequest.setPageSize(String.valueOf(pageSize));
-                accountDetailsQueryRequest.setPageNum(String.valueOf(pageIndex));
-                accountDetailsQueryRequest.setStartDate(jixinTxDateHelper.getTxDateStr()); // 查询当天数据
-                accountDetailsQueryRequest.setEndDate(jixinTxDateHelper.getTxDateStr());
-                accountDetailsQueryRequest.setType("0");
-                accountDetailsQueryRequest.setAccountId(accountId);
-
-                AccountDetailsQueryResponse accountDetailsQueryResponse = jixinManager.send(JixinTxCodeEnum.ACCOUNT_DETAILS_QUERY,
-                        accountDetailsQueryRequest,
-                        AccountDetailsQueryResponse.class);
-
-                if ((ObjectUtils.isEmpty(accountDetailsQueryResponse)) || (!JixinResultContants.SUCCESS.equals(accountDetailsQueryResponse.getRetCode()))) {
-                    String msg = ObjectUtils.isEmpty(accountDetailsQueryResponse) ? "当前网络出现异常, 请稍后尝试！" : accountDetailsQueryResponse.getRetMsg();
-                    log.error(msg);
-                    break;
-                }
-
-                String subPacks = accountDetailsQueryResponse.getSubPacks();
-                if (StringUtils.isEmpty(subPacks)) {
-                    break;
-                }
-
-                Optional<List<AccountDetailsQueryItem>> optional = Optional.ofNullable(GSON.fromJson(accountDetailsQueryResponse.getSubPacks(), new TypeToken<List<AccountDetailsQueryItem>>() {
-                }.getType()));
-                List<AccountDetailsQueryItem> accountDetailsQueryItems = optional.orElse(com.google.common.collect.Lists.newArrayList());
-                realSize = accountDetailsQueryItems.size();
-                accountDetailsQueryItemList.addAll(accountDetailsQueryItems);
-                pageIndex++;
-            } while (realSize == pageSize);
-        }
-
-        for (AccountDetailsQueryItem item : accountDetailsQueryItemList) {
-            log.error(GSON.toJson(item));
-        }
-
-    }
 
     @Test
     public void contextLoads() throws InterruptedException {
@@ -453,22 +334,18 @@ public class AplloApplicationTests {
         System.out.println(balanceQueryResponse);
     }
 
-    @Test
-    public void accountDetailsQuery() {
 
-        AccountDetailsQueryRequest request = new AccountDetailsQueryRequest();
-        request.setAccountId("6212462190000059514");
-        request.setStartDate("20161002");
-        request.setEndDate("20171003");
+    public void accountDetailsQuery2() {
+
+        AccountDetailsQuery2Request request = new AccountDetailsQuery2Request();
+        request.setAccountId("6212462190000090196");
+        request.setStartDate("20171002");
+        request.setEndDate("20171207");
         request.setChannel(ChannelContant.HTML);
         request.setType("0"); // 转入
-        //request.setTranType("7820"); // 线下转账的
-        request.setPageSize(String.valueOf(30));
-        request.setPageNum(String.valueOf(1));
-        AccountDetailsQueryResponse response = jixinManager.send(JixinTxCodeEnum.ACCOUNT_DETAILS_QUERY, request, AccountDetailsQueryResponse.class);
+        AccountDetailsQuery2Response response = jixinManager.send(JixinTxCodeEnum.ACCOUNT_DETAILS_QUERY2, request, AccountDetailsQuery2Response.class);
         System.out.println(response);
     }
-
 
     /**
      * 复审债权转让的
@@ -587,14 +464,22 @@ public class AplloApplicationTests {
     @Transactional
     public void test() {
 
+        Date flagAt = new Date();
+        flagAt = DateHelper.beginOfDate(flagAt);
+        flagAt = DateHelper.subDays(flagAt, 2);
 
-        /*try {
-            testTransaction.test();
-        } catch (Exception e) {
-            System.out.println(e.getMessage());
-        }*/
-       /* //批次处理
-       batchDeal();
+        Specification<BorrowCollection> bcs = Specifications
+                .<BorrowCollection>and()
+                .eq("transferFlag", 0)
+                .eq("status", 0)
+                .predicate(new LeSpecification<>("collectionAt",new DataObject(flagAt)))
+                .build();
+        long count = borrowCollectionService.count(bcs);
+
+        System.out.println(count);
+        System.out.println(DateHelper.dateToString(flagAt));
+        /* //批次处理
+        batchDeal();
         //unfrozee();
         //查询存管账户资金信息
         balanceQuery();

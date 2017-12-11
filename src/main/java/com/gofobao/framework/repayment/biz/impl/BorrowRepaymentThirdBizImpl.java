@@ -17,10 +17,7 @@ import com.gofobao.framework.api.model.batch_query.BatchQueryReq;
 import com.gofobao.framework.api.model.batch_query.BatchQueryResp;
 import com.gofobao.framework.api.model.batch_repay.BatchRepayCheckResp;
 import com.gofobao.framework.api.model.batch_repay.BatchRepayRunResp;
-import com.gofobao.framework.api.model.batch_repay_bail.BatchRepayBailRunResp;
-import com.gofobao.framework.api.model.trustee_pay_query.TrusteePayQueryReq;
 import com.gofobao.framework.api.model.trustee_pay_query.TrusteePayQueryResp;
-import com.gofobao.framework.asset.contants.AssetTypeContants;
 import com.gofobao.framework.asset.contants.BatchAssetChangeContants;
 import com.gofobao.framework.asset.entity.BatchAssetChange;
 import com.gofobao.framework.asset.entity.BatchAssetChangeItem;
@@ -38,6 +35,12 @@ import com.gofobao.framework.common.rabbitmq.MqConfig;
 import com.gofobao.framework.common.rabbitmq.MqHelper;
 import com.gofobao.framework.common.rabbitmq.MqQueueEnum;
 import com.gofobao.framework.common.rabbitmq.MqTagEnum;
+import com.gofobao.framework.contract.biz.ContractBiz;
+import com.gofobao.framework.contract.contants.ContractContants;
+import com.gofobao.framework.contract.entity.BorrowContract;
+import com.gofobao.framework.contract.repository.BorrowContractRepository;
+import com.gofobao.framework.contract.service.ContractService;
+import com.gofobao.framework.contract.vo.request.BindBorrow;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.helper.*;
 import com.gofobao.framework.helper.project.TrusteePayQueryHelper;
@@ -80,7 +83,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.ResponseEntity;
-import org.springframework.retry.support.RetryTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
@@ -166,6 +168,12 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
 
     @Autowired
     TrusteePayQueryHelper trusteePayQueryHelper;
+
+    @Autowired
+    private ContractService contractService;
+
+    @Autowired
+    private ContractBiz contractBiz;
 
     /**
      * 非流转标的 即信批次放款 （满标后调用）
@@ -262,8 +270,50 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
             tender.setUpdatedAt(nowDate);
         }
         tenderService.save(tenderList);
-
         String batchNo = jixinHelper.getBatchNo();  // 批次放款
+        /**
+         * 绑定标的合同
+         */
+        //TODO 借款人是否委托授权
+        /*UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(borrow.getUserId());
+        if (!ObjectUtils.isEmpty(userThirdAccount)
+                && !StringUtils.isEmpty(userThirdAccount.getOpenAccountAt())
+                && userThirdAccount.getEntrustState()) {
+            try {
+                log.info("============进入标的绑定合同==============");
+                BindBorrow bindBorrow = new BindBorrow();
+                bindBorrow.setProductId(borrowId);
+                bindBorrow.setTemplateId(140);
+                bindBorrow.setCustomField("");
+                bindBorrow.setTradeType(ContractContants.BORROWING);
+                contractBiz.debtTemplate(bindBorrow);
+                List<BorrowContract> borrowContracts = new ArrayList<>();
+                tenderList.forEach(p -> {
+                    Long tenderUserId = p.getUserId();
+                    UserThirdAccount userThirdAccount1 = userThirdAccountService.findByUserId(tenderUserId);
+                    if (!ObjectUtils.isEmpty(userThirdAccount1)
+                            && !StringUtils.isEmpty(userThirdAccount.getOpenAccountAt())
+                            && userThirdAccount1.getEntrustState()) {
+                        BorrowContract borrowContract = new BorrowContract();
+                        borrowContract.setBatchNo(batchNo);
+                        borrowContract.setUserId(borrow.getUserId());
+                        borrowContract.setBorrowId(p.getBorrowId());
+                        borrowContract.setType(1);
+                        borrowContract.setBorrowName(borrow.getName());
+                        borrowContract.setForUserId(tenderUserId);
+                        borrowContract.setCreatedAt(p.getCreatedAt());
+                        borrowContract.setUpdateAt(new Date());
+                        borrowContracts.add(borrowContract);
+                    }
+                });
+                if (!CollectionUtils.isEmpty(borrowContracts)) {
+                    contractService.bitchSave(borrowContracts);
+                }
+            } catch (Exception e) {
+                log.error("绑定标的合同失败", e);
+            }
+        }*/
+
         Map<String, Object> acqResMap = new HashMap<>();
         acqResMap.put("borrowId", borrowId);
         String data = "";
@@ -895,7 +945,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
                 .put(MqConfig.BATCH_TYPE, String.valueOf(ThirdBatchLogContants.BATCH_LEND_REPAY))
                 .put(MqConfig.MSG_TIME, DateHelper.dateToString(new Date()))
                 .put(MqConfig.ACQ_RES, lendRepayRunResp.getAcqRes())
-                .put(MqConfig.BATCH_RESP,  GSON.toJson(lendRepayRunResp))
+                .put(MqConfig.BATCH_RESP, GSON.toJson(lendRepayRunResp))
                 .build();
 
         mqConfig.setMsg(body);

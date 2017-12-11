@@ -20,10 +20,10 @@ spring:
     password: gofobao@123
     port: 6379
   rabbitmq:
-    host: 192.168.1.5
+    host: localhost
     port: 5672
-    username: gofobao
-    password: gofobao
+    username: admin
+    password: admin123
   mail:
     host: smtp.qq.com
     port: 587
@@ -92,6 +92,9 @@ jixin: #银行存管
   ftp-host: sftp.credit2go.cn # ftp远程地址
   ftp-username: guangfubao # ftp用户名
   ftp-password: A85yL0p9ZyxIj # ftp密码
+  contract:
+      url: https://apitest-contract.credit2go.cn
+      onlineAt: 2017-11-15
 gofobao:
   dev: true # 开发环境
   javaDomain: http://7yhsngp.hk1.mofasuidao.cn

@@ -168,7 +168,7 @@ public class ThirdBatchLogBizImpl implements ThirdBatchLogBiz {
         boolean flag = true;
         for (DetailsQueryResp detailsQueryResp : detailsQueryRespList) {
             if ("F".equalsIgnoreCase(detailsQueryResp.getTxState())) {
-                Set<String> allowOrderSet = ImmutableSet.of("GFBR_1511658026692754922475", "GFBR_1511658026692299701585", "GFBR_1511658026692054001177");
+                Set<String> allowOrderSet = ImmutableSet.of("GFBLR_1511787605248691344880", "GFBR_1511658026692299701585", "GFBR_1511658026692054001177");
                 if (!allowOrderSet.contains(detailsQueryResp.getOrderId())) {
                     log.error(String.format("批次处理,出现失败批次: %s", detailsQueryResp.getFailMsg()));
                     flag = false;

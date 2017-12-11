@@ -153,4 +153,8 @@ public class RabbitMQConfig {
         return BindingBuilder.bind(financePlanRabbitmq).to(delayExchange).with(MqQueueEnum.RABBITMQ_FINANCE_PLAN.getValue()).noargs();
     }
 
+    @Bean
+    Binding productRabbitmqBinding(Queue productRabbitmq, Exchange delayExchange) {
+        return BindingBuilder.bind(productRabbitmq).to(delayExchange).with(MqQueueEnum.RABBITMQ_PRODUCT.getValue()).noargs();
+    }
 }

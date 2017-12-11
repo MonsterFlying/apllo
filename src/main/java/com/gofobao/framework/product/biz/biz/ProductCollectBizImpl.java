@@ -70,7 +70,7 @@ public class ProductCollectBizImpl implements ProductCollectBiz {
                 .eq("productItemId", productItemId)
                 .build();
         List<ProductCollect> productCollectList = productCollectService.findList(pcs);
-        Preconditions.checkState(CollectionUtils.isEmpty(productCollectList), "这个收藏已经不见啦！");
+        Preconditions.checkState(!CollectionUtils.isEmpty(productCollectList), "这个收藏已经不见啦！");
         productCollectList.stream().forEach(productCollect -> {
             productCollectService.del(productCollect);
         });
@@ -101,7 +101,7 @@ public class ProductCollectBizImpl implements ProductCollectBiz {
      */
     @Override
     public ResponseEntity<VoViewFindProductCollectListRes> findProductCollectList(VoFindProductCollectList voFindProductCollectList) {
-        VoViewFindProductCollectListRes res = new VoViewFindProductCollectListRes();
+        VoViewFindProductCollectListRes res = VoBaseResp.ok("查询成功", VoViewFindProductCollectListRes.class);
         List<VoProductCollect> voProductCollectList = new ArrayList<>();
         res.setProductCollectList(voProductCollectList);
         /*用户id*/
@@ -166,6 +166,8 @@ public class ProductCollectBizImpl implements ProductCollectBiz {
                         ProductSkuClassify productSkuClassify = productSkuClassifyMap.get(productSku.getScId());
                         //sku 对象
                         VoSku sku = new VoSku();
+                        sku.setId(String.valueOf(productItemSkuRef.getId()));
+                        sku.setClassId(String.valueOf(productSkuClassify.getId()));
                         sku.setName(productSku.getName());
                         sku.setClassNo(String.valueOf(productSkuClassify.getNo()));
                         sku.setClassName(productSkuClassify.getName());

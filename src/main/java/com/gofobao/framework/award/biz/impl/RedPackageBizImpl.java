@@ -162,7 +162,7 @@ public class RedPackageBizImpl implements RedPackageBiz {
         voucherPayRequest.setTxAmount(doubleMoney + "");
         voucherPayRequest.setForAccountId(userThirdAccount.getAccountId());
         voucherPayRequest.setDesLineFlag(DesLineFlagContant.TURE);
-        voucherPayRequest.setDesLine(sourceId + "");
+        voucherPayRequest.setDesLine(onlyNo);
         voucherPayRequest.setChannel(ChannelContant.HTML);
         VoucherPayResponse voucherPayResponse = jixinManager.send(JixinTxCodeEnum.SEND_RED_PACKET, voucherPayRequest, VoucherPayResponse.class);
         log.info(String.format("开始派发红包:%s", gson.toJson(voucherPayRequest)));

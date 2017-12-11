@@ -83,6 +83,7 @@ public class ProductBizImpl implements ProductBiz {
 
     /**
      * 立即购买
+     *
      * @// TODO: 2017/11/24 如果sku没有套餐则算作现金购买
      */
     @Override
@@ -142,7 +143,7 @@ public class ProductBizImpl implements ProductBiz {
 
         //计算额外收益
         BorrowCalculatorHelper borrowCalculatorHelper = new BorrowCalculatorHelper(new Double(productPlan.getLowest()), new Double(productPlan.getApr()), productPlan.getTimeLimit(), null);
-        Map<String, Object> rsMap = borrowCalculatorHelper.ycxhbfx();
+        Map<String, Object> rsMap = borrowCalculatorHelper.dqhbayfx();
         long earnings = NumberHelper.toLong(rsMap.get("earnings"));
         //生成订单
         String orderNumber = RandomHelper.generateNumberCode(18);
@@ -156,6 +157,7 @@ public class ProductBizImpl implements ProductBiz {
         order.setOrderNumber(orderNumber);
         order.setProductMoney(productItem.getDiscountPrice());
         order.setStatus(1);
+        order.setPayMoney(productPlan.getLowest());
         order.setUpdatedAt(nowDate);
         order.setCreatedAt(nowDate);
         productOrderService.save(order);
@@ -194,7 +196,6 @@ public class ProductBizImpl implements ProductBiz {
 
     /**
      * 下单页面
-     *
      */
     @Override
     public ResponseEntity<VoViewBoughtProductPlanRes> boughtProductPlan(VoBoughtProductPlan voBoughtProductPlan) {
@@ -279,6 +280,8 @@ public class ProductBizImpl implements ProductBiz {
             ProductSkuClassify productSkuClassify = productSkuClassifyMap.get(productSku.getScId());
             //sku 对象
             VoSku sku = new VoSku();
+            sku.setId(String.valueOf(productItemSkuRef.getId()));
+            sku.setClassId(String.valueOf(productSkuClassify.getId()));
             sku.setName(productSku.getName());
             sku.setClassNo(String.valueOf(productSkuClassify.getNo()));
             sku.setNo(String.valueOf(productSku.getNo()));
@@ -289,7 +292,7 @@ public class ProductBizImpl implements ProductBiz {
 
         /*计算额外收益*/
         BorrowCalculatorHelper borrowCalculatorHelper = new BorrowCalculatorHelper(new Double(productPlan.getLowest()), new Double(productPlan.getApr()), productPlan.getTimeLimit(), null);
-        Map<String, Object> rsMap = borrowCalculatorHelper.ycxhbfx();
+        Map<String, Object> rsMap = borrowCalculatorHelper.dqhbayfx();
 
         res.setPlanId(String.valueOf(productPlan.getId()));
         res.setProductItemId(String.valueOf(productItem.getId()));
@@ -297,7 +300,7 @@ public class ProductBizImpl implements ProductBiz {
         res.setSkuList(skuList);
         res.setExistAddress(existAddress);
         res.setTitle(product.getTitle());
-        res.setImgUrl(!ObjectUtils.isEmpty(productItem.getImgUrl()) ? product.getImgUrl() : productItem.getImgUrl());
+        res.setImgUrl(ObjectUtils.isEmpty(productItem.getImgUrl()) ? product.getImgUrl() : productItem.getImgUrl());
         res.setLowest(StringHelper.formatDouble(productPlan.getLowest(), 100, false));
         res.setShowLowest(StringHelper.formatDouble(productPlan.getLowest(), 100, true));
         res.setPlanName(productPlan.getName());
@@ -377,12 +380,16 @@ public class ProductBizImpl implements ProductBiz {
     @Override
     public ResponseEntity<VoViewFindProductItemDetailsRes> findProductDetail(VoFindProductDetail voFindProductDetail) {
         VoViewFindProductItemDetailsRes voViewFindProductItemDetailsRes = VoBaseResp.ok("查询成功!", VoViewFindProductItemDetailsRes.class);
-        List<VoProductItemDetail> productItemDetailList = new ArrayList<>();
-        voViewFindProductItemDetailsRes.setProductItemDetailList(productItemDetailList);
+        List<SkuSiftKey> siftKey = new ArrayList<>();
+        List<VoProductItemDetail> skuData = new ArrayList<>();
+        voViewFindProductItemDetailsRes.setSkuData(skuData);
+        voViewFindProductItemDetailsRes.setSiftKey(siftKey);
         /*用户id*/
         long userId = voFindProductDetail.getUserId();
-        /*商品id*/
-        long productId = voFindProductDetail.getProductId();
+        /*子商品id*/
+        long productItemId = voFindProductDetail.getProductItemId();
+        ProductItem productItem = productItemService.findById(productItemId);
+        long productId = productItem.getProductId();
         /*商品记录*/
         Product product = productService.findById(productId);
         if (!ObjectUtils.isEmpty(product)) {
@@ -411,7 +418,7 @@ public class ProductBizImpl implements ProductBiz {
                         .<ProductSku>and()
                         .in("id", skuIds.toArray())
                         .build();
-                List<ProductSku> productSkuList = productSkuService.findList(pss);
+                List<ProductSku> productSkuList = productSkuService.findList(pss, new Sort(Sort.Direction.DESC, "no"));
                 Set<Long> skuClassifyIds = productSkuList.stream().map(ProductSku::getScId).collect(Collectors.toSet());
                 Map<Long, ProductSku> productSkuMap = productSkuList.stream().collect(Collectors.toMap(ProductSku::getId, Function.identity()));
                 /*sku分类集合*/
@@ -419,39 +426,52 @@ public class ProductBizImpl implements ProductBiz {
                         .<ProductSkuClassify>and()
                         .in("id", skuClassifyIds.toArray())
                         .build();
-                List<ProductSkuClassify> productSkuClassifyList = productSkuClassifyService.findList(pscs);
-                Map<Long, ProductSkuClassify> productSkuClassifyMap = productSkuClassifyList.stream().collect(Collectors.toMap(ProductSkuClassify::getId, Function.identity()));
+                List<ProductSkuClassify> productSkuClassifyList = productSkuClassifyService.findList(pscs, new Sort(Sort.Direction.DESC, "no"));
+
+                productSkuClassifyList.stream().forEach(skuClassify -> {
+                    SkuSiftKey skuSiftKey = new SkuSiftKey();
+                    skuSiftKey.setSkuClassId(String.valueOf(skuClassify.getId()));
+                    skuSiftKey.setSkuClassName(skuClassify.getName());
+                    List<SkuSiftKey.Sku> skuList = new ArrayList<>();
+                    productSkuList.stream().forEach(productSku -> {
+                        SkuSiftKey.Sku sku = skuSiftKey.new Sku();
+                        if (skuClassify.getId().intValue() == productSku.getScId().intValue()) {
+                            sku.setSkuName(productSku.getName());
+                            sku.setSkuId(String.valueOf(productSku.getId()));
+                            skuList.add(sku);
+                        }
+                    });
+                    skuSiftKey.setSkuList(skuList);
+                    siftKey.add(skuSiftKey);
+                });
+
                 //装填子商品列表
-                for (ProductItem productItem : productItemList) {
+                for (ProductItem item : productItemList) {
                     /*子商品与sku的关联*/
-                    List<ProductItemSkuRef> productItemSkuRefs = productItemSkuRefsMap.get(productItem.getId());
-                    List<VoSku> skuList = new ArrayList<>();
+                    List<ProductItemSkuRef> productItemSkuRefs = productItemSkuRefsMap.get(item.getId());
+                    /*子商品sku字符串*/
+                    StringBuffer skuStr = new StringBuffer();
                     productItemSkuRefs.stream().forEach(productItemSkuRef -> {
                         ProductSku productSku = productSkuMap.get(productItemSkuRef.getSkuId());
-                        ProductSkuClassify classify = productSkuClassifyMap.get(productSku.getScId());
-                        VoSku voSku = new VoSku();
-                        voSku.setName(productSku.getName());
-                        voSku.setClassNo(String.valueOf(classify.getNo()));
-                        voSku.setNo(String.valueOf(productSku.getNo()));
-                        voSku.setClassName(classify.getName());
-                        skuList.add(voSku);
+                        skuStr.append(productSku.getId()).append(";");
                     });
 
                     VoProductItemDetail voProductItemDetail = new VoProductItemDetail();
                     voProductItemDetail.setName(product.getName());
-                    voProductItemDetail.setImgUrl(productItem.getImgUrl());
+                    voProductItemDetail.setImgUrl(item.getImgUrl());
                     voProductItemDetail.setTitle(product.getTitle());
-                    voProductItemDetail.setDetails(ObjectUtils.isEmpty(productItem.getDetails()) ? product.getDetails() : productItem.getDetails());
-                    voProductItemDetail.setDiscountPrice(StringHelper.formatDouble(productItem.getDiscountPrice(), 100, true));
-                    voProductItemDetail.setPrice(StringHelper.formatDouble(productItem.getPrice(), 100, true));
-                    voProductItemDetail.setInventory(String.valueOf(productItem.getInventory()));
-                    voProductItemDetail.setSkuList(skuList);
-                    voProductItemDetail.setProductItemId(productItem.getId());
-                    voProductItemDetail.setQAndA(ObjectUtils.isEmpty(productItem.getQAndA()) ? product.getQAndA() : productItem.getQAndA());
-                    voProductItemDetail.setAfterSalesService(ObjectUtils.isEmpty(productItem.getAfterSalesService()) ? product.getAfterSalesService() : productItem.getAfterSalesService());
+                    voProductItemDetail.setDetails(ObjectUtils.isEmpty(item.getDetails()) ? product.getDetails() : item.getDetails());
+                    voProductItemDetail.setDiscountPrice(StringHelper.formatDouble(item.getDiscountPrice(), 100, true));
+                    voProductItemDetail.setPrice(StringHelper.formatDouble(item.getPrice(), 100, true));
+                    voProductItemDetail.setInventory(String.valueOf(item.getInventory()));
+                    voProductItemDetail.setProductItemId(item.getId());
+                    voProductItemDetail.setQAndA(ObjectUtils.isEmpty(item.getQAndA()) ? product.getQAndA() : item.getQAndA());
+                    voProductItemDetail.setAfterSalesService(ObjectUtils.isEmpty(item.getAfterSalesService()) ? product.getAfterSalesService() : item.getAfterSalesService());
                     //判断是否收藏
-                    voProductItemDetail.setIsCollect(isCollect(userId, productItem.getId()));
-                    productItemDetailList.add(voProductItemDetail);
+                    voProductItemDetail.setIsCollect(isCollect(userId, item.getId()));
+                    voProductItemDetail.setSkuIds(skuStr.substring(0, skuStr.length() - 1));
+
+                    skuData.add(voProductItemDetail);
                 }
             }
         }
@@ -557,11 +577,13 @@ public class ProductBizImpl implements ProductBiz {
                             List<ProductItem> productItems = productItemMaps.get(product.getId());
                             Collections.sort(productItems, Comparator.comparing(ProductItem::getDiscountPrice));
                             ProductItem productItem = productItems.get(0);
+                            /*广富送计划记录*/
+                            ProductPlan productPlan = getProductPlan(productItem.getId());
                             VoProductPlan voProductPlan = new VoProductPlan();
-                            voProductPlan.setProductId(product.getId());
+                            voProductPlan.setProductItemId(productItem.getId());
                             voProductPlan.setName(product.getName());
-                            voProductPlan.setShowPrice(formatPrice(productItem.getDiscountPrice()));
-                            voProductPlan.setImgUrl(productItem.getImgUrl());
+                            voProductPlan.setShowPrice(formatPrice(productPlan.getLowest()));
+                            voProductPlan.setImgUrl(ObjectUtils.isEmpty(product.getImgUrl()) ? productItem.getImgUrl() : product.getImgUrl());
                             voProductPlan.setTitle(product.getTitle());
                             showProductPlanList.add(voProductPlan);
                         }

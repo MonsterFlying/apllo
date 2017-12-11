@@ -5,9 +5,9 @@ import com.gofobao.framework.api.contants.*;
 import com.gofobao.framework.api.helper.JixinManager;
 import com.gofobao.framework.api.helper.JixinTxCodeEnum;
 import com.gofobao.framework.api.helper.JixinTxDateHelper;
-import com.gofobao.framework.api.model.account_details_query.AccountDetailsQueryItem;
-import com.gofobao.framework.api.model.account_details_query.AccountDetailsQueryRequest;
-import com.gofobao.framework.api.model.account_details_query.AccountDetailsQueryResponse;
+import com.gofobao.framework.api.model.account_details_query2.AccountDetailsQuery2Item;
+import com.gofobao.framework.api.model.account_details_query2.AccountDetailsQuery2Request;
+import com.gofobao.framework.api.model.account_details_query2.AccountDetailsQuery2Response;
 import com.gofobao.framework.api.model.account_id_query.AccountIdQueryRequest;
 import com.gofobao.framework.api.model.account_id_query.AccountIdQueryResponse;
 import com.gofobao.framework.api.model.account_open.AccountOpenRequest;
@@ -16,8 +16,8 @@ import com.gofobao.framework.api.model.account_open_plus.AccountOpenPlusRequest;
 import com.gofobao.framework.api.model.account_open_plus.AccountOpenPlusResponse;
 import com.gofobao.framework.api.model.account_query_by_mobile.AccountQueryByMobileRequest;
 import com.gofobao.framework.api.model.account_query_by_mobile.AccountQueryByMobileResponse;
-import com.gofobao.framework.api.model.auto_bid_auth_plus.AutoBidAuthRequest;
-import com.gofobao.framework.api.model.auto_bid_auth_plus.AutoBidAuthResponse;
+import com.gofobao.framework.api.model.auto_bid_auth_plus.AutoBidAuthPlusRequest;
+import com.gofobao.framework.api.model.auto_bid_auth_plus.AutoBidAuthPlusResponse;
 import com.gofobao.framework.api.model.auto_credit_invest_auth.AutoCreditInvestAuthRequest;
 import com.gofobao.framework.api.model.auto_credit_invest_auth.AutoCreditInvestAuthResponse;
 import com.gofobao.framework.api.model.balance_query.BalanceQueryRequest;
@@ -361,6 +361,8 @@ public class UserThirdBizImpl implements UserThirdBiz {
         entity.setName(voOpenAccountReq.getName());
         entity.setBankLogo(dictValue.getValue03());
         entity.setBankName(bankName);
+        //todo 开户时间
+        //entity.setOpenAccountAt(nowDate);
         Long id = userThirdAccountService.save(entity);
 
         //  9.保存用户实名信息
@@ -653,7 +655,7 @@ public class UserThirdBizImpl implements UserThirdBiz {
 
     @Override
     public ResponseEntity<String> autoTenderCallback(HttpServletRequest request, HttpServletResponse response) {
-        AutoBidAuthResponse autoBidAuthResponse = jixinManager.callback(request, new TypeToken<AutoBidAuthResponse>() {
+        AutoBidAuthPlusResponse autoBidAuthResponse = jixinManager.callback(request, new TypeToken<AutoBidAuthPlusResponse>() {
         });
 
         if (ObjectUtils.isEmpty(autoBidAuthResponse)) {
@@ -748,7 +750,7 @@ public class UserThirdBizImpl implements UserThirdBiz {
         }
 
 
-        AutoBidAuthRequest autoBidAuthRequest = new AutoBidAuthRequest();
+        AutoBidAuthPlusRequest autoBidAuthRequest = new AutoBidAuthPlusRequest();
         autoBidAuthRequest.setAccountId(userThirdAccount.getAccountId());
         autoBidAuthRequest.setOrderId(System.currentTimeMillis() + RandomHelper.generateNumberCode(6));
         autoBidAuthRequest.setTxAmount("999999999");
@@ -824,20 +826,20 @@ public class UserThirdBizImpl implements UserThirdBiz {
             }
             log.info("查询用户自动债权转让协议结束");
         }
-        AutoCreditInvestAuthRequest autoCreditInvestAuthPlusRequest = new AutoCreditInvestAuthRequest();
-        autoCreditInvestAuthPlusRequest.setAccountId(userThirdAccount.getAccountId());
-        autoCreditInvestAuthPlusRequest.setOrderId(System.currentTimeMillis() + RandomHelper.generateNumberCode(6));
-        autoCreditInvestAuthPlusRequest.setForgotPwdUrl(thirdAccountPasswordHelper.getThirdAcccountResetPasswordUrl(httpServletRequest, userId));
+        AutoCreditInvestAuthRequest autoCreditInvestAuthRequest = new AutoCreditInvestAuthRequest();
+        autoCreditInvestAuthRequest.setAccountId(userThirdAccount.getAccountId());
+        autoCreditInvestAuthRequest.setOrderId(System.currentTimeMillis() + RandomHelper.generateNumberCode(6));
+        autoCreditInvestAuthRequest.setForgotPwdUrl(thirdAccountPasswordHelper.getThirdAcccountResetPasswordUrl(httpServletRequest, userId));
         // autoCreditInvestAuthPlusRequest.setRetUrl(String.format("%s%s%s", javaDomain, "/pub/autoTranfer/show/", userId));
-        autoCreditInvestAuthPlusRequest.setRetUrl(String.format("%s/pub/openAccount/callback/%s/autoTranfer", javaDomain, userThirdAccount.getUserId()));
-        autoCreditInvestAuthPlusRequest.setNotifyUrl(String.format("%s/%s", javaDomain, "/pub/user/third/autoTranfer/callback"));
-        autoCreditInvestAuthPlusRequest.setAcqRes(userId.toString());
-        autoCreditInvestAuthPlusRequest.setChannel(ChannelContant.getchannel(httpServletRequest));
+        autoCreditInvestAuthRequest.setRetUrl(String.format("%s/pub/openAccount/callback/%s/autoTranfer", javaDomain, userThirdAccount.getUserId()));
+        autoCreditInvestAuthRequest.setNotifyUrl(String.format("%s/%s", javaDomain, "/pub/user/third/autoTranfer/callback"));
+        autoCreditInvestAuthRequest.setAcqRes(userId.toString());
+        autoCreditInvestAuthRequest.setChannel(ChannelContant.getchannel(httpServletRequest));
 
 
         String html = null;
         try {
-            html = jixinManager.getHtml(JixinTxCodeEnum.AUTO_CREDIT_INVEST_AUTH, autoCreditInvestAuthPlusRequest);
+            html = jixinManager.getHtml(JixinTxCodeEnum.AUTO_CREDIT_INVEST_AUTH, autoCreditInvestAuthRequest);
         } catch (Throwable e) {
             log.error("UserThirdBizImpl autoTranfter get redis exception ", e);
             return ResponseEntity
@@ -1241,8 +1243,9 @@ public class UserThirdBizImpl implements UserThirdBiz {
         Date nowDate = new Date();
         UserThirdAccount userThirdAccount = userThirdAccountService.findByDelUseid(userId);
         userThirdAccount.setAccountId(accountOpenResponse.getAccountId());
-        userThirdAccount.setUpdateAt(new Date());
+        userThirdAccount.setUpdateAt(nowDate);
         userThirdAccount.setDel(0);
+        // todo userThirdAccount.setOpenAccountAt(nowDate);   //后台开户时间
         userThirdAccountService.save(userThirdAccount);
 
         Users user = userService.findById(userId);
@@ -1941,11 +1944,11 @@ public class UserThirdBizImpl implements UserThirdBiz {
         //分页
         Integer pageIndex = userAccountThirdTxReq.getPageIndex() + 1;
         Integer pageSize = userAccountThirdTxReq.getPageSize();
-        List<AccountDetailsQueryItem> accountDetailsQueryItemList = new ArrayList<>();
+        List<AccountDetailsQuery2Item> accountDetailsQueryItemList = new ArrayList<>();
         //装配请求即信请求参数
-        AccountDetailsQueryRequest accountDetailsQueryRequest = new AccountDetailsQueryRequest();
-        accountDetailsQueryRequest.setPageNum(String.valueOf(pageIndex)); //启始页
-        accountDetailsQueryRequest.setPageSize(String.valueOf(pageSize));   //页面大小
+        AccountDetailsQuery2Request accountDetailsQueryRequest = new AccountDetailsQuery2Request();
+        accountDetailsQueryRequest.setInpDate(""); //翻页控制使用；首次查询上送空；翻页查询时上送上页返回的最后一条记录交易日期；YYYYMMDD
+        accountDetailsQueryRequest.setRtnInd("");   //空：首次查询；1：翻页查询；其它：非法；
         // 查询交易时间范围
         accountDetailsQueryRequest.setStartDate(txDateStr);
         accountDetailsQueryRequest.setEndDate(txDateStr);
@@ -1954,9 +1957,9 @@ public class UserThirdBizImpl implements UserThirdBiz {
         //存管账户
         accountDetailsQueryRequest.setAccountId(accountId);
         //发送即信请求
-        AccountDetailsQueryResponse accountDetailsQueryResponse = jixinManager.send(JixinTxCodeEnum.ACCOUNT_DETAILS_QUERY,
+        AccountDetailsQuery2Response accountDetailsQueryResponse = jixinManager.send(JixinTxCodeEnum.ACCOUNT_DETAILS_QUERY2,
                 accountDetailsQueryRequest,
-                AccountDetailsQueryResponse.class);
+                AccountDetailsQuery2Response.class);
         //判断返回结果
         if ((ObjectUtils.isEmpty(accountDetailsQueryResponse)) || (!JixinResultContants.SUCCESS.equals(accountDetailsQueryResponse.getRetCode()))) {
             String ressultMsg = ObjectUtils.isEmpty(accountDetailsQueryResponse) ? "当前网络出现异常, 请稍后尝试！" : accountDetailsQueryResponse.getRetMsg();
@@ -1970,9 +1973,9 @@ public class UserThirdBizImpl implements UserThirdBiz {
             return ResponseEntity.ok(thridTxRes);
         }
         //json转对象
-        List<AccountDetailsQueryItem> detailsQueryItems = new Gson().fromJson(subPacks, new TypeToken<List<AccountDetailsQueryItem>>() {
+        List<AccountDetailsQuery2Item> detailsQueryItems = new Gson().fromJson(subPacks, new TypeToken<List<AccountDetailsQuery2Item>>() {
         }.getType());
-        thridTxRes.setTotalCount(Integer.valueOf(accountDetailsQueryResponse.getTotalItems()));
+        thridTxRes.setTotalCount(Integer.valueOf(detailsQueryItems.size()));
         thridTxRes.setDetailsQueryItems(detailsQueryItems);
         return ResponseEntity.ok(thridTxRes);
     }

@@ -7,14 +7,13 @@ import com.gofobao.framework.api.contants.JixinResultContants;
 import com.gofobao.framework.api.helper.JixinManager;
 import com.gofobao.framework.api.helper.JixinTxCodeEnum;
 import com.gofobao.framework.api.helper.JixinTxDateHelper;
-import com.gofobao.framework.api.model.account_details_query.AccountDetailsQueryItem;
-import com.gofobao.framework.api.model.account_details_query.AccountDetailsQueryRequest;
-import com.gofobao.framework.api.model.account_details_query.AccountDetailsQueryResponse;
+import com.gofobao.framework.api.model.account_details_query2.AccountDetailsQuery2Item;
+import com.gofobao.framework.api.model.account_details_query2.AccountDetailsQuery2Request;
+import com.gofobao.framework.api.model.account_details_query2.AccountDetailsQuery2Response;
 import com.gofobao.framework.api.model.balance_query.BalanceQueryRequest;
 import com.gofobao.framework.api.model.balance_query.BalanceQueryResponse;
 import com.gofobao.framework.api.model.with_daw.WithDrawRequest;
 import com.gofobao.framework.api.model.with_daw.WithDrawResponse;
-import com.gofobao.framework.asset.biz.AssetBiz;
 import com.gofobao.framework.asset.biz.CashDetailLogBiz;
 import com.gofobao.framework.asset.entity.Asset;
 import com.gofobao.framework.asset.entity.CashDetailLog;
@@ -756,42 +755,45 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
      * @param userThirdAccount
      * @return
      */
-    private List<AccountDetailsQueryItem> findUserAssetChangeLog(CashDetailLog cashDetailLog, UserThirdAccount userThirdAccount) {
-        List<AccountDetailsQueryItem> accountDetailsQueryItemList = new ArrayList<>();
+    private List<AccountDetailsQuery2Item> findUserAssetChangeLog(CashDetailLog cashDetailLog, UserThirdAccount userThirdAccount) {
+        List<AccountDetailsQuery2Item> accountDetailsQueryItemList = new ArrayList<>();
         // 查询用户操作记录
-        int pageSize = 20, pageIndex = 1, realSize = 0;
         String accountId = userThirdAccount.getAccountId();  // 存管账户ID
+        String rtnInd = "";
+        String inpDate = "";
         String queryDate = StringUtils.isEmpty(cashDetailLog.getQuerySeqNo()) ? jixinTxDateHelper.getTxDateStr() : cashDetailLog.getQuerySeqNo();
         do {
-            AccountDetailsQueryRequest accountDetailsQueryRequest = new AccountDetailsQueryRequest();
-            accountDetailsQueryRequest.setPageSize(String.valueOf(pageSize));
-            accountDetailsQueryRequest.setPageNum(String.valueOf(pageIndex));
-            accountDetailsQueryRequest.setStartDate(queryDate);
-            accountDetailsQueryRequest.setEndDate(queryDate);
-            accountDetailsQueryRequest.setType("0");
-            accountDetailsQueryRequest.setAccountId(accountId);
-            AccountDetailsQueryResponse accountDetailsQueryResponse = jixinManager.send(JixinTxCodeEnum.ACCOUNT_DETAILS_QUERY,
-                    accountDetailsQueryRequest,
-                    AccountDetailsQueryResponse.class);
+            AccountDetailsQuery2Request accountDetailsQuery2Request = new AccountDetailsQuery2Request();
+            accountDetailsQuery2Request.setRtnInd(rtnInd);
+            accountDetailsQuery2Request.setInpDate(inpDate);
+            accountDetailsQuery2Request.setStartDate(queryDate);
+            accountDetailsQuery2Request.setEndDate(queryDate);
+            accountDetailsQuery2Request.setType("0");
+            accountDetailsQuery2Request.setAccountId(accountId);
+            AccountDetailsQuery2Response accountDetailsQuery2Response = jixinManager.send(JixinTxCodeEnum.ACCOUNT_DETAILS_QUERY2,
+                    accountDetailsQuery2Request,
+                    AccountDetailsQuery2Response.class);
 
-            if ((ObjectUtils.isEmpty(accountDetailsQueryResponse)) || (!JixinResultContants.SUCCESS.equals(accountDetailsQueryResponse.getRetCode()))) {
-                String msg = ObjectUtils.isEmpty(accountDetailsQueryResponse) ? "当前网络出现异常, 请稍后尝试！" : accountDetailsQueryResponse.getRetMsg();
+            if ((ObjectUtils.isEmpty(accountDetailsQuery2Response)) || (!JixinResultContants.SUCCESS.equals(accountDetailsQuery2Response.getRetCode()))) {
+                String msg = ObjectUtils.isEmpty(accountDetailsQuery2Response) ? "当前网络出现异常, 请稍后尝试！" : accountDetailsQuery2Response.getRetMsg();
                 log.error(String.format("资金同步: %s", msg));
                 return Collections.EMPTY_LIST;
             }
 
-            String subPacks = accountDetailsQueryResponse.getSubPacks();
+            String subPacks = accountDetailsQuery2Response.getSubPacks();
             if (StringUtils.isEmpty(subPacks)) {
                 break;
             }
 
-            Optional<List<AccountDetailsQueryItem>> optional = Optional.ofNullable(GSON.fromJson(accountDetailsQueryResponse.getSubPacks(), new TypeToken<List<AccountDetailsQueryItem>>() {
+            Optional<List<AccountDetailsQuery2Item>> optional = Optional.ofNullable(GSON.fromJson(accountDetailsQuery2Response.getSubPacks(), new TypeToken<List<AccountDetailsQuery2Item>>() {
             }.getType()));
-            List<AccountDetailsQueryItem> accountDetailsQueryItems = optional.orElse(Lists.newArrayList());
-            realSize = accountDetailsQueryItems.size();
+            List<AccountDetailsQuery2Item> accountDetailsQueryItems = optional.orElse(Lists.newArrayList());
+
+            inpDate = accountDetailsQueryItemList.get(accountDetailsQueryItems.size() - 1).getInpDate();
+
             accountDetailsQueryItemList.addAll(accountDetailsQueryItems);
-            pageIndex++;
-        } while (realSize == pageSize);
+            rtnInd = "1";
+        } while (!CollectionUtils.isEmpty(accountDetailsQueryItemList));
         if (CollectionUtils.isEmpty(accountDetailsQueryItemList)) {
             log.error(String.format("大额提现调度: 查询存管系统信息为空 %s", GSON.toJson(cashDetailLog)));
             return Collections.EMPTY_LIST;
@@ -949,7 +951,7 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
             }
 
             long redPackMoney = marketingRedpackRecordService.countByUserIdAndDate(userId, beginDate, nowDate);
-            log.warn("领取红包金额:" + redPackMoney) ;
+            log.warn("领取红包金额:" + redPackMoney);
             long cahsMoney = money.longValue() - redPackMoney;
             // 提现金额
             return cahsMoney < 0 ? 0 : cahsMoney;

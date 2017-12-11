@@ -212,7 +212,7 @@ public class BorrowCollectionServiceImpl implements BorrowCollectionService {
         Set<Long> borrowIds = borrowCollections.stream().map(p -> p.getBorrowId()).collect(Collectors.toSet());
         List<Borrow> borrowList = borrowRepository.findByIdIn(new ArrayList<>(borrowIds));
         Map<Long, Borrow> borrowMaps = borrowList.stream().collect(Collectors.toMap(Borrow::getId, Function.identity()));
-
+        Date flagAt = DateHelper.stringToDate("2017-11-1 00:00:00", DateHelper.DATE_FORMAT_YMDHMS);
         borrowCollections.stream().forEach(p -> {
             Collection collection = new Collection();
             Borrow borrow = borrowMaps.get(p.getBorrowId());
@@ -221,8 +221,9 @@ public class BorrowCollectionServiceImpl implements BorrowCollectionService {
             collection.setPrincipal(StringHelper.formatMon(p.getPrincipal() / 100D));
             collection.setCollectionAt(DateHelper.dateToString(p.getCollectionAt()));
             collection.setOrder(p.getOrder() + 1);
-            collection.setTimeLimit(BorrowContants.REPAY_FASHION_ONCE == borrow.getRepayFashion() ? BorrowContants.REPAY_FASHION_ONCE : borrow.getTimeLimit());
-            if (borrow.getType().intValue() == 0 || borrow.getType().intValue() == 4) { //官标
+            collection.setTimeLimit(BorrowContants.REPAY_FASHION_ONCE.equals(borrow.getRepayFashion()) ? BorrowContants.REPAY_FASHION_ONCE : borrow.getTimeLimit());
+            if ((borrow.getType().intValue() == 0 || borrow.getType().intValue() == 4)
+                    && flagAt.getTime() > borrow.getRecheckAt().getTime()) { //官标并且是2017-11-1 00:00:00之前的标的
                 collection.setEarnings(StringHelper.formatMon((p.getInterest() * 0.9) / 100D));
             } else {
                 collection.setEarnings(StringHelper.formatMon(p.getInterest() / 100D));

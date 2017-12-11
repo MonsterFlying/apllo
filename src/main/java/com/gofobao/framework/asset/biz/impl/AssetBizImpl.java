@@ -5,8 +5,6 @@ import com.gofobao.framework.api.contants.*;
 import com.gofobao.framework.api.helper.JixinManager;
 import com.gofobao.framework.api.helper.JixinTxCodeEnum;
 import com.gofobao.framework.api.helper.JixinTxDateHelper;
-import com.gofobao.framework.api.model.account_details_query.AccountDetailsQueryRequest;
-import com.gofobao.framework.api.model.account_details_query.AccountDetailsQueryResponse;
 import com.gofobao.framework.api.model.balance_query.BalanceQueryRequest;
 import com.gofobao.framework.api.model.balance_query.BalanceQueryResponse;
 import com.gofobao.framework.api.model.direct_recharge_online.DirectRechargeOnlineRequest;
@@ -88,7 +86,6 @@ import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 
-import javax.persistence.Entity;
 import javax.persistence.EntityManager;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -444,7 +441,7 @@ public class AssetBizImpl implements AssetBiz {
                 log.warn("中国银行快捷充值, 系统主动拒绝充值!");
                 return ResponseEntity
                         .badRequest()
-                        .body(VoBaseResp.error(VoBaseResp.ERROR_INIT_BANK_PASSWORD,
+                        .body(VoBaseResp.error(VoBaseResp.ERROR,
                                 "非常抱歉, 存管系统暂不支持中国银行的快捷充值, 建议你使用支付宝/网银转账"));
             }
 
@@ -1121,39 +1118,6 @@ public class AssetBizImpl implements AssetBiz {
         return ResponseEntity.ok(response);
     }
 
-
-    /**
-     * 查询线下充值
-     *
-     * @param pageIndex 下标
-     * @param pageSize  页面
-     * @param accountId 存管账户
-     * @return
-     */
-    private AccountDetailsQueryResponse doOffLineRecharge(int pageIndex, int pageSize, String accountId) {
-        AccountDetailsQueryRequest request = new AccountDetailsQueryRequest();
-        request.setAccountId(accountId);
-        request.setStartDate(jixinTxDateHelper.getTxDateStr());
-        request.setEndDate(jixinTxDateHelper.getTxDateStr());
-        request.setChannel(ChannelContant.HTML);
-        request.setType("9"); // 转入
-        request.setTranType("7820"); // 线下转账的
-        request.setPageSize(String.valueOf(pageSize));
-        request.setPageNum(String.valueOf(pageIndex));
-
-        AccountDetailsQueryResponse response = jixinManager.send(JixinTxCodeEnum.ACCOUNT_DETAILS_QUERY, request, AccountDetailsQueryResponse.class);
-        if (ObjectUtils.isEmpty(response)) {
-            log.error(String.format("查询资金请求异常"));
-            return null;
-        }
-
-        if (!JixinResultContants.SUCCESS.equals(response.getRetCode())) {
-            log.error(String.format("资金查询失败"));
-            return null;
-        }
-
-        return response;
-    }
 
     /**
      * 账户总额统计

@@ -27,6 +27,8 @@ import com.gofobao.framework.common.data.DataObject;
 import com.gofobao.framework.common.data.GeSpecification;
 import com.gofobao.framework.common.data.LeSpecification;
 import com.gofobao.framework.common.rabbitmq.MqConfig;
+import com.gofobao.framework.contract.biz.ContractBiz;
+import com.gofobao.framework.contract.service.ContractService;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.helper.*;
 import com.gofobao.framework.helper.project.BorrowHelper;
@@ -106,6 +108,9 @@ public class TransferProvider {
     private String javaDomain;
 
     @Autowired
+    private ContractService contractService;
+
+    @Autowired
     private JixinManager jixinManager;
 
     final Gson GSON = new GsonBuilder().create();
@@ -176,13 +181,13 @@ public class TransferProvider {
             //查询自动投标投资人的资产记录
             as = Specifications
                     .<Asset>and()
-                    .in("userId", userIds)
+                    .in("userId", userIds.toArray())
                     .build();
             assetMaps = assetService.findList(as).stream().collect(Collectors.toMap(Asset::getUserId, Function.identity()));
             //查询自动投标投资人的存管账户记录
             utas = Specifications
                     .<UserThirdAccount>and()
-                    .in("userId", userIds)
+                    .in("userId", userIds.toArray())
                     .build();
             userThirdAccountMaps = userThirdAccountService.findList(utas).stream().collect(Collectors.toMap(UserThirdAccount::getUserId, Function.identity()));
 
@@ -300,6 +305,16 @@ public class TransferProvider {
         //增加successAt时间
         transfer.setSuccessAt(new Date());
         transferService.save(transfer);
+           //TODO 债转合同生成成功
+        /*    try {
+            List<BorrowContract> borrowContracts = contractService.findByBorrowId(transfer.getBorrowId(), batchNo, false);
+            if (!CollectionUtils.isEmpty(borrowContracts)) {
+                contractService.updateContractStatus(transfer.getBorrowId(), batchNo);
+            }
+            log.info("标的放款成功，合同生成成功,打印合同用户的信息：" + GSON.toJson(borrowContracts));
+        } catch (Exception e) {
+            log.info("标的放款放款成功,合同失败", e);
+        }*/
         log.info(String.format("复审: 批量债权转让申请成功: %s", GSON.toJson(msg)));
         return true;
 
@@ -402,6 +417,10 @@ public class TransferProvider {
         }
     }
 
+
+    @Autowired
+    private ContractBiz contractBiz;
+
     /**
      * 登记存管债权转让
      *
@@ -492,6 +511,47 @@ public class TransferProvider {
 
         //批次号
         String batchNo = JixinHelper.getBatchNo();
+        //todo 绑定债转合同
+       /* Borrow borrow = borrowService.findById(transfer.getBorrowId());
+        try {
+            Long transferUserId = transfer.getUserId();
+            UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(transferUserId);
+            if (!ObjectUtils.isEmpty(userThirdAccount)
+                    && !StringUtils.isEmpty(userThirdAccount.getOpenAccountAt())
+                    && userThirdAccount.getEntrustState()) {
+                log.info("=============调用债权转让生成合同===============");
+                BindBorrow bindBorrow = new BindBorrow();
+                bindBorrow.setProductId(transfer.getBorrowId());
+                bindBorrow.setTradeType(ContractContants.TRANSFER);
+                //todo 合同模板没确定
+                bindBorrow.setTemplateId(147);
+                contractBiz.debtTemplate(bindBorrow);
+                //记录
+                List<BorrowContract> borrowContracts = Lists.newArrayList();
+                transferBuyLogList.forEach(transferBuyLog -> {
+                    Long userId = transferBuyLog.getUserId();
+                    UserThirdAccount userThirdAccount1 = userThirdAccountService.findByUserId(userId);
+                    if (userThirdAccount1.getEntrustState()) {
+                        BorrowContract borrowContract = new BorrowContract();
+                        borrowContract.setBatchNo(batchNo);
+                        borrowContract.setForUserId(transferBuyLog.getUserId());
+                        borrowContract.setType(2);
+                        borrowContract.setCreatedAt(new Date());
+                        borrowContract.setUserId(transfer.getUserId());
+                        borrowContract.setBorrowId(transfer.getBorrowId());
+                        borrowContract.setUpdateAt(new Date());
+                        borrowContract.setBorrowName(borrow.getName());
+                        borrowContract.setStatus(false);
+                        borrowContracts.add(borrowContract);
+                    }
+                });
+                if (!CollectionUtils.isEmpty(borrowContracts)) {
+                    contractService.bitchSave(borrowContracts);
+                }
+            }
+        } catch (Exception e) {
+            log.error("调用债权转让生成合同失败", e);
+        }*/
         //请求保留参数
         Map<String, Object> acqResMap = new HashMap<>();
         acqResMap.put("transferId", transfer.getId());

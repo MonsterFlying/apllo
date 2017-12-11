@@ -29,6 +29,8 @@ import com.gofobao.framework.common.assets.AssetChangeProvider;
 import com.gofobao.framework.common.assets.AssetChangeTypeEnum;
 import com.gofobao.framework.common.constans.MoneyConstans;
 import com.gofobao.framework.common.constans.TypeTokenContants;
+import com.gofobao.framework.common.data.DataObject;
+import com.gofobao.framework.common.data.LeSpecification;
 import com.gofobao.framework.common.rabbitmq.MqConfig;
 import com.gofobao.framework.common.rabbitmq.MqHelper;
 import com.gofobao.framework.common.rabbitmq.MqQueueEnum;
@@ -260,40 +262,67 @@ public class TransferBizImpl implements TransferBiz {
                 .eq("transferId", transfer.getId())
                 .build();
         List<TransferBuyLog> transferBuyLogList = transferBuyLogService.findList(tbls);
-        Preconditions.checkState(!CollectionUtils.isEmpty(transferBuyLogList), "购买债权转让记录为空!");
-        /* 已跟即信通信的债权转让记录条数 */
-        long count = transferBuyLogList.stream().filter(transferBuyLog -> BooleanHelper.isTrue(transferBuyLog.getThirdTransferFlag())).count();
-        if (count > 0) {
-            return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "已存在售出的债权，无法取消债权转让!"));
-        }
-        //3.更改债权转让与购买债权转让记录状态
-        transfer.setState(4);
-        transfer.setUpdatedAt(new Date());
-        transfer.setSuccessAt(null);
-        transferService.save(transfer);
-        //4.取消购买债权并解冻金额
-        transferBuyLogList.stream().forEach(transferBuyLog -> {
-            transferBuyLog.setState(2);
-            transferBuyLog.setUpdatedAt(new Date());
-            //解冻债权转让人购买债权转让冻结资金
-            AssetChange assetChange = new AssetChange();
-            assetChange.setSourceId(transferBuyLog.getId());
-            assetChange.setGroupSeqNo(assetChangeProvider.getGroupSeqNo());
-            assetChange.setMoney(transferBuyLog.getValidMoney());
-            assetChange.setSeqNo(assetChangeProvider.getSeqNo());
-            assetChange.setRemark(String.format("购买债权转让[%s]失败, 冻结解冻资金%s元",
-                    transfer.getTitle(),
-                    StringHelper.formatDouble(transferBuyLog.getValidMoney() / 100D,
-                            true)));
-            assetChange.setType(AssetChangeTypeEnum.unfreeze);
-            assetChange.setUserId(transferBuyLog.getUserId());
-            try {
-                assetChangeProvider.commonAssetChange(assetChange);
-            } catch (Exception e) {
-                log.error("结束债权转让解冻直接失败!", e);
+        if (!CollectionUtils.isEmpty(transferBuyLogList)) {
+            Set<Long> userIds = transferBuyLogList.stream().map(TransferBuyLog::getUserId).collect(Collectors.toSet());
+            Specification<UserThirdAccount> utas = Specifications
+                    .<UserThirdAccount>and()
+                    .in("userId", userIds.toArray())
+                    .build();
+            List<UserThirdAccount> userThirdAccountList = userThirdAccountService.findList(utas);
+            Map<Long/*用户id*/, UserThirdAccount> userThirdAccountMap = userThirdAccountList.stream().collect(Collectors.toMap(UserThirdAccount::getUserId, Function.identity()));
+
+            /* 已跟即信通信的债权转让记录条数 */
+            long count = transferBuyLogList.stream().filter(transferBuyLog -> BooleanHelper.isTrue(transferBuyLog.getThirdTransferFlag())).count();
+            if (count > 0) {
+                return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "已存在售出的债权，无法取消债权转让!"));
             }
-        });
-        transferBuyLogService.save(transferBuyLogList);
+            //3.更改债权转让与购买债权转让记录状态
+            transfer.setState(4);
+            transfer.setUpdatedAt(new Date());
+            transfer.setSuccessAt(null);
+            transferService.save(transfer);
+            //4.取消购买债权并解冻金额
+            transferBuyLogList.stream().forEach(transferBuyLog -> {
+                if (!ObjectUtils.isEmpty(transferBuyLog.getFreezeOrderId())) {
+                    UserThirdAccount userThirdAccount = userThirdAccountMap.get(transferBuyLog.getUserId());
+                    //解除存管资金冻结
+                    String orderId = JixinHelper.getOrderId(JixinHelper.BALANCE_UNFREEZE_PREFIX);
+                    BalanceUnfreezeReq balanceUnfreezeReq = new BalanceUnfreezeReq();
+                    balanceUnfreezeReq.setAccountId(String.valueOf(userThirdAccount.getAccountId()));
+                    balanceUnfreezeReq.setTxAmount(String.valueOf(transferBuyLog.getValidMoney()));
+                    balanceUnfreezeReq.setChannel(ChannelContant.HTML);
+                    balanceUnfreezeReq.setOrderId(orderId);
+                    balanceUnfreezeReq.setOrgOrderId(String.valueOf(transferBuyLog.getFreezeOrderId()));
+                    BalanceUnfreezeResp balanceUnfreezeResp = jixinManager.send(JixinTxCodeEnum.BALANCE_UN_FREEZE, balanceUnfreezeReq, BalanceUnfreezeResp.class);
+                    if ((ObjectUtils.isEmpty(balanceUnfreezeResp)) || (!JixinResultContants.SUCCESS.equalsIgnoreCase(balanceUnfreezeResp.getRetCode()))) {
+                        log.error("===========================================================================");
+                        log.error("即信批次取消债权转让解除冻结资金失败：" + balanceUnfreezeResp.getRetMsg());
+                        log.error("===========================================================================");
+                    }
+                }
+
+                transferBuyLog.setState(2);
+                transferBuyLog.setUpdatedAt(new Date());
+                //解冻债权转让人购买债权转让冻结资金
+                AssetChange assetChange = new AssetChange();
+                assetChange.setSourceId(transferBuyLog.getId());
+                assetChange.setGroupSeqNo(assetChangeProvider.getGroupSeqNo());
+                assetChange.setMoney(transferBuyLog.getValidMoney());
+                assetChange.setSeqNo(assetChangeProvider.getSeqNo());
+                assetChange.setRemark(String.format("购买债权转让[%s]失败, 冻结解冻资金%s元",
+                        transfer.getTitle(),
+                        StringHelper.formatDouble(transferBuyLog.getValidMoney() / 100D,
+                                true)));
+                assetChange.setType(AssetChangeTypeEnum.unfreeze);
+                assetChange.setUserId(transferBuyLog.getUserId());
+                try {
+                    assetChangeProvider.commonAssetChange(assetChange);
+                } catch (Exception e) {
+                    log.error("结束债权转让解冻直接失败!", e);
+                }
+            });
+            transferBuyLogService.save(transferBuyLogList);
+        }
 
         tender.setTransferFlag(0);
         tender.setUpdatedAt(new Date());
@@ -791,6 +820,7 @@ public class TransferBizImpl implements TransferBiz {
             //更新待支出利息管理费
             if (parentBorrow.getRecheckAt().getTime() < DateHelper.stringToDate("2017-11-01 00:00:00").getTime() && ImmutableSet.of(0, 4).contains(parentBorrow.getType())) {
                 userCache.setWaitExpenditureInterestManage(userCache.getWaitExpenditureInterestManage() + new Double(MoneyHelper.round(MoneyHelper.divide(countInterest, 0.1), 0)).longValue());
+                userService.repairWaitExpenditureInterestManage();
             }
             userCacheService.save(userCache);
         });
@@ -883,6 +913,7 @@ public class TransferBizImpl implements TransferBiz {
         //更新待支出利息管理费
         if (parentBorrow.getRecheckAt().getTime() < DateHelper.stringToDate("2017-11-01 00:00:00").getTime() && ImmutableSet.of(0, 4).contains(parentBorrow.getType())) {
             userCache.setWaitExpenditureInterestManage(userCache.getWaitExpenditureInterestManage() - new Double(MoneyHelper.round(MoneyHelper.divide(countInterest, 0.1), 0)).longValue());
+            userService.repairWaitExpenditureInterestManage();
         }
         userCacheService.save(userCache);
     }
@@ -1123,6 +1154,7 @@ public class TransferBizImpl implements TransferBiz {
      * 4.生成购买债权记录
      */
     @Transactional(rollbackFor = Exception.class)
+    @Override
     public ResponseEntity<VoBaseResp> buyTransfer(VoBuyTransfer voBuyTransfer) throws Exception {
         String msg = null;
         String orderId = JixinHelper.getOrderId(JixinHelper.BALANCE_FREEZE_PREFIX);/* 购买债权转让冻结金额 orderid */
@@ -1183,7 +1215,7 @@ public class TransferBizImpl implements TransferBiz {
                 mqHelper.convertAndSend(mqConfig);
             }
         } catch (Exception e) {
-            String newOrderId = JixinHelper.getOrderId(JixinHelper.BALANCE_UNFREEZE_PREFIX);/* 购买债权转让冻结金额 orderid */
+            String newOrderId = JixinHelper.getOrderId(JixinHelper.BALANCE_UNFREEZE_PREFIX);// 购买债权转让冻结金额 orderid
             //解除存管资金冻结
             BalanceUnfreezeReq balanceUnfreezeReq = new BalanceUnfreezeReq();
             balanceUnfreezeReq.setAccountId(buyUserThirdAccount.getAccountId());
@@ -1356,13 +1388,9 @@ public class TransferBizImpl implements TransferBiz {
      * @throws Exception
      */
     @Transactional(rollbackFor = Exception.class)
+    @Override
     public ResponseEntity<VoBaseResp> newTransferTender(VoTransferTenderReq voTransferTenderReq) throws Exception {
 
-        /*if (true) {
-            return ResponseEntity
-                    .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, "债权转让内测中，敬请期待！"));
-        }*/
         long tenderId = voTransferTenderReq.getTenderId();/* 转让债权id */
         long userId = voTransferTenderReq.getUserId();/* 转让人id */
         boolean isAll = voTransferTenderReq.getIsAll();/* 是否是部分转让 */
@@ -1735,6 +1763,25 @@ public class TransferBizImpl implements TransferBiz {
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "债权至少要一期已回款,才能转让!"));
         }
 
+        //至少剩余2天回款
+        Date flagAt = new Date();
+        flagAt = DateHelper.beginOfDate(flagAt);
+        flagAt = DateHelper.subDays(flagAt, 2);
+
+        bcs = Specifications
+                .<BorrowCollection>and()
+                .eq("tenderId", tender.getId())
+                .eq("transferFlag", 0)
+                .eq("status", 0)
+                .predicate(new LeSpecification<>("collectionAt", new DataObject(flagAt)))
+                .build();
+        count = borrowCollectionService.count(bcs);
+        if (count > 0) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "转让债权离还款日必须大于2天,才能转让!"));
+        }
+
         //判断用户存管信息
         UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(tender.getUserId());
         if (!userThirdAccount.getAutoTransferState().equals(1)) {  // 审核
@@ -2054,21 +2101,21 @@ public class TransferBizImpl implements TransferBiz {
 
         BorrowInfoRes borrowInfoRes = VoBaseResp.ok("查询成功", BorrowInfoRes.class);
         borrowInfoRes.setApr(StringHelper.formatMon(borrow.getApr() / 100d));
-        borrowInfoRes.setLowest(StringHelper.formatMon(borrow.getLowest() / 100d));
+        borrowInfoRes.setLowest(StringHelper.formatMon(transfer.getLowest() / 100d));
         long surplusMoney = transfer.getTransferMoney() - transfer.getTransferMoneyYes();
         borrowInfoRes.setViewSurplusMoney(StringHelper.formatMon(surplusMoney / 100D));
         borrowInfoRes.setHideSurplusMoney(surplusMoney);
 
-        if (borrow.getType() == com.gofobao.framework.borrow.contants.BorrowContants.REPAY_FASHION_ONCE) {
+        if (borrow.getType().equals(com.gofobao.framework.borrow.contants.BorrowContants.REPAY_FASHION_ONCE)) {
             borrowInfoRes.setTimeLimit(transfer.getTimeLimit() + com.gofobao.framework.borrow.contants.BorrowContants.DAY);
         } else {
             borrowInfoRes.setTimeLimit(transfer.getTimeLimit() + com.gofobao.framework.borrow.contants.BorrowContants.MONTH);
         }
 
-        //double principal = 10000D * 100;
+        double principal = 10000D * 100;
         double apr = NumberHelper.toDouble(StringHelper.toString(transfer.getApr()));
         BorrowCalculatorHelper borrowCalculatorHelper = new BorrowCalculatorHelper(
-                new Double(transfer.getPrincipal()),
+                principal,
                 apr,
                 transfer.getTimeLimit(),
                 transfer.getRecheckAt());

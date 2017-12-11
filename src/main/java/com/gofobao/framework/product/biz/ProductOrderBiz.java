@@ -14,6 +14,13 @@ import org.springframework.http.ResponseEntity;
 public interface ProductOrderBiz {
 
     /**
+     * 订单审核
+     * @param voAuditOrder
+     * @return
+     */
+    ResponseEntity<VoBaseResp> auditOrder(VoAuditOrder voAuditOrder);
+
+    /**
      * 删除订单
      */
     ResponseEntity<VoBaseResp> delOrder(VoDelOrder voDelOrder) throws Exception;
@@ -42,4 +49,9 @@ public interface ProductOrderBiz {
      * 查看物流
      */
     ResponseEntity<VoViewFindOrderLogisticsDetailRes> findOrderLogisticsDetail(VoFindOrderLogisticsDetail voFindOrderLogisticsDetail);
+
+/*    *//**
+     * 确认收货
+     *//*
+    ResponseEntity<VoViewFindOrderLogisticsDetailRes> (VoFindOrderLogisticsDetail voFindOrderLogisticsDetail);*/
 }

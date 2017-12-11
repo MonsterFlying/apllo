@@ -97,4 +97,17 @@ public class FinanceProductController {
         voFindProductDetail.setUserId(userId);
         return productBiz.findProductDetail(voFindProductDetail);
     }
+
+
+    /**
+     * 查询广富送计划详情
+     *
+     * @param voFindProductPlanDetail
+     * @return
+     */
+    @PostMapping("/pub/v2/product/plan/detail")
+    @ApiOperation("查询广富送计划详情")
+    public ResponseEntity<VoViewFindProductPlanDetailRes> findProductPlanDetail(@Valid @ModelAttribute VoFindProductPlanDetail voFindProductPlanDetail) {
+        return productBiz.findProductPlanDetail(voFindProductPlanDetail);
+    }
 }

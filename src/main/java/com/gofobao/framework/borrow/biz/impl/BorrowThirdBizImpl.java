@@ -33,6 +33,7 @@ import com.gofobao.framework.common.rabbitmq.MqConfig;
 import com.gofobao.framework.common.rabbitmq.MqHelper;
 import com.gofobao.framework.common.rabbitmq.MqQueueEnum;
 import com.gofobao.framework.common.rabbitmq.MqTagEnum;
+import com.gofobao.framework.contract.biz.ContractBiz;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.helper.*;
 import com.gofobao.framework.member.entity.UserThirdAccount;
@@ -97,6 +98,8 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
     @Autowired
     AssetChangeProvider assetChangeProvider;
     @Autowired
+    private ContractBiz contractBiz;
+    @Autowired
     private ThirdBatchDealLogBiz thirdBatchDealLogBiz;
     @Value("${gofobao.javaDomain}")
     private String javaDomain;
@@ -108,8 +111,8 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
      * @param voCreateThirdBorrowReq
      * @return
      */
-    @Transactional(rollbackFor = Exception.class)
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public ResponseEntity<VoBaseResp> createThirdBorrow(VoCreateThirdBorrowReq voCreateThirdBorrowReq) {
         log.error(String.format(String.format("报备标的信息: %s", new Gson().toJson(voCreateThirdBorrowReq))));
         Long borrowId = voCreateThirdBorrowReq.getBorrowId();
@@ -206,8 +209,9 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
         } catch (Exception e) {
             log.error("查询标的登记情况异常", e);
         }
-
         log.info(String.format(String.format("报备标的信息: 成功 %s", new Gson().toJson(voCreateThirdBorrowReq))));
+
+
         return ResponseEntity.ok(VoBaseResp.ok("创建标的成功!"));
     }
 

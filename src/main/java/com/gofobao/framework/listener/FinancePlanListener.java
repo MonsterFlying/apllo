@@ -31,8 +31,8 @@ public class FinancePlanListener {
     @RabbitHandler
     public void process(String message) {
 
-        log.info(String.format("RedPackageListener process detail: %s", message));
-        Preconditions.checkNotNull(message, "RedPackageListener process message is empty");
+        log.info(String.format("FinancePlanListener process detail: %s", message));
+        Preconditions.checkNotNull(message, "FinancePlanListener process message is empty");
         try {
             Map<String, Object> body = JacksonHelper.json2map(message);
             Preconditions.checkNotNull(body.get(MqConfig.MSG_TAG));

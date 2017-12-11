@@ -18,7 +18,8 @@ public enum RegisterSourceEnum {
     ZLP("zlp", 8), // 赚乐扒
     H5("h5", 9), // h5
     LLBANK("llbank", 10),// 流量银行
-    WINDMILL("windmill",12);
+    WINDMILL("windmill",12),
+    DT("offline",15);
     private String name;
     private int index;
 

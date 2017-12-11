@@ -322,7 +322,7 @@ public class UserBizImpl implements UserBiz {
             voBasicUserInfoResp.setSubbranch(StringUtils.isEmpty(userThirdAccount.getBankName()) ? "" : userThirdAccount.getBankName());
             voBasicUserInfoResp.setBankState(!StringUtils.isEmpty(userThirdAccount.getCardNo()));
             voBasicUserInfoResp.setAutoTenderState(userThirdAccount.getAutoTenderState().equals(1));
-            voBasicUserInfoResp.setAutoTranferState(userThirdAccount.getAutoTransferState().equals(1));  // 审核
+            voBasicUserInfoResp.setAutoTranferState(userThirdAccount.getAutoTransferState().equals(1));
            /* try {
                 assetSynBiz.doAssetSyn(user.getId());
             } catch (Exception e) {

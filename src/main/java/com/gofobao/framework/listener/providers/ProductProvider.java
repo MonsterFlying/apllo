@@ -42,6 +42,7 @@ import com.gofobao.framework.tender.service.TransferService;
 import com.google.common.base.Preconditions;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -119,8 +120,25 @@ public class ProductProvider {
             financePlan.setCreateId(productOrder.getUserId());
             financePlan.setUpdateId(productOrder.getUserId());
             financePlan.setLockPeriod(productPlan.getTimeLimit());
-            financePlanService.save(financePlan);
-            financePlan.setContractNo(String.format("LCJH%s&s", DateHelper.dateToString(new Date(), DateHelper.DATE_FORMAT_YMD_NUM), financePlan.getId()));
+            financePlan.setLowest(productOrder.getPayMoney());
+            financePlan.setType(2);
+            financePlan.setStatus(1);
+            financePlan.setLowestShow(productOrder.getPayMoney());
+            financePlan.setLeftMoney(0L);
+            financePlan.setRightMoney(0L);
+            financePlan.setEndLockAt(getFinancePlanEndLockAt(productPlan.getTimeLimit()));
+            financePlan.setTimeLimit(productPlan.getTimeLimit());
+            financePlan.setMoneyYes(0L);
+            financePlan.setOrderNumber(orderNumber);
+            financePlan.setFinishedState(false);
+            financePlan.setSubPointCount(0);
+            financePlan.setTotalSubPoint(0);
+            financePlan.setMost(0L);
+            financePlan.setAppendMultipleAmount(0);
+            financePlan.setDescription("");
+            financePlan.setContractNo(String.format("LCJH%s", DateHelper.dateToString(new Date(), DateHelper.DATE_FORMAT_YMD_NUM)));
+            financePlan = financePlanService.save(financePlan);
+            financePlan.setContractNo(String.format("LCJH%s%s", DateHelper.dateToString(new Date(), DateHelper.DATE_FORMAT_YMD_NUM), financePlan.getId()));
             financePlan.setCreatedAt(nowDate);
             financePlan.setUpdatedAt(nowDate);
             financePlanService.save(financePlan);
@@ -133,6 +151,20 @@ public class ProductProvider {
             financePlanBiz.tenderFinancePlan(voTenderFinancePlan);
         }
         return true;
+    }
+
+    /**
+     * 获取理财计划退出日期
+     *
+     * @param timeLimit
+     */
+    public Date getFinancePlanEndLockAt(int timeLimit) {
+        Date tomorrow = DateHelper.addDays(new Date(), 1);
+        Date endLockAt = DateHelper.addMonths(tomorrow, timeLimit);
+        if ((DateHelper.getMonth(tomorrow) + timeLimit) % 12 != DateHelper.getMonth(endLockAt) % 12) {
+            endLockAt = DateHelper.subDays(DateHelper.setDays(endLockAt, 1), 1);
+        }
+        return endLockAt;
     }
 
 }
