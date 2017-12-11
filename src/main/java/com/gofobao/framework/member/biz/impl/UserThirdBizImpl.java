@@ -5,9 +5,6 @@ import com.gofobao.framework.api.contants.*;
 import com.gofobao.framework.api.helper.JixinManager;
 import com.gofobao.framework.api.helper.JixinTxCodeEnum;
 import com.gofobao.framework.api.helper.JixinTxDateHelper;
-import com.gofobao.framework.api.model.account_details_query.AccountDetailsQueryItem;
-import com.gofobao.framework.api.model.account_details_query.AccountDetailsQueryRequest;
-import com.gofobao.framework.api.model.account_details_query.AccountDetailsQueryResponse;
 import com.gofobao.framework.api.model.account_details_query2.AccountDetailsQuery2Item;
 import com.gofobao.framework.api.model.account_details_query2.AccountDetailsQuery2Request;
 import com.gofobao.framework.api.model.account_details_query2.AccountDetailsQuery2Response;
@@ -1019,7 +1016,6 @@ public class UserThirdBizImpl implements UserThirdBiz {
             return "autoTranfer/faile";
         }
     }
-
     @Override
     public ResponseEntity<String> publicPasswordModify(HttpServletRequest httpServletRequest, String encode, String channel) {
         Long userId = thirdAccountPasswordHelper.getUserId(encode);
@@ -1945,7 +1941,7 @@ public class UserThirdBizImpl implements UserThirdBiz {
         //分页
         Integer pageIndex = userAccountThirdTxReq.getPageIndex() + 1;
         Integer pageSize = userAccountThirdTxReq.getPageSize();
-        List<AccountDetailsQueryItem> accountDetailsQueryItemList = new ArrayList<>();
+        List<AccountDetailsQuery2Item> accountDetailsQueryItemList = new ArrayList<>();
         //装配请求即信请求参数
         AccountDetailsQuery2Request accountDetailsQueryRequest = new AccountDetailsQuery2Request();
         accountDetailsQueryRequest.setInpDate(""); //翻页控制使用；首次查询上送空；翻页查询时上送上页返回的最后一条记录交易日期；YYYYMMDD
@@ -1958,7 +1954,7 @@ public class UserThirdBizImpl implements UserThirdBiz {
         //存管账户
         accountDetailsQueryRequest.setAccountId(accountId);
         //发送即信请求
-        AccountDetailsQuery2Response accountDetailsQueryResponse = jixinManager.send(JixinTxCodeEnum.ACCOUNT_DETAILS_QUERY,
+        AccountDetailsQuery2Response accountDetailsQueryResponse = jixinManager.send(JixinTxCodeEnum.ACCOUNT_DETAILS_QUERY2,
                 accountDetailsQueryRequest,
                 AccountDetailsQuery2Response.class);
         //判断返回结果

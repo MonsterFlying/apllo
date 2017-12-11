@@ -49,4 +49,9 @@ public interface ProductOrderBiz {
      * 查看物流
      */
     ResponseEntity<VoViewFindOrderLogisticsDetailRes> findOrderLogisticsDetail(VoFindOrderLogisticsDetail voFindOrderLogisticsDetail);
+
+/*    *//**
+     * 确认收货
+     *//*
+    ResponseEntity<VoViewFindOrderLogisticsDetailRes> (VoFindOrderLogisticsDetail voFindOrderLogisticsDetail);*/
 }

@@ -2,6 +2,7 @@ package com.gofobao.framework.scheduler;
 
 import com.github.wenhao.jpa.Specifications;
 import com.gofobao.framework.common.data.DataObject;
+import com.gofobao.framework.common.data.GeSpecification;
 import com.gofobao.framework.common.data.LeSpecification;
 import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.tender.biz.TransferBiz;
@@ -31,13 +32,16 @@ public class TransferCancelSchuduler {
     @Autowired
     private TransferBiz transferBiz;
 
-    @Scheduled(cron = "0 0 0,20 * * ? ")
+    @Scheduled(cron = "0 0 21 * * ? ")
     public void process() {
         //1.查询当日以前未审核、未投满的债权转让通过的债券转让
+        Date flagAt = new Date();
+        flagAt = DateHelper.beginOfDate(flagAt);
+
         Specification<Transfer> ts = Specifications
                 .<Transfer>and()
                 .eq("type", 0)
-                .predicate(new LeSpecification("createdAt", new DataObject(DateHelper.addHours(DateHelper.beginOfDate(new Date()), 20))))
+                .predicate(new LeSpecification("createdAt", new DataObject(flagAt)))
                 .in("state", 0, 1)
                 .build();
         List<Transfer> transferList = transferService.findList(ts);
