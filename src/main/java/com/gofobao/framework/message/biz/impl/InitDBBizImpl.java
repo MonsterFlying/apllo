@@ -108,7 +108,7 @@ public class InitDBBizImpl implements InitDBBiz {
         String groupSeqNo = assetChangeProvider.getGroupSeqNo(); // 资产记录分组流水号
         //红包账户
         long redId = assetChangeProvider.getRedpackAccountId();
-        UserThirdAccount redpackThirdAccount = userThirdAccountService.findByUserId(redId); //查询红包账户
+        UserThirdAccount redpackThirdAccount = userThirdAccountService.findByUserIdAndDel(redId); //查询红包账户
 
         Specification<NewAssetLog> nals = Specifications
                 .<NewAssetLog>and()
@@ -471,7 +471,7 @@ public class InitDBBizImpl implements InitDBBiz {
         Map<Long, TransferBuyLog> transferBuyLogMaps = transferBuyLogList1.stream().collect(Collectors.toMap(TransferBuyLog::getId, Function.identity()));
         transferBuyLogList.stream().forEach(transferBuyLog -> {
             Tender childTender = new Tender();
-            /*UserThirdAccount buyUserThirdAccount = userThirdAccountService.findByUserId(transferBuyLog.getUserId());
+            /*UserThirdAccount buyUserThirdAccount = userThirdAccountService.findByUserIdAndDel(transferBuyLog.getUserId());
 */
             TransferBuyLog transferBuyLog1 = transferBuyLogMaps.get(transferBuyLog.getId());
             childTender.setUserId(transferBuyLog.getUserId());

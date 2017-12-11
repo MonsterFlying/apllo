@@ -25,6 +25,7 @@ public class FinancePlan {
     private Integer status;
     private String name;
     private Long money;
+    private String contractNo;
     private Long moneyYes;
     private Long rightMoney;
     private Long leftMoney;
@@ -37,11 +38,12 @@ public class FinancePlan {
     private Long most;
     private Date successAt;
     private Date endLockAt;
+    private String orderNumber;
     private Boolean finishedState;
     private Integer totalSubPoint;
     private Integer subPointCount;
-    private Integer createId;
-    private Integer updateId;
+    private Long createId;
+    private Long updateId;
     private String description;
     private Date createdAt;
     private Date updatedAt;

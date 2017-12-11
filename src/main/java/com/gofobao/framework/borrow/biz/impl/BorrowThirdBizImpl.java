@@ -221,6 +221,7 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
      * @param voCancelThirdBorrow
      * @return
      */
+    @Override
     public ResponseEntity<VoBaseResp> cancelThirdBorrow(VoCancelThirdBorrow voCancelThirdBorrow) {
         Long userId = voCancelThirdBorrow.getUserId();
         String productId = voCancelThirdBorrow.getProductId();
@@ -243,6 +244,7 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
         return ResponseEntity.ok(VoBaseResp.ok("取消借款成功"));
     }
 
+    @Override
     public DebtDetailsQueryResponse queryThirdBorrowList(VoQueryThirdBorrowList voQueryThirdBorrowList) {
         DebtDetailsQueryResponse debtDetailsQueryResponse = null;
         Long userId = voQueryThirdBorrowList.getUserId();
@@ -339,6 +341,7 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
      *
      * @return
      */
+    @Override
     public ResponseEntity<String> thirdBatchRepayAllCheckCall(HttpServletRequest request, HttpServletResponse response) {
         BatchRepayCheckResp repayCheckResp = jixinManager.callback(request, new TypeToken<BatchRepayCheckResp>() {
         });
@@ -479,6 +482,7 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
      * @return
      */
     @Transactional(rollbackFor = Exception.class)
+    @Override
     public ResponseEntity<VoHtmlResp> thirdTrusteePay(VoThirdTrusteePayReq voThirdTrusteePayReq, HttpServletRequest httpServletRequest) {
 
         long borrowId = voThirdTrusteePayReq.getBorrowId();

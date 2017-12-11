@@ -5,8 +5,10 @@ import com.gofobao.framework.api.contants.ChannelContant;
 import com.gofobao.framework.api.contants.JixinResultContants;
 import com.gofobao.framework.api.helper.JixinManager;
 import com.gofobao.framework.api.helper.JixinTxCodeEnum;
-import com.gofobao.framework.api.model.account_details_query.AccountDetailsQueryRequest;
-import com.gofobao.framework.api.model.account_details_query.AccountDetailsQueryResponse;
+import com.gofobao.framework.api.model.account_details_query2.AccountDetailsQuery2Request;
+import com.gofobao.framework.api.model.account_details_query2.AccountDetailsQuery2Response;
+import com.gofobao.framework.api.model.account_id_query.AccountIdQueryRequest;
+import com.gofobao.framework.api.model.account_id_query.AccountIdQueryResponse;
 import com.gofobao.framework.api.model.balance_query.BalanceQueryRequest;
 import com.gofobao.framework.api.model.balance_query.BalanceQueryResponse;
 import com.gofobao.framework.api.model.balance_un_freeze.BalanceUnfreezeReq;
@@ -19,6 +21,8 @@ import com.gofobao.framework.api.model.batch_query.BatchQueryReq;
 import com.gofobao.framework.api.model.batch_query.BatchQueryResp;
 import com.gofobao.framework.api.model.bid_apply_query.BidApplyQueryRequest;
 import com.gofobao.framework.api.model.bid_apply_query.BidApplyQueryResponse;
+import com.gofobao.framework.api.model.card_bind_details_query.CardBindDetailsQueryRequest;
+import com.gofobao.framework.api.model.card_bind_details_query.CardBindDetailsQueryResponse;
 import com.gofobao.framework.api.model.credit_details_query.CreditDetailsQueryRequest;
 import com.gofobao.framework.api.model.credit_details_query.CreditDetailsQueryResponse;
 import com.gofobao.framework.api.model.credit_invest_query.CreditInvestQueryReq;
@@ -39,9 +43,13 @@ import com.gofobao.framework.common.rabbitmq.MqHelper;
 import com.gofobao.framework.common.rabbitmq.MqQueueEnum;
 import com.gofobao.framework.common.rabbitmq.MqTagEnum;
 import com.gofobao.framework.core.vo.VoBaseResp;
-import com.gofobao.framework.helper.*;
+import com.gofobao.framework.helper.DateHelper;
+import com.gofobao.framework.helper.JixinHelper;
+import com.gofobao.framework.helper.NumberHelper;
+import com.gofobao.framework.helper.StringHelper;
 import com.gofobao.framework.helper.project.BatchAssetChangeHelper;
 import com.gofobao.framework.helper.project.IntegralChangeHelper;
+import com.gofobao.framework.listener.providers.FinancePlanProvider;
 import com.gofobao.framework.member.service.UserCacheService;
 import com.gofobao.framework.member.service.UserService;
 import com.gofobao.framework.member.service.UserThirdAccountService;
@@ -54,6 +62,8 @@ import com.gofobao.framework.tender.biz.AutoTenderBiz;
 import com.gofobao.framework.tender.biz.TenderBiz;
 import com.gofobao.framework.tender.biz.TransferBiz;
 import com.gofobao.framework.tender.entity.Tender;
+import com.gofobao.framework.tender.entity.Transfer;
+import com.gofobao.framework.tender.entity.TransferBuyLog;
 import com.gofobao.framework.tender.service.TenderService;
 import com.gofobao.framework.tender.service.TransferBuyLogService;
 import com.gofobao.framework.tender.service.TransferService;
@@ -76,9 +86,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.*;
-
-import static java.util.stream.Collectors.groupingBy;
+import java.util.Date;
+import java.util.List;
 
 /**
  * Created by Zeke on 2017/6/21.
@@ -141,10 +150,62 @@ public class TestController {
     private BorrowRepaymentService borrowRepaymentService;
     @Autowired
     private TransferBuyLogService transferBuyLogService;
+    @Autowired
+    private FinancePlanProvider financePlanProvider;
+
+    @RequestMapping("/pub/test/xiufu/transfer")
+    @Transactional(rollbackFor = Exception.class)
+    public void xiufuCall() throws Exception {
+        Date nowDate = new Date();
+        /* 理财计划回购债权转让id */
+        long transferId = 613L;
+        /* 理财计划回购债权转让记录 */
+        Transfer transfer = transferService.findByIdLock(transferId);
+        //默认zfh为回购人
+        long repurchaseUserId = 22002L;
+        //回购金额
+        long principal = transfer.getPrincipal();
+        /* 债权购买记录 */
+        TransferBuyLog transferBuyLog = new TransferBuyLog();
+        transferBuyLog.setTransferId(transferId);
+        transferBuyLog.setState(0);
+        transferBuyLog.setAlreadyInterest(0L);
+        transferBuyLog.setBuyMoney(principal);
+        transferBuyLog.setValidMoney(principal);
+        transferBuyLog.setPrincipal(principal);
+        transferBuyLog.setUserId(repurchaseUserId);
+        transferBuyLog.setAuto(false);
+        transferBuyLog.setAutoOrder(0);
+        transferBuyLog.setDel(false);
+        transferBuyLog.setSource(0);
+        transferBuyLog.setType(0);
+        transferBuyLog.setCreatedAt(nowDate);
+        transferBuyLog.setUpdatedAt(nowDate);
+        transferBuyLogService.save(transferBuyLog);
+
+        transfer.setTransferMoneyYes(principal);
+        transfer.setUpdatedAt(nowDate);
+        transfer.setTenderCount(transfer.getTenderCount() + 1);
+        transferService.save(transfer);
+
+        //理财计划回购债权转让
+        if (transfer.getTransferMoneyYes() >= transfer.getTransferMoney()) {
+            ImmutableMap<String, String> body = ImmutableMap
+                    .of(MqConfig.MSG_TRANSFER_ID, StringHelper.toString(transferId),
+                            MqConfig.IS_REPURCHASE, "true",
+                            MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
+            Boolean result = financePlanProvider.againVerifyFinanceTransfer(body);
+            if (!result) {
+                throw new Exception("回购失败!");
+            }
+        }
+
+    }
 
     @RequestMapping("/pub/test/asset/change")
     @Transactional(rollbackFor = Exception.class)
-    public void repairCall(@RequestParam("sourceId") Object sourceId, @RequestParam("batchNo") Object batchNo, @RequestParam("type") Object type) {
+    public void repairCall(@RequestParam("sourceId") Object sourceId, @RequestParam("batchNo") Object
+            batchNo, @RequestParam("type") Object type) {
         //2.处理资金还款人、收款人资金变动
         try {
             batchAssetChangeHelper.batchAssetChangeDeal(NumberHelper.toLong(sourceId), String.valueOf(batchNo), NumberHelper.toInt(type));
@@ -152,7 +213,6 @@ public class TestController {
             log.error("变动异常：", e);
         }
     }
-
 
     @ApiOperation("获取自动投标列表")
     @RequestMapping("/pub/batch/deal")
@@ -189,7 +249,8 @@ public class TestController {
     @ApiOperation("获取自动投标列表")
     @RequestMapping("/pub/credit/invest/query")
     @Transactional(rollbackFor = Exception.class)
-    public void creditInvestQuery(@RequestParam("accountId") Object accountId, @RequestParam("orgOrderId") Object orgOrderId) {
+    public void creditInvestQuery(@RequestParam("accountId") Object accountId, @RequestParam("orgOrderId") Object
+            orgOrderId) {
         CreditInvestQueryReq request = new CreditInvestQueryReq();
         request.setChannel(ChannelContant.HTML);
         request.setAccountId(String.valueOf(accountId));
@@ -213,8 +274,8 @@ public class TestController {
     @RequestMapping("/pub/asset/find")
     @Transactional(rollbackFor = Exception.class)
     public void findAsset(@RequestParam("sourceId") Object sourceId, @RequestParam("startDate") Object startDate,
-                          @RequestParam("endDate") Object endDate, @RequestParam("pageIndex") Object pageIndex,
-                          @RequestParam("pageSize") Object pageSize) {
+                          @RequestParam("endDate") Object endDate, @RequestParam("inpDate") Object inpDate,
+                          @RequestParam("rtnInd") Object rtnInd) {
         BalanceQueryRequest balanceQueryRequest = new BalanceQueryRequest();
         balanceQueryRequest.setChannel(ChannelContant.HTML);
         balanceQueryRequest.setAccountId(String.valueOf(sourceId));
@@ -224,16 +285,16 @@ public class TestController {
         log.info("=========================================================================================");
         log.info(GSON.toJson(balanceQueryResponse));
 
-        AccountDetailsQueryRequest request = new AccountDetailsQueryRequest();
+        AccountDetailsQuery2Request request = new AccountDetailsQuery2Request();
         request.setAccountId(String.valueOf(sourceId));
         request.setStartDate(String.valueOf(startDate));
         request.setEndDate(String.valueOf(endDate));
         request.setChannel(ChannelContant.HTML);
         request.setType("0"); // 转入
         //request.setTranType("7820"); // 线下转账的
-        request.setPageSize(String.valueOf(pageIndex));
-        request.setPageNum(String.valueOf(pageSize));
-        AccountDetailsQueryResponse response = jixinManager.send(JixinTxCodeEnum.ACCOUNT_DETAILS_QUERY, request, AccountDetailsQueryResponse.class);
+        request.setInpDate(String.valueOf(inpDate));
+        request.setRtnInd(String.valueOf(rtnInd));
+        AccountDetailsQuery2Response response = jixinManager.send(JixinTxCodeEnum.ACCOUNT_DETAILS_QUERY2, request, AccountDetailsQuery2Response.class);
         log.info("=========================================================================================");
         log.info("即信用户资产流水查询:");
         log.info("=========================================================================================");
@@ -281,7 +342,8 @@ public class TestController {
     @ApiOperation("冻结查询")
     @RequestMapping("/pub/freeze/find")
     @Transactional(rollbackFor = Exception.class)
-    public void findFreeze(@RequestParam("accountId") Object accountId, @RequestParam("startDate") Object startDate,
+    public void findFreeze(@RequestParam("accountId") Object accountId, @RequestParam("startDate") Object
+            startDate,
                            @RequestParam("endDate") Object endDate) {
         FreezeDetailsQueryRequest freezeDetailsQueryRequest = new FreezeDetailsQueryRequest();
         freezeDetailsQueryRequest.setChannel(ChannelContant.HTML);
@@ -301,7 +363,8 @@ public class TestController {
     @ApiOperation("用户债权列表查询")
     @RequestMapping("/pub/bid/find/all")
     @Transactional(rollbackFor = Exception.class)
-    public void findBidList(@RequestParam("accountId") Object accountId, @RequestParam("startDate") Object startDate, @RequestParam("productId") Object productId) {
+    public void findBidList(@RequestParam("accountId") Object accountId, @RequestParam("startDate") Object
+            startDate, @RequestParam("productId") Object productId) {
         CreditDetailsQueryRequest creditDetailsQueryRequest = new CreditDetailsQueryRequest();
         creditDetailsQueryRequest.setAccountId(String.valueOf(accountId));
         creditDetailsQueryRequest.setStartDate(String.valueOf(startDate));
@@ -339,7 +402,8 @@ public class TestController {
     @ApiOperation("用户债权列表查询")
     @RequestMapping("/pub/test/batch/cancel")
     @Transactional(rollbackFor = Exception.class)
-    public void cancelBatch(@RequestParam("batchNo") Object batchNo, @RequestParam("txAmount") Object txAmount, @RequestParam("count") Object count) {
+    public void cancelBatch(@RequestParam("batchNo") Object batchNo, @RequestParam("txAmount") Object
+            txAmount, @RequestParam("count") Object count) {
         BatchCancelReq batchCancelReq = new BatchCancelReq();
         batchCancelReq.setBatchNo(String.valueOf(batchNo));
         batchCancelReq.setTxAmount(String.valueOf(txAmount));
@@ -354,6 +418,37 @@ public class TestController {
     @Override
     public boolean equals(Object obj) {
         return super.equals(obj);
+    }
+
+    @ApiOperation("个人账户银行卡查询")
+    @RequestMapping("/pub/bank/find")
+    @Transactional(rollbackFor = Exception.class)
+    public void bankQuery(@RequestParam("accountId") Object accountId) {
+        CardBindDetailsQueryRequest cardBindDetailsQueryRequest = new CardBindDetailsQueryRequest();
+        cardBindDetailsQueryRequest.setAccountId(String.valueOf(accountId));
+        cardBindDetailsQueryRequest.setState("1");
+        CardBindDetailsQueryResponse cardBindDetailsQueryResponse = jixinManager.send(JixinTxCodeEnum.CARD_BIND_DETAILS_QUERY,
+                cardBindDetailsQueryRequest,
+                CardBindDetailsQueryResponse.class);
+
+        log.info("=========================================================================================");
+        log.info("个人账户银行卡查询:");
+        log.info("=========================================================================================");
+        log.info(GSON.toJson(cardBindDetailsQueryResponse));
+    }
+
+    @ApiOperation("个人账户查询")
+    @RequestMapping("/pub/account/find")
+    @Transactional(rollbackFor = Exception.class)
+    public void accountQuery(@RequestParam("idNo") Object idNo) {
+        AccountIdQueryRequest accountIdQueryRequest = new AccountIdQueryRequest();
+        accountIdQueryRequest.setIdNo(StringHelper.toString(idNo));
+        AccountIdQueryResponse accountIdQueryResponse = jixinManager.send(JixinTxCodeEnum.ACCOUNT_ID_QUERY,
+                accountIdQueryRequest, AccountIdQueryResponse.class);
+        log.info("=========================================================================================");
+        log.info("个人账户查询:");
+        log.info("=========================================================================================");
+        log.info(GSON.toJson(accountIdQueryResponse));
     }
 
     @ApiOperation("批次查询")

@@ -225,6 +225,14 @@ public enum JixinTxCodeEnum {
             "电子账户资金交易明细查询"
     ),
     /**
+     * 近两日电子账户资金交易明细查询
+     */
+    ACCOUNT_DETAILS_QUERY2(
+            "accountDetailsQuery2",
+            "/p2p/online",
+            "近两日电子账户资金交易明细查询"
+    ),
+    /**
      * 批次融资人还担保账户垫款
      */
     BATCH_REPAY_BAIL(

@@ -51,7 +51,29 @@ public class StringHelper {
      * @param symbol 是否添加千分符
      * @return
      */
-    public static String formatDouble(double number, double divisor, boolean symbol) {
+    public static String formatDouble(Long number, double divisor, boolean symbol) {
+        return formatDouble(NumberHelper.toDouble(number) / NumberHelper.toDouble(divisor), symbol);
+    }
+
+    /**
+     * 格式化金额
+     *
+     * @param number 单位分
+     * @param symbol 是否添加千分符
+     * @return
+     */
+    public static String formatDouble(Integer number, double divisor, boolean symbol) {
+        return formatDouble(NumberHelper.toDouble(number) / NumberHelper.toDouble(divisor), symbol);
+    }
+
+    /**
+     * 格式化金额
+     *
+     * @param number 单位分
+     * @param symbol 是否添加千分符
+     * @return
+     */
+    public static String formatDouble(Double number, double divisor, boolean symbol) {
         return formatDouble(NumberHelper.toDouble(number) / NumberHelper.toDouble(divisor), symbol);
     }
 

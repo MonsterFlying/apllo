@@ -42,6 +42,11 @@ public class FinanceIndexController {
         return bannerBiz.index("mobile");
     }
 
+    @GetMapping("/index/finance/v2/product/banner/list")
+    public ResponseEntity<VoIndexResp> productIndex() {
+        return bannerBiz.index("product");
+    }
+
     @ApiOperation("首页")
     @GetMapping("/pub/finance/index/v2/home")
     public ResponseEntity<VoFinanceIndexResp> home() {

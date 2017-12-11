@@ -1487,6 +1487,8 @@ public class RepaymentBizImpl implements RepaymentBiz {
         if (advance) { //存在垫付时间则当条还款已经被垫付过
             AdvanceLog advanceLog = advanceLogService.findByRepaymentId(borrowRepayment.getId());
             Preconditions.checkNotNull(advanceLog, "RepaymentBizImpl changeRepaymentAndRepayStatus 垫付记录不存在!请联系客服。");
+
+
             //更新垫付记录转状态
             advanceLog.setStatus(1);
             advanceLog.setRepayAtYes(new Date());
@@ -1494,7 +1496,6 @@ public class RepaymentBizImpl implements RepaymentBiz {
         }
         try {
             if (parentBorrow.getIsWindmill()) {
-                //把回款的用户中是否有车轮用户
                 Set<Long> userIds = tenderList.stream()
                         .map(p -> p.getUserId())
                         .collect(Collectors.toSet());
@@ -2963,7 +2964,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
         //5. 垫付金额 = sum(垫付本金 + 垫付利息)
         double txAmount = 0d;
         for (CreditInvest creditInvest : creditInvestList) {
-            txAmount = MoneyHelper.add(txAmount, MoneyHelper.round(NumberHelper.toDouble(creditInvest.getTxAmount()), 0));
+            txAmount = MoneyHelper.add(txAmount, NumberHelper.toDouble(creditInvest.getTxAmount()));
         }
         //6. 生成名义借款人垫付批次资产变更记录
         addBatchAssetChangeItemByAdvance(batchAssetChange.getId(), titularBorrowAccount.getUserId(), borrowRepayment, borrow, lateInterest, groupSeqNo);
@@ -3065,7 +3066,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
             Transfer transfer = transferMaps.get(tender.getId());
             TransferBuyLog transferBuyLog = null;
             if (!ObjectUtils.isEmpty(transfer)) {
-                transferBuyLogMaps.get(transfer.getId());
+                transferBuyLog = transferBuyLogMaps.get(transfer.getId());
             }
 
             //投标人银行存管账户

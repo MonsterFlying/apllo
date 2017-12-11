@@ -5,7 +5,6 @@ import com.gofobao.framework.comment.vo.request.VoTopicReq;
 import com.gofobao.framework.comment.vo.response.VoTopicListResp;
 import com.gofobao.framework.comment.vo.response.VoTopicResp;
 import com.gofobao.framework.core.vo.VoBaseResp;
-import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 
 import javax.servlet.http.HttpServletRequest;
@@ -16,6 +15,7 @@ import javax.servlet.http.HttpServletRequest;
 public interface TopicService {
     /**
      * 发布主题
+     *
      * @param voTopicReq
      * @param userId
      * @param httpServletRequest
@@ -25,24 +25,39 @@ public interface TopicService {
 
     /**
      * 删除主题
+     *
      * @param id
      * @return
      */
-    ResponseEntity<VoTopicResp> delTopic(long id,long userId);
+    ResponseEntity<VoBaseResp> delTopic(long id, long userId);
 
     /**
      * 查询板块下的帖子
+     *
+     * @param httpServletRequest
      * @param topicTypeId
      * @return
      */
-    ResponseEntity<VoTopicListResp> listTopic(long topicTypeId, Pageable pageable);
+    ResponseEntity<VoTopicListResp> listTopic(HttpServletRequest httpServletRequest, long topicTypeId, Integer pageable);
 
     /**
      * 查询帖子详情
+     *
      * @param topicId
      * @return
      */
-    ResponseEntity<VoTopicResp> findTopic(long topicId);
+    ResponseEntity<VoTopicResp> findTopic(long topicId, HttpServletRequest httpServletRequest);
 
     Topic findById(Long soucreId);
+
+    /**
+     * 批量修改帖子冗余的用户名和头像
+     *
+     * @param userId
+     * @param username
+     * @param avatar
+     */
+    void batchUpdateRedundancy(Long userId, String username, String avatar) throws Exception;
+
+    Topic save(Topic topic);
 }

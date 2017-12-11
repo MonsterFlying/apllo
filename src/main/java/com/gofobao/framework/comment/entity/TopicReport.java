@@ -15,7 +15,7 @@ import java.util.Date;
  * Created by xin on 2017/11/8.
  */
 @Entity
-@Table(name = "gfb_topics")
+@Table(name = "gfb_topics_report")
 @DynamicInsert
 @DynamicUpdate
 @Data

@@ -755,6 +755,9 @@ INSERT INTO `gfb_sms_template` ( `ALIAS_CODE`, `TEMPLATE`, `IS_DEL`, `IS_ACTIVE`
 INSERT INTO `gfb_sms_template` (`ALIAS_CODE`, `TEMPLATE`, `IS_DEL`, `IS_ACTIVE`, `TYPE`, `CREATE_TIME`, `CREATE_ID`, `UPDATE_TIME`, `UPDATE_ID`) VALUES ('SMS_BORROW_CANCEL_BORROW', '【广富宝】你发布的[编号：{id}][借款：{name}]，在{timestamp}停止募集，已取消', '0', '1', '0', '2017-09-12 16:07:36', '0', '2017-09-12 16:07:44', '0');
 
 ALTER TABLE gfb_borrow ADD `lend_repay_status` int(11) DEFAULT '0' COMMENT '放款即信通信状态 0.未处理 1.处理中 2.处理失败 3.处理成功';
+
+ALTER TABLE gfb_borrow ADD `first_most` int(10) DEFAULT '0' COMMENT '第一笔限额';
+
 ALTER TABLE gfb_borrow_repayment ADD   `repay_status` int(11) DEFAULT '0' COMMENT '还款即信通信状态 0.未处理 1.处理中 2.处理失败 3.处理成功';
 
 
@@ -1100,23 +1103,74 @@ CREATE TABLE gfb_topics_report (
 )  CHARSET=UTF8MB4 , COMMENT '帖子举报表';
 
 
-CREATE TABLE `gfb_product` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
-  `name` varchar(255) DEFAULT NULL COMMENT '商品名',
-  `title` varchar(255) DEFAULT NULL COMMENT '标题',
-  `after_sales_service` text COMMENT '售后服务',
-  `details` text COMMENT '商品详情',
-  `is_del` int(11) DEFAULT '0' COMMENT '是否删除 0否 1是',
-  `create_at` datetime DEFAULT NULL,
-  `update_at` datetime DEFAULT NULL,
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
-CREATE TABLE `gfb_product_ plan` (
+-- 论坛用户表
+DROP TABLE IF EXISTS gfb_topics_users;
+CREATE TABLE gfb_topics_users (
+  id BIGINT AUTO_INCREMENT COMMENT '点赞记录唯一标识',
+  user_id INT NOT NULL DEFAULT 0 COMMENT '用户ID',
+  username varchar(32) NOT NULL DEFAULT '' COMMENT '用户昵称',
+  avatar varchar(255) NOT NULL DEFAULT '' COMMENT '头像地址',
+  force_state INT NOT NULL DEFAULT 0 COMMENT '冻结状态 0:主题点赞, 1:评论点赞, 2:回复点赞',
+  level_id INT NOT NULL DEFAULT 0 COMMENT '等级ID',
+  use_integral INT NOT NULL DEFAULT 0 COMMENT '可用积分',
+  no_use_integral INT NOT NULL DEFAULT 0 COMMENT '不可用积分',
+  create_date DATETIME NULL COMMENT '创建时间',
+  update_date DATETIME NULL COMMENT '更新时间',
+  PRIMARY KEY (id),
+  INDEX (user_id)
+)  CHARSET=UTF8MB4 , COMMENT '论坛用户表';
+
+-- 论坛积分变动记录表
+DROP TABLE IF EXISTS gfb_topics_integral_record;
+CREATE TABLE gfb_topics_integral_record (
+  id BIGINT AUTO_INCREMENT COMMENT '点赞记录唯一标识',
+  user_id INT NOT NULL DEFAULT 0 COMMENT '用户ID',
+  op_type VARCHAR(64) NOT NULL DEFAULT '' COMMENT '操作类型',
+  op_name VARCHAR(32) NOT NULL DEFAULT '' COMMENT '操作名称',
+  op_flag VARCHAR(2) NOT NULL DEFAULT 'D' COMMENT 'D 标识加, C 标识减',
+  op_money INT NOT NULL DEFAULT 0 COMMENT '操作积分',
+  use_integral INT NOT NULL DEFAULT 0 COMMENT '可用积分',
+  no_use_integral INT NOT NULL DEFAULT 0 COMMENT '不可用积分',
+  source_id INT NOT NULL DEFAULT 0 COMMENT '来源ID',
+  source_type INT NOT NULL DEFAULT 0 COMMENT '来源类型',
+  del INT NOT NULL DEFAULT 0 COMMENT '记录有效状态, 1 .删除',
+  create_date DATETIME NULL COMMENT '创建时间',
+  update_date DATETIME NULL COMMENT '更新时间',
+  PRIMARY KEY (id),
+  INDEX (user_id),
+  INDEX (source_id),
+  INDEX (user_id, op_type)
+)  CHARSET=UTF8MB4 , COMMENT '论坛积分变动记录表';
+
+
+-- 论坛回复通知
+DROP TABLE IF EXISTS gfb_topics_reply_notices;
+CREATE TABLE gfb_topics_reply_notices (
+  id BIGINT AUTO_INCREMENT COMMENT '点赞记录唯一标识',
+  user_id INT NOT NULL DEFAULT 0 COMMENT '回复用户ID',
+  reply_id BIGINT NOT NULL DEFAULT 0 COMMENT '通知信息ID',
+  source_type INT NOT NULL DEFAULT 0 COMMENT '点赞类型 0:评论, 1:回复',
+  for_user_id INT NOT NULL DEFAULT 0 COMMENT '被@的用户Id , 如果回复类型为评论直接为评论用户ID',
+  for_user_name VARCHAR(36) NOT NULL DEFAULT '' COMMENT '用户名-此处冗余',
+  for_user_icon_url VARCHAR(255) NOT NULL DEFAULT '' COMMENT '用户头像-此处冗余',
+  view_state INT NOT NULL DEFAULT 0 COMMENT '阅读状态, 0:未阅读, 1.以阅读',
+  create_date DATETIME NULL COMMENT '创建时间',
+  update_date DATETIME NULL COMMENT '更新时间',
+  PRIMARY KEY (id),
+  INDEX (user_id)
+)  CHARSET=UTF8MB4 , COMMENT '论坛回复通知表';
+
+-- 商品计划
+DROP TABLE IF EXISTS `gfb_product_plan`;
+CREATE TABLE `gfb_product_plan` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
+  `type` int(11) DEFAULT NULL COMMENT '商品计划类型 0广富送 1联通送',
+  `name` varchar(255) DEFAULT NULL COMMENT '广富送计划名',
   `time_limit` int(2) unsigned NOT NULL DEFAULT '0' COMMENT '期限',
   `lowest` int(10) unsigned NOT NULL DEFAULT '0' COMMENT '单个用户加入金额最小阈值',
   `apr` int(11) DEFAULT NULL COMMENT '利率',
+  `fee_ratio` int(11) DEFAULT NULL COMMENT '费率',
   `is_open` int(11) DEFAULT NULL,
   `start_at` datetime DEFAULT NULL COMMENT '开始时间',
   `end_at` datetime DEFAULT NULL COMMENT '结束时间',
@@ -1124,24 +1178,69 @@ CREATE TABLE `gfb_product_ plan` (
   `create_at` datetime DEFAULT NULL,
   `update_at` datetime DEFAULT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8;
 
-CREATE TABLE `gfb_product_item_plan_ref` (
+-- 商品sku
+DROP TABLE IF EXISTS `gfb_product_sku`;
+CREATE TABLE `gfb_product_sku` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
-  `product_item_id` int(11) DEFAULT NULL COMMENT '利率',
-  `plan_id` int(11) DEFAULT NULL COMMENT '商品计划id',
+  `type` int(11) DEFAULT '0' COMMENT '类型：0普通sku 1.套餐sku',
+  `sc_id` int(11) DEFAULT NULL COMMENT 'sku_classify主键id',
+  `no` int(11) DEFAULT NULL COMMENT '序号',
+  `name` varchar(255) DEFAULT NULL,
+  `plan_id` int(11) DEFAULT NULL COMMENT '商品计划id type为1时生效',
   `is_del` int(11) DEFAULT '0' COMMENT '是否删除 0否 1是',
   `create_at` datetime DEFAULT NULL,
   `update_at` datetime DEFAULT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=15 DEFAULT CHARSET=utf8;
 
+-- 商品分类sku分类关联表
+DROP TABLE IF EXISTS `gfb_product_classify_sku_classify_ref`;
+CREATE TABLE `gfb_product_classify_sku_classify_ref` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `pc_id` int(11) DEFAULT NULL COMMENT 'gfb_product_classify 表主键',
+  `sc_id` int(11) DEFAULT NULL COMMENT 'gfb_product_sku_classify主键id',
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8 COMMENT='商品分类表';
+
+-- 商品分类表
+DROP TABLE IF EXISTS `gfb_product_classify`;
+CREATE TABLE `gfb_product_classify` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `no` int(11) DEFAULT NULL COMMENT '编号',
+  `name` varchar(255) DEFAULT NULL,
+  `remark` varchar(255) DEFAULT NULL COMMENT '备注',
+  `is_del` int(11) DEFAULT '0' COMMENT '是否删除 0否 1是',
+  `create_at` datetime DEFAULT NULL,
+  `update_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8 COMMENT='商品分类表';
+
+-- 商品sku分类表
+DROP TABLE IF EXISTS `gfb_product_sku_classify`;
+CREATE TABLE `gfb_product_sku_classify` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `no` int(11) DEFAULT NULL COMMENT '排序序号',
+  `name` varchar(255) DEFAULT NULL,
+  `remark` varchar(255) DEFAULT NULL COMMENT '备注',
+  `is_del` int(11) DEFAULT '0' COMMENT '是否删除 0否 1是',
+  `create_at` datetime DEFAULT NULL,
+  `update_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8;
+
+-- 子商品表
+DROP TABLE IF EXISTS `gfb_product_item`;
 CREATE TABLE `gfb_product_item` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
+  `product_id` int(11) DEFAULT NULL COMMENT '父级id',
   `price` int(11) DEFAULT NULL COMMENT '价格',
   `discount_price` int(11) DEFAULT NULL COMMENT '折扣价',
   `after_sales_service` text COMMENT '售后服务',
+  `img_url` varchar(255) DEFAULT NULL COMMENT '图片地址',
   `details` text COMMENT '商品详情',
+  `q_and_a` text COMMENT '问答',
   `inventory` int(11) DEFAULT '0' COMMENT '库存',
   `is_del` int(11) DEFAULT '0' COMMENT '是否删除 0否 1是',
   `is_enable` int(11) DEFAULT '0' COMMENT '是否上架',
@@ -1149,33 +1248,120 @@ CREATE TABLE `gfb_product_item` (
   `create_at` datetime DEFAULT NULL,
   `update_at` datetime DEFAULT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=10 DEFAULT CHARSET=utf8;
 
+-- 商品子表与sku的关联表
+DROP TABLE IF EXISTS `gfb_product_item_sku_ref`;
 CREATE TABLE `gfb_product_item_sku_ref` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `product_item_id` int(11) DEFAULT NULL,
   `sku_id` int(11) DEFAULT NULL COMMENT '备注',
-  `create_at` datetime DEFAULT NULL,
-  `update_at` datetime DEFAULT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='商品子表与sku的关联表';
+) ENGINE=InnoDB AUTO_INCREMENT=31 DEFAULT CHARSET=utf8 COMMENT='商品子表与sku的关联表';
 
-CREATE TABLE `gfb_product_sku_classify` (
+-- 商品配送详情表
+DROP TABLE IF EXISTS `gfb_product_logistics`;
+CREATE TABLE `gfb_product_logistics` (
+  `id` int(11) NOT NULL AUTO_INCREMENT COMMENT '主键id',
+  `order_number` varchar(255) DEFAULT NULL COMMENT '所属订单编号',
+  `state` int(11) DEFAULT NULL COMMENT '收寄状态：0收件人 1.寄件人',
+  `user_id` int(11) DEFAULT NULL COMMENT '用户id',
+  `express_name` int(11) DEFAULT NULL COMMENT '快递名称',
+  `express_number` varchar(255) DEFAULT NULL COMMENT '快递编号',
+  `name` varchar(255) DEFAULT NULL COMMENT '收件人姓名',
+  `phone` varchar(25) DEFAULT NULL COMMENT '收货号码',
+  `country` varchar(255) DEFAULT NULL COMMENT '国家',
+  `province` varchar(255) DEFAULT NULL COMMENT '省份',
+  `city` varchar(255) DEFAULT NULL COMMENT '城市',
+  `district` varchar(255) DEFAULT NULL COMMENT '地区（市区/县）',
+  `detailed_address` varchar(1024) DEFAULT NULL COMMENT '详细地址',
+  `create_at` datetime DEFAULT NULL COMMENT '创建时间',
+  `update_at` datetime DEFAULT NULL COMMENT '更新时间',
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=10 DEFAULT CHARSET=utf8 COMMENT='商品配送地址';
+
+-- 商品表
+DROP TABLE IF EXISTS `gfb_product`;
+CREATE TABLE `gfb_product` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
-  `name` varchar(255) DEFAULT NULL,
-  `remark` varchar(255) DEFAULT NULL COMMENT '备注',
+  `pc_id` int(11) DEFAULT NULL COMMENT 'gfb_product_classify 表主键',
+  `name` varchar(255) DEFAULT NULL COMMENT '商品名',
+  `img_url` varchar(255) DEFAULT NULL COMMENT '图片地址',
+  `title` varchar(255) DEFAULT NULL COMMENT '标题',
+  `after_sales_service` text COMMENT '售后服务',
+  `details` text COMMENT '商品详情',
+  `q_and_a` text COMMENT '问答',
   `is_del` int(11) DEFAULT '0' COMMENT '是否删除 0否 1是',
   `create_at` datetime DEFAULT NULL,
   `update_at` datetime DEFAULT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8;
 
-CREATE TABLE `gfb_product_sku` (
+-- 商品子表与sku的关联表
+DROP TABLE IF EXISTS `gfb_product_order`;
+CREATE TABLE `gfb_product_order` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
-  `sc_id` int(11) DEFAULT NULL COMMENT 'sku_classify主键id',
-  `name` varchar(255) DEFAULT NULL,
-  `is_del` int(11) DEFAULT '0' COMMENT '是否删除 0否 1是',
-  `create_at` datetime DEFAULT NULL,
-  `update_at` datetime DEFAULT NULL,
+  `type` int(11) DEFAULT NULL COMMENT '商品计划类型 0广富送 1联通送',
+  `status` int(11) DEFAULT NULL COMMENT '状态：1.未付款 2.已付款 3.待发货 4.待收货 5.已完成 6.已取消',
+  `user_id` int(11) DEFAULT NULL COMMENT '会员id',
+  `order_number` varchar(255) NOT NULL DEFAULT '' COMMENT '订单编号',
+  `pay_number` varchar(255) DEFAULT NULL COMMENT '支付流水号',
+  `pay_type` int(11) DEFAULT NULL COMMENT '支付方式：0在线支付 ',
+  `product_address_id` int(11) DEFAULT NULL COMMENT '商品配送地址id',
+  `pay_money` int(11) DEFAULT NULL COMMENT '实付款',
+  `product_money` int(11) DEFAULT NULL COMMENT '商品金额',
+  `discounts_money` int(11) DEFAULT NULL COMMENT '折扣金额',
+  `fee` int(11) DEFAULT NULL COMMENT '手续费',
+  `earnings` int(11) DEFAULT NULL COMMENT '收益',
+  `is_del` int(11) DEFAULT '0' COMMENT '是否 0否 1是',
+  `pay_at` datetime DEFAULT NULL COMMENT '支付时间',
+  `created_at` datetime DEFAULT NULL COMMENT '创建时间',
+  `updated_at` datetime DEFAULT NULL COMMENT '更新时间',
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8 COMMENT='商品子表与sku的关联表';
+
+-- 商品子表与sku的关联表
+DROP TABLE IF EXISTS `gfb_product_order_buy_log`;
+CREATE TABLE `gfb_product_order_buy_log` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `product_item_id` int(11) DEFAULT NULL,
+  `product_order_id` int(11) DEFAULT NULL COMMENT '订单id',
+  `product_money` int(11) DEFAULT NULL COMMENT '购买时商品的价格',
+  `discounts_money` int(11) DEFAULT NULL,
+  `is_del` int(11) DEFAULT '0' COMMENT '是否删除 0否 1是',
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=23 DEFAULT CHARSET=utf8 COMMENT='商品子表与sku的关联表';
+
+DROP TABLE IF EXISTS `gfb_product_collect`;
+CREATE TABLE `gfb_product_collect` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `product_item_id` int(11) DEFAULT NULL COMMENT '子商品id',
+  `user_id` int(11) DEFAULT NULL COMMENT '用户id',
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=31 DEFAULT CHARSET=utf8 COMMENT='商品收藏表';
+
+
+ALTER TABLE `gfb_product_order`
+  ADD COLUMN `remark` varchar(1024) NULL DEFAULT '' COMMENT '订单备注' AFTER `pay_at`;
+
+ALTER TABLE `gfb_product_order_buy_log`
+  ADD COLUMN `plan_id` INT(11) NOT NULL COMMENT '订单id' AFTER `id`;
+ALTER TABLE `gfb_product_order_buy_log`
+  ADD COLUMN `plan_money` INT(11) NULL DEFAULT 0  COMMENT '订单购买金额' AFTER `id`;
+ALTER TABLE `gfb_product_order_buy_log`
+  ADD COLUMN `pay_money` INT(11) NULL DEFAULT 0  COMMENT '订单购买金额' AFTER `plan_money`;
+
+ALTER TABLE `gfb_topics`
+  CHANGE COLUMN `titel` `title` varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT '' COMMENT '标的' AFTER `id`;
+
+ALTER TABLE `gfb_product_order`
+  ADD COLUMN `ship_at` datetime NULL COMMENT '发货时间' AFTER `pay_at`;
+
+ALTER TABLE `gfb_finance_plan`
+  ADD COLUMN `order_number` varchar(255) DEFAULT NULL COMMENT '订单编号' AFTER `end_lock_at`\
+
+
+ALTER TABLE `gfb_users`
+  ADD COLUMN `join_company` varchar(255) COLLATE utf8_unicode_ci NOT NULL;

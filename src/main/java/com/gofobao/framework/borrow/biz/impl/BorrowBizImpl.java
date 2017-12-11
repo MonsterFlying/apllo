@@ -70,6 +70,7 @@ import com.gofobao.framework.tender.service.TenderService;
 import com.gofobao.framework.tender.service.TransferService;
 import com.gofobao.framework.tender.vo.request.VoCancelThirdTenderReq;
 import com.gofobao.framework.tender.vo.request.VoCreateTenderReq;
+import com.gofobao.framework.wheel.borrow.biz.WheelBorrowBiz;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -167,7 +168,8 @@ public class BorrowBizImpl implements BorrowBiz {
     private ThirdBatchLogBiz thirdBatchLogBiz;
     @Autowired
     private UserHelper userHelper;
-
+    @Autowired
+    private WheelBorrowBiz wheelBorrowBiz;
     @Value("${gofobao.javaDomain}")
     private String javaDomain;
     @Value("${gofobao.imageDomain}")
@@ -867,6 +869,12 @@ public class BorrowBizImpl implements BorrowBiz {
         borrow.setStatus(5);
         borrow.setUpdatedAt(nowDate);
         borrowService.updateById(borrow);
+        //撤标成功通知车轮理财
+        try {
+            wheelBorrowBiz.borrowUpdateNotice(borrow);
+        } catch (Exception e) {
+            log.error("撤标成功通知车轮理财失败", e);
+        }
         return ResponseEntity.ok(VoBaseResp.ok("取消借款成功!"));
     }
 
@@ -1545,7 +1553,7 @@ public class BorrowBizImpl implements BorrowBiz {
 
             return ResponseEntity
                     .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, "借款标不是车贷标或净值标!", VoHtmlResp.class));
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "借款标不是车贷标或渠道标!", VoHtmlResp.class));
         }
 
         //受托支付

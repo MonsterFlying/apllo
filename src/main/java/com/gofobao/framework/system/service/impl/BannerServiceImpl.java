@@ -40,6 +40,8 @@ public class BannerServiceImpl implements BannerService {
                         banners = bannerRepository.findByStatusAndTerminalOrderByIdDesc(new Byte("1"), 0);
                     } else if ("financer".equals(s)) {
                         banners = bannerRepository.findByStatusAndTerminalOrderByIdDesc(new Byte("1"), 2);
+                    } else if ("product".equals(s)) {
+                        banners = bannerRepository.findByStatusAndTerminalOrderByIdDesc(new Byte("1"), 3);
                     } else {  // 移动端
                         banners = bannerRepository.findByStatusAndTerminalOrderByIdDesc(new Byte("1"), 1);
                     }

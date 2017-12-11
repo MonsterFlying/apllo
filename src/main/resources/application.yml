@@ -29,6 +29,11 @@ spring:
     default-encoding: UTF-8
   thymeleaf:
     mode: LEGACYHTML5
+  http:
+    multipart:
+      max-file-size: 2MB
+      max-request-size: 20MB
+      enabled: true
 
 jwt: #JWT 安全配置
   header: Authorization

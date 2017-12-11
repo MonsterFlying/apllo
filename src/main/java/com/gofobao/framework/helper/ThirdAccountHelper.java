@@ -30,17 +30,10 @@ public class ThirdAccountHelper {
                     .body(VoBaseResp.error(VoBaseResp.ERROR_INIT_BANK_PASSWORD, "请初始化江西银行存管账户密码！", VoBaseResp.class));
         }
 
-        if (userThirdAccount.getAutoTransferState() != 1) {
+        if (!userThirdAccount.getAutoTenderState().equals(1)) {
             return ResponseEntity
                     .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR_CREDIT, "请先签订自动债权转让协议！", VoBaseResp.class));
-        }
-
-
-        if (userThirdAccount.getAutoTenderState() != 1) {
-            return ResponseEntity
-                    .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR_CREDIT, "请先签订自动投标协议！", VoBaseResp.class));
+                    .body(VoBaseResp.error(VoBaseResp.ERROR_CREDIT_TENDER, "请先签订自动投标协议！", VoBaseResp.class));
         }
 
         return ResponseEntity.ok(VoBaseResp.ok("搜索成功")) ;

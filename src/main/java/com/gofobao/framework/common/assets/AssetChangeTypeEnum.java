@@ -7,17 +7,17 @@ public enum AssetChangeTypeEnum {
     /**
      * 理财计划到期收回本金
      */
-    financeReceivedPaymentsPrincipal("理财计划到期收回本金", "financeReceivedPayments", "7781", "add@financePlanMoney", "", "D"),
+    financeReceivedPaymentsPrincipal("正常本金回款", "financeReceivedPaymentsPrincipal", "7781", "add@financePlanMoney", "", "D"),
 
     /**
      * 理财计划到期收回利息
      */
-    financeReceivedPaymentsInterest("理财计划到期收回利息", "financeReceivedPayments", "7781", "add@financePlanMoney", "", "D"),
+    financeReceivedPaymentsInterest("正常利息回款", "financeReceivedPaymentsInterest", "7781", "add@financePlanMoney", "", "D"),
 
     /**
      * 理财计划到期收回本息
      */
-    financeReceivedPayments("理财计划回款", "financeReceivedPayments", "7781", "add@financePlanMoney", "", "D"),
+    financeReceivedPayments("正常回款", "financeReceivedPayments", "7781", "add@financePlanMoney", "", "D"),
 
     /**
      * 投资人到期收回本息
@@ -40,40 +40,49 @@ public enum AssetChangeTypeEnum {
     offlineRecharge("线下转账", "offline_recharge", "7820", "add@useMoney", "add@rechargeTotal", "D"),
 
     /**
-     * 资金冻结冻结
+     * 资金冻结
      */
     freeze("资金冻结", "freeze", "0", "sub@useMoney,add@noUseMoney", "", "B"),
 
+    /**
+     * 广富送资金冻结
+     */
+    buyProductFreeze("购买广富送冻结资金", "buyProductFreeze", "0", "sub@useMoney,add@noUseMoney", "", "B"),
+
+    /**
+     * 广富送资金冻结
+     */
+    buyProductUnFreeze("购买广富送取消订单冻结资金", "buyProductFreeze", "0", "add@useMoney,sub@noUseMoney", "", "B"),
 
     /**
      * 理财计划冻结
      */
-    financePlanFreeze("理财计划资金购买", "finance_plan_freeze", "", "sub@useMoney,add@financePlanMoney", "", "B"),
+    financePlanFreeze("资金冻结", "finance_plan_freeze", "", "sub@useMoney,add@financePlanMoney", "", "B"),
 
     /**
      * 用户购买理财计划债权
      */
-    InvestorsFinanceBatchBuyClaims("用户购买理财计划债权", "investors_finance_batch_buy_claims", "2789", "sub@financePlanMoney", "", "C"),
+    InvestorsFinanceBatchBuyClaims("用户购买债权", "investors_finance_batch_buy_claims", "2789", "sub@financePlanMoney", "", "C"),
 
     /**
      * 平台出售理财计划债权
      */
-    platformFinanceBatchSellBonds("平台出售理财计划债权", "platform_finance_batch_sell_bonds", "7785", "add@useMoney", "", "D"),
+    platformFinanceBatchSellBonds("出售债权", "platform_finance_batch_sell_bonds", "7785", "add@useMoney", "", "D"),
 
     /**
      * 平台回购理财计划债权
      */
-    platformFinanceBatchBuyClaims("平台回购理财计划债权", "platform_finance_batch_buy_claims", "2789", "sub@noUseMoney", "", "C"),
+    platformFinanceBatchBuyClaims("用户购买债权", "platform_finance_batch_buy_claims", "2789", "sub@noUseMoney", "", "C"),
 
     /**
      * 用户出售理财计划债权
      */
-    InvestorsFinanceBatchSellBonds("用户出售理财计划债权", "investors_finance_batch_sell_bonds", "7785", "add@financePlanMoney", "", "D"),
+    InvestorsFinanceBatchSellBonds("出售债权", "investors_finance_batch_sell_bonds", "7785", "add@financePlanMoney", "", "D"),
 
     /**
      * 理财计划接触冻结
      */
-    financePlanUnFreeze("理财计划资金解除冻结", "finance_plan_unfreeze", "", "add@useMoney,sub@financePlanMoney", "", "B"),
+    financePlanUnFreeze("资金解冻", "finance_plan_unfreeze", "", "add@useMoney,sub@financePlanMoney", "", "B"),
 
 
     /**
@@ -138,7 +147,7 @@ public enum AssetChangeTypeEnum {
     /**
      * 借款人借款入账
      */
-    financeBorrow("理财计划借款入账", "financeBorrow", "7780", "add@useMoney", "", "D"),
+    financeBorrow("借款入账", "financeBorrow", "7780", "add@useMoney", "", "D"),
 
     /**
      * 借款人借款入账

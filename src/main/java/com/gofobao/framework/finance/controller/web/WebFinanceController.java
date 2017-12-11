@@ -33,12 +33,12 @@ public class WebFinanceController {
 
     /**
      * 理财计划回购
-     *
+     * @// TODO: 2017/11/30 后台未接
      * @param voFinanceRepurchase
      * @return
      * @throws Exception
      */
-    @ApiOperation("理财计划匹配债权转让")
+    @ApiOperation("理财计划回购")
     @PostMapping("/v2/pub/finance/plan/repurchase")
     public ResponseEntity<VoBaseResp> financeRepurchase(VoFinanceRepurchase voFinanceRepurchase) {
         try {

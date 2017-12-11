@@ -18,6 +18,7 @@ public class ProductSkuClassify {
     @Id
     @GeneratedValue
     private Long id;
+    private Integer no;
     private String name;
     private String remark;
     private Boolean isDel;

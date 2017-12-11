@@ -113,4 +113,6 @@ public interface UserService {
     List<Users> findByIdIn(List<Long> ids);
 
     Page<Users> findAll(Pageable pageable);
+
+    void repairWaitExpenditureInterestManage();
 }

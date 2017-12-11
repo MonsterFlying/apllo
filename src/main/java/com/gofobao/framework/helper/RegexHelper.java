@@ -7,10 +7,17 @@ import java.util.regex.Pattern;
  * Created by Max on 2017/2/17.
  */
 public class RegexHelper {
+
+
     /**
      * 正则：手机号（简单）, 1字头＋10位数字即可.
      */
     public static final String REGEX_MOBILE_SIMPLE = "^[1]\\d{10}$";
+
+    /**
+     * 中文， 數字， 字符 _
+     */
+    public static final String REGEX_USERNAME = "^[a-zA-Z0-9_\\u4e00-\\u9fa5]{1,12}$";
 
     /**
      * 正则:支付密码,必须6位的纯数字密码

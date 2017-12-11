@@ -10,6 +10,8 @@ import lombok.Data;
 @ApiModel
 @Data
 public class VoUserAddress {
+    @ApiModelProperty("收货地址id")
+    private Long addressId;
     @ApiModelProperty("收货人")
     private String name;
     @ApiModelProperty("收货人电话")

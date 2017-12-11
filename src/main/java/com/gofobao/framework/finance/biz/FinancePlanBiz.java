@@ -28,7 +28,7 @@ public interface FinancePlanBiz {
      *
      * @param voFinanceAgainVerifyTransfer
      */
-    ResponseEntity<VoBaseResp> financeAgainVerifyTransfer(VoFinanceAgainVerifyTransfer voFinanceAgainVerifyTransfer);
+    ResponseEntity<VoBaseResp> financeAgainVerifyTransfer(VoFinanceAgainVerifyTransfer voFinanceAgainVerifyTransfer) throws Exception;
 
     /**
      * 理财计划资金变动

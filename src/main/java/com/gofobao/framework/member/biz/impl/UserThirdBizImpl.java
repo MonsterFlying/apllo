@@ -5,9 +5,9 @@ import com.gofobao.framework.api.contants.*;
 import com.gofobao.framework.api.helper.JixinManager;
 import com.gofobao.framework.api.helper.JixinTxCodeEnum;
 import com.gofobao.framework.api.helper.JixinTxDateHelper;
-import com.gofobao.framework.api.model.account_details_query.AccountDetailsQueryItem;
-import com.gofobao.framework.api.model.account_details_query.AccountDetailsQueryRequest;
-import com.gofobao.framework.api.model.account_details_query.AccountDetailsQueryResponse;
+import com.gofobao.framework.api.model.account_details_query2.AccountDetailsQuery2Item;
+import com.gofobao.framework.api.model.account_details_query2.AccountDetailsQuery2Request;
+import com.gofobao.framework.api.model.account_details_query2.AccountDetailsQuery2Response;
 import com.gofobao.framework.api.model.account_id_query.AccountIdQueryRequest;
 import com.gofobao.framework.api.model.account_id_query.AccountIdQueryResponse;
 import com.gofobao.framework.api.model.account_open.AccountOpenRequest;
@@ -16,8 +16,8 @@ import com.gofobao.framework.api.model.account_open_plus.AccountOpenPlusRequest;
 import com.gofobao.framework.api.model.account_open_plus.AccountOpenPlusResponse;
 import com.gofobao.framework.api.model.account_query_by_mobile.AccountQueryByMobileRequest;
 import com.gofobao.framework.api.model.account_query_by_mobile.AccountQueryByMobileResponse;
-import com.gofobao.framework.api.model.auto_bid_auth_plus.AutoBidAuthRequest;
-import com.gofobao.framework.api.model.auto_bid_auth_plus.AutoBidAuthResponse;
+import com.gofobao.framework.api.model.auto_bid_auth_plus.AutoBidAuthPlusRequest;
+import com.gofobao.framework.api.model.auto_bid_auth_plus.AutoBidAuthPlusResponse;
 import com.gofobao.framework.api.model.auto_credit_invest_auth.AutoCreditInvestAuthRequest;
 import com.gofobao.framework.api.model.auto_credit_invest_auth.AutoCreditInvestAuthResponse;
 import com.gofobao.framework.api.model.balance_query.BalanceQueryRequest;
@@ -63,8 +63,10 @@ import com.gofobao.framework.marketing.entity.MarketingData;
 import com.gofobao.framework.marketing.entity.MarketingRedpackRecord;
 import com.gofobao.framework.marketing.service.MarketingRedpackRecordService;
 import com.gofobao.framework.member.biz.UserThirdBiz;
+import com.gofobao.framework.member.entity.UserInfo;
 import com.gofobao.framework.member.entity.UserThirdAccount;
 import com.gofobao.framework.member.entity.Users;
+import com.gofobao.framework.member.service.UserInfoService;
 import com.gofobao.framework.member.service.UserService;
 import com.gofobao.framework.member.service.UserThirdAccountService;
 import com.gofobao.framework.member.vo.request.UserAccountThirdTxReq;
@@ -162,6 +164,8 @@ public class UserThirdBizImpl implements UserThirdBiz {
 
     @Autowired
     OpenAccountBizImpl openAccountBiz;
+    @Autowired
+    private UserInfoService userInfoService;
 
 
     //用户来源
@@ -233,6 +237,20 @@ public class UserThirdBizImpl implements UserThirdBiz {
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "你访问的账户不存在", VoOpenAccountResp.class));
+
+        // 1.5 判断银行卡号唯一
+        Specification<UserThirdAccount> userThirdAccountSpecification = Specifications.
+                <UserThirdAccount>and()
+                .eq("cardNo", voOpenAccountReq.getCardNo())
+                .build();
+
+        long cardNoCount = userThirdAccountService.count(userThirdAccountSpecification);
+        if (cardNoCount > 0) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "银行卡号已经开户", VoOpenAccountResp.class));
+        }
+
         // 2. 判断用户是否已经开过存管账户
         UserThirdAccount userThirdAccount = null;
         try {
@@ -352,6 +370,23 @@ public class UserThirdBizImpl implements UserThirdBiz {
         user.setCardId(voOpenAccountReq.getIdNo());
         user.setUpdatedAt(nowDate);
         userService.save(user);
+        //10. 更新userInfo
+        UserInfo userInfo = userInfoService.info(userId);
+        String cardNo = voOpenAccountReq.getCardNo();
+        int idxSexStart = 16;
+        int birthYearSpan = 4;
+        //如果是15位的证件号码
+        if (cardNo.length() == 15) {
+            idxSexStart = 14;
+            birthYearSpan = 2;
+        }
+        //出生日期
+        String year = (birthYearSpan == 2 ? "19" : "") + cardNo.substring(6, 6 + birthYearSpan);
+        String month = cardNo.substring(6 + birthYearSpan, 6 + birthYearSpan + 2);
+        String day = cardNo.substring(8 + birthYearSpan, 8 + birthYearSpan + 2);
+        userInfo.setBirthdayY(NumberHelper.toInt(year));
+        userInfo.setBirthdayMd(NumberHelper.toInt(month + day));
+        userInfoService.save(userInfo);
 
         VoOpenAccountResp voOpenAccountResp = VoBaseResp.ok("开户成功", VoOpenAccountResp.class);
         voOpenAccountResp.setOpenAccountBankName("江西银行");
@@ -362,6 +397,25 @@ public class UserThirdBizImpl implements UserThirdBiz {
         return ResponseEntity.ok(voOpenAccountResp);
     }
 
+    public static void main(String[] args) {
+
+        String certificateNo = "360733199508260910";
+
+        int idxSexStart = 16;
+        int birthYearSpan = 4;
+        //如果是15位的证件号码
+        if (certificateNo.length() == 15) {
+            idxSexStart = 14;
+            birthYearSpan = 2;
+        }
+
+        //出生日期
+        String year = (birthYearSpan == 2 ? "19" : "") + certificateNo.substring(6, 6 + birthYearSpan);
+        String month = certificateNo.substring(6 + birthYearSpan, 6 + birthYearSpan + 2);
+        String day = certificateNo.substring(8 + birthYearSpan, 8 + birthYearSpan + 2);
+        String birthday = year + '-' + month + '-' + day;
+        System.out.println(birthday);
+    }
 
     /**
      * 开户前置检测
@@ -601,7 +655,7 @@ public class UserThirdBizImpl implements UserThirdBiz {
 
     @Override
     public ResponseEntity<String> autoTenderCallback(HttpServletRequest request, HttpServletResponse response) {
-        AutoBidAuthResponse autoBidAuthResponse = jixinManager.callback(request, new TypeToken<AutoBidAuthResponse>() {
+        AutoBidAuthPlusResponse autoBidAuthResponse = jixinManager.callback(request, new TypeToken<AutoBidAuthPlusResponse>() {
         });
 
         if (ObjectUtils.isEmpty(autoBidAuthResponse)) {
@@ -634,7 +688,7 @@ public class UserThirdBizImpl implements UserThirdBiz {
         }
 
 
-        if (userThirdAccount.getAutoTenderState() == 1) {
+        if (userThirdAccount.getAutoTenderState().equals(1)) {
             return ResponseEntity.ok("success");
         }
 
@@ -670,7 +724,7 @@ public class UserThirdBizImpl implements UserThirdBiz {
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "请先设置江西银行存管账户交易密码！", VoHtmlResp.class));
         }
 
-        if (userThirdAccount.getAutoTenderState() == 0) {
+        if (userThirdAccount.getAutoTenderState().equals(0)) {
             log.info("查询用户签约状态开始");
             CreditAuthQueryRequest creditAuthQueryRequest = new CreditAuthQueryRequest();
             creditAuthQueryRequest.setAccountId(userThirdAccount.getAccountId());
@@ -696,7 +750,7 @@ public class UserThirdBizImpl implements UserThirdBiz {
         }
 
 
-        AutoBidAuthRequest autoBidAuthRequest = new AutoBidAuthRequest();
+        AutoBidAuthPlusRequest autoBidAuthRequest = new AutoBidAuthPlusRequest();
         autoBidAuthRequest.setAccountId(userThirdAccount.getAccountId());
         autoBidAuthRequest.setOrderId(System.currentTimeMillis() + RandomHelper.generateNumberCode(6));
         autoBidAuthRequest.setTxAmount("999999999");
@@ -738,19 +792,19 @@ public class UserThirdBizImpl implements UserThirdBiz {
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "请先开通江西银行存管账户！", VoHtmlResp.class));
         }
 
-        if (userThirdAccount.getPasswordState() != 1) {
+        if (!userThirdAccount.getPasswordState().equals(1)) {
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "请先设置江西银行存管账户交易密码！", VoHtmlResp.class));
         }
 
-        if (userThirdAccount.getAutoTenderState() != 1) {
+        if (!userThirdAccount.getAutoTenderState().equals(1)) {
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "请先签约江西银行自动投标协议！", VoHtmlResp.class));
         }
 
-        if (userThirdAccount.getAutoTransferState() == 0) {
+        if (userThirdAccount.getAutoTransferState().equals(0)) {  // 审核过
             log.info("查询用户自动债权转让协议开始");
             CreditAuthQueryRequest creditAuthQueryRequest = new CreditAuthQueryRequest();
             creditAuthQueryRequest.setAccountId(userThirdAccount.getAccountId());
@@ -772,20 +826,20 @@ public class UserThirdBizImpl implements UserThirdBiz {
             }
             log.info("查询用户自动债权转让协议结束");
         }
-        AutoCreditInvestAuthRequest autoCreditInvestAuthPlusRequest = new AutoCreditInvestAuthRequest();
-        autoCreditInvestAuthPlusRequest.setAccountId(userThirdAccount.getAccountId());
-        autoCreditInvestAuthPlusRequest.setOrderId(System.currentTimeMillis() + RandomHelper.generateNumberCode(6));
-        autoCreditInvestAuthPlusRequest.setForgotPwdUrl(thirdAccountPasswordHelper.getThirdAcccountResetPasswordUrl(httpServletRequest, userId));
+        AutoCreditInvestAuthRequest autoCreditInvestAuthRequest = new AutoCreditInvestAuthRequest();
+        autoCreditInvestAuthRequest.setAccountId(userThirdAccount.getAccountId());
+        autoCreditInvestAuthRequest.setOrderId(System.currentTimeMillis() + RandomHelper.generateNumberCode(6));
+        autoCreditInvestAuthRequest.setForgotPwdUrl(thirdAccountPasswordHelper.getThirdAcccountResetPasswordUrl(httpServletRequest, userId));
         // autoCreditInvestAuthPlusRequest.setRetUrl(String.format("%s%s%s", javaDomain, "/pub/autoTranfer/show/", userId));
-        autoCreditInvestAuthPlusRequest.setRetUrl(String.format("%s/pub/openAccount/callback/%s/autoTranfer", javaDomain, userThirdAccount.getUserId()));
-        autoCreditInvestAuthPlusRequest.setNotifyUrl(String.format("%s/%s", javaDomain, "/pub/user/third/autoTranfer/callback"));
-        autoCreditInvestAuthPlusRequest.setAcqRes(userId.toString());
-        autoCreditInvestAuthPlusRequest.setChannel(ChannelContant.getchannel(httpServletRequest));
+        autoCreditInvestAuthRequest.setRetUrl(String.format("%s/pub/openAccount/callback/%s/autoTranfer", javaDomain, userThirdAccount.getUserId()));
+        autoCreditInvestAuthRequest.setNotifyUrl(String.format("%s/%s", javaDomain, "/pub/user/third/autoTranfer/callback"));
+        autoCreditInvestAuthRequest.setAcqRes(userId.toString());
+        autoCreditInvestAuthRequest.setChannel(ChannelContant.getchannel(httpServletRequest));
 
 
         String html = null;
         try {
-            html = jixinManager.getHtml(JixinTxCodeEnum.AUTO_CREDIT_INVEST_AUTH, autoCreditInvestAuthPlusRequest);
+            html = jixinManager.getHtml(JixinTxCodeEnum.AUTO_CREDIT_INVEST_AUTH, autoCreditInvestAuthRequest);
         } catch (Throwable e) {
             log.error("UserThirdBizImpl autoTranfter get redis exception ", e);
             return ResponseEntity
@@ -839,7 +893,7 @@ public class UserThirdBizImpl implements UserThirdBiz {
         }
 
 
-        if (userThirdAccount.getAutoTransferState() == 1) {
+        if (userThirdAccount.getAutoTransferState().equals(1)) {  // 审核
             return ResponseEntity.ok("success");
         }
 
@@ -876,7 +930,7 @@ public class UserThirdBizImpl implements UserThirdBiz {
         userThirdAccount = synCreditQuth(userThirdAccount);
         VoSignInfoResp re = VoBaseResp.ok("查询成功", VoSignInfoResp.class);
         re.setAutoTenderState(userThirdAccount.getAutoTenderState().equals(1));
-        re.setAutoTransferState(userThirdAccount.getAutoTransferState().equals(1));
+        re.setAutoTransferState(userThirdAccount.getAutoTransferState().equals(1));  // 审核
         return ResponseEntity.ok(re);
     }
 
@@ -942,7 +996,7 @@ public class UserThirdBizImpl implements UserThirdBiz {
             return "autoTender/faile";
         }
 
-        if (userThirdAccount.getAutoTenderState() == 1) {
+        if (userThirdAccount.getAutoTenderState().equals(1)) {
             return "autoTender/success";
         } else {
             return "autoTender/faile";
@@ -958,13 +1012,12 @@ public class UserThirdBizImpl implements UserThirdBiz {
             return "autoTranfer/faile";
         }
 
-        if (userThirdAccount.getAutoTransferState() == 1) {
+        if (userThirdAccount.getAutoTransferState().equals(1)) {  // 审核
             return "autoTranfer/success";
         } else {
             return "autoTranfer/faile";
         }
     }
-
     @Override
     public ResponseEntity<String> publicPasswordModify(HttpServletRequest httpServletRequest, String encode, String channel) {
         Long userId = thirdAccountPasswordHelper.getUserId(encode);
@@ -992,7 +1045,7 @@ public class UserThirdBizImpl implements UserThirdBiz {
 
     @Override
     public UserThirdAccount synCreditQuth(UserThirdAccount userThirdAccount) {
-        if (userThirdAccount.getAutoTenderState() == 0) {
+        if (userThirdAccount.getAutoTenderState().equals(0)) {
             CreditAuthQueryRequest creditAuthQueryRequest = new CreditAuthQueryRequest();
             creditAuthQueryRequest.setAccountId(userThirdAccount.getAccountId());
             creditAuthQueryRequest.setType("1");
@@ -1014,7 +1067,7 @@ public class UserThirdBizImpl implements UserThirdBiz {
             }
         }
 
-        if (userThirdAccount.getAutoTransferState() == 0) {
+        if (userThirdAccount.getAutoTransferState().equals(0)) { // 审核
             CreditAuthQueryRequest creditAuthQueryRequest = new CreditAuthQueryRequest();
             creditAuthQueryRequest.setAccountId(userThirdAccount.getAccountId());
             creditAuthQueryRequest.setType("2");
@@ -1425,8 +1478,7 @@ public class UserThirdBizImpl implements UserThirdBiz {
     }
 
     @Override
-    public ResponseEntity<VoHtmlResp>
-    bindBank(HttpServletRequest httpServletRequest, Long userId, String bankNo) {
+    public ResponseEntity<VoHtmlResp> bindBank(HttpServletRequest httpServletRequest, Long userId, String bankNo) {
         UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(userId);
         if (ObjectUtils.isEmpty(userThirdAccount)) {
             return ResponseEntity
@@ -1440,18 +1492,18 @@ public class UserThirdBizImpl implements UserThirdBiz {
                     .body(VoBaseResp.error(VoBaseResp.ERROR_INIT_BANK_PASSWORD, "请初始化江西银行存管账户密码！", VoHtmlResp.class));
         }
 
-        if (userThirdAccount.getAutoTransferState() != 1) {
+        /*if (userThirdAccount.getAutoTransferState() != 1) {  // 审核
             return ResponseEntity
                     .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR_CREDIT, "请先签订自动债权转让协议！", VoHtmlResp.class));
+                    .body(VoBaseResp.error(VoBaseResp.ERROR_CREDIT_TENDER, "请先签订自动债权转让协议！", VoHtmlResp.class));
         }
 
 
         if (userThirdAccount.getAutoTenderState() != 1) {
             return ResponseEntity
                     .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR_CREDIT, "请先签订自动投标协议！", VoHtmlResp.class));
-        }
+                    .body(VoBaseResp.error(VoBaseResp.ERROR_CREDIT_TENDER, "请先签订自动投标协议！", VoHtmlResp.class));
+        }*/
 
         // 先判断是否已经绑定
         CardBindItem cardInfoByThird = null;
@@ -1467,14 +1519,14 @@ public class UserThirdBizImpl implements UserThirdBiz {
                     log.error("银行卡绑定前置: 查无此银行卡号, 如有问题请联系平台客服!");
                     return ResponseEntity
                             .badRequest()
-                            .body(VoBaseResp.error(VoBaseResp.ERROR_CREDIT, "系统异常, 请联系客户", VoHtmlResp.class));
+                            .body(VoBaseResp.error(VoBaseResp.ERROR_CREDIT_TENDER, "系统异常, 请联系客户", VoHtmlResp.class));
                 }
 
                 if (!bankInfo.getCardType().equals("借记卡")) {
                     log.error("银行卡绑定前置: 银行卡类型必须为借记卡!");
                     return ResponseEntity
                             .badRequest()
-                            .body(VoBaseResp.error(VoBaseResp.ERROR_CREDIT, "系统异常, 请联系客户", VoHtmlResp.class));
+                            .body(VoBaseResp.error(VoBaseResp.ERROR_CREDIT_TENDER, "系统异常, 请联系客户", VoHtmlResp.class));
                 }
 
                 bankName = bankInfo.getBankName();
@@ -1492,7 +1544,7 @@ public class UserThirdBizImpl implements UserThirdBiz {
             if (ObjectUtils.isEmpty(dictValue)) {
                 return ResponseEntity
                         .badRequest()
-                        .body(VoBaseResp.error(VoBaseResp.ERROR_CREDIT, "系统异常, 请联系客户", VoHtmlResp.class));
+                        .body(VoBaseResp.error(VoBaseResp.ERROR_CREDIT_TENDER, "系统异常, 请联系客户", VoHtmlResp.class));
             }
 
             userThirdAccount.setCardNoBindState(1);
@@ -1502,7 +1554,7 @@ public class UserThirdBizImpl implements UserThirdBiz {
             userThirdAccountService.save(userThirdAccount);
             return ResponseEntity
                     .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR_CREDIT, "你已经绑定银行卡, 如需要操作请进行解绑银行卡!", VoHtmlResp.class));
+                    .body(VoBaseResp.error(VoBaseResp.ERROR_CREDIT_TENDER, "你已经绑定银行卡, 如需要操作请进行解绑银行卡!", VoHtmlResp.class));
         } catch (Exception e) {
             log.info("绑定银行卡: 查询用户银行卡为空");
         }
@@ -1892,11 +1944,11 @@ public class UserThirdBizImpl implements UserThirdBiz {
         //分页
         Integer pageIndex = userAccountThirdTxReq.getPageIndex() + 1;
         Integer pageSize = userAccountThirdTxReq.getPageSize();
-        List<AccountDetailsQueryItem> accountDetailsQueryItemList = new ArrayList<>();
+        List<AccountDetailsQuery2Item> accountDetailsQueryItemList = new ArrayList<>();
         //装配请求即信请求参数
-        AccountDetailsQueryRequest accountDetailsQueryRequest = new AccountDetailsQueryRequest();
-        accountDetailsQueryRequest.setPageNum(String.valueOf(pageIndex)); //启始页
-        accountDetailsQueryRequest.setPageSize(String.valueOf(pageSize));   //页面大小
+        AccountDetailsQuery2Request accountDetailsQueryRequest = new AccountDetailsQuery2Request();
+        accountDetailsQueryRequest.setInpDate(""); //翻页控制使用；首次查询上送空；翻页查询时上送上页返回的最后一条记录交易日期；YYYYMMDD
+        accountDetailsQueryRequest.setRtnInd("");   //空：首次查询；1：翻页查询；其它：非法；
         // 查询交易时间范围
         accountDetailsQueryRequest.setStartDate(txDateStr);
         accountDetailsQueryRequest.setEndDate(txDateStr);
@@ -1905,9 +1957,9 @@ public class UserThirdBizImpl implements UserThirdBiz {
         //存管账户
         accountDetailsQueryRequest.setAccountId(accountId);
         //发送即信请求
-        AccountDetailsQueryResponse accountDetailsQueryResponse = jixinManager.send(JixinTxCodeEnum.ACCOUNT_DETAILS_QUERY,
+        AccountDetailsQuery2Response accountDetailsQueryResponse = jixinManager.send(JixinTxCodeEnum.ACCOUNT_DETAILS_QUERY2,
                 accountDetailsQueryRequest,
-                AccountDetailsQueryResponse.class);
+                AccountDetailsQuery2Response.class);
         //判断返回结果
         if ((ObjectUtils.isEmpty(accountDetailsQueryResponse)) || (!JixinResultContants.SUCCESS.equals(accountDetailsQueryResponse.getRetCode()))) {
             String ressultMsg = ObjectUtils.isEmpty(accountDetailsQueryResponse) ? "当前网络出现异常, 请稍后尝试！" : accountDetailsQueryResponse.getRetMsg();
@@ -1921,9 +1973,9 @@ public class UserThirdBizImpl implements UserThirdBiz {
             return ResponseEntity.ok(thridTxRes);
         }
         //json转对象
-        List<AccountDetailsQueryItem> detailsQueryItems = new Gson().fromJson(subPacks, new TypeToken<List<AccountDetailsQueryItem>>() {
+        List<AccountDetailsQuery2Item> detailsQueryItems = new Gson().fromJson(subPacks, new TypeToken<List<AccountDetailsQuery2Item>>() {
         }.getType());
-        thridTxRes.setTotalCount(Integer.valueOf(accountDetailsQueryResponse.getTotalItems()));
+        thridTxRes.setTotalCount(Integer.valueOf(detailsQueryItems.size()));
         thridTxRes.setDetailsQueryItems(detailsQueryItems);
         return ResponseEntity.ok(thridTxRes);
     }
@@ -1943,7 +1995,7 @@ public class UserThirdBizImpl implements UserThirdBiz {
         log.info("================================");
 
 
-        CardBindDetailsQueryRequest cardBindDetailsQueryRequest = new CardBindDetailsQueryRequest() ;
+        CardBindDetailsQueryRequest cardBindDetailsQueryRequest = new CardBindDetailsQueryRequest();
         cardBindDetailsQueryRequest.setAccountId(userThirdAccount.getAccountId());
         cardBindDetailsQueryRequest.setState("0");
         CardBindDetailsQueryResponse cardBindDetailsQueryResponse = jixinManager.send(JixinTxCodeEnum.CARD_BIND_DETAILS_QUERY, cardBindDetailsQueryRequest, CardBindDetailsQueryResponse.class);

@@ -1,6 +1,7 @@
 package com.gofobao.framework.member.vo.response;
 
 import com.gofobao.framework.api.model.account_details_query.AccountDetailsQueryItem;
+import com.gofobao.framework.api.model.account_details_query2.AccountDetailsQuery2Item;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import lombok.Data;
 
@@ -13,7 +14,7 @@ import java.util.List;
 @Data
 public class UserAccountThirdTxRes extends VoBaseResp {
 
-        private List<AccountDetailsQueryItem> detailsQueryItems= new ArrayList<>(0);
+        private List<AccountDetailsQuery2Item> detailsQueryItems= new ArrayList<>(0);
 
         private Integer totalCount=0;
 

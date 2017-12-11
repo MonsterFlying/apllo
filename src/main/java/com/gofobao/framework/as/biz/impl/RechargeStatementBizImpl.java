@@ -1,13 +1,9 @@
 package com.gofobao.framework.as.biz.impl;
 
 import com.github.wenhao.jpa.Specifications;
-import com.gofobao.framework.api.contants.JixinResultContants;
 import com.gofobao.framework.api.helper.JixinManager;
-import com.gofobao.framework.api.helper.JixinTxCodeEnum;
 import com.gofobao.framework.api.helper.JixinTxDateHelper;
-import com.gofobao.framework.api.model.account_details_query.AccountDetailsQueryItem;
-import com.gofobao.framework.api.model.account_details_query.AccountDetailsQueryRequest;
-import com.gofobao.framework.api.model.account_details_query.AccountDetailsQueryResponse;
+import com.gofobao.framework.api.model.account_details_query2.AccountDetailsQuery2Item;
 import com.gofobao.framework.as.biz.RechargeStatementBiz;
 import com.gofobao.framework.asset.entity.RechargeDetailLog;
 import com.gofobao.framework.asset.service.RechargeDetailLogService;
@@ -21,14 +17,15 @@ import com.gofobao.framework.common.rabbitmq.MqTagEnum;
 import com.gofobao.framework.financial.entity.NewEve;
 import com.gofobao.framework.financial.service.NewAleveService;
 import com.gofobao.framework.financial.service.NewEveService;
-import com.gofobao.framework.helper.*;
+import com.gofobao.framework.helper.DateHelper;
+import com.gofobao.framework.helper.ExceptionEmailHelper;
+import com.gofobao.framework.helper.MoneyHelper;
 import com.gofobao.framework.helper.project.QueryThirdRecordHelper;
 import com.gofobao.framework.member.entity.UserThirdAccount;
 import com.gofobao.framework.member.service.UserThirdAccountService;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
-import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,7 +34,6 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
-import org.springframework.util.ObjectUtils;
 
 import java.util.*;
 
@@ -127,7 +123,7 @@ public class RechargeStatementBizImpl implements RechargeStatementBiz {
         UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(userId);
         Preconditions.checkNotNull(userThirdAccount, "userthirdAccount record is null");
         Preconditions.checkNotNull(date, "date is null");
-        List<AccountDetailsQueryItem> thirdRechargeRecordList = null;
+        List<AccountDetailsQuery2Item> thirdRechargeRecordList = null;
         try {
             log.info("[实时对账] 实时查询即信流水记录");
             thirdRechargeRecordList = queryThirdRecordHelper.queryThirdRecord(userThirdAccount.getAccountId(), date, rechargeType.getLocalType()) ;
@@ -156,16 +152,16 @@ public class RechargeStatementBizImpl implements RechargeStatementBiz {
      */
     private boolean doOnlineMacthRecord(UserThirdAccount userThirdAccount,
                                         Date date,
-                                        List<AccountDetailsQueryItem> thirdRechargeRecordList,
+                                        List<AccountDetailsQuery2Item> thirdRechargeRecordList,
                                         List<RechargeDetailLog> localRechargeRecordList,
                                         boolean force) throws Exception {
 
         // 对即信流水进行分类
         // 拨正数据集合
-        List<AccountDetailsQueryItem> errorThirdRechargeRecords = new ArrayList<>();
+        List<AccountDetailsQuery2Item> errorThirdRechargeRecords = new ArrayList<>();
         // 正确数据集合
-        List<AccountDetailsQueryItem> okThirdRechargeRecords = new ArrayList<>();
-        for (AccountDetailsQueryItem item : thirdRechargeRecordList) {
+        List<AccountDetailsQuery2Item> okThirdRechargeRecords = new ArrayList<>();
+        for (AccountDetailsQuery2Item item : thirdRechargeRecordList) {
             if ("R".equalsIgnoreCase(item.getOrFlag())) {
                 errorThirdRechargeRecords.add(item);
             } else {
@@ -194,10 +190,10 @@ public class RechargeStatementBizImpl implements RechargeStatementBiz {
             }
         }
 
-        Iterator<AccountDetailsQueryItem> okThirdIterator = okThirdRechargeRecords.iterator();
+        Iterator<AccountDetailsQuery2Item> okThirdIterator = okThirdRechargeRecords.iterator();
         while (okThirdIterator.hasNext()) {
             // 即信流水对象
-            AccountDetailsQueryItem accountDetailsQueryItem = okThirdIterator.next();
+            AccountDetailsQuery2Item accountDetailsQueryItem = okThirdIterator.next();
             Iterator<RechargeDetailLog> okLocalIterator = okLocalRechargeDetailRecords.iterator();
             while (okLocalIterator.hasNext()) {
                 // 本地流水对象
@@ -220,7 +216,7 @@ public class RechargeStatementBizImpl implements RechargeStatementBiz {
             while (okThirdIterator.hasNext()) {
                 // 即信流水
                 Iterator<RechargeDetailLog> errorLocalIterator = errorLocalRechargeDetailRecords.iterator();
-                AccountDetailsQueryItem item = okThirdIterator.next();
+                AccountDetailsQuery2Item item = okThirdIterator.next();
                 while (errorLocalIterator.hasNext()) {
                     // 本地流水
                     RechargeDetailLog rechargeDetailLog = errorLocalIterator.next();
@@ -245,7 +241,7 @@ public class RechargeStatementBizImpl implements RechargeStatementBiz {
             }
 
             if (!CollectionUtils.isEmpty(okThirdRechargeRecords)) {
-                for (AccountDetailsQueryItem item : okThirdRechargeRecords) {
+                for (AccountDetailsQuery2Item item : okThirdRechargeRecords) {
                     if (force) {
                         boolean insertState = insertRechargeRecordByOnline(item, userThirdAccount);
                         String msg = GSON.toJson(item);
@@ -282,7 +278,7 @@ public class RechargeStatementBizImpl implements RechargeStatementBiz {
      * @param userThirdAccount
      * @return
      */
-    private boolean insertRechargeRecordByOnline(AccountDetailsQueryItem item, UserThirdAccount userThirdAccount) throws Exception {
+    private boolean insertRechargeRecordByOnline(AccountDetailsQuery2Item item, UserThirdAccount userThirdAccount) throws Exception {
         String transtype = item.getTranType();
         AssetChangeTypeEnum assetChangeTypeEnum = null;
         try {
@@ -619,52 +615,6 @@ public class RechargeStatementBizImpl implements RechargeStatementBiz {
         List<RechargeDetailLog> rechargeDetailLogs = rechargeDetailLogService.findAll(rechargeDetailLogSpecification);
         Optional<List<RechargeDetailLog>> optinal = Optional.ofNullable(rechargeDetailLogs);
         return optinal.orElse(Lists.newArrayList());
-    }
-
-
-    /**
-     * 实时查询交易记录
-     *
-     * @param userThirdAccount
-     * @param date
-     * @param rechargeType
-     * @return
-     */
-    private List<AccountDetailsQueryItem> findOnlineThirdRecord(UserThirdAccount userThirdAccount,
-                                                                Date date,
-                                                                RechargeType rechargeType) throws Exception {
-        List<AccountDetailsQueryItem> accountDetailsQueryItemList = new ArrayList<>();
-        int pageSize = 20, pageIndex = 1, realSize = 0;
-        do {
-            AccountDetailsQueryRequest accountDetailsQueryRequest = new AccountDetailsQueryRequest();
-            accountDetailsQueryRequest.setPageSize(String.valueOf(pageSize));
-            accountDetailsQueryRequest.setPageNum(String.valueOf(pageIndex));
-            accountDetailsQueryRequest.setStartDate(DateHelper.dateToString(date, DateHelper.DATE_FORMAT_YMD_NUM));
-            accountDetailsQueryRequest.setEndDate(DateHelper.dateToString(date, DateHelper.DATE_FORMAT_YMD_NUM));
-            accountDetailsQueryRequest.setType("9");
-            accountDetailsQueryRequest.setTranType(rechargeType.getLocalType());
-            accountDetailsQueryRequest.setAccountId(userThirdAccount.getAccountId());
-            AccountDetailsQueryResponse accountDetailsQueryResponse = jixinManager.send(JixinTxCodeEnum.ACCOUNT_DETAILS_QUERY,
-                    accountDetailsQueryRequest,
-                    AccountDetailsQueryResponse.class);
-
-            if ((ObjectUtils.isEmpty(accountDetailsQueryResponse)) || (!JixinResultContants.SUCCESS.equals(accountDetailsQueryResponse.getRetCode()))) {
-                String msg = ObjectUtils.isEmpty(accountDetailsQueryResponse) ? "当前网络出现异常, 请稍后尝试" : accountDetailsQueryResponse.getRetMsg();
-                throw new Exception(msg);
-            }
-            pageIndex++;
-            Optional<List<AccountDetailsQueryItem>> optional = Optional.ofNullable(GSON.fromJson(accountDetailsQueryResponse.getSubPacks(), new TypeToken<List<AccountDetailsQueryItem>>() {
-            }.getType()));
-            List<AccountDetailsQueryItem> accountDetailsQueryItems = optional.orElse(Lists.newArrayList());
-            if (CollectionUtils.isEmpty(accountDetailsQueryItems)) {
-                break;
-            }
-
-            realSize = accountDetailsQueryItems.size();
-            accountDetailsQueryItemList.addAll(accountDetailsQueryItems);
-        } while (realSize == pageSize);
-
-        return accountDetailsQueryItemList;
     }
 
 

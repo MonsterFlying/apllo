@@ -33,7 +33,11 @@ spring:
     mode: LEGACYHTML5
   profiles:
     active: def
-
+  http:
+    multipart:
+      max-file-size: 2MB
+      max-request-size: 20MB
+      enabled: true
 jwt: #JWT 安全配置
   header: Authorization
   secret: WWW.gOf0b@o.c0m@0701
@@ -41,7 +45,7 @@ jwt: #JWT 安全配置
   prefix: Bearer
   #七牛
 qiniu:
-    domain: test.img.gofobao.com
+    domain: http://test.img.gofobao.com
     bucket: test
     ak : yevGNMoheNL4EGIencz8E-ohrPzMqLwchW9SvX9e
     sk : GjGZAJBUpe8UzPoWmKeKBPSi7Kq_IshmuW-UC89o
