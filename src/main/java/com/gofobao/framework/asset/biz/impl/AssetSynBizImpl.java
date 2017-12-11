@@ -305,10 +305,10 @@ AssetSynBizImpl implements AssetSynBiz {
         Preconditions.checkNotNull(asset, "资金同步: 查询用户资产为空");
         UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(userId);
         ResponseEntity<VoBaseResp> conditionResponse = ThirdAccountHelper.allConditionCheck(userThirdAccount);
-       /* if (!conditionResponse.getStatusCode().equals(HttpStatus.OK)) {
+        if (!conditionResponse.getStatusCode().equals(HttpStatus.OK)) {
             log.error("当前用户未开户");
             return false;
-        }*/
+        }
 
         Date nowDate = new Date();
         // 同步时间大于两天
