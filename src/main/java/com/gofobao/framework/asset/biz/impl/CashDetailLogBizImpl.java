@@ -399,6 +399,7 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
             cashDetailLog.setMoney(new Double(cashMoney).longValue());
             cashDetailLog.setSeqNo(withDrawRequest.getTxDate() + withDrawRequest.getTxTime() + withDrawRequest.getSeqNo());
             cashDetailLog.setState(4);  // 直接设置为失败
+            cashDetailLog.setIp(httpServletRequest.getLocalAddr());
             cashDetailLog.setVerifyTime(nowDate);
             cashDetailLog.setVerifyUserId(0L);
             cashDetailLog.setUserId(userId);
