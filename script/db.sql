@@ -1425,3 +1425,6 @@ ALTER TABLE gfb_borrow ADD is_contract tinyint(1) DEFAULT '0' COMMENT '是否生
 
 ALTER TABLE gfb_user_third_account ADD open_account_at datetime DEFAULT NULL COMMENT '合同开户时间';
 ALTER TABLE gfb_user_third_account ADD entrust_state smallint(1) DEFAULT '0' COMMENT '是否签署委托授权协议';
+
+
+ALTER TABLE gfb_user_cache ADD `tender_id` int(10) DEFAULT '0' COMMENT '首投id' AFTER `wait_repay_interest`;

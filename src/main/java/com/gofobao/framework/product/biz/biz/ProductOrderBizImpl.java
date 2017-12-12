@@ -525,4 +525,24 @@ public class ProductOrderBizImpl implements ProductOrderBiz {
         }
         return ResponseEntity.ok(res);
     }
+
+    /**
+     * 确认收货
+     */
+    @Override
+    public ResponseEntity<VoBaseResp> confirmReceipt(VoConfirmReceipt voConfirmReceipt) {
+        //订单号
+        long userId = voConfirmReceipt.getUserId();
+        //确认收货
+        String orderNumber = voConfirmReceipt.getOrderNumber();
+        /* 订单记录 */
+        ProductOrder productOrder = productOrderService.findByOrderNumber(orderNumber);
+        if (productOrder.getUserId().longValue() != userId) {
+            return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "你看到的订单不见啦!"));
+        }
+        productOrder.setStatus(5);
+        productOrder.setUpdatedAt(new Date());
+        return ResponseEntity.ok(VoBaseResp.ok("确认收货"));
+    }
+
 }

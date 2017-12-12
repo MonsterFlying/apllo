@@ -181,6 +181,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
      * @param voThirdBatchLendRepay
      * @return
      */
+    @Override
     public ResponseEntity<VoBaseResp> thirdBatchLendRepay(VoThirdBatchLendRepay voThirdBatchLendRepay) throws Exception {
         Gson gson = new Gson();
         log.info(String.format("批次放款调用: %s", gson.toJson(voThirdBatchLendRepay)));
@@ -645,15 +646,21 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
 
             if (borrow.isTransfer() && (!BooleanUtils.toBoolean(userCache.getTenderTransfer()))) {
                 userCache.setTenderTransfer(borrow.getId().intValue());
+                userCache.setTenderId(tender.getId());
             } else if ((borrow.getType() == 0) && (!BooleanUtils.toBoolean(userCache.getTenderTuijian()))) {
                 userCache.setTenderTuijian(borrow.getId().intValue());
+                userCache.setTenderId(tender.getId());
             } else if ((borrow.getType() == 1) && (!BooleanUtils.toBoolean(userCache.getTenderJingzhi()))) {
                 userCache.setTenderJingzhi(borrow.getId().intValue());
+                userCache.setTenderId(tender.getId());
             } else if ((borrow.getType() == 2) && (!BooleanUtils.toBoolean(userCache.getTenderMiao()))) {
                 userCache.setTenderMiao(borrow.getId().intValue());
+                userCache.setTenderId(tender.getId());
             } else if ((borrow.getType() == 4) && (!BooleanUtils.toBoolean(userCache.getTenderQudao()))) {
                 userCache.setTenderQudao(borrow.getId().intValue());
+                userCache.setTenderId(tender.getId());
             }
+
             userCacheService.save(userCache);
         }
     }
@@ -854,7 +861,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
                 .put(MqConfig.BATCH_TYPE, String.valueOf(ThirdBatchLogContants.BATCH_REPAY))
                 .put(MqConfig.MSG_TIME, DateHelper.dateToString(new Date()))
                 .put(MqConfig.ACQ_RES, repayRunResp.getAcqRes())
-                .put(MqConfig.BATCH_RESP,GSON.toJson(repayRunResp))
+                .put(MqConfig.BATCH_RESP, GSON.toJson(repayRunResp))
                 .build();
 
         mqConfig.setMsg(body);

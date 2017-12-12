@@ -50,8 +50,8 @@ public interface ProductOrderBiz {
      */
     ResponseEntity<VoViewFindOrderLogisticsDetailRes> findOrderLogisticsDetail(VoFindOrderLogisticsDetail voFindOrderLogisticsDetail);
 
-/*    *//**
+    /**
      * 确认收货
-     *//*
-    ResponseEntity<VoViewFindOrderLogisticsDetailRes> (VoFindOrderLogisticsDetail voFindOrderLogisticsDetail);*/
+     */
+    ResponseEntity<VoBaseResp>  confirmReceipt(VoConfirmReceipt voConfirmReceipt);
 }
