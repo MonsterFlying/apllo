@@ -323,13 +323,9 @@ public class TransferBizImpl implements TransferBiz {
             //3.更改债权转让与购买债权转让记录状态
             /* 总购买金额 */
             long sumBuyMoney = transferBuyLogList.stream().mapToLong(TransferBuyLog::getBuyMoney).sum();
-
-            transfer.setState(4);
-            transfer.setUpdatedAt(new Date());
             transfer.setTransferMoneyYes(transfer.getTransferMoneyYes() - sumBuyMoney);
             transfer.setTenderCount(transfer.getTenderCount() - transferBuyLogList.size());
-            transfer.setSuccessAt(null);
-            transferService.save(transfer);
+
             //4.取消购买债权并解冻金额
             transferBuyLogList.stream().forEach(transferBuyLog -> {
                 if (!ObjectUtils.isEmpty(transferBuyLog.getFreezeOrderId())) {
@@ -372,7 +368,12 @@ public class TransferBizImpl implements TransferBiz {
             });
             transferBuyLogService.save(transferBuyLogList);
         }
-
+        //更新债权转让
+        transfer.setState(4);
+        transfer.setUpdatedAt(new Date());
+        transfer.setSuccessAt(null);
+        transferService.save(transfer);
+        //更新tender
         tender.setTransferFlag(0);
         tender.setUpdatedAt(new Date());
         tenderService.save(tender);

@@ -46,7 +46,7 @@ public class PasswordController {
      */
     @ApiOperation("用户忘记密码")
     @PostMapping("/pub/user/password/find")
-    public ResponseEntity<VoBaseResp> findPassword(@Valid @ModelAttribute VoFindPasswordReq voFindPasswordReq){
+    public ResponseEntity<VoBaseResp> findPassword(@Valid @ModelAttribute VoFindPasswordReq voFindPasswordReq) {
         return userPasswordBiz.findPassword(voFindPasswordReq);
     }
 
