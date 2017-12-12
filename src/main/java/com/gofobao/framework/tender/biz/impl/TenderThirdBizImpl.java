@@ -481,6 +481,7 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
      *
      * @return
      */
+    @Override
     public ResponseEntity<String> thirdBatchCreditInvestRunCall(HttpServletRequest request, HttpServletResponse
             response) throws Exception {
         BatchCreditInvestRunCall batchCreditInvestRunCall = jixinManager.callback(request, new TypeToken<BatchCreditInvestRunCall>() {

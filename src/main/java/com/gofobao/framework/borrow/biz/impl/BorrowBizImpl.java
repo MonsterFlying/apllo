@@ -572,6 +572,7 @@ public class BorrowBizImpl implements BorrowBiz {
         Specification<Transfer> ts = Specifications
                 .<Transfer>and()
                 .eq("userId", userId)
+                .eq("type", 0)
                 .in("state", Lists.newArrayList(TransferContants.CHECKPENDING, TransferContants.TRANSFERIND).toArray())
                 .build();
         long tranferingNum = transferService.count(ts);

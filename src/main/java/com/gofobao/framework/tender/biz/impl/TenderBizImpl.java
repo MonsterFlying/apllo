@@ -573,7 +573,13 @@ public class TenderBizImpl implements TenderBiz {
         }
 
         UserCache userCache = userCacheService.findById(user.getId());
-        if (ObjectUtils.isEmpty(borrow.getLendId()) && releaseAt.getTime() > nowDate.getTime() && !userCache.isNovice()) {
+        //新手标老用户是否可投判断
+        boolean flag1 = (ObjectUtils.isEmpty(borrow.getLendId())
+                && releaseAt.getTime() > nowDate.getTime()
+                && !userCache.isNovice());
+        //判断投标用户是zfh  并且投资金额可以投满这个标
+        boolean flag2 = (user.getId() == 22002) && (voCreateTenderReq.getTenderMoney() > (borrow.getMoney() - borrow.getMoneyYes()));
+        if (flag1 || flag2) {
             log.info(String.valueOf(ObjectUtils.isEmpty(borrow.getLendId())));
             log.info(String.valueOf(releaseAt.getTime() > nowDate.getTime()));
             log.info(String.valueOf(!userCache.isNovice()));

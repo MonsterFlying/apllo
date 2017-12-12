@@ -69,6 +69,8 @@ public class UserCache {
 
     private Long waitRepayInterest;
 
+    private Long tenderId;
+
     private Integer tenderTuijian;
 
     private Integer tenderJingzhi;

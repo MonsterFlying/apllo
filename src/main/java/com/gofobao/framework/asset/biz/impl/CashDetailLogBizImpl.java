@@ -787,11 +787,11 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
 
             Optional<List<AccountDetailsQuery2Item>> optional = Optional.ofNullable(GSON.fromJson(accountDetailsQuery2Response.getSubPacks(), new TypeToken<List<AccountDetailsQuery2Item>>() {
             }.getType()));
-            List<AccountDetailsQuery2Item> accountDetailsQueryItems = optional.orElse(Lists.newArrayList());
+            List<AccountDetailsQuery2Item> accountDetailsQuery2Items = optional.orElse(Lists.newArrayList());
 
-            inpDate = accountDetailsQueryItemList.get(accountDetailsQueryItems.size() - 1).getInpDate();
+            inpDate = accountDetailsQuery2Items.get(accountDetailsQuery2Items.size() - 1).getInpDate();
 
-            accountDetailsQueryItemList.addAll(accountDetailsQueryItems);
+            accountDetailsQueryItemList.addAll(accountDetailsQuery2Items);
             rtnInd = "1";
         } while (!CollectionUtils.isEmpty(accountDetailsQueryItemList));
         if (CollectionUtils.isEmpty(accountDetailsQueryItemList)) {

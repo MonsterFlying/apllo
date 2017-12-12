@@ -153,7 +153,6 @@ public class ProductCollectBizImpl implements ProductCollectBiz {
                 Map<Long, ProductSkuClassify> productSkuClassifyMap = productSkuClassifyList.stream().collect(Collectors.toMap(ProductSkuClassify::getId, Function.identity()));
                 //查询商品计划
 
-                VoProductCollect voProductCollect = new VoProductCollect();
                 productItemList.stream().forEach(productItem -> {
                     List<VoSku> skuList = new ArrayList<>();
                     /*子商品sku关联集合*/
@@ -176,11 +175,12 @@ public class ProductCollectBizImpl implements ProductCollectBiz {
                     });
 
                     Product product = productMap.get(productItem.getProductId());
+                    VoProductCollect voProductCollect = new VoProductCollect();
                     voProductCollect.setProductItemId(productItem.getId());
                     voProductCollect.setIsEnable(productItem.getIsEnable());
                     voProductCollect.setName(product.getName());
                     voProductCollect.setTitle(product.getTitle());
-                    voProductCollect.setImgUrl(!ObjectUtils.isEmpty(productItem.getImgUrl()) ? product.getImgUrl() : productItem.getImgUrl());
+                    voProductCollect.setImgUrl(ObjectUtils.isEmpty(productItem.getImgUrl()) ? product.getImgUrl() : productItem.getImgUrl());
                     voProductCollect.setSkuList(skuList);
                     voProductCollect.setLowest(formatPrice(productPlan.getLowest()));
                     voProductCollectList.add(voProductCollect);

@@ -816,15 +816,21 @@ public class ThirdBatchDealBizImpl implements ThirdBatchDealBiz {
 
             if (borrow.isTransfer() && (!BooleanUtils.toBoolean(userCache.getTenderTransfer()))) {
                 userCache.setTenderTransfer(0);
+                userCache.setTenderId(0L);
             } else if ((borrow.getType() == 0) && (!BooleanUtils.toBoolean(userCache.getTenderTuijian()))) {
                 userCache.setTenderTuijian(0);
+                userCache.setTenderId(0L);
             } else if ((borrow.getType() == 1) && (!BooleanUtils.toBoolean(userCache.getTenderJingzhi()))) {
                 userCache.setTenderJingzhi(0);
+                userCache.setTenderId(0L);
             } else if ((borrow.getType() == 2) && (!BooleanUtils.toBoolean(userCache.getTenderMiao()))) {
                 userCache.setTenderMiao(0);
+                userCache.setTenderId(0L);
             } else if ((borrow.getType() == 4) && (!BooleanUtils.toBoolean(userCache.getTenderQudao()))) {
                 userCache.setTenderQudao(0);
+                userCache.setTenderId(0L);
             }
+
             userCacheService.save(userCache);
         }
     }

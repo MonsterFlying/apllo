@@ -92,6 +92,7 @@ public class ThirdBatchLogBizImpl implements ThirdBatchLogBiz {
      *
      * @return
      */
+    @Override
     public ResponseEntity<VoBaseResp> findThirdThirdBatch(VoFindThirdBatch voFindThirdBatch) {
         log.info("pc：触发查询即信批次处理");
         String paramStr = voFindThirdBatch.getParamStr();/* pc请求提前结清参数 */
@@ -290,6 +291,7 @@ public class ThirdBatchLogBizImpl implements ThirdBatchLogBiz {
      * @param sourceId
      * @return
      */
+    @Override
     public int checkBatchOftenSubmit(String sourceId, Integer... type) {
         //查询最后一条提交的批次
         ThirdBatchLog thirdBatchLog = getValidLastBatchLog(sourceId, type);

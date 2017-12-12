@@ -1368,6 +1368,26 @@ ALTER TABLE `gfb_users`
 /*
 Navicat MySQL Data Transfer
 
+
+CREATE TABLE gfb_product_agent
+(
+  id         INT AUTO_INCREMENT PRIMARY KEY,
+  user_id    INT(10) UNSIGNED NOT NULL COMMENT '用户ID',
+  name       VARCHAR(255)     NOT NULL COMMENT '代理商名称',
+  level      TINYINT(2) UNSIGNED NOT NULL  COMMENT '等级；0：省代，1：市代，2县代，3：零售',
+  parent_id  INT(10) UNSIGNED NOT NULL DEFAULT 0 COMMENT '上级代理',
+  commission_discount INT(3) UNSIGNED NOT NULL DEFAULT 0 COMMENT '上级代理',
+  remark     VARCHAR(255) NOT NULL DEFAULT '' COMMENT '备注',
+  created_at DATETIME         NULL,
+  updated_at DATETIME         NULL,
+  CONSTRAINT product_agent_user_id_foreign
+  FOREIGN KEY (user_id) REFERENCES gfb_users (id)
+    ON UPDATE CASCADE
+    ON DELETE NO ACTION
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;
+
+CREATE INDEX product_agent_user_id_foreign
+  ON gfb_product_agent (user_id);
 Source Server         : root
 Source Server Version : 50637
 Source Host           : 192.168.1.5:3306
@@ -1405,3 +1425,6 @@ ALTER TABLE gfb_borrow ADD is_contract tinyint(1) DEFAULT '0' COMMENT '是否生
 
 ALTER TABLE gfb_user_third_account ADD open_account_at datetime DEFAULT NULL COMMENT '合同开户时间';
 ALTER TABLE gfb_user_third_account ADD entrust_state smallint(1) DEFAULT '0' COMMENT '是否签署委托授权协议';
+
+
+ALTER TABLE gfb_user_cache ADD `tender_id` int(10) DEFAULT '0' COMMENT '首投id' AFTER `wait_repay_interest`;

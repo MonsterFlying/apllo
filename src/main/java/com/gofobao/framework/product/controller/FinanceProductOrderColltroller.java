@@ -106,4 +106,14 @@ public class FinanceProductOrderColltroller {
         voFindOrderLogisticsDetail.setUserId(userId);
         return productOrderBiz.findOrderLogisticsDetail(voFindOrderLogisticsDetail);
     }
+
+    /**
+     * 确认收货
+     */
+    @PostMapping("/v2/product/order/confirm/receipt")
+    @ApiOperation("确认收货")
+    public ResponseEntity<VoBaseResp> confirmReceipt(@ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId, @Valid @ModelAttribute VoConfirmReceipt voConfirmReceipt) {
+        voConfirmReceipt.setUserId(userId);
+        return productOrderBiz.confirmReceipt(voConfirmReceipt);
+    }
 }
