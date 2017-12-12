@@ -349,6 +349,13 @@ public class MarketingProcessBizImpl implements MarketingProcessBiz {
         marketingRedpackRecord.setUserId(opUser.getId());
         marketingRedpackRecord.setMoney(money);
         marketingRedpackRecord.setRemark(remark.toString());
+        String sourceType = "";
+        if (marketing.getId().intValue() == 1 || marketing.getId().intValue() == 2 || marketing.getId().intValue() == 4) {
+            sourceType = "App\\Models\\Tender";
+        } else if (marketing.getId().intValue() == 3) {
+            sourceType = "App\\Models\\User";
+        }
+        marketingRedpackRecord.setSourceType(sourceType);
         // 查询记录是否存在
         List<MarketingRedpackRecord> marketingRedpackRecords = marketingRedpackRecordService.findByMarketingIdAndRedpackRuleIdAndUserIdAndSourceId(marketingRedpackRecord.getMarketingId(),
                 marketingRedpackRecord.getRedpackRuleId(),
@@ -381,7 +388,7 @@ public class MarketingProcessBizImpl implements MarketingProcessBiz {
      * @param marketingData
      */
     private void filterDataByCondition(List<Marketing> marketings, MarketingData marketingData) throws Exception {
-        if(CollectionUtils.isEmpty(marketings)){
+        if (CollectionUtils.isEmpty(marketings)) {
             return;
         }
         List<Long> marketingidList = marketings.stream().map(marketing -> marketing.getId()).collect(Collectors.toList());

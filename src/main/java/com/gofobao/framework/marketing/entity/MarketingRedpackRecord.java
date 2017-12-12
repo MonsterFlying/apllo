@@ -31,5 +31,5 @@ public class MarketingRedpackRecord {
     private Date cancelTime;
     private Integer del;
     private String remark;
-
+    private String sourceType;
 }
