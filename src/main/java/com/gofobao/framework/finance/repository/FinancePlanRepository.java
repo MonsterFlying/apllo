@@ -25,7 +25,7 @@ public interface FinancePlanRepository extends JpaRepository<FinancePlan, Long>,
             "plan.status NOT  IN ?1 " +
             "AND " +
             "plan.type=?2 " +
-            "ORDER BY plan.id DESC , " +
-            "plan.status, plan.moneyYes/plan.money ASC ")
+            "ORDER BY  " +
+            "plan.status,plan.moneyYes/plan.money ASC ,plan.id DESC ")
     List<FinancePlan> indexList(List<Integer> status, Integer type, Pageable pageable);
 }

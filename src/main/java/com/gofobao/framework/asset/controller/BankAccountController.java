@@ -60,7 +60,7 @@ public class BankAccountController {
 
     @ApiOperation("省市")
     @GetMapping("pub/area/list")
-    public ResponseEntity<VoAreaWarpRes> areaList(@Param("id") Integer id) {
+    public ResponseEntity<VoAreaWarpRes> areaList(@Param("id") String id) {
         return areaBiz.list(id);
     }
 

@@ -6,6 +6,7 @@ import com.gofobao.framework.asset.service.AreaService;
 import com.gofobao.framework.asset.vo.response.pc.AreaRes;
 import com.gofobao.framework.asset.vo.response.pc.VoAreaWarpRes;
 import com.gofobao.framework.core.vo.VoBaseResp;
+import com.gofobao.framework.helper.NumberHelper;
 import com.gofobao.framework.helper.RedisHelper;
 import com.google.common.collect.Lists;
 import com.google.common.reflect.TypeToken;
@@ -40,9 +41,9 @@ public class AreaBizImpl implements AreaBiz {
      * @return
      */
     @Override
-    public ResponseEntity<VoAreaWarpRes> list(Integer id) {
+    public ResponseEntity<VoAreaWarpRes> list(String id) {
 
-        id = StringUtils.isEmpty(id) ? 0 : id;
+        id = StringUtils.isEmpty(id) ? "0" : id;
 
         VoAreaWarpRes warpRes = VoBaseResp.ok("查询成功", VoAreaWarpRes.class);
         try {
@@ -52,8 +53,8 @@ public class AreaBizImpl implements AreaBiz {
             if (!StringUtils.isEmpty(area)) {
                 areaResList = new Gson().fromJson(area, new TypeToken<List<AreaRes>>() {
                 }.getType());
-                Integer finalId = id;
-                List<AreaRes>  areaRes = areaResList.stream().
+                Integer finalId = NumberHelper.toInt(id);
+                List<AreaRes> areaRes = areaResList.stream().
                         filter(p -> p.getPid().intValue() == finalId.intValue())
                         .collect(Collectors.toList());
                 warpRes.setAreaRes(areaRes);
@@ -83,8 +84,8 @@ public class AreaBizImpl implements AreaBiz {
         } catch (Exception e) {
             log.error("地区添加到redis报错", areaJson);
         }
-        Integer finalId1 = id;
-        List<AreaRes>areaRes=areaResList.stream().filter(w->w.getPid()== finalId1).collect(Collectors.toList());
+        Integer finalId1 = NumberHelper.toInt(id);
+        List<AreaRes> areaRes = areaResList.stream().filter(w -> w.getPid() == finalId1).collect(Collectors.toList());
         warpRes.setAreaRes(areaRes);
         return ResponseEntity.ok(warpRes);
     }

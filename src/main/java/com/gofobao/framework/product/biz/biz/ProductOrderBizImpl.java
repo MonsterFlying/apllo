@@ -542,6 +542,7 @@ public class ProductOrderBizImpl implements ProductOrderBiz {
         }
         productOrder.setStatus(5);
         productOrder.setUpdatedAt(new Date());
+        productOrderService.save(productOrder);
         return ResponseEntity.ok(VoBaseResp.ok("确认收货"));
     }
 
