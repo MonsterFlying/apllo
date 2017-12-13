@@ -2191,15 +2191,18 @@ public class TransferBizImpl implements TransferBiz {
             if (transfer.getTransferMoneyYes() / transfer.getTransferMoney() == 1) {
                 //复审中
                 borrowInfoRes.setStatus(6);
+                borrowInfoRes.setPeriodHour(transfer.getSuccessAt().getTime()-transfer.getReleaseAt().getTime());
                 //已过期
             } else if (DateHelper.subDays(transfer.getReleaseAt(), 1).getTime() > System.currentTimeMillis()) {
                 borrowInfoRes.setStatus(5);
             } else {
                 //招标中
                 borrowInfoRes.setStatus(3);
+                borrowInfoRes.setPeriodSurplusHour(endAt.getTime()-new Date().getTime());
             }
         } else {
             borrowInfoRes.setStatus(4);
+            borrowInfoRes.setPeriodHour(transfer.getSuccessAt().getTime()-transfer.getReleaseAt().getTime());
         }
         borrowInfoRes.setReleaseAt(DateHelper.dateToString(transfer.getReleaseAt()));
         borrowInfoRes.setBorrowId(borrowId);

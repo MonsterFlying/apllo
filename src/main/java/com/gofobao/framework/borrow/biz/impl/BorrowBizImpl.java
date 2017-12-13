@@ -377,6 +377,7 @@ public class BorrowBizImpl implements BorrowBiz {
             Date nowDate = new Date(System.currentTimeMillis());
             Date releaseAt = borrow.getReleaseAt();  //发布时间
             borrowInfoRes.setSpend(StringHelper.formatMon(NumberHelper.floorDouble(borrow.getMoneyYes() / borrow.getMoney().doubleValue(), 2) * 100));
+
             if (status == BorrowContants.BIDDING) {//招标中
                 //待发布
                 if (releaseAt.getTime() >= nowDate.getTime()) {
@@ -386,18 +387,23 @@ public class BorrowBizImpl implements BorrowBiz {
                     //复审中
                     status = 6;
                     borrowInfoRes.setRecheckAt(DateHelper.dateToString(borrow.getRecheckAt()));
+                    borrowInfoRes.setPeriodHour(borrow.getSuccessAt().getTime()-borrow.getReleaseAt().getTime());
                 } else if (nowDate.getTime() > endAt.getTime()) {  //招标有效时间大于当前时间
                     borrowInfoRes.setRecheckAt(DateHelper.dateToString(borrow.getRecheckAt()));
                     status = 5; //已过期
                 } else {
                     status = 3; //招标中
+                    borrowInfoRes.setPeriodSurplusHour(endAt.getTime()-nowDate.getTime());
                 }
             } else if (!ObjectUtils.isEmpty(borrow.getRecheckAt()) && !ObjectUtils.isEmpty(borrow.getCloseAt())) {   //满标时间 结清
                 status = 4; //已完成
+                borrowInfoRes.setPeriodHour(borrow.getSuccessAt().getTime()-borrow.getReleaseAt().getTime());
             } else if (status == BorrowContants.PASS && ObjectUtils.isEmpty(borrow.getCloseAt())) {
                 status = 2; //还款中
                 borrowInfoRes.setRecheckAt(DateHelper.dateToString(borrow.getRecheckAt()));
+                borrowInfoRes.setPeriodHour(borrow.getSuccessAt().getTime()-borrow.getReleaseAt().getTime());
             }
+
             borrowInfoRes.setType(borrow.getType());
             if (!StringUtils.isEmpty(borrow.getTenderId())) {
                 borrowInfoRes.setType(5);

@@ -109,4 +109,12 @@ public class BorrowInfoRes extends VoBaseResp {
     @ApiModelProperty("当状态还款中 为满标计息时间")
     private String recheckAt;
 
+    @ApiModelProperty("满标募集共用时间")
+    private Long periodHour=0L;
+
+    @ApiModelProperty("募集剩余时间")
+    private Long periodSurplusHour=0L;
+
+
+
 }
