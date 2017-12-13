@@ -81,6 +81,7 @@ public class FinanceInvestServiceImpl implements FinanceInvestService {
     @PersistenceContext
     private EntityManager entityManager;
 
+
     /**
      * 回款中列表
      *
@@ -353,7 +354,11 @@ public class FinanceInvestServiceImpl implements FinanceInvestService {
             Map<String, Object> calculatorMap = borrowCalculatorHelper.simpleCount(2);
             Integer earnings = NumberHelper.toInt(StringHelper.toString(calculatorMap.get("earnings")));
             item.setReceivableInterest(StringHelper.formatMon(earnings / 100D));
-            List<BorrowCollection> borrowCollectionList = borrowCollectionRepository.findByTenderId(financePlanBuyer.getId());
+            Specification<FinancePlanCollection> planCollectionSpecification = Specifications.<FinancePlanCollection>and()
+                    .eq("buyerId", financePlanBuyer.getId())
+                    .eq("userId", financePlanBuyer.getUserId())
+                    .build();
+            List<FinancePlanCollection> borrowCollectionList = financePlanCollectionService.findList(planCollectionSpecification);
             //利息
             Long interest = borrowCollectionList.stream()
                     .filter(w -> w.getStatus() == BorrowCollectionContants.STATUS_YES)
@@ -412,13 +417,10 @@ public class FinanceInvestServiceImpl implements FinanceInvestService {
             FinanceReturnedMoney returnedMoney = new FinanceReturnedMoney();
             returnedMoney.setInterest(StringHelper.formatMon(p.getInterest() / 100D));
             returnedMoney.setPrincipal(StringHelper.formatMon(p.getPrincipal() / 100D));
-            returnedMoney.setCollectionMoney(StringHelper.formatMon(p.getPrincipal() + p.getInterest() / 100D));
+            returnedMoney.setCollectionMoney(StringHelper.formatMon((p.getPrincipal() + p.getInterest()) / 100D));
             returnedMoney.setOrder(p.getOrderNum() + 1);
-            Date nowDate = DateHelper.endOfDate(new Date());
-            Date collectionAt = DateHelper.endOfDate(p.getCollectionAt());
-
-            returnedMoney.setCollectionAt(p.getStatus() == BorrowCollectionContants.STATUS_YES ?
-                    DateHelper.dateToString(p.getCreatedAt(), DateHelper.DATE_FORMAT_YMD) :
+            returnedMoney.setCollectionAt(p.getStatus().intValue() == BorrowCollectionContants.STATUS_YES ?
+                    DateHelper.dateToString(p.getCollectionAtYes(), DateHelper.DATE_FORMAT_YMD) :
                     DateHelper.dateToString(p.getCollectionAt(), DateHelper.DATE_FORMAT_YMD));
             returnedMoney.setStatus(p.getStatus());
             returnedMonies.add(returnedMoney);

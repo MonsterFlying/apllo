@@ -33,4 +33,5 @@ public class FinancePlanCollection {
     private Date collectionAt;
     private Date createdAt;
     private Date updatedAt;
+    private Date collectionAtYes;
 }
