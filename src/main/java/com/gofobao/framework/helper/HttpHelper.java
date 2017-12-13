@@ -1,12 +1,13 @@
 package com.gofobao.framework.helper;
 
 import com.google.common.base.Preconditions;
-import org.apache.commons.codec.binary.Base64;
+import org.springframework.util.ObjectUtils;
 
+import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 import javax.servlet.http.HttpServletRequest;
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 
 /**
  * Created by Max on 17/5/31.
@@ -27,46 +28,33 @@ public class HttpHelper {
 
     /**
      * 获取请求参数
+     *
      * @param request
      * @return
      */
     public static String getRequestParameter(HttpServletRequest request) {
+        StringBuffer params = new StringBuffer();
+        if (ObjectUtils.isEmpty(request)) {
+            return "";
+        }
+        Map map = new HashMap();
+        Enumeration paramNames = request.getParameterNames();
+        while (paramNames.hasMoreElements()) {
+            String paramName = (String) paramNames.nextElement();
 
-        if (null == request) {
-            return null;
+            String[] paramValues = request.getParameterValues(paramName);
+            if (paramValues.length == 1) {
+                String paramValue = paramValues[0];
+                if (paramValue.length() != 0) {
+                    map.put(paramName, paramValue);
+                }
+            }
         }
 
-        String method = request.getMethod();
-        String param = null;
-        if (method.equalsIgnoreCase("GET")) {
-            param = request.getQueryString();
-            if (Base64.isBase64(param)) {
-                param = new String(Base64.decodeBase64(param), StandardCharsets.UTF_8);
-            }
-        } else {
-            param = getBodyData(request);
-            if (Base64.isBase64(param)) {
-                param = new String(Base64.decodeBase64(param), StandardCharsets.UTF_8);
-            }
+        Set<Map.Entry<String, String>> set = map.entrySet();
+        for (Map.Entry entry : set) {
+            params.append(entry.getKey()).append("->").append(entry.getValue());
         }
-        return param;
-    }
-
-    /**
-     * 获取请求体中的字符串(POST)
-     */
-    private static String getBodyData(HttpServletRequest request) {
-        StringBuffer data = new StringBuffer();
-        String line = null;
-        BufferedReader reader = null;
-        try {
-            reader = request.getReader();
-            while (null != (line = reader.readLine())) {
-                data.append(line);
-            }
-        } catch (IOException e) {
-        } finally {
-        }
-        return data.toString();
+        return params.toString();
     }
 }
