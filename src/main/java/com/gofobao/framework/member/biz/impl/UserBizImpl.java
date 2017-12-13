@@ -191,7 +191,7 @@ public class UserBizImpl implements UserBiz {
 
         long parentId = 0;
         if (!StringUtils.isEmpty(voRegisterReq.getInviteCode())) {
-            String inviteCode = voRegisterReq.getInviteCode();
+            String inviteCode = voRegisterReq.getInviteCode().replace(" ", "");
             //注册码可能是手机号，可能是用户名，可能是邀请码
             Specification<Users> us = Specifications
                     .<Users>or()
@@ -201,6 +201,11 @@ public class UserBizImpl implements UserBiz {
                     .build();
             // 3.推荐人处理
             List<Users> usersList = userService.findList(us);
+            if (CollectionUtils.isEmpty(usersList)) {
+                return ResponseEntity
+                        .badRequest()
+                        .body(VoBaseResp.error(VoBaseResp.ERROR, "邀请码输入错误，请检查后重新输入！"));
+            }
             Users invitedUser = usersList.get(0);
             if (ObjectUtils.isEmpty(invitedUser)) {
                 return ResponseEntity
