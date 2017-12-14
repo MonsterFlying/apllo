@@ -73,7 +73,6 @@ wheel: #车轮
   secret-key: ey4a3wca
   domain: http://promotion.chelun.com
   check_ticket_url: /Financial/ps_check_ticket
-
 jixin: #银行存管
   keysPassword: guangfubao_uat@2016 #私钥密码
   url: http://uat.gofobao.com/escrow  #即信服务器路径

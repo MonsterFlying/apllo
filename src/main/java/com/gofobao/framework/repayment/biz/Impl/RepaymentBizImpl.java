@@ -1473,6 +1473,8 @@ public class RepaymentBizImpl implements RepaymentBiz {
                 tender.setState(3);
                 tender.setUpdatedAt(new Date());
             });
+
+
             tenderService.save(tenderList);
         }
 
@@ -1497,20 +1499,13 @@ public class RepaymentBizImpl implements RepaymentBiz {
         try {
             //用户回款成功推送车轮理财
             if (parentBorrow.getIsWindmill()) {
-                Set<Long> userIds = tenderList.stream()
-                        .map(p -> p.getUserId())
-                        .collect(Collectors.toSet());
-                List<Users> usersList = userService.findByIdIn(new ArrayList<>(userIds));
-                List<Users> tempUserList = usersList.stream()
-                        .filter(p -> !StringUtils.isEmpty(p.getWheelId()))
-                        .collect(Collectors.toList());
-                if (!CollectionUtils.isEmpty(tempUserList)) {
+                if (!CollectionUtils.isEmpty(tenderList)) {
                     tenderList.forEach(tender -> {
-                        if (tempUserList.contains(tender.getUserId())) {
-                            wheelBorrowBiz.investNotice(tender);
-                        }
+                        log.info("用户回款成功 ,投资变化通知车轮,打印投资信息：" + GSON.toJson(tender));
+                        wheelBorrowBiz.investNotice(tender);
                     });
                 }
+                log.info("用户回款成功: 标的变化通知车轮,打印标的信息：" + GSON.toJson(parentBorrow));
                 wheelBorrowBiz.borrowUpdateNotice(parentBorrow);
             }
         } catch (Exception e) {

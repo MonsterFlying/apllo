@@ -56,6 +56,7 @@ import com.gofobao.framework.listener.providers.CreditProvider;
 import com.gofobao.framework.listener.providers.TransferProvider;
 import com.gofobao.framework.marketing.biz.MarketingProcessBiz;
 import com.gofobao.framework.member.biz.BrokerBounsBiz;
+import com.gofobao.framework.member.biz.UserBiz;
 import com.gofobao.framework.member.biz.impl.WebUserThirdBizImpl;
 import com.gofobao.framework.member.entity.UserThirdAccount;
 import com.gofobao.framework.member.service.UserCacheService;
@@ -74,11 +75,13 @@ import com.gofobao.framework.system.biz.ThirdBatchDealLogBiz;
 import com.gofobao.framework.system.service.IncrStatisticService;
 import com.gofobao.framework.system.service.ThirdBatchLogService;
 import com.gofobao.framework.tender.biz.TransferBiz;
+import com.gofobao.framework.tender.contants.TenderConstans;
 import com.gofobao.framework.tender.entity.Tender;
 import com.gofobao.framework.tender.entity.Transfer;
 import com.gofobao.framework.tender.service.TenderService;
 import com.gofobao.framework.tender.service.TransferBuyLogService;
 import com.gofobao.framework.tender.service.TransferService;
+import com.gofobao.framework.wheel.borrow.biz.WheelBorrowBiz;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
@@ -185,7 +188,23 @@ public class AplloApplicationTests {
 
     }
 
+    @Autowired
+    private WheelBorrowBiz wheelBorrowBiz;
 
+    /**
+     * 重推车轮理财
+     */
+    @Test
+    public void rePush() {
+        Specification<Tender> tenderSpecifications = Specifications.<Tender>and()
+                .eq("borrowId", 184979L)
+                .eq("status", TenderConstans.SUCCESS)
+                .build();
+        List<Tender> tenders = tenderService.findList(tenderSpecifications);
+        for (Tender tender : tenders) {
+            wheelBorrowBiz.investNotice(tender);
+        }
+    }
 
 
     @Test
@@ -472,7 +491,7 @@ public class AplloApplicationTests {
                 .<BorrowCollection>and()
                 .eq("transferFlag", 0)
                 .eq("status", 0)
-                .predicate(new LeSpecification<>("collectionAt",new DataObject(flagAt)))
+                .predicate(new LeSpecification<>("collectionAt", new DataObject(flagAt)))
                 .build();
         long count = borrowCollectionService.count(bcs);
 
