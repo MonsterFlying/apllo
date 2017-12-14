@@ -8,6 +8,7 @@ import com.gofobao.framework.collection.contants.BorrowCollectionContants;
 import com.gofobao.framework.collection.entity.BorrowCollection;
 import com.gofobao.framework.collection.repository.BorrowCollectionRepository;
 import com.gofobao.framework.collection.service.BorrowCollectionService;
+import com.gofobao.framework.common.constans.TypeTokenContants;
 import com.gofobao.framework.common.rabbitmq.MqConfig;
 import com.gofobao.framework.common.rabbitmq.MqHelper;
 import com.gofobao.framework.common.rabbitmq.MqQueueEnum;
@@ -17,6 +18,7 @@ import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.currency.entity.Currency;
 import com.gofobao.framework.currency.service.CurrencyService;
 import com.gofobao.framework.helper.*;
+import com.gofobao.framework.helper.project.SecurityHelper;
 import com.gofobao.framework.integral.entity.Integral;
 import com.gofobao.framework.integral.service.IntegralService;
 import com.gofobao.framework.member.biz.UserBiz;
@@ -24,12 +26,10 @@ import com.gofobao.framework.member.contants.UsersContants;
 import com.gofobao.framework.member.entity.*;
 import com.gofobao.framework.member.enums.RegisterSourceEnum;
 import com.gofobao.framework.member.service.*;
-import com.gofobao.framework.member.vo.request.VoRegisterReq;
-import com.gofobao.framework.member.vo.request.VoRestPayPassWord;
-import com.gofobao.framework.member.vo.request.VoSettingTranPassWord;
-import com.gofobao.framework.member.vo.request.VoUserInfoUpdateReq;
+import com.gofobao.framework.member.vo.request.*;
 import com.gofobao.framework.member.vo.response.VoBasicUserInfoResp;
 import com.gofobao.framework.member.vo.response.VoOpenAccountInfo;
+import com.gofobao.framework.member.vo.response.VoThirdLoginRes;
 import com.gofobao.framework.member.vo.response.pc.*;
 import com.gofobao.framework.message.entity.SmsNoticeSettingsEntity;
 import com.gofobao.framework.message.service.SmsNoticeSettingsService;
@@ -146,6 +146,66 @@ public class UserBizImpl implements UserBiz {
 
     @Value("${gofobao.imageDomain}")
     private String imageDomain;
+
+    /**
+     * 第三方登录
+     *
+     * @param voThirdLoginReq
+     * @return
+     * @throws Exception
+     */
+    @Override
+    public ResponseEntity<VoThirdLoginRes> pcThirdLogin(VoThirdLoginReq voThirdLoginReq) throws Exception {
+        VoThirdLoginRes res = null;
+        /* pc第三方登录请求参数 */
+        String paramStr = voThirdLoginReq.getParamStr();
+        if (!SecurityHelper.checkSign(voThirdLoginReq.getSign(), paramStr)) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "pc第三方登录 签名验证不通过!", VoThirdLoginRes.class));
+        }
+        Map<String, String> paramMap = GSON.fromJson(paramStr, TypeTokenContants.MAP_ALL_STRING_TOKEN);
+        /* 登录类型 0平台令牌登录 */
+        int loginType = NumberHelper.toInt(voThirdLoginReq);
+        switch (loginType) {
+            case 0:
+                res = loginByToken(paramMap);
+                break;
+            default:
+                return ResponseEntity
+                        .badRequest()
+                        .body(VoBaseResp.error(VoBaseResp.ERROR, "不支持当前登录方式!", VoThirdLoginRes.class));
+        }
+
+        return ResponseEntity.ok(res);
+    }
+
+    /**
+     * 根据token登录
+     *
+     * @return
+     */
+    private VoThirdLoginRes loginByToken(Map<String, String> paramMap) {
+        VoThirdLoginRes res = VoBaseResp.ok("登录成功!", VoThirdLoginRes.class);
+        /**
+         * 登录名  9位tokenId + userId
+         */
+        String username = StringHelper.toString(paramMap.get("username"));
+        /**
+         * 登录密码
+         */
+        String password = StringHelper.toString(paramMap.get("password"));
+        //判断登录名是否符合格式
+        String regex = "^\\d{10,}$";
+        if (!username.matches(regex)) {
+            return VoBaseResp.error(VoBaseResp.ERROR, "登录名不符合规则!", VoThirdLoginRes.class);
+        }
+
+
+
+        //解析参数
+        return res;
+    }
 
     /**
      * @param request       请求
@@ -301,11 +361,6 @@ public class UserBizImpl implements UserBiz {
         // 5.删除短信验证码
         redisHelper.remove(String.format("%s_%s", MqTagEnum.SMS_REGISTER, voRegisterReq.getPhone()));
         return ResponseEntity.ok(VoBaseResp.ok("注册成功"));
-    }
-
-    @Override
-    public Users findByAccount(String account) {
-        return userService.findByAccount(account);
     }
 
     @Override

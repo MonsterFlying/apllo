@@ -515,7 +515,7 @@ public class TestController {
     /**
      * 重推车轮理财
      */
-    @GetMapping("pub/repush/wheel")
+    @GetMapping("pub/repush/whe")
     public void rePush(@RequestParam("borrowId") Object borrowId) {
         Specification<Tender> tenderSpecifications = Specifications.<Tender>and()
                 .eq("borrowId", NumberHelper.toLong(borrowId))
