@@ -12,11 +12,11 @@ public class BorrowContants {
 
     public static  final  String CE_DAI_STR="车贷标";
     /**
-     * 净值标
+     * 信用标
      */
     public static final int JING_ZHI = 1;
 
-    public static  final  String JING_ZHI_STR="净值标";
+    public static  final  String JING_ZHI_STR="信用标";
 
     /**
      *秒标

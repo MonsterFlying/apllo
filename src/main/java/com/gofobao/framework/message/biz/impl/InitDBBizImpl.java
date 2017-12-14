@@ -496,7 +496,7 @@ public class InitDBBizImpl implements InitDBBiz {
             childTender.setUpdatedAt(nowDate);
             childTenderList.add(childTender);
 
-            //更新购买净值标状态为成功购买
+            //更新购买信用标状态为成功购买
             transferBuyLog.setState(1);
             transferBuyLog.setUpdatedAt(nowDate);
         });

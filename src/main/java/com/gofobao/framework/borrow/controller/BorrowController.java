@@ -48,7 +48,7 @@ public class BorrowController {
     @Value("${jwt.prefix}")
     private String prefix;
 
-    @ApiOperation(value = "首页标列表; type:  -1：全部;   0：车贷标；  1：净值标；  2：秒标；  4：渠道标;  5: 流转标")
+    @ApiOperation(value = "首页标列表; type:  -1：全部;   0：车贷标；  1：信用标；  2：秒标；  4：渠道标;  5: 流转标")
     @GetMapping("/pub/borrow/v2/list/{type}/{pageIndex}/{pageSize}")
     public ResponseEntity<VoViewBorrowListWarpRes> borrowList(@PathVariable Integer pageIndex,
                                                               @PathVariable Integer pageSize,
@@ -118,13 +118,13 @@ public class BorrowController {
 
 
     /**
-     * 新增净值借款
+     * 新增信用借款
      *
      * @param voAddNetWorthBorrow
      * @return
      */
     @PostMapping("/borrow/addNetWorth")
-    @ApiOperation("发布净值借款")
+    @ApiOperation("发布信用借款")
     public ResponseEntity<VoBaseResp> addNetWorth(@Valid @ModelAttribute VoAddNetWorthBorrow voAddNetWorthBorrow, @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) throws Exception {
         voAddNetWorthBorrow.setUserId(userId);
         return borrowBiz.addNetWorth(voAddNetWorthBorrow);

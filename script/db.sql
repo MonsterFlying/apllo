@@ -99,6 +99,7 @@ ALTER TABLE gfb_borrow_collection MODIFY transfer_flag INT(11) DEFAULT '0' COMME
 ALTER TABLE gfb_borrow_collection MODIFY updated_at DATETIME COMMENT '更新时间';
 ALTER TABLE gfb_borrow_collection ADD user_id INT(11) NULL COMMENT '投标会员id';
 ALTER TABLE gfb_borrow_repayment ADD iparam1 INT(11) NULL;
+ALTER TABLE gfb_borrow_repayment ADD `is_advance` int(11) DEFAULT '0' COMMENT '是否垫付 0否1是' AFTER `late_interest`;
 ALTER TABLE gfb_borrow_repayment ADD iparam2 INT(11) NULL;
 ALTER TABLE gfb_borrow_repayment ADD iparam3 INT(11) NULL;
 ALTER TABLE gfb_borrow_repayment ADD t_user_id INT(11) NULL COMMENT '银行电子账户标 id';
@@ -383,7 +384,7 @@ CREATE TABLE gfb_marketing_dimension
   id INT(11) PRIMARY KEY NOT NULL AUTO_INCREMENT,
   marketing_id INT(11) DEFAULT '0' COMMENT '营销活动ID',
   platform VARCHAR(32) DEFAULT '' COMMENT '活动的平台类型, 可以使用多个(0,pc, 1.android, 2, ios, 3.h5)',
-  borrow_type VARCHAR(32) DEFAULT '' COMMENT '标的类型:(1.车贷标, 2.渠道标, 3.流转表, 净值标,-2.新手标)',
+  borrow_type VARCHAR(32) DEFAULT '' COMMENT '标的类型:(1.车贷标, 2.渠道标, 3.流转表, 信用标,-2.新手标)',
   member_type INT(11) DEFAULT '0' COMMENT '0.不选, 1.新用户, 2.老用户',
   channel_type VARCHAR(32) DEFAULT '' COMMENT '渠道用户类型(0.pc, 1.android, 2.ios, 3.h5, 4.类型)',
   parent_state INT(11) DEFAULT '0' COMMENT '被邀请人:0, 赠送被邀请人, 1.赠送邀请人',
@@ -574,7 +575,7 @@ ALTER TABLE gfb_user_cache MODIFY income_overdue BIGINT(20) unsigned NOT NULL DE
 ALTER TABLE gfb_user_cache MODIFY qd_wait_collection_interest BIGINT(20) unsigned NOT NULL DEFAULT '0' COMMENT '渠道标代收利息';
 ALTER TABLE gfb_user_cache MODIFY qd_wait_collection_principal BIGINT(20) unsigned NOT NULL DEFAULT '0' COMMENT '渠道标代收本金';
 ALTER TABLE gfb_user_cache MODIFY recharge_total BIGINT(20) unsigned NOT NULL DEFAULT '0' COMMENT '充值总额';
-ALTER TABLE gfb_user_cache MODIFY tender_jingzhi INT(10) NOT NULL DEFAULT '0' COMMENT '首投净值标';
+ALTER TABLE gfb_user_cache MODIFY tender_jingzhi INT(10) NOT NULL DEFAULT '0' COMMENT '首投信用标';
 ALTER TABLE gfb_user_cache MODIFY tender_miao INT(10) NOT NULL DEFAULT '0' COMMENT '首投秒标';
 ALTER TABLE gfb_user_cache MODIFY tender_qudao INT(10) DEFAULT '0' COMMENT '首投渠道标';
 ALTER TABLE gfb_user_cache MODIFY tender_transfer INT(10) NOT NULL DEFAULT '0' COMMENT '首投转让标';

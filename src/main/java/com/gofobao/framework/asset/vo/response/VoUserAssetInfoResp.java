@@ -39,10 +39,10 @@ public class VoUserAssetInfoResp extends VoBaseResp {
     @ApiModelProperty("待还金额(展示)")
     private String hidePayment;
 
-    @ApiModelProperty("净值额度")
+    @ApiModelProperty("信用额度")
     private Long netWorthQuota;
 
-    @ApiModelProperty("净值额度(展示)")
+    @ApiModelProperty("信用额度(展示)")
     private String hideNetWorthQuota;
 
     @ApiModelProperty("净资产")

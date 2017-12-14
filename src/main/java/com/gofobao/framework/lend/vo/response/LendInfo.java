@@ -39,10 +39,10 @@ public class LendInfo {
     @ApiModelProperty("id")
     private Long id;
 
-    @ApiModelProperty("净值额度")
+    @ApiModelProperty("信用额度")
     private String equityLimit;
 
-    @ApiModelProperty("净值额度隐藏")
+    @ApiModelProperty("信用额度隐藏")
     private Long equityLimitHide;
 
     @ApiModelProperty("状态（0、可借；1、结束）")
