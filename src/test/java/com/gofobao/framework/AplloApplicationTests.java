@@ -188,25 +188,6 @@ public class AplloApplicationTests {
 
     }
 
-    @Autowired
-    private WheelBorrowBiz wheelBorrowBiz;
-
-    /**
-     * 重推车轮理财
-     */
-    @Test
-    public void rePush() {
-        Specification<Tender> tenderSpecifications = Specifications.<Tender>and()
-                .eq("borrowId", 184979L)
-                .eq("status", TenderConstans.SUCCESS)
-                .build();
-        List<Tender> tenders = tenderService.findList(tenderSpecifications);
-        for (Tender tender : tenders) {
-            wheelBorrowBiz.investNotice(tender);
-        }
-    }
-
-
     @Test
     public void contextLoads() throws InterruptedException {
         MqConfig mqConfig = new MqConfig();
