@@ -2181,7 +2181,7 @@ public class TransferBizImpl implements TransferBiz {
         borrowInfoRes.setRepayFashion(borrow.getRepayFashion());
 
         //结束时间
-        Date endAt = DateHelper.addDays(DateHelper.beginOfDate(transfer.getReleaseAt()), 3 + 1);
+        Date endAt = DateHelper.addHours(DateHelper.beginOfDate(transfer.getRecheckAt()), 21);
         borrowInfoRes.setEndAt(DateHelper.dateToString(endAt, DateHelper.DATE_FORMAT_YMDHMS));
         //进度
         borrowInfoRes.setSurplusSecond(-1L);
@@ -2191,18 +2191,18 @@ public class TransferBizImpl implements TransferBiz {
             if (transfer.getTransferMoneyYes() / transfer.getTransferMoney() == 1) {
                 //复审中
                 borrowInfoRes.setStatus(6);
-                borrowInfoRes.setPeriodHour(transfer.getSuccessAt().getTime()-transfer.getReleaseAt().getTime());
+                borrowInfoRes.setPeriodHour(transfer.getSuccessAt().getTime() - transfer.getReleaseAt().getTime());
                 //已过期
             } else if (DateHelper.subDays(transfer.getReleaseAt(), 1).getTime() > System.currentTimeMillis()) {
                 borrowInfoRes.setStatus(5);
             } else {
                 //招标中
                 borrowInfoRes.setStatus(3);
-                borrowInfoRes.setPeriodSurplusHour(endAt.getTime()-new Date().getTime());
+                borrowInfoRes.setPeriodSurplusHour(endAt.getTime() - new Date().getTime());
             }
         } else {
             borrowInfoRes.setStatus(4);
-            borrowInfoRes.setPeriodHour(transfer.getSuccessAt().getTime()-transfer.getReleaseAt().getTime());
+            borrowInfoRes.setPeriodHour(transfer.getSuccessAt().getTime() - transfer.getReleaseAt().getTime());
         }
         borrowInfoRes.setReleaseAt(DateHelper.dateToString(transfer.getReleaseAt()));
         borrowInfoRes.setBorrowId(borrowId);
