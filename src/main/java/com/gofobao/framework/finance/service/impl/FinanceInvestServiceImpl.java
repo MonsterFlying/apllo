@@ -346,8 +346,7 @@ public class FinanceInvestServiceImpl implements FinanceInvestService {
         successAt = financePlan.getSuccessAt();
         //期限
         item.setTimeLimit(timeLimit + BorrowContants.MONTH);
-        item.setSuccessAt(DateHelper.dateToString(successAt));
-
+        item.setSuccessAt(DateHelper.dateToString(DateHelper.addDays(successAt, 1), DateHelper.DATE_FORMAT_YMD));
         if (financePlanBuyer.getState() != TenderConstans.BIDDING) {
             //应收利息
             BorrowCalculatorHelper borrowCalculatorHelper = new BorrowCalculatorHelper(new Double(financePlanBuyer.getValidMoney()), new Double(apr), timeLimit, successAt);

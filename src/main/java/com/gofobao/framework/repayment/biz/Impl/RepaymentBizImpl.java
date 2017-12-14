@@ -1496,6 +1496,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
             advanceLogService.save(advanceLog);
         }
         try {
+            //用户回款成功推送车轮理财
             if (parentBorrow.getIsWindmill()) {
                 Set<Long> userIds = tenderList.stream()
                         .map(p -> p.getUserId())
