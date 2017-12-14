@@ -19,7 +19,7 @@ public class VoViewBorrowList implements Serializable {
     @ApiModelProperty("1.待发布 2.还款中 3.招标中 4.已完成 5.已过期 6.待复审")
     private Integer status;
 
-    @ApiModelProperty("标类型: type:-1：全部 0：车贷标；1：净值标；2：秒标；4：渠道标 ; 5流转标")
+    @ApiModelProperty("标类型: type:-1：全部 0：车贷标；1：信用标；2：秒标；4：渠道标 ; 5流转标")
     private Integer type;
 
     @ApiModelProperty("标名")

@@ -44,7 +44,7 @@ public interface BorrowBiz {
     ResponseEntity<VoBaseResp> pcCancelBorrow(VoPcCancelThirdBorrow voPcCancelThirdBorrow) throws Exception;
 
     /**
-     * 新增净值借款
+     * 新增信用借款
      *
      * @param voAddNetWorthBorrow
      * @return

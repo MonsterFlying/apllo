@@ -71,6 +71,7 @@ import com.gofobao.framework.member.service.UserService;
 import com.gofobao.framework.member.service.UserThirdAccountService;
 import com.gofobao.framework.repayment.biz.RepaymentBiz;
 import com.gofobao.framework.repayment.contants.RepaymentContants;
+import com.gofobao.framework.repayment.contants.ThirdDealStatusContrants;
 import com.gofobao.framework.repayment.entity.AdvanceAssetChange;
 import com.gofobao.framework.repayment.entity.BorrowRepayment;
 import com.gofobao.framework.repayment.entity.RepayAssetChange;
@@ -1178,7 +1179,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
                             name = "车贷标";
                             break;
                         case BorrowContants.JING_ZHI:
-                            name = "净值标";
+                            name = "信用标";
                             break;
                         case BorrowContants.QU_DAO:
                             name = "渠道标";
@@ -1426,7 +1427,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
             if (parentBorrow.getType() == 0) { //车贷标
                 statistic.setTjWaitRepayPrincipalTotal(-principal);
                 statistic.setTjWaitRepayTotal(-repayMoney);
-            } else if (parentBorrow.getType() == 1) { //净值标
+            } else if (parentBorrow.getType() == 1) { //信用标
                 statistic.setJzWaitRepayPrincipalTotal(-principal);
                 statistic.setJzWaitRepayTotal(-repayMoney);
             } else if (parentBorrow.getType() == 4) { //渠道标
@@ -1577,6 +1578,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
         borrowRepayment.setRepayMoneyYes(repayMoney);
         borrowRepayment.setRepayMoney(repayMoney);
         borrowRepayment.setUpdatedAt(nowDate);
+        borrowRepayment.setRepayStatus(advance ? 0 : ThirdDealStatusContrants.DISPOSING);
         borrowRepayment.setRepayTriggerAt(nowDate);
         borrowRepaymentService.save(borrowRepayment);
         if (advance) {
@@ -2549,7 +2551,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
         if (borrow.getType() != 1) {
             return ResponseEntity
                     .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, "只有净值标才能垫付!"));
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "只有信用标才能垫付!"));
         }
         if (StringUtils.isEmpty(borrow.getTitularBorrowAccountId())) {
             return ResponseEntity
@@ -2949,7 +2951,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
         }
         //1. 生成垫付还款主记录
         BatchAssetChange batchAssetChange = addBatchAssetChangeByAdvance(borrowRepayment.getId(), batchNo);
-        //2. 生成债权转让记录  位置不能调换
+        //2. 生成债权转让记录  (位置不能调换)
         addTransferTenderByAdvance(borrow, transferList, borrowRepayment, transferBuyLogList, tenderList, borrowCollectionMaps, titularBorrowAccount.getUserId(), lateDays, lateInterest);
         //3.获取名义借款人垫付记录
         List<CreditInvest> creditInvestList = calculateAdvancePlan(borrow, borrowRepayment, titularBorrowAccount, transferList, transferBuyLogList, tenderList,
@@ -2966,6 +2968,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
         addBatchAssetChangeItemByAdvance(batchAssetChange.getId(), titularBorrowAccount.getUserId(), borrowRepayment, borrow, lateInterest, groupSeqNo);
         //7.更新还款状态
         borrowRepayment.setRepayTriggerAt(nowDate);
+        borrowRepayment.setIsAdvance(true);
         borrowRepaymentService.save(borrowRepayment);
         try {
             // 垫付还款冻结
@@ -3363,7 +3366,8 @@ public class RepaymentBizImpl implements RepaymentBiz {
         batchAssetChangeHelper.batchAssetChangeDeal(repaymentId, batchNo, BatchAssetChangeContants.BATCH_BAIL_REPAY);
         /* 逾期天数 */
         int lateDays = getLateDays(borrowRepayment, true);
-        long lateInterest = new Double(calculateLateInterest(lateDays, borrowRepayment, parentBorrow) / 2D).longValue();/* 获取逾期利息的一半*/
+        /* 获取逾期利息的一半*/
+        long lateInterest = new Double(calculateLateInterest(lateDays, borrowRepayment, parentBorrow) / 2D).longValue();
         // 平台担保人ID
         long titularBorrowUserId = assetChangeProvider.getTitularBorrowUserId();
         //3.新增垫付记录与更改还款状态

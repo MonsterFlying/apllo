@@ -202,7 +202,7 @@ public class LendServiceImpl implements LendService {
         }
         lendInfo.setRepayAtYes(StringUtils.isEmpty(lend.getRepayAt()) ? "----" : DateHelper.dateToString(lend.getRepayAt()));
         lendInfo.setStatus(lend.getStatus());
-        long netWorthQuota = userHelper.getNetWorthQuota(userId);//计算净值额度
+        long netWorthQuota = userHelper.getNetWorthQuota(userId);//计算信用额度
         lendInfo.setEquityLimit(StringHelper.formatMon(netWorthQuota / 100D));
         lendInfo.setEquityLimitHide(netWorthQuota);
         return lendInfo;

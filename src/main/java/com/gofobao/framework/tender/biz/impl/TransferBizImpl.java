@@ -646,7 +646,7 @@ public class TransferBizImpl implements TransferBiz {
             childTender.setUpdatedAt(nowDate);
             childTenderList.add(childTender);
 
-            //更新购买净值标状态为成功购买
+            //更新购买信用标状态为成功购买
             transferBuyLog.setState(1);
             transferBuyLog.setUpdatedAt(new Date());
         });
@@ -684,8 +684,8 @@ public class TransferBizImpl implements TransferBiz {
         }
         //保存生成投标记录
         tenderService.save(childTenderList);
-        //更新老债权为已转让
-        parentTender.setTransferFlag(transfer.getIsAll() ? 2 : 3);
+        //更新老债权为已转让 部分转让暂不记录  改为0
+        parentTender.setTransferFlag(transfer.getIsAll() ? 2 : 0);
         parentTender.setUpdatedAt(nowDate);
         tenderService.save(parentTender);
         //更新债权转让为已转让
@@ -1108,15 +1108,15 @@ public class TransferBizImpl implements TransferBiz {
             childTender.setUpdatedAt(nowDate);
             childTenderList.add(childTender);
 
-            //更新购买净值标状态为成功购买
+            //更新购买信用标状态为成功购买
             transferBuyLog.setState(1);
             transferBuyLog.setUpdatedAt(new Date());
         });
         transferBuyLogService.save(transferBuyLogList);
         //保存生成投标记录
         tenderService.save(childTenderList);
-        //更新老债权为已转让
-        parentTender.setTransferFlag(transfer.getIsAll() ? 2 : 3);
+        //更新老债权为已转让 部分转让暂不记录  改为0
+        parentTender.setTransferFlag(transfer.getIsAll() ? 2 : 0);
         parentTender.setUpdatedAt(nowDate);
         tenderService.save(parentTender);
         //更新债权转让为已转让

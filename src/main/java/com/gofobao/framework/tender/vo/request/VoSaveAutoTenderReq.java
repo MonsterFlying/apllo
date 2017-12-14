@@ -32,7 +32,7 @@ VoSaveAutoTenderReq {
     @ApiModelProperty(value = "最低投标金额 元 不填写默认50")
     private Integer lowest = 50 * 100;
 
-    @ApiModelProperty(value = "投标种类（0：车贷标；4、渠道标；1、净值标；3、转让标） 选中则带上相应数字 用,隔开 0,1,3", dataType = "String", required = true)
+    @ApiModelProperty(value = "投标种类（0：车贷标；4、渠道标；1、信用标；3、转让标） 选中则带上相应数字 用,隔开 0,1,3", dataType = "String", required = true)
     @NotNull(message = "投标种类不能为空!")
     @Pattern(regexp = "^\\d(,\\d){0,3}$", message = "投标种类填写不符合规则!")
     private transient String borrowTypes;

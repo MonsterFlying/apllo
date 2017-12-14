@@ -22,7 +22,7 @@ public class VoAutoTenderInfo extends VoBaseResp {
     @ApiModelProperty(name = "showLowest", value = "最低投标金额 分 不填写默认0", dataType = "int", required = false)
     private String showLowest = "0";
 
-    @ApiModelProperty(name = "borrowTypes", value = "投标种类（0：车贷标；4、渠道标；1、净值标；3、转让标） 选中则带上相应数字 用,隔开 0,1,3", dataType = "String", required = true)
+    @ApiModelProperty(name = "borrowTypes", value = "投标种类（0：车贷标；4、渠道标；1、信用标；3、转让标） 选中则带上相应数字 用,隔开 0,1,3", dataType = "String", required = true)
     private String borrowTypes;
 
     @ApiModelProperty(name = "mode", value = "投标方式 0、余额； 1、固定金额；", dataType = "int", required = true)

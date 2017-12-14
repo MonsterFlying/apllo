@@ -62,7 +62,7 @@ public class WebBorrowController {
     private TransferBiz transferBiz;
 
 
-    @ApiOperation(value = "pc:首页理财标列表; type:-1：全部 0：车贷标；1：净值标；2：秒标；4：渠道标 ; 5流转标")
+    @ApiOperation(value = "pc:首页理财标列表; type:-1：全部 0：车贷标；1：信用标；2：秒标；4：渠道标 ; 5流转标")
     @GetMapping("/pub/borrow/pc/v2/list/{type}/{pageIndex}/{pageSize}")
     public ResponseEntity<VoPcBorrowList> pcList(@PathVariable Integer pageIndex,
                                                  @PathVariable Integer pageSize,
@@ -74,7 +74,7 @@ public class WebBorrowController {
         return borrowBiz.pcFindAll(voBorrowListReq);
     }
 
-    @ApiOperation(value = "0：车贷标；1：净值标；2：秒标；4：渠道标 ")
+    @ApiOperation(value = "0：车贷标；1：信用标；2：秒标；4：渠道标 ")
     @GetMapping("/pub/borrow/pc/v2/index/list")
     public ResponseEntity<VoPcBorrowList> pcIndexBorrow() {
         return borrowBiz.pcIndexBorrowList();
@@ -165,13 +165,13 @@ public class WebBorrowController {
     }
 
     /**
-     * pc 新增净值借款
+     * pc 新增信用借款
      *
      * @param voAddNetWorthBorrow
      * @return
      */
     @PostMapping("/borrow/pc/addNetWorth")
-    @ApiOperation("发布净值借款")
+    @ApiOperation("发布信用借款")
     public ResponseEntity<VoBaseResp> addNetWorth(@Valid @ModelAttribute VoAddNetWorthBorrow voAddNetWorthBorrow, @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) throws Exception {
         voAddNetWorthBorrow.setUserId(userId);
         return borrowBiz.addNetWorth(voAddNetWorthBorrow);

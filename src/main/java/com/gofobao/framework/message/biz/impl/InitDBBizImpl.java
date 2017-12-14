@@ -496,15 +496,15 @@ public class InitDBBizImpl implements InitDBBiz {
             childTender.setUpdatedAt(nowDate);
             childTenderList.add(childTender);
 
-            //更新购买净值标状态为成功购买
+            //更新购买信用标状态为成功购买
             transferBuyLog.setState(1);
             transferBuyLog.setUpdatedAt(nowDate);
         });
         tenderService.save(childTenderList);
         transferBuyLogService.save(transferBuyLogList);
 
-        //更新老债权为已转让
-        parentTender.setTransferFlag(transfer.getIsAll() ? 3 : 2);
+        //更新老债权为已转让  部分转让暂不记录  改为0
+        parentTender.setTransferFlag(transfer.getIsAll() ? 2 : 0);
         parentTender.setUpdatedAt(nowDate);
         tenderService.save(parentTender);
         //更新债权转让为已转让
@@ -523,7 +523,8 @@ public class InitDBBizImpl implements InitDBBiz {
      * @param childTenderList
      */
     public List<BorrowCollection> addChildTenderCollection(Date nowDate, Transfer transfer, Borrow parentBorrow, List<Tender> childTenderList) {
-        List<BorrowCollection> childTenderCollectionList = new ArrayList<>();/* 债权子记录回款记录 */
+        /* 债权子记录回款记录 */
+        List<BorrowCollection> childTenderCollectionList = new ArrayList<>();
         String borrowCollectionIds = transfer.getBorrowCollectionIds();
 
         //生成子级债权回款记录，标注老债权回款已经转出
@@ -543,8 +544,10 @@ public class InitDBBizImpl implements InitDBBiz {
                     .eq("transferFlag", 1)
                     .build();
         }
-        List<BorrowCollection> borrowCollectionList = borrowCollectionService.findList(bcs);/* 债权转让原投资回款记录 */
-        Date repayAt = transfer.getRepayAt();/* 原借款下一期还款日期 */
+        /* 债权转让原投资回款记录 */
+        List<BorrowCollection> borrowCollectionList = borrowCollectionService.findList(bcs);
+        /* 原借款下一期还款日期 */
+        Date repayAt = transfer.getRepayAt();
         Date startAt = DateHelper.subMonths(repayAt, 1);/* 计息开始时间 */
         for (int j = 0; j < childTenderList.size(); j++) {
             Tender childTender = childTenderList.get(j);/* 购买债权转让子投资记录 */

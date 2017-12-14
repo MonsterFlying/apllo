@@ -10,7 +10,7 @@ public class BorrowContants {
      */
     public static final int CE_DAI = 0;
     /**
-     * 净值标
+     * 信用标
      */
     public static final int JING_ZHI = 1;
     /**
@@ -30,7 +30,7 @@ public class BorrowContants {
      */
     public static final int INDEX_TYPE_CE_DAI = 1;
     /**
-     * 净值标
+     * 信用标
      */
     public static final int INDEX_TYPE_JING_ZHI = 2;
     /**
