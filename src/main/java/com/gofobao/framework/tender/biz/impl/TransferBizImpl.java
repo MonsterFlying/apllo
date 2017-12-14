@@ -2193,7 +2193,7 @@ public class TransferBizImpl implements TransferBiz {
                 borrowInfoRes.setStatus(6);
                 borrowInfoRes.setPeriodHour(transfer.getSuccessAt().getTime() - transfer.getReleaseAt().getTime());
                 //已过期
-            } else if (DateHelper.subDays(transfer.getReleaseAt(), 1).getTime() > System.currentTimeMillis()) {
+            } else if (endAt.getTime()<new Date().getTime()) {
                 borrowInfoRes.setStatus(5);
             } else {
                 //招标中
