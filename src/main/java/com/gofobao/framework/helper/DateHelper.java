@@ -5,6 +5,7 @@ import org.apache.commons.lang3.time.DateUtils;
 import org.apache.poi.ss.formula.functions.T;
 import org.springframework.util.ObjectUtils;
 
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
@@ -319,11 +320,12 @@ public class DateHelper {
 
     /**
      * 根据日期获取年份
+     *
      * @param date
      * @return
      */
-    public static  int getYear(final Date date){
-        return get(date, Calendar.YEAR) ;
+    public static int getYear(final Date date) {
+        return get(date, Calendar.YEAR);
     }
 
     /**
@@ -706,23 +708,54 @@ public class DateHelper {
 
     /**
      * 获取距今过去的时间
+     *
      * @param time
      * @return
      */
-    public static String getPastTime(long time){
+    public static String getPastTime(long time) {
         long nowTime = Calendar.getInstance().getTimeInMillis();
         long between = nowTime - time;
         if (between > DateHelper.MILLIS_PER_DAY * 7) {
             return "1周前";
         } else if (between >= DateHelper.MILLIS_PER_DAY) {
-            return between/DateHelper.MILLIS_PER_DAY+"天前";
+            return between / DateHelper.MILLIS_PER_DAY + "天前";
         } else if (between >= DateHelper.MILLIS_PER_HOUR) {
-            return between/DateHelper.MILLIS_PER_HOUR+"小时前";
+            return between / DateHelper.MILLIS_PER_HOUR + "小时前";
         } else if (between >= DateHelper.MILLIS_PER_MINUTE) {
-            return between/DateHelper.MILLIS_PER_MINUTE+"分钟前";
-        }else {
+            return between / DateHelper.MILLIS_PER_MINUTE + "分钟前";
+        } else {
             return "1分钟前";
         }
+    }
+
+    /**
+     * 获取两个日期之间相差几个月
+     *
+     * @param date1
+     * @param date2
+     * @return
+     * @throws ParseException
+     */
+    public static int getMonthSpace(String date1, String date2) {
+
+        int result = 0;
+
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+
+        Calendar c1 = Calendar.getInstance();
+        Calendar c2 = Calendar.getInstance();
+
+        try {
+            c1.setTime(sdf.parse(date1));
+            c2.setTime(sdf.parse(date2));
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+
+        result = c2.get(Calendar.MONTH) - c1.get(Calendar.MONTH);
+
+        return result == 0 ? 1 : Math.abs(result);
+
     }
 
 }

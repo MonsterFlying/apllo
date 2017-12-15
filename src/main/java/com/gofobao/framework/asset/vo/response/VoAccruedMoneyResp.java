@@ -25,4 +25,6 @@ public class VoAccruedMoneyResp extends VoBaseResp {
     private String incomeIntegralCash;
     @ApiModelProperty("其他收入")
     private String incomeOther;
+    @ApiModelProperty("待收利息")
+    private String incomeWaitInterest;
 }

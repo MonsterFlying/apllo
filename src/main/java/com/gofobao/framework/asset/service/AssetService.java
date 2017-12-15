@@ -39,4 +39,5 @@ public interface AssetService {
 
     long count(Specification<Asset> specification);
 
+    Date findTopOrderByUpdatedAtDesc();
 }

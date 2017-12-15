@@ -1054,6 +1054,7 @@ public class AssetBizImpl implements AssetBiz {
         Long incomeAward = userCache.getIncomeAward();
         Long incomeIntegralCash = userCache.getIncomeIntegralCash();
         Long incomeOther = userCache.getIncomeOther();
+        Long incomeWaitInterest = userCache.getWaitCollectionInterest();
         Long totalIncome = incomeBonus + incomeOverdue + incomeInterest + incomeAward + incomeIntegralCash + incomeOther;
         VoAccruedMoneyResp response = VoBaseResp.ok("查询成功", VoAccruedMoneyResp.class);
         response.setIncomeBonus(StringHelper.formatMon(incomeBonus / 100D));
@@ -1063,6 +1064,9 @@ public class AssetBizImpl implements AssetBiz {
         response.setIncomeOther(StringHelper.formatMon(incomeOther / 100D));
         response.setTotalIncome(StringHelper.formatMon(totalIncome / 100D));
         response.setIncomeOverdue(StringHelper.formatMon(incomeOverdue / 100D));
+        //待收利息
+        response.setIncomeWaitInterest(StringHelper.formatMon(incomeWaitInterest / 100D));
+
         return ResponseEntity.ok(response);
     }
 
@@ -1720,5 +1724,15 @@ public class AssetBizImpl implements AssetBiz {
         assetChange.setMoney(currMoney);
         assetChangeProvider.commonAssetChange(assetChange);
         log.info(String.format("处理活期收益成功: %s", no));
+    }
+
+    @Override
+    public ResponseEntity<VoExpenditureResp> expandMoney(Long userId) {
+       return userCacheService.expendMoeny(userId);
+    }
+
+    @Override
+    public ResponseEntity<VoAssetDetailResp> netAssetDetail(Long userId) {
+        return userCacheService.netAssetDetail(userId);
     }
 }

@@ -56,9 +56,9 @@ import com.gofobao.framework.listener.providers.CreditProvider;
 import com.gofobao.framework.listener.providers.TransferProvider;
 import com.gofobao.framework.marketing.biz.MarketingProcessBiz;
 import com.gofobao.framework.member.biz.BrokerBounsBiz;
-import com.gofobao.framework.member.biz.UserBiz;
 import com.gofobao.framework.member.biz.impl.WebUserThirdBizImpl;
 import com.gofobao.framework.member.entity.UserThirdAccount;
+import com.gofobao.framework.member.entity.Users;
 import com.gofobao.framework.member.service.UserCacheService;
 import com.gofobao.framework.member.service.UserService;
 import com.gofobao.framework.member.service.UserThirdAccountService;
@@ -72,16 +72,15 @@ import com.gofobao.framework.scheduler.DealThirdBatchScheduler;
 import com.gofobao.framework.scheduler.biz.FundStatisticsBiz;
 import com.gofobao.framework.system.biz.ThirdBatchDealBiz;
 import com.gofobao.framework.system.biz.ThirdBatchDealLogBiz;
+import com.gofobao.framework.scheduler.service.CountAssetInfo;
 import com.gofobao.framework.system.service.IncrStatisticService;
 import com.gofobao.framework.system.service.ThirdBatchLogService;
 import com.gofobao.framework.tender.biz.TransferBiz;
-import com.gofobao.framework.tender.contants.TenderConstans;
 import com.gofobao.framework.tender.entity.Tender;
 import com.gofobao.framework.tender.entity.Transfer;
 import com.gofobao.framework.tender.service.TenderService;
 import com.gofobao.framework.tender.service.TransferBuyLogService;
 import com.gofobao.framework.tender.service.TransferService;
-import com.gofobao.framework.wheel.borrow.biz.WheelBorrowBiz;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
@@ -130,6 +129,9 @@ public class AplloApplicationTests {
     @Autowired
     private JdbcTemplate jdbcTemplate;
 
+    @Autowired
+    private CountAssetInfo countAssetInfo;
+
 
     @PersistenceContext
     private EntityManager entityManager;
@@ -157,6 +159,10 @@ public class AplloApplicationTests {
 
     @Autowired
     MigrateProtocolBiz migrateProtocolBiz;
+
+    @Autowired
+    CountRepository countRepository;
+
 
     @Test
     public void testMigrateBiz() {
@@ -187,6 +193,9 @@ public class AplloApplicationTests {
         borrowBiz.touchMarketingByTender(tender);
 
     }
+
+
+
 
     @Test
     public void contextLoads() throws InterruptedException {
@@ -472,7 +481,7 @@ public class AplloApplicationTests {
                 .<BorrowCollection>and()
                 .eq("transferFlag", 0)
                 .eq("status", 0)
-                .predicate(new LeSpecification<>("collectionAt", new DataObject(flagAt)))
+                .predicate(new LeSpecification<>("collectionAt",new DataObject(flagAt)))
                 .build();
         long count = borrowCollectionService.count(bcs);
 
@@ -606,6 +615,25 @@ public class AplloApplicationTests {
     public void incrstatistic() {
         incrStatisticService.dayStatistic(new Date());
     }
+
+    @Test
+    public void testDayStatistic() {
+        /**
+         * 每月1号统计前一月情况
+         */
+//        查询最早时间
+        Date topOrderByUpdatedAtDesc = assetService.findTopOrderByUpdatedAtDesc();
+        //之前的数据
+        Integer len = DateHelper.getMonthSpace(DateHelper.dateToString(topOrderByUpdatedAtDesc),
+                DateHelper.dateToString(new Date()));
+
+//        for (int i = 0; i < len; i++) {
+//            countAssetInfo.dayStatistic(topOrderByUpdatedAtDesc);
+//        }
+        countAssetInfo.dayStatistic(new Date());
+
+    }
+
 
     @Autowired
     private BrokerBounsBiz brokerBounsBiz;

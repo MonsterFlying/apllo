@@ -123,6 +123,17 @@ public class AssetController {
         return assetBiz.accruedMoney(userId);
     }
 
+    @ApiOperation("累计支出详情")
+    @GetMapping("/asset/v2/expandMoney")
+    public ResponseEntity<VoExpenditureResp> expandMoney(@ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
+        return assetBiz.expandMoney(userId);
+    }
+
+    @ApiOperation("净资产详情")
+    @GetMapping("/asset/v2/netAssetDetail")
+    public ResponseEntity<VoAssetDetailResp> netAssetDetail(@ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId){
+        return assetBiz.netAssetDetail(userId);
+    }
 
     @ApiOperation("账户余额")
     @GetMapping("/asset/v2/accountMoney")
