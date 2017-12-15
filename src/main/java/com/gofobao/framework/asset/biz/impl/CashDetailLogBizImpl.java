@@ -262,6 +262,8 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
         // assetBiz.synOffLineRecharge(userId);
         //当前用户
         Users users = userService.findByIdLock(userId);
+        /*用户缓存*/
+        UserCache userCache = userCacheService.findById(userId);
         Preconditions.checkNotNull(users, "当前用户不存在");
         if (users.getIsLock()) {
             return ResponseEntity
@@ -316,6 +318,14 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "对不起, 当天提现次数大于10次!", VoHtmlResp.class));
+        }
+
+        //判断能否发布净值借款
+        if (System.currentTimeMillis() > DateHelper.stringToDate("2018-01-15 24:00:00").getTime()
+                && userCache.getWaitRepayPrincipal() > 200 * 1000) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "您的待还本金超过20万，暂时限制提现!",VoHtmlResp.class));
         }
 
         Date nowDate = new Date();
@@ -915,7 +925,6 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
      */
     private Long getRealCashMoney(Long userId) {
         Asset asset = assetService.findByUserIdLock(userId);
-        UserCache userCache = userCacheService.findByUserIdLock(userId);
         Double money = 0D;
         if (asset.getPayment() > 0) {
             long netWorthQuota = userHelper.getNetWorthQuota(userId);

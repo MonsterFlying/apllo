@@ -387,21 +387,21 @@ public class BorrowBizImpl implements BorrowBiz {
                     //复审中
                     status = 6;
                     borrowInfoRes.setRecheckAt(DateHelper.dateToString(borrow.getRecheckAt()));
-                    borrowInfoRes.setPeriodHour(borrow.getSuccessAt().getTime()-borrow.getReleaseAt().getTime());
+                    borrowInfoRes.setPeriodHour(borrow.getSuccessAt().getTime() - borrow.getReleaseAt().getTime());
                 } else if (nowDate.getTime() > endAt.getTime()) {  //招标有效时间大于当前时间
                     borrowInfoRes.setRecheckAt(DateHelper.dateToString(borrow.getRecheckAt()));
                     status = 5; //已过期
                 } else {
                     status = 3; //招标中
-                    borrowInfoRes.setPeriodSurplusHour(endAt.getTime()-nowDate.getTime());
+                    borrowInfoRes.setPeriodSurplusHour(endAt.getTime() - nowDate.getTime());
                 }
             } else if (!ObjectUtils.isEmpty(borrow.getRecheckAt()) && !ObjectUtils.isEmpty(borrow.getCloseAt())) {   //满标时间 结清
                 status = 4; //已完成
-                borrowInfoRes.setPeriodHour(borrow.getSuccessAt().getTime()-borrow.getReleaseAt().getTime());
+                borrowInfoRes.setPeriodHour(borrow.getSuccessAt().getTime() - borrow.getReleaseAt().getTime());
             } else if (status == BorrowContants.PASS && ObjectUtils.isEmpty(borrow.getCloseAt())) {
                 status = 2; //还款中
                 borrowInfoRes.setRecheckAt(DateHelper.dateToString(borrow.getRecheckAt()));
-                borrowInfoRes.setPeriodHour(borrow.getSuccessAt().getTime()-borrow.getReleaseAt().getTime());
+                borrowInfoRes.setPeriodHour(borrow.getSuccessAt().getTime() - borrow.getReleaseAt().getTime());
             }
 
             borrowInfoRes.setType(borrow.getType());
@@ -528,9 +528,14 @@ public class BorrowBizImpl implements BorrowBiz {
     @Transactional(rollbackFor = Exception.class)
     @Override
     public ResponseEntity<VoBaseResp> addNetWorth(VoAddNetWorthBorrow voAddNetWorthBorrow) throws Exception {
-        Long userId = voAddNetWorthBorrow.getUserId();
+        long userId = voAddNetWorthBorrow.getUserId();
+        /*用户缓存记录*/
+        UserCache userCache = userCacheService.findByUserIdLock(userId);
+        /*发布时间*/
         String releaseAtStr = voAddNetWorthBorrow.getReleaseAt();
-        Long money = new Double(MoneyHelper.round(voAddNetWorthBorrow.getMoney(), 0)).longValue();
+        /*借款金额*/
+        long money = new Double(MoneyHelper.round(voAddNetWorthBorrow.getMoney(), 0)).longValue();
+        /*是否关闭自动投标*/
         boolean closeAuto = voAddNetWorthBorrow.isCloseAuto();
 
         Asset asset = assetService.findByUserIdLock(userId);
@@ -557,6 +562,13 @@ public class BorrowBizImpl implements BorrowBiz {
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "借款金额大于信用额度!"));
+        }
+        //判断能否发布净值借款
+        if (System.currentTimeMillis() > DateHelper.stringToDate("2018-01-15 24:00:00").getTime()
+                && userCache.getWaitRepayPrincipal() > 200 * 1000) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "您的待还本金超过20万，暂不能发布信用借款!"));
         }
 
         Specification<Borrow> specification = Specifications.<Borrow>and()

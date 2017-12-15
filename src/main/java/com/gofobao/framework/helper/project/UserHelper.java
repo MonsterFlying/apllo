@@ -6,13 +6,11 @@ import com.gofobao.framework.asset.service.AssetService;
 import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.borrow.service.BorrowService;
 import com.gofobao.framework.common.capital.CapitalChangeEnum;
-import com.gofobao.framework.helper.DateHelper;
-import com.gofobao.framework.helper.MoneyHelper;
-import com.gofobao.framework.helper.NumberHelper;
-import com.gofobao.framework.helper.StringHelper;
+import com.gofobao.framework.helper.*;
 import com.gofobao.framework.member.entity.UserCache;
 import com.gofobao.framework.member.entity.Users;
 import com.gofobao.framework.member.service.UserCacheService;
+import com.gofobao.framework.member.service.UserService;
 import com.gofobao.framework.repayment.entity.BorrowRepayment;
 import com.gofobao.framework.tender.service.TenderService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -47,6 +45,8 @@ public class UserHelper {
     private TenderService tenderService;
     @Autowired
     private BorrowService borrowService;
+    @Autowired
+    private UserService userService;
 
     /**
      * 计算信用额度
@@ -56,11 +56,10 @@ public class UserHelper {
      */
     public long getNetWorthQuota(long userId) {
         Asset asset = assetService.findByUserId(userId);
+        Users user = userService.findById(userId);
         UserCache userCache = userCacheService.findById(userId);
         /* 投标复审中的金额 */
         long tenderAgainVerifyMoney = tenderService.findTenderAgainVerifyMoney(userId);
-        /* 总资产 = 可用金额 + 待回款本金 + 在即信复审本金*/
-        long assets = asset.getUseMoney() + userCache.getWaitCollectionPrincipal() + tenderAgainVerifyMoney;
         /* 信用标借款金额 */
         Specification<Borrow> bs = Specifications
                 .<Borrow>and()
@@ -82,8 +81,27 @@ public class UserHelper {
             sumRepayTotal = sumRepayTotal + repayTotal;
         }
 
-            /* 信用额度 总资产*0.8 - 待还  - 复审中待还*/
+        /* 总资产 = 可用金额 + 待回款本金 + 在即信复审本金*/
+        long assets = asset.getUseMoney() + userCache.getWaitCollectionPrincipal() + tenderAgainVerifyMoney;
+        /* 信用额度 总资产*0.8 - 待还  - 复审中待还*/
         long netWorthQuota = new Double(MoneyHelper.multiply(assets, 0.8)).longValue() - asset.getPayment() - sumRepayTotal;
+        /*截止2017年12月15日12：00，净值待还金额超过10万的用户信息如下*/
+        String passUserName = "cy333999,cjm888,cuic7777,cuic8888,cjm8866,zz888,钱途无量,tasklist,ss999,tiger888,sadfsaag,王自胜,黛溪新芽,antiqdong,tiger999,cstqq,inetcall,tiger_w,sadfsaag3,sadfsaag1,sayba,cuic9999";
+        /**
+         * 2018年1月15日24:00止，如仍有待还本金超过20万的用户，账户不得投标
+         不得提现不得发净值。直至降到20万以内。
+         */
+        if (passUserName.indexOf(user.getUsername()) == -1 || System.currentTimeMillis() > DateHelper.stringToDate("2018-01-15 24:00:00").getTime()) {
+            //信用限额
+            long quota = 0;
+            if (passUserName.indexOf(user.getUsername()) != -1) {
+                quota = 200 * 1000;
+            } else {
+                quota = 100 * 1000;
+            }
+            /* 信用限额跟信用额度取小值 */
+            netWorthQuota = MathHelper.min((quota - userCache.getJhWaitCollectionPrincipal()), netWorthQuota);
+        }
         return netWorthQuota > 0 ? netWorthQuota : 0;
     }
 

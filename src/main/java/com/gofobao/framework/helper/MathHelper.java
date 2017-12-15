@@ -217,4 +217,14 @@ public class MathHelper {
         return num1 < num2 ?num1:num2;
     }
 
+    /**
+     * 比较两个参数返回最大值
+     *
+     * @param num1
+     * @param num2
+     * @return
+     */
+    public static long min(long num1, long num2) {
+        return num1 < num2 ?num1:num2;
+    }
 }

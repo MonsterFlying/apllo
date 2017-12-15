@@ -24,6 +24,10 @@ public interface BorrowBiz {
      */
     ResponseEntity<VoBaseResp> sendAgainVerify(VoSendAgainVerify voSendAgainVerify);
 
+    /**
+     * 触发开户活动
+     * @param tender
+     */
     void touchMarketingByTender(Tender tender);
 
 
