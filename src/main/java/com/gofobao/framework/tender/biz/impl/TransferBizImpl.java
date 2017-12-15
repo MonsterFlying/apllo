@@ -2217,7 +2217,7 @@ public class TransferBizImpl implements TransferBiz {
         borrowInfoRes.setIsNovice(borrow.getIsNovice());
         borrowInfoRes.setSuccessAt(StringUtils.isEmpty(transfer.getSuccessAt())
                 ? ""
-                : DateHelper.dateToString(borrow.getSuccessAt()));
+                : DateHelper.dateToString(transfer.getSuccessAt()));
         borrowInfoRes.setRecheckAt(!StringUtils.isEmpty(transfer.getRecheckAt())
                 ? DateHelper.dateToString(transfer.getRecheckAt())
                 : ""
