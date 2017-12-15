@@ -15,4 +15,6 @@ public interface TaskSchedulerService {
     TaskScheduler save(TaskScheduler taskScheduler);
 
     List<TaskScheduler> findByTypeAndTaskData(Integer type, String taskData);
+
+
 }

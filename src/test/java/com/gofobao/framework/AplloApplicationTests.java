@@ -1,14 +1,14 @@
 package com.gofobao.framework;
 
-import com.github.wenhao.jpa.Specifications;
 import com.gofobao.framework.api.contants.ChannelContant;
 import com.gofobao.framework.api.contants.JixinResultContants;
 import com.gofobao.framework.api.helper.CertHelper;
 import com.gofobao.framework.api.helper.JixinManager;
 import com.gofobao.framework.api.helper.JixinTxCodeEnum;
 import com.gofobao.framework.api.helper.JixinTxDateHelper;
-import com.gofobao.framework.api.model.account_details_query2.AccountDetailsQuery2Request;
-import com.gofobao.framework.api.model.account_details_query2.AccountDetailsQuery2Response;
+import com.gofobao.framework.api.model.account_details_query.AccountDetailsQueryItem;
+import com.gofobao.framework.api.model.account_details_query.AccountDetailsQueryRequest;
+import com.gofobao.framework.api.model.account_details_query.AccountDetailsQueryResponse;
 import com.gofobao.framework.api.model.account_query_by_mobile.AccountQueryByMobileRequest;
 import com.gofobao.framework.api.model.account_query_by_mobile.AccountQueryByMobileResponse;
 import com.gofobao.framework.api.model.balance_query.BalanceQueryRequest;
@@ -38,16 +38,12 @@ import com.gofobao.framework.borrow.biz.BorrowBiz;
 import com.gofobao.framework.borrow.biz.BorrowThirdBiz;
 import com.gofobao.framework.borrow.service.BorrowService;
 import com.gofobao.framework.borrow.vo.request.VoQueryThirdBorrowList;
-import com.gofobao.framework.collection.entity.BorrowCollection;
 import com.gofobao.framework.collection.service.BorrowCollectionService;
 import com.gofobao.framework.common.assets.AssetChangeProvider;
-import com.gofobao.framework.common.data.DataObject;
-import com.gofobao.framework.common.data.LeSpecification;
 import com.gofobao.framework.common.rabbitmq.MqConfig;
 import com.gofobao.framework.common.rabbitmq.MqHelper;
 import com.gofobao.framework.common.rabbitmq.MqQueueEnum;
 import com.gofobao.framework.common.rabbitmq.MqTagEnum;
-import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.helper.JixinHelper;
 import com.gofobao.framework.helper.StringHelper;
@@ -58,6 +54,7 @@ import com.gofobao.framework.marketing.biz.MarketingProcessBiz;
 import com.gofobao.framework.member.biz.BrokerBounsBiz;
 import com.gofobao.framework.member.biz.impl.WebUserThirdBizImpl;
 import com.gofobao.framework.member.entity.UserThirdAccount;
+import com.gofobao.framework.member.entity.Users;
 import com.gofobao.framework.member.service.UserCacheService;
 import com.gofobao.framework.member.service.UserService;
 import com.gofobao.framework.member.service.UserThirdAccountService;
@@ -69,13 +66,15 @@ import com.gofobao.framework.repayment.service.BorrowRepaymentService;
 import com.gofobao.framework.scheduler.DailyAssetBackupScheduler;
 import com.gofobao.framework.scheduler.DealThirdBatchScheduler;
 import com.gofobao.framework.scheduler.biz.FundStatisticsBiz;
+import com.gofobao.framework.scheduler.entity.Count;
+import com.gofobao.framework.scheduler.repository.CountRepository;
 import com.gofobao.framework.system.biz.ThirdBatchDealBiz;
 import com.gofobao.framework.system.biz.ThirdBatchDealLogBiz;
+import com.gofobao.framework.scheduler.service.CountAssetInfo;
 import com.gofobao.framework.system.service.IncrStatisticService;
 import com.gofobao.framework.system.service.ThirdBatchLogService;
 import com.gofobao.framework.tender.biz.TransferBiz;
 import com.gofobao.framework.tender.entity.Tender;
-import com.gofobao.framework.tender.entity.Transfer;
 import com.gofobao.framework.tender.service.TenderService;
 import com.gofobao.framework.tender.service.TransferBuyLogService;
 import com.gofobao.framework.tender.service.TransferService;
@@ -89,8 +88,6 @@ import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.data.jpa.domain.Specification;
-import org.springframework.http.ResponseEntity;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.transaction.annotation.Transactional;
@@ -127,6 +124,9 @@ public class AplloApplicationTests {
     @Autowired
     private JdbcTemplate jdbcTemplate;
 
+    @Autowired
+    private CountAssetInfo countAssetInfo;
+
 
     @PersistenceContext
     private EntityManager entityManager;
@@ -154,6 +154,10 @@ public class AplloApplicationTests {
 
     @Autowired
     MigrateProtocolBiz migrateProtocolBiz;
+
+    @Autowired
+    CountRepository countRepository;
+
 
     @Test
     public void testMigrateBiz() {
@@ -186,7 +190,98 @@ public class AplloApplicationTests {
     }
 
 
+    @Test
+    public void testQueryFeeAccount() {
+        Users users = userService.findById(45217L);
+        UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(users.getId());
+        int pageSize = 20, pageIndex = 1, realSize = 0;
+        String accountId = userThirdAccount.getAccountId();  // 存管账户ID
+        List<AccountDetailsQueryItem> accountDetailsQueryItemList = new ArrayList<>();
+        do {
+            AccountDetailsQueryRequest accountDetailsQueryRequest = new AccountDetailsQueryRequest();
+            accountDetailsQueryRequest.setPageSize(String.valueOf(pageSize));
+            accountDetailsQueryRequest.setPageNum(String.valueOf(pageIndex));
+            accountDetailsQueryRequest.setStartDate(""); // 查询当天数据
+            accountDetailsQueryRequest.setEndDate("20160927");
+            accountDetailsQueryRequest.setType("0");
+            accountDetailsQueryRequest.setAccountId(accountId);
 
+            AccountDetailsQueryResponse accountDetailsQueryResponse = jixinManager.send(JixinTxCodeEnum.ACCOUNT_DETAILS_QUERY,
+                    accountDetailsQueryRequest,
+                    AccountDetailsQueryResponse.class);
+
+            if ((ObjectUtils.isEmpty(accountDetailsQueryResponse)) || (!JixinResultContants.SUCCESS.equals(accountDetailsQueryResponse.getRetCode()))) {
+                String msg = ObjectUtils.isEmpty(accountDetailsQueryResponse) ? "当前网络出现异常, 请稍后尝试！" : accountDetailsQueryResponse.getRetMsg();
+                log.error(msg);
+                break;
+            }
+
+            String subPacks = accountDetailsQueryResponse.getSubPacks();
+            if (StringUtils.isEmpty(subPacks)) {
+                break;
+            }
+
+            Optional<List<AccountDetailsQueryItem>> optional = Optional.ofNullable(GSON.fromJson(accountDetailsQueryResponse.getSubPacks(), new TypeToken<List<AccountDetailsQueryItem>>() {
+            }.getType()));
+            List<AccountDetailsQueryItem> accountDetailsQueryItems = optional.orElse(com.google.common.collect.Lists.newArrayList());
+            realSize = accountDetailsQueryItems.size();
+            accountDetailsQueryItemList.addAll(accountDetailsQueryItems);
+            pageIndex++;
+        } while (realSize == pageSize);
+
+        for (AccountDetailsQueryItem item : accountDetailsQueryItemList) {
+            log.error(GSON.toJson(item));
+        }
+    }
+
+
+    @Test
+    public void testQueryUserInfo() {
+        List<UserThirdAccount> userThirdAccountList = userThirdAccountService.findByAll();
+
+        List<AccountDetailsQueryItem> accountDetailsQueryItemList = new ArrayList<>();
+        for (UserThirdAccount userThirdAccount : userThirdAccountList) {
+            // 查询当天充值记录
+            int pageSize = 20, pageIndex = 1, realSize = 0;
+            String accountId = userThirdAccount.getAccountId();  // 存管账户ID
+            do {
+                AccountDetailsQueryRequest accountDetailsQueryRequest = new AccountDetailsQueryRequest();
+                accountDetailsQueryRequest.setPageSize(String.valueOf(pageSize));
+                accountDetailsQueryRequest.setPageNum(String.valueOf(pageIndex));
+                accountDetailsQueryRequest.setStartDate(jixinTxDateHelper.getTxDateStr()); // 查询当天数据
+                accountDetailsQueryRequest.setEndDate(jixinTxDateHelper.getTxDateStr());
+                accountDetailsQueryRequest.setType("0");
+                accountDetailsQueryRequest.setAccountId(accountId);
+
+                AccountDetailsQueryResponse accountDetailsQueryResponse = jixinManager.send(JixinTxCodeEnum.ACCOUNT_DETAILS_QUERY,
+                        accountDetailsQueryRequest,
+                        AccountDetailsQueryResponse.class);
+
+                if ((ObjectUtils.isEmpty(accountDetailsQueryResponse)) || (!JixinResultContants.SUCCESS.equals(accountDetailsQueryResponse.getRetCode()))) {
+                    String msg = ObjectUtils.isEmpty(accountDetailsQueryResponse) ? "当前网络出现异常, 请稍后尝试！" : accountDetailsQueryResponse.getRetMsg();
+                    log.error(msg);
+                    break;
+                }
+
+                String subPacks = accountDetailsQueryResponse.getSubPacks();
+                if (StringUtils.isEmpty(subPacks)) {
+                    break;
+                }
+
+                Optional<List<AccountDetailsQueryItem>> optional = Optional.ofNullable(GSON.fromJson(accountDetailsQueryResponse.getSubPacks(), new TypeToken<List<AccountDetailsQueryItem>>() {
+                }.getType()));
+                List<AccountDetailsQueryItem> accountDetailsQueryItems = optional.orElse(com.google.common.collect.Lists.newArrayList());
+                realSize = accountDetailsQueryItems.size();
+                accountDetailsQueryItemList.addAll(accountDetailsQueryItems);
+                pageIndex++;
+            } while (realSize == pageSize);
+        }
+
+        for (AccountDetailsQueryItem item : accountDetailsQueryItemList) {
+            log.error(GSON.toJson(item));
+        }
+
+    }
 
     @Test
     public void contextLoads() throws InterruptedException {
@@ -334,18 +429,22 @@ public class AplloApplicationTests {
         System.out.println(balanceQueryResponse);
     }
 
+    @Test
+    public void accountDetailsQuery() {
 
-    public void accountDetailsQuery2() {
-
-        AccountDetailsQuery2Request request = new AccountDetailsQuery2Request();
-        request.setAccountId("6212462190000090196");
-        request.setStartDate("20171002");
-        request.setEndDate("20171207");
+        AccountDetailsQueryRequest request = new AccountDetailsQueryRequest();
+        request.setAccountId("6212462190000059514");
+        request.setStartDate("20161002");
+        request.setEndDate("20171003");
         request.setChannel(ChannelContant.HTML);
         request.setType("0"); // 转入
-        AccountDetailsQuery2Response response = jixinManager.send(JixinTxCodeEnum.ACCOUNT_DETAILS_QUERY2, request, AccountDetailsQuery2Response.class);
+        //request.setTranType("7820"); // 线下转账的
+        request.setPageSize(String.valueOf(30));
+        request.setPageNum(String.valueOf(1));
+        AccountDetailsQueryResponse response = jixinManager.send(JixinTxCodeEnum.ACCOUNT_DETAILS_QUERY, request, AccountDetailsQueryResponse.class);
         System.out.println(response);
     }
+
 
     /**
      * 复审债权转让的
@@ -464,22 +563,14 @@ public class AplloApplicationTests {
     @Transactional
     public void test() {
 
-        Date flagAt = new Date();
-        flagAt = DateHelper.beginOfDate(flagAt);
-        flagAt = DateHelper.subDays(flagAt, 2);
 
-        Specification<BorrowCollection> bcs = Specifications
-                .<BorrowCollection>and()
-                .eq("transferFlag", 0)
-                .eq("status", 0)
-                .predicate(new LeSpecification<>("collectionAt",new DataObject(flagAt)))
-                .build();
-        long count = borrowCollectionService.count(bcs);
-
-        System.out.println(count);
-        System.out.println(DateHelper.dateToString(flagAt));
-        /* //批次处理
-        batchDeal();
+        /*try {
+            testTransaction.test();
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+        }*/
+       /* //批次处理
+       batchDeal();
         //unfrozee();
         //查询存管账户资金信息
         balanceQuery();
@@ -606,6 +697,25 @@ public class AplloApplicationTests {
     public void incrstatistic() {
         incrStatisticService.dayStatistic(new Date());
     }
+
+    @Test
+    public void testDayStatistic() {
+        /**
+         * 每月1号统计前一月情况
+         */
+//        查询最早时间
+        Date topOrderByUpdatedAtDesc = assetService.findTopOrderByUpdatedAtDesc();
+        //之前的数据
+        Integer len = DateHelper.getMonthSpace(DateHelper.dateToString(topOrderByUpdatedAtDesc),
+                DateHelper.dateToString(new Date()));
+
+//        for (int i = 0; i < len; i++) {
+//            countAssetInfo.dayStatistic(topOrderByUpdatedAtDesc);
+//        }
+        countAssetInfo.dayStatistic(new Date());
+
+    }
+
 
     @Autowired
     private BrokerBounsBiz brokerBounsBiz;

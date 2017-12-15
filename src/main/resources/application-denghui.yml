@@ -20,7 +20,7 @@ spring:
     password: gofobao@123
     port: 6379
   rabbitmq:
-    host: 192.168.1.120
+    host: 192.168.1.121
     port: 5672
     username: gofobao
     password: gofobao
@@ -39,7 +39,7 @@ spring:
       max-request-size: 20MB
       enabled: true
 server:
-  port: 8080
+  port: 80
 jwt: #JWT 安全配置
   header: Authorization
   secret: WWW.gOf0b@o.c0m@0701
