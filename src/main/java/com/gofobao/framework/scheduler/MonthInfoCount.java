@@ -16,7 +16,7 @@ public class MonthInfoCount {
     /**
      * 每个月初定时统计
      */
-    @Scheduled(cron = "0 30 0 1 * ?")
+    @Scheduled(cron = "0 30 0 * * ?")
     public void process() {
         countAssetInfo.dayStatistic(new Date());
     }
