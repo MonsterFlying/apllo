@@ -1,11 +1,10 @@
 package com.gofobao.framework.asset.service.impl;
 
 import com.gofobao.framework.asset.entity.Asset;
-import com.gofobao.framework.asset.entity.AssetLog;
 import com.gofobao.framework.asset.repository.AssetRepository;
 import com.gofobao.framework.asset.service.AssetService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
@@ -42,6 +41,18 @@ public class AssetServiceImpl implements AssetService {
     @Override
     public long count(Specification<Asset> specification) {
         return assetRepository.count(specification);
+    }
+
+    @Override
+    public Date findTopOrderByUpdatedAtDesc() {
+        List<Asset> assets = assetRepository.orderByUpdatedAt(
+                new PageRequest(
+                        0,
+                        1,
+                        new Sort(
+                                Sort.Direction.ASC,
+                                "updatedAt")));
+        return assets.get(0).getUpdatedAt();
     }
 
     /**

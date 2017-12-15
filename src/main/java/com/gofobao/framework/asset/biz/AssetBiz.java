@@ -276,4 +276,17 @@ public interface AssetBiz {
      */
     void doAssetChangeByCurrentInterest(NewAleve eve, UserThirdAccount userThirdAccount, String money) throws Exception ;
 
+    /**
+     * 累计支出详情
+     * @param userId
+     * @return
+     */
+    ResponseEntity<VoExpenditureResp> expandMoney(Long userId);
+
+    /**
+     * 净资产详情
+     * @param userId
+     * @return
+     */
+    ResponseEntity<VoAssetDetailResp> netAssetDetail(Long userId);
 }
