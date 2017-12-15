@@ -263,7 +263,7 @@ public class WheelBorrowBizImpl implements WheelBorrowBiz {
         investNotice.setInvest_money(StringHelper.formatDouble(tender.getValidMoney(), 100, false));
         if (!StringUtils.isEmpty(borrow.getRecheckAt())
                 && BorrowContants.PASS.equals(borrow.getStatus())
-                && StringUtils.isEmpty(borrow.getCloseAt())) {
+                && tender.getState().intValue()!=TenderConstans.SETTLE) {
             Specification<BorrowRepayment> specification = Specifications.<BorrowRepayment>and()
                     .eq("borrowId", borrow.getId())
                     .build();
