@@ -119,7 +119,7 @@ public class WindmillBorrowBizImpl implements WindmillBorrowBiz {
                         invest.setInvest_condition(p.getIsNovice()
                                 ? "新手"
                                 : p.getType().intValue() == BorrowContants.JING_ZHI
-                                    ? "净值"
+                                    ? "信用"
                                     : "");
                         invest.setProject_description(p.getDescription());
                         invest.setLose_invest(0);

@@ -181,6 +181,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
      * @param voThirdBatchLendRepay
      * @return
      */
+    @Override
     public ResponseEntity<VoBaseResp> thirdBatchLendRepay(VoThirdBatchLendRepay voThirdBatchLendRepay) throws Exception {
         Gson gson = new Gson();
         log.info(String.format("批次放款调用: %s", gson.toJson(voThirdBatchLendRepay)));
@@ -217,7 +218,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
             }
         }
 
-        long totalManageFee = 0; // 净值标, 收取账户管理费
+        long totalManageFee = 0; // 信用标, 收取账户管理费
         if (borrow.getType() == 1) {
             double manageFeeRate = 0.0012;
             if (borrow.getRepayFashion() == 1) {
@@ -236,9 +237,9 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
             debtFee = 0;
             //投标有效金额
             validMoney = tender.getValidMoney();
-            /*净值管理费*/
+            /*信用管理费*/
             long newWorthFee = new Double(MoneyHelper.round(MoneyHelper.multiply(MoneyHelper.divide(validMoney, borrow.getMoney()), totalManageFee), 0)).longValue();
-            //净值账户管理费
+            //信用账户管理费
             if (borrow.getType() == 1) {
                 sumNetWorthFee = MoneyHelper.add(sumNetWorthFee, newWorthFee);
             }
@@ -246,7 +247,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
             if (BooleanHelper.isTrue(tender.getThirdTenderFlag())) {
                 continue;
             }
-            //即信收取净值账户管理费
+            //即信收取信用账户管理费
             if (borrow.getType() == 1) {
                 debtFee = MoneyHelper.add(debtFee, newWorthFee);
             }
@@ -645,15 +646,21 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
 
             if (borrow.isTransfer() && (!BooleanUtils.toBoolean(userCache.getTenderTransfer()))) {
                 userCache.setTenderTransfer(borrow.getId().intValue());
+                userCache.setTenderId(tender.getId());
             } else if ((borrow.getType() == 0) && (!BooleanUtils.toBoolean(userCache.getTenderTuijian()))) {
                 userCache.setTenderTuijian(borrow.getId().intValue());
+                userCache.setTenderId(tender.getId());
             } else if ((borrow.getType() == 1) && (!BooleanUtils.toBoolean(userCache.getTenderJingzhi()))) {
                 userCache.setTenderJingzhi(borrow.getId().intValue());
+                userCache.setTenderId(tender.getId());
             } else if ((borrow.getType() == 2) && (!BooleanUtils.toBoolean(userCache.getTenderMiao()))) {
                 userCache.setTenderMiao(borrow.getId().intValue());
+                userCache.setTenderId(tender.getId());
             } else if ((borrow.getType() == 4) && (!BooleanUtils.toBoolean(userCache.getTenderQudao()))) {
                 userCache.setTenderQudao(borrow.getId().intValue());
+                userCache.setTenderId(tender.getId());
             }
+
             userCacheService.save(userCache);
         }
     }
@@ -699,7 +706,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
         batchAssetChangeItem.setUpdatedAt(nowDate);
         batchAssetChangeItemService.save(batchAssetChangeItem);
 
-        // 净值账户管理费
+        // 信用账户管理费
         if (borrow.getType() == 1) {
             batchAssetChangeItem = new BatchAssetChangeItem();
             batchAssetChangeItem.setBatchAssetChangeId(batchAssetChangeId);
@@ -793,7 +800,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
 
             //更新即信放款状态 为处理失败!
             BorrowRepayment borrowRepayment = borrowRepaymentService.findById(repaymentId);
-            borrowRepayment.setRepayStatus(ThirdDealStatusContrants.UNDISPOSED);
+            borrowRepayment.setRepayStatus(ThirdDealStatusContrants.INDISPOSE);
             borrowRepayment.setUpdatedAt(new Date());
             borrowRepaymentService.save(borrowRepayment);
 
@@ -824,6 +831,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
      *
      * @return
      */
+    @Override
     public ResponseEntity<String> thirdBatchRepayRunCall(HttpServletRequest request, HttpServletResponse response) {
         log.info("即信批次回调触发");
         BatchRepayRunResp repayRunResp = jixinManager.callback(request, new TypeToken<BatchRepayRunResp>() {
@@ -854,7 +862,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
                 .put(MqConfig.BATCH_TYPE, String.valueOf(ThirdBatchLogContants.BATCH_REPAY))
                 .put(MqConfig.MSG_TIME, DateHelper.dateToString(new Date()))
                 .put(MqConfig.ACQ_RES, repayRunResp.getAcqRes())
-                .put(MqConfig.BATCH_RESP,GSON.toJson(repayRunResp))
+                .put(MqConfig.BATCH_RESP, GSON.toJson(repayRunResp))
                 .build();
 
         mqConfig.setMsg(body);
@@ -873,6 +881,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
      *
      * @return
      */
+    @Override
     public ResponseEntity<String> thirdBatchLendRepayCheckCall(HttpServletRequest request, HttpServletResponse response) {
         BatchLendPayCheckResp lendRepayCheckResp = jixinManager.callback(request, new TypeToken<BatchLendPayCheckResp>() {
         });
@@ -977,6 +986,9 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
             log.error("=============================批次名义借款人垫付参数检查回调===========================");
             log.error("回调失败! msg:" + batchBailRepayCheckResp.getRetMsg());
             BorrowRepayment borrowRepayment = borrowRepaymentService.findById(repaymentId);
+            borrowRepayment.setIsAdvance(false);
+            borrowRepayment.setUpdatedAt(new Date());
+            borrowRepaymentService.save(borrowRepayment);
 
             //垫付失败解冻账户资金
             if (unfreezeAssetByAdvance(batchBailRepayCheckResp, acqResMap, repaymentId)) {
@@ -1101,6 +1113,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
     /**
      * 批次名义借款人垫付业务处理回调
      */
+    @Override
     public ResponseEntity<String> thirdBatchAdvanceRunCall(HttpServletRequest request, HttpServletResponse response) {
         BatchBailRepayRunResp batchBailRepayRunResp = jixinManager.callback(request, new TypeToken<BatchBailRepayRunResp>() {
         });

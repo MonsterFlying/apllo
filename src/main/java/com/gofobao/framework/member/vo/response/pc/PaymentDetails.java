@@ -19,9 +19,9 @@ public class PaymentDetails {
     @ApiModelProperty("渠道待收本金")
     private String qudaoWaitCollectionInterest;
 
-    @ApiModelProperty("净值标待收本金")
+    @ApiModelProperty("信用标待收本金")
     private String jingzhiWaitCollectionPrincipal;
-    @ApiModelProperty("净值标待收本金")
+    @ApiModelProperty("信用标待收本金")
     private String jingzhiWaitCollectionInterest;
 
 

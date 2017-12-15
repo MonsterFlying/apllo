@@ -52,7 +52,7 @@ public class BorrowInfoRes extends VoBaseResp {
     @ApiModelProperty("秒差 ：当状态是招标中 为正数  其他状态则返回-1")
     private Long surplusSecond;
 
-    @ApiModelProperty("标类型 type: 0：车贷标；1：净值标；2：秒标；4：渠道标 ; 5流转标")
+    @ApiModelProperty("标类型 type: 0：车贷标；1：信用标；2：秒标；4：渠道标 ; 5流转标")
     private Integer type;
 
     @ApiModelProperty("锁定状态；0：未锁定；1：已锁定（不能手动投标）")
@@ -108,5 +108,13 @@ public class BorrowInfoRes extends VoBaseResp {
 
     @ApiModelProperty("当状态还款中 为满标计息时间")
     private String recheckAt;
+
+    @ApiModelProperty("满标募集共用时间")
+    private Long periodHour=0L;
+
+    @ApiModelProperty("募集剩余时间")
+    private Long periodSurplusHour=0L;
+
+
 
 }

@@ -549,43 +549,45 @@ public class ProductBizImpl implements ProductBiz {
                         .in("skuId", skuIds.toArray())
                         .build();
                 List<ProductItemSkuRef> productItemSkuRefList = productItemSkuRefService.findList(ptrs);
-                /*子商品id集合*/
-                Set<Long> productItemIds = productItemSkuRefList.stream().map(ProductItemSkuRef::getProductItemId)
-                        .collect(Collectors.toSet());
-                Specification<ProductItem> pis = Specifications
-                        .<ProductItem>and()
-                        .in("id", productItemIds.toArray())
-                        .eq("isEnable", true)
-                        .eq("isDel", false)
-                        .build();
-                /*子商品记录*/
-                List<ProductItem> productItemList = productItemService.findList(pis);
-                if (!CollectionUtils.isEmpty(productItemList)) {
-                    Set<Long> productIds = productItemList.stream().map(ProductItem::getProductId).collect(Collectors.toSet());
-                    Specification<Product> ps = Specifications
-                            .<Product>and()
-                            .in("id", productIds.toArray())
+                if (!ObjectUtils.isEmpty(productItemSkuRefList)) {
+                    /*子商品id集合*/
+                    Set<Long> productItemIds = productItemSkuRefList.stream().map(ProductItemSkuRef::getProductItemId)
+                            .collect(Collectors.toSet());
+                    Specification<ProductItem> pis = Specifications
+                            .<ProductItem>and()
+                            .in("id", productItemIds.toArray())
+                            .eq("isEnable", true)
                             .eq("isDel", false)
                             .build();
-                    /*商品记录*/
-                    List<Product> productList = productService.findList(ps);
-                    if (!CollectionUtils.isEmpty(productList)) {
-                        /*子商品集合列表*/
-                        Map<Long/*productId*/, List<ProductItem>> productItemMaps = productItemList.stream().collect(groupingBy(ProductItem::getProductId));
+                    /*子商品记录*/
+                    List<ProductItem> productItemList = productItemService.findList(pis);
+                    if (!CollectionUtils.isEmpty(productItemList)) {
+                        Set<Long> productIds = productItemList.stream().map(ProductItem::getProductId).collect(Collectors.toSet());
+                        Specification<Product> ps = Specifications
+                                .<Product>and()
+                                .in("id", productIds.toArray())
+                                .eq("isDel", false)
+                                .build();
+                        /*商品记录*/
+                        List<Product> productList = productService.findList(ps);
+                        if (!CollectionUtils.isEmpty(productList)) {
+                            /*子商品集合列表*/
+                            Map<Long/*productId*/, List<ProductItem>> productItemMaps = productItemList.stream().collect(groupingBy(ProductItem::getProductId));
 
-                        for (Product product : productList) {
-                            List<ProductItem> productItems = productItemMaps.get(product.getId());
-                            Collections.sort(productItems, Comparator.comparing(ProductItem::getDiscountPrice));
-                            ProductItem productItem = productItems.get(0);
-                            /*广富送计划记录*/
-                            ProductPlan productPlan = getProductPlan(productItem.getId());
-                            VoProductPlan voProductPlan = new VoProductPlan();
-                            voProductPlan.setProductItemId(productItem.getId());
-                            voProductPlan.setName(product.getName());
-                            voProductPlan.setShowPrice(formatPrice(productPlan.getLowest()));
-                            voProductPlan.setImgUrl(ObjectUtils.isEmpty(product.getImgUrl()) ? productItem.getImgUrl() : product.getImgUrl());
-                            voProductPlan.setTitle(product.getTitle());
-                            showProductPlanList.add(voProductPlan);
+                            for (Product product : productList) {
+                                List<ProductItem> productItems = productItemMaps.get(product.getId());
+                                Collections.sort(productItems, Comparator.comparing(ProductItem::getDiscountPrice));
+                                ProductItem productItem = productItems.get(0);
+                                /*广富送计划记录*/
+                                ProductPlan productPlan = getProductPlan(productItem.getId());
+                                VoProductPlan voProductPlan = new VoProductPlan();
+                                voProductPlan.setProductItemId(productItem.getId());
+                                voProductPlan.setName(product.getName());
+                                voProductPlan.setShowPrice(formatPrice(productPlan.getLowest()));
+                                voProductPlan.setImgUrl(ObjectUtils.isEmpty(product.getImgUrl()) ? productItem.getImgUrl() : product.getImgUrl());
+                                voProductPlan.setTitle(product.getTitle());
+                                showProductPlanList.add(voProductPlan);
+                            }
                         }
                     }
                 }

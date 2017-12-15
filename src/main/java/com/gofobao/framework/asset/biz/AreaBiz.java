@@ -8,5 +8,5 @@ import org.springframework.http.ResponseEntity;
  */
 public interface AreaBiz {
 
-    ResponseEntity<VoAreaWarpRes> list(Integer id);
+    ResponseEntity<VoAreaWarpRes> list(String id);
 }

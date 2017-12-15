@@ -6,6 +6,7 @@ import com.gofobao.framework.asset.entity.Asset;
 import com.gofobao.framework.asset.service.AssetService;
 import com.gofobao.framework.collection.contants.BorrowCollectionContants;
 import com.gofobao.framework.collection.entity.BorrowCollection;
+import com.gofobao.framework.collection.repository.BorrowCollectionRepository;
 import com.gofobao.framework.collection.service.BorrowCollectionService;
 import com.gofobao.framework.common.rabbitmq.MqConfig;
 import com.gofobao.framework.common.rabbitmq.MqHelper;
@@ -34,6 +35,7 @@ import com.gofobao.framework.message.entity.SmsNoticeSettingsEntity;
 import com.gofobao.framework.message.service.SmsNoticeSettingsService;
 import com.gofobao.framework.repayment.contants.RepaymentContants;
 import com.gofobao.framework.repayment.entity.BorrowRepayment;
+import com.gofobao.framework.repayment.repository.BorrowRepaymentRepository;
 import com.gofobao.framework.repayment.service.BorrowRepaymentService;
 import com.gofobao.framework.security.helper.JwtTokenHelper;
 import com.gofobao.framework.security.vo.VoLoginReq;
@@ -191,7 +193,7 @@ public class UserBizImpl implements UserBiz {
 
         long parentId = 0;
         if (!StringUtils.isEmpty(voRegisterReq.getInviteCode())) {
-            String inviteCode = voRegisterReq.getInviteCode();
+            String inviteCode = voRegisterReq.getInviteCode().replace(" ", "");
             //注册码可能是手机号，可能是用户名，可能是邀请码
             Specification<Users> us = Specifications
                     .<Users>or()
@@ -201,6 +203,11 @@ public class UserBizImpl implements UserBiz {
                     .build();
             // 3.推荐人处理
             List<Users> usersList = userService.findList(us);
+            if (CollectionUtils.isEmpty(usersList)) {
+                return ResponseEntity
+                        .badRequest()
+                        .body(VoBaseResp.error(VoBaseResp.ERROR, "邀请码输入错误，请检查后重新输入！"));
+            }
             Users invitedUser = usersList.get(0);
             if (ObjectUtils.isEmpty(invitedUser)) {
                 return ResponseEntity
@@ -781,12 +788,11 @@ public class UserBizImpl implements UserBiz {
         return resultMap;
     }
 
+    @Autowired
+    private BorrowCollectionRepository borrowCollectionRepository;
 
     @Autowired
-    private BorrowRepaymentService borrowRepaymentService;
-
-    @Autowired
-    private BorrowCollectionService borrowCollectionService;
+    private BorrowRepaymentRepository borrowRepaymentRepository;
 
     /**
      * 用户今日收支
@@ -797,12 +803,7 @@ public class UserBizImpl implements UserBiz {
     @Override
     public ResponseEntity<BalanceOfPaymentRes> userBalanceOfPayment(Long userId) {
         BalanceOfPaymentRes balanceOfPaymentRes = VoBaseResp.ok("查询成功", BalanceOfPaymentRes.class);
-        Date nowDate = new Date();
-        Specification repaymentSpecification = Specifications.<BorrowRepayment>and()
-                .eq("userId", userId)
-                .between("repayAt", new Range<>(DateHelper.beginOfDate(nowDate), DateHelper.endOfDate(nowDate)))
-                .build();
-        List<BorrowRepayment> borrowRepayments = borrowRepaymentService.findList(repaymentSpecification);
+        List<BorrowRepayment> borrowRepayments = borrowRepaymentRepository.todayRepayment(userId);
         if (!CollectionUtils.isEmpty(borrowRepayments)) {
             //应还
             Long waitRepayment = borrowRepayments.stream().mapToLong(p -> p.getRepayMoney()).sum();
@@ -819,11 +820,7 @@ public class UserBizImpl implements UserBiz {
             }
         }
         //已收 待收
-        Specification<BorrowCollection> collectionSpecification = Specifications.<BorrowCollection>and()
-                .eq("userId", userId)
-                .between("collectionAt", new Range<>(DateHelper.beginOfDate(nowDate), DateHelper.endOfDate(nowDate)))
-                .build();
-        List<BorrowCollection> borrowCollections = borrowCollectionService.findList(collectionSpecification);
+        List<BorrowCollection> borrowCollections = borrowCollectionRepository.todayBorrowCollections(userId);
         if (!CollectionUtils.isEmpty(borrowCollections)) {
             //待收
             Long waitCollection = borrowCollections.stream()

@@ -23,6 +23,6 @@ public class VoAssetIndexResp extends VoBaseResp{
     @ApiModelProperty("净资产")
     private String totalAsset ;
 
-    @ApiModelProperty("净值额度")
+    @ApiModelProperty("信用额度")
     private String NetAmount ;
 }

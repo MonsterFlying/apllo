@@ -91,6 +91,12 @@ jixin: #银行存管
   ftp-host: sftp.credit2go.cn # ftp远程地址
   ftp-username: guangfubao # ftp用户名
   ftp-password: A85yL0p9ZyxIj # ftp密码
+  contract:
+          crtdata_url: http://120.27.15.77:48080
+          content-url: http://118.190.145.213:28080
+          ids-url: http://120.27.15.77:28080
+          onlineAt: 2017-11-15
+          version: 10
 gofobao:
   dev: true # 开发环境
   javaDomain:  http://lang.hk1.mofasuidao.cn

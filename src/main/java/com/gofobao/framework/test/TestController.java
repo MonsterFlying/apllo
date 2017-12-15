@@ -61,12 +61,14 @@ import com.gofobao.framework.system.service.ThirdBatchLogService;
 import com.gofobao.framework.tender.biz.AutoTenderBiz;
 import com.gofobao.framework.tender.biz.TenderBiz;
 import com.gofobao.framework.tender.biz.TransferBiz;
+import com.gofobao.framework.tender.contants.TenderConstans;
 import com.gofobao.framework.tender.entity.Tender;
 import com.gofobao.framework.tender.entity.Transfer;
 import com.gofobao.framework.tender.entity.TransferBuyLog;
 import com.gofobao.framework.tender.service.TenderService;
 import com.gofobao.framework.tender.service.TransferBuyLogService;
 import com.gofobao.framework.tender.service.TransferService;
+import com.gofobao.framework.wheel.borrow.biz.WheelBorrowBiz;
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -152,6 +154,8 @@ public class TestController {
     private TransferBuyLogService transferBuyLogService;
     @Autowired
     private FinancePlanProvider financePlanProvider;
+    @Autowired
+    private WheelBorrowBiz wheelBorrowBiz;
 
     @RequestMapping("/pub/test/xiufu/transfer")
     @Transactional(rollbackFor = Exception.class)
@@ -506,6 +510,21 @@ public class TestController {
         Tender tender = tenderService.findById(262363L);
         borrowBiz.touchMarketingByTender(tender);
 
+    }
+
+    /**
+     * 重推车轮理财
+     */
+    @GetMapping("pub/repush/wheel")
+    public void rePush(@RequestParam("borrowId") Object borrowId) {
+        Specification<Tender> tenderSpecifications = Specifications.<Tender>and()
+                .eq("borrowId", NumberHelper.toLong(borrowId))
+                .eq("status", TenderConstans.SUCCESS)
+                .build();
+        List<Tender> tenders = tenderService.findList(tenderSpecifications);
+        for (Tender tender : tenders) {
+            wheelBorrowBiz.investNotice(tender);
+        }
     }
 
 }

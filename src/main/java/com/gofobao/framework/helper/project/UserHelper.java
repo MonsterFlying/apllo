@@ -49,7 +49,7 @@ public class UserHelper {
     private BorrowService borrowService;
 
     /**
-     * 计算净值额度
+     * 计算信用额度
      *
      * @param userId
      * @return
@@ -61,7 +61,7 @@ public class UserHelper {
         long tenderAgainVerifyMoney = tenderService.findTenderAgainVerifyMoney(userId);
         /* 总资产 = 可用金额 + 待回款本金 + 在即信复审本金*/
         long assets = asset.getUseMoney() + userCache.getWaitCollectionPrincipal() + tenderAgainVerifyMoney;
-        /* 净值标借款金额 */
+        /* 信用标借款金额 */
         Specification<Borrow> bs = Specifications
                 .<Borrow>and()
                 .eq("userId", userId)
@@ -82,7 +82,7 @@ public class UserHelper {
             sumRepayTotal = sumRepayTotal + repayTotal;
         }
 
-            /* 净值额度 总资产*0.8 - 待还  - 复审中待还*/
+            /* 信用额度 总资产*0.8 - 待还  - 复审中待还*/
         long netWorthQuota = new Double(MoneyHelper.multiply(assets, 0.8)).longValue() - asset.getPayment() - sumRepayTotal;
         return netWorthQuota > 0 ? netWorthQuota : 0;
     }

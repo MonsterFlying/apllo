@@ -377,6 +377,7 @@ public class BorrowBizImpl implements BorrowBiz {
             Date nowDate = new Date(System.currentTimeMillis());
             Date releaseAt = borrow.getReleaseAt();  //发布时间
             borrowInfoRes.setSpend(StringHelper.formatMon(NumberHelper.floorDouble(borrow.getMoneyYes() / borrow.getMoney().doubleValue(), 2) * 100));
+
             if (status == BorrowContants.BIDDING) {//招标中
                 //待发布
                 if (releaseAt.getTime() >= nowDate.getTime()) {
@@ -386,18 +387,23 @@ public class BorrowBizImpl implements BorrowBiz {
                     //复审中
                     status = 6;
                     borrowInfoRes.setRecheckAt(DateHelper.dateToString(borrow.getRecheckAt()));
+                    borrowInfoRes.setPeriodHour(borrow.getSuccessAt().getTime()-borrow.getReleaseAt().getTime());
                 } else if (nowDate.getTime() > endAt.getTime()) {  //招标有效时间大于当前时间
                     borrowInfoRes.setRecheckAt(DateHelper.dateToString(borrow.getRecheckAt()));
                     status = 5; //已过期
                 } else {
                     status = 3; //招标中
+                    borrowInfoRes.setPeriodSurplusHour(endAt.getTime()-nowDate.getTime());
                 }
             } else if (!ObjectUtils.isEmpty(borrow.getRecheckAt()) && !ObjectUtils.isEmpty(borrow.getCloseAt())) {   //满标时间 结清
                 status = 4; //已完成
+                borrowInfoRes.setPeriodHour(borrow.getSuccessAt().getTime()-borrow.getReleaseAt().getTime());
             } else if (status == BorrowContants.PASS && ObjectUtils.isEmpty(borrow.getCloseAt())) {
                 status = 2; //还款中
                 borrowInfoRes.setRecheckAt(DateHelper.dateToString(borrow.getRecheckAt()));
+                borrowInfoRes.setPeriodHour(borrow.getSuccessAt().getTime()-borrow.getReleaseAt().getTime());
             }
+
             borrowInfoRes.setType(borrow.getType());
             if (!StringUtils.isEmpty(borrow.getTenderId())) {
                 borrowInfoRes.setType(5);
@@ -528,7 +534,7 @@ public class BorrowBizImpl implements BorrowBiz {
         boolean closeAuto = voAddNetWorthBorrow.isCloseAuto();
 
         Asset asset = assetService.findByUserIdLock(userId);
-        Preconditions.checkNotNull(asset, "净值标的发布: 当前用户资金账户为空!");
+        Preconditions.checkNotNull(asset, "信用标的发布: 当前用户资金账户为空!");
         UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(userId);
 
         ResponseEntity<VoBaseResp> conditionCheckResponse = ThirdAccountHelper.allConditionCheck(userThirdAccount);
@@ -544,13 +550,13 @@ public class BorrowBizImpl implements BorrowBiz {
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "发布时间必须在24小时内!"));
         }
 
-        /* 净值额度 */
+        /* 信用额度 */
         long totalMoney = userHelper.getNetWorthQuota(userId);
         if (totalMoney < money) {
-            log.info("新增借款：借款金额大于净值额度。");
+            log.info("新增借款：借款金额大于信用额度。");
             return ResponseEntity
                     .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, "借款金额大于净值额度!"));
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "借款金额大于信用额度!"));
         }
 
         Specification<Borrow> specification = Specifications.<Borrow>and()
@@ -572,6 +578,7 @@ public class BorrowBizImpl implements BorrowBiz {
         Specification<Transfer> ts = Specifications
                 .<Transfer>and()
                 .eq("userId", userId)
+                .eq("type", 0)
                 .in("state", Lists.newArrayList(TransferContants.CHECKPENDING, TransferContants.TRANSFERIND).toArray())
                 .build();
         long tranferingNum = transferService.count(ts);
@@ -583,10 +590,10 @@ public class BorrowBizImpl implements BorrowBiz {
 
         Long borrowId = insertBorrow(voAddNetWorthBorrow, userId);  // 插入标
         if (borrowId <= 0) {
-            log.info("新增借款：净值标插入失败。");
+            log.info("新增借款：信用标插入失败。");
             return ResponseEntity
                     .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, "净值标插入失败!"));
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "信用标插入失败!"));
         }
 
         //关闭用户自动投标
@@ -623,10 +630,10 @@ public class BorrowBizImpl implements BorrowBiz {
         }
 
         if (!mqState) {
-            return ResponseEntity.ok(VoBaseResp.ok("发布净值借款失败!"));
+            return ResponseEntity.ok(VoBaseResp.ok("发布信用借款失败!"));
         }
 
-        return ResponseEntity.ok(VoBaseResp.ok("发布净值借款成功!"));
+        return ResponseEntity.ok(VoBaseResp.ok("发布信用借款成功!"));
     }
 
     private long insertBorrow(VoAddNetWorthBorrow voAddNetWorthBorrow, Long userId) throws Exception {
@@ -634,7 +641,7 @@ public class BorrowBizImpl implements BorrowBiz {
         Preconditions.checkNotNull(userThirdAccount, "借款人未开户!");
 
         Borrow borrow = new Borrow();
-        borrow.setType(BorrowContants.JING_ZHI); // 净值标
+        borrow.setType(BorrowContants.JING_ZHI); // 信用标
         borrow.setUserId(userId);
         borrow.setTUserId(userThirdAccount.getId());
         borrow.setUse(0);
@@ -823,7 +830,7 @@ public class BorrowBizImpl implements BorrowBiz {
             }
 
             content = String.format("你发布的借款[ %s ]停止募集，在 %s 取消", borrow.getName(), DateHelper.dateToString(new Date()));
-            //净值标取消发送短信
+            //信用标取消发送短信
             if (borrow.getType() == 1) {
                 Users borrowUser = userService.findById(borrow.getUserId());
                 notices = new Notices();
@@ -1065,7 +1072,7 @@ public class BorrowBizImpl implements BorrowBiz {
         paymentAssetChangeEntity.setUserId(takeUserId);
         assetChangeProvider.commonAssetChange(paymentAssetChangeEntity);  // 放款
 
-        // 净值账户管理费
+        // 信用账户管理费
         if (borrow.getType() == 1) {
 
             Double fee;
@@ -1766,7 +1773,7 @@ public class BorrowBizImpl implements BorrowBiz {
 
         if (borrow.isTransfer()) {
             statistic.setLzBorrowTotal(borrowMoney);
-        } else if (borrow.getType() == 0) {//0：车贷标；1：净值标；2：秒标；4：渠道标；
+        } else if (borrow.getType() == 0) {//0：车贷标；1：信用标；2：秒标；4：渠道标；
             statistic.setTjBorrowTotal(borrowMoney);
             statistic.setTjWaitRepayPrincipalTotal(principal);
             statistic.setTjWaitRepayTotal(repayMoney);
@@ -1818,7 +1825,7 @@ public class BorrowBizImpl implements BorrowBiz {
 
 
     /**
-     * 车贷标、净值标、渠道标、转让标初审
+     * 车贷标、信用标、渠道标、转让标初审
      * 标的状态改变
      * 判断是否需要推送到自动投标队列
      *

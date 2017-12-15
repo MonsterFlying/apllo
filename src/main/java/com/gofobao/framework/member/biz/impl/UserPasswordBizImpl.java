@@ -46,6 +46,7 @@ public class UserPasswordBizImpl implements UserPasswordBiz {
      * @param voModifyPasswordReq
      * @return
      */
+    @Override
     public ResponseEntity<VoBaseResp> modifyPassword(Long userId, VoModifyPasswordReq voModifyPasswordReq) {
         Users users = userService.findById(userId);
 

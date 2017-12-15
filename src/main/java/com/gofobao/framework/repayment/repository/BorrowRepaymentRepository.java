@@ -3,6 +3,7 @@ import com.gofobao.framework.repayment.entity.BorrowRepayment;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Lock;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import javax.persistence.LockModeType;
@@ -32,4 +33,15 @@ public interface BorrowRepaymentRepository extends JpaRepository<BorrowRepayment
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     BorrowRepayment findById(Long id);
+
+
+    @Query("SELECT borrowRepayment FROM  BorrowRepayment borrowRepayment\n" +
+            "where\n" +
+            "borrowRepayment.userId=?1\n" +
+            "AND\n" +
+            "(DATE_FORMAT(borrowRepayment.repayAt,'%Y%m%d')=current_date\n" +
+            "OR\n" +
+            "(DATE_FORMAT(borrowRepayment.repayAtYes,'%Y%m%d')=current_date))")
+    List<BorrowRepayment>todayRepayment(Long userId);
+
 }

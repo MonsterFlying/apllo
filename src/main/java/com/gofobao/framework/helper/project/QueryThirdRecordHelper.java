@@ -99,14 +99,14 @@ public class QueryThirdRecordHelper {
                     }.getType());
             Optional<List<AccountDetailsQuery2Item>> optional = Optional.ofNullable(items);
 
-            List<AccountDetailsQuery2Item> accountDetailsQueryItems = optional.orElse(Lists.newArrayList());
-            inpDate = accountDetailsQueryItemList.get(accountDetailsQueryItems.size() - 1).getInpDate();
-            if (CollectionUtils.isEmpty(accountDetailsQueryItems)) {
+            List<AccountDetailsQuery2Item> accountDetailsQuery2Items = optional.orElse(Lists.newArrayList());
+            inpDate = accountDetailsQuery2Items.get(accountDetailsQuery2Items.size() - 1).getInpDate();
+            if (CollectionUtils.isEmpty(accountDetailsQuery2Items)) {
                 break;
             }
 
             rtnInd = "1";
-            accountDetailsQueryItemList.addAll(accountDetailsQueryItems);
+            accountDetailsQueryItemList.addAll(accountDetailsQuery2Items);
         } while (!CollectionUtils.isEmpty(accountDetailsQueryItemList));
         return accountDetailsQueryItemList;
     }

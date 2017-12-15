@@ -99,6 +99,7 @@ ALTER TABLE gfb_borrow_collection MODIFY transfer_flag INT(11) DEFAULT '0' COMME
 ALTER TABLE gfb_borrow_collection MODIFY updated_at DATETIME COMMENT '更新时间';
 ALTER TABLE gfb_borrow_collection ADD user_id INT(11) NULL COMMENT '投标会员id';
 ALTER TABLE gfb_borrow_repayment ADD iparam1 INT(11) NULL;
+ALTER TABLE gfb_borrow_repayment ADD `is_advance` int(11) DEFAULT '0' COMMENT '是否垫付 0否1是' AFTER `late_interest`;
 ALTER TABLE gfb_borrow_repayment ADD iparam2 INT(11) NULL;
 ALTER TABLE gfb_borrow_repayment ADD iparam3 INT(11) NULL;
 ALTER TABLE gfb_borrow_repayment ADD t_user_id INT(11) NULL COMMENT '银行电子账户标 id';
@@ -383,7 +384,7 @@ CREATE TABLE gfb_marketing_dimension
   id INT(11) PRIMARY KEY NOT NULL AUTO_INCREMENT,
   marketing_id INT(11) DEFAULT '0' COMMENT '营销活动ID',
   platform VARCHAR(32) DEFAULT '' COMMENT '活动的平台类型, 可以使用多个(0,pc, 1.android, 2, ios, 3.h5)',
-  borrow_type VARCHAR(32) DEFAULT '' COMMENT '标的类型:(1.车贷标, 2.渠道标, 3.流转表, 净值标,-2.新手标)',
+  borrow_type VARCHAR(32) DEFAULT '' COMMENT '标的类型:(1.车贷标, 2.渠道标, 3.流转表, 信用标,-2.新手标)',
   member_type INT(11) DEFAULT '0' COMMENT '0.不选, 1.新用户, 2.老用户',
   channel_type VARCHAR(32) DEFAULT '' COMMENT '渠道用户类型(0.pc, 1.android, 2.ios, 3.h5, 4.类型)',
   parent_state INT(11) DEFAULT '0' COMMENT '被邀请人:0, 赠送被邀请人, 1.赠送邀请人',
@@ -574,7 +575,7 @@ ALTER TABLE gfb_user_cache MODIFY income_overdue BIGINT(20) unsigned NOT NULL DE
 ALTER TABLE gfb_user_cache MODIFY qd_wait_collection_interest BIGINT(20) unsigned NOT NULL DEFAULT '0' COMMENT '渠道标代收利息';
 ALTER TABLE gfb_user_cache MODIFY qd_wait_collection_principal BIGINT(20) unsigned NOT NULL DEFAULT '0' COMMENT '渠道标代收本金';
 ALTER TABLE gfb_user_cache MODIFY recharge_total BIGINT(20) unsigned NOT NULL DEFAULT '0' COMMENT '充值总额';
-ALTER TABLE gfb_user_cache MODIFY tender_jingzhi INT(10) NOT NULL DEFAULT '0' COMMENT '首投净值标';
+ALTER TABLE gfb_user_cache MODIFY tender_jingzhi INT(10) NOT NULL DEFAULT '0' COMMENT '首投信用标';
 ALTER TABLE gfb_user_cache MODIFY tender_miao INT(10) NOT NULL DEFAULT '0' COMMENT '首投秒标';
 ALTER TABLE gfb_user_cache MODIFY tender_qudao INT(10) DEFAULT '0' COMMENT '首投渠道标';
 ALTER TABLE gfb_user_cache MODIFY tender_transfer INT(10) NOT NULL DEFAULT '0' COMMENT '首投转让标';
@@ -1365,3 +1366,66 @@ ALTER TABLE `gfb_finance_plan`
 
 ALTER TABLE `gfb_users`
   ADD COLUMN `join_company` varchar(255) COLLATE utf8_unicode_ci NOT NULL;
+/*
+Navicat MySQL Data Transfer
+
+
+CREATE TABLE gfb_product_agent
+(
+  id         INT AUTO_INCREMENT PRIMARY KEY,
+  user_id    INT(10) UNSIGNED NOT NULL COMMENT '用户ID',
+  name       VARCHAR(255)     NOT NULL COMMENT '代理商名称',
+  level      TINYINT(2) UNSIGNED NOT NULL  COMMENT '等级；0：省代，1：市代，2县代，3：零售',
+  parent_id  INT(10) UNSIGNED NOT NULL DEFAULT 0 COMMENT '上级代理',
+  commission_discount INT(3) UNSIGNED NOT NULL DEFAULT 0 COMMENT '上级代理',
+  remark     VARCHAR(255) NOT NULL DEFAULT '' COMMENT '备注',
+  created_at DATETIME         NULL,
+  updated_at DATETIME         NULL,
+  CONSTRAINT product_agent_user_id_foreign
+  FOREIGN KEY (user_id) REFERENCES gfb_users (id)
+    ON UPDATE CASCADE
+    ON DELETE NO ACTION
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;
+
+CREATE INDEX product_agent_user_id_foreign
+  ON gfb_product_agent (user_id);
+Source Server         : root
+Source Server Version : 50637
+Source Host           : 192.168.1.5:3306
+Source Database       : gfb0810
+
+Target Server Type    : MYSQL
+Target Server Version : 50637
+File Encoding         : 65001
+
+Date: 2017-12-11 09:35:50
+*/
+
+SET FOREIGN_KEY_CHECKS=0;
+
+-- ----------------------------
+-- Table structure for gfb_borrow_contract
+-- ----------------------------
+DROP TABLE IF EXISTS `gfb_borrow_contract`;
+CREATE TABLE `gfb_borrow_contract` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `borrow_id` int(11) NOT NULL,
+  `user_id` int(11) NOT NULL,
+  `type` smallint(2) NOT NULL,
+  `created_at` datetime NOT NULL,
+  `update_at` timestamp NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
+  `status` smallint(1) NOT NULL DEFAULT '0',
+  `batch_no` varchar(20) CHARACTER SET utf8 NOT NULL,
+  `for_user_id` int(11) DEFAULT NULL,
+  `borrow_name` varchar(200) CHARACTER SET utf8 NOT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf-8;
+
+
+ALTER TABLE gfb_borrow ADD is_contract tinyint(1) DEFAULT '0' COMMENT '是否生成合同';
+
+ALTER TABLE gfb_user_third_account ADD open_account_at datetime DEFAULT NULL COMMENT '合同开户时间';
+ALTER TABLE gfb_user_third_account ADD entrust_state smallint(1) DEFAULT '0' COMMENT '是否签署委托授权协议';
+
+
+ALTER TABLE gfb_user_cache ADD `tender_id` int(10) DEFAULT '0' COMMENT '首投id' AFTER `wait_repay_interest`;

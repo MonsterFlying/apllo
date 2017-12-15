@@ -2,6 +2,7 @@ package com.gofobao.framework.security.interceptor;
 
 import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.helper.IpHelper;
+import com.gofobao.framework.helper.HttpHelper;
 import com.gofobao.framework.security.contants.SecurityContants;
 import com.gofobao.framework.security.exception.LoginException;
 import com.gofobao.framework.security.helper.JwtTokenHelper;
@@ -61,21 +62,24 @@ public class Jwtintercepter extends HandlerInterceptorAdapter {
         httpServletRequest.setAttribute(SecurityContants.USERID_KEY, userId);
         try {
             String requestSourceStr = StringUtils.isEmpty(requestSource) ? "未知来源" : requestSource;
-            log.info(String.format("当前请求地址：%s，来源: %s , 终端ip: %s", url, requestSourceStr, httpServletRequest.getRemoteAddr()));
+            log.info(String.format("当前请求地址：%s，来源: %s , 终端ip: %s ,参数：%s",
+                    url,
+                    requestSourceStr,
+                    httpServletRequest.getRemoteAddr(),
+                    HttpHelper.getRequestParameter(httpServletRequest)));
         } catch (Exception e) {
         }
         String type = jwtTokenHelper.getType(token);
-        String employee="employee";
-        String branch="branch";
+        String employee = "employee";
+        String branch = "branch";
 
         if (url.contains("/financeserver/")) { //金服理财用户
             if ("finance".equals(type)) {
                 throw new Exception("系统拒绝当前请求");
             }
-        }else if(url.contains(employee)||url.contains(branch)){
+        } else if (url.contains(employee) || url.contains(branch)) {
             return true;
-        }
-        else if (url.contains("/finance/")) {  // 理财用户
+        } else if (url.contains("/finance/")) {  // 理财用户
             String finance = "finance";
             if (type.contains(finance)) {
                 return true;

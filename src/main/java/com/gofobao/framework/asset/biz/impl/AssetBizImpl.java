@@ -325,7 +325,7 @@ public class AssetBizImpl implements AssetBiz {
 
         Long useMoney = asset.getUseMoney();
         Long payment = asset.getPayment();
-        //计算净值额度
+        //计算信用额度
         long netWorthQuota = userHelper.getNetWorthQuota(userId);
         Long netAsset = new Double((asset.getCollection() + asset.getNoUseMoney() + asset.getUseMoney()) - asset.getPayment()).longValue();
         VoUserAssetInfoResp voUserAssetInfoResp = VoBaseResp.ok("成功", VoUserAssetInfoResp.class);

@@ -806,8 +806,10 @@ public class FinancePlanBizImpl implements FinancePlanBiz {
             return ResponseEntity.ok(warpRes);
         }
         page.setPageSize(10);
-        List<FinancePlan> financePlans = financePlanRepository.indexList(statusArray, 0, new PageRequest(page.getPageIndex(), page.getPageSize()));
-
+        List<FinancePlan> financePlans = financePlanRepository.indexList(Lists.newArrayList(FinannceContants.PURCJASE, FinannceContants.END),
+                0,
+                page.getPageIndex(),
+                page.getPageSize());
         warpRes.setTotalCount(10);
         if (CollectionUtils.isEmpty(financePlans)) {
             return ResponseEntity.ok(warpRes);
@@ -843,8 +845,10 @@ public class FinancePlanBizImpl implements FinancePlanBiz {
             return ResponseEntity.ok(warpRes);
         }
         page.setPageSize(10);
-        List<FinancePlan> financePlans = financePlanRepository.indexList(statusArray, 1, new PageRequest(page.getPageIndex(), page.getPageSize()));
-
+        List<FinancePlan> financePlans = financePlanRepository.indexList(Lists.newArrayList(FinannceContants.PURCJASE, FinannceContants.END),
+                1,
+                page.getPageIndex(),
+                page.getPageSize());
         warpRes.setTotalCount(10);
         if (CollectionUtils.isEmpty(financePlans)) {
             return ResponseEntity.ok(warpRes);

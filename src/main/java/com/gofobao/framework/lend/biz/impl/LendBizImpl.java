@@ -309,12 +309,12 @@ public class LendBizImpl implements LendBiz {
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "账户已被锁定，请联系客服人员!"));
         }
 
-        /* 净值额度 */
+        /* 信用额度 */
         long totalMoney = userHelper.getNetWorthQuota(userId);
         if (money > totalMoney) {
             return ResponseEntity
                     .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, "操作失败: 摘草金额大于你当前的净值额度!"));
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "操作失败: 摘草金额大于你当前的信用额度!"));
         }
 
         Date nowDate = new Date();

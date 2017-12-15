@@ -27,7 +27,7 @@ public class PcAutoTender {
     @ApiModelProperty("利率范围")
     private String scope;
 
-    @ApiModelProperty("投标种类（0：车贷标；4、渠道标；1、净值标；3、转让标）")
+    @ApiModelProperty("投标种类（0：车贷标；4、渠道标；1、信用标；3、转让标）")
     private String borrowTypes;
 
     @ApiModelProperty("排队天数")

@@ -58,7 +58,7 @@ public class WindmillBorrowServiceImpl implements WindmillBorrowService {
                 new Integer(BorrowContants.RECHECK_NO_PASS),
                 new Integer(BorrowContants.PENDING),
                 new Integer(BorrowContants.PASS));
-        //過濾掉秒标,净值标
+        //過濾掉秒标,信用标
         List typeArray = Lists.newArrayList(new Integer(BorrowContants.JING_ZHI),
                 new Integer(BorrowContants.MIAO_BIAO));
         StringBuilder sql = new StringBuilder("SELECT b FROM Borrow  AS b WHERE 1=1 ");
@@ -102,7 +102,7 @@ public class WindmillBorrowServiceImpl implements WindmillBorrowService {
      */
     @Override
     public List<Tender> tenderList(Long borrowId, String date) {
-        //获取当前标是否是净值标
+        //获取当前标是否是信用标
         Specification<Borrow> specification = Specifications.<Borrow>and()
                 .eq("id", borrowId)
                 .eq("type", BorrowContants.JING_ZHI)

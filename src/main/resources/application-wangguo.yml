@@ -22,8 +22,8 @@ spring:
   rabbitmq:
     host: localhost
     port: 5672
-    username: admin
-    password: admin123
+    username: gofobao
+    password: gofobao
   mail:
     host: smtp.qq.com
     port: 587
@@ -73,7 +73,6 @@ wheel: #车轮
   secret-key: ey4a3wca
   domain: http://promotion.chelun.com
   check_ticket_url: /Financial/ps_check_ticket
-
 jixin: #银行存管
   keysPassword: guangfubao_uat@2016 #私钥密码
   url: http://uat.gofobao.com/escrow  #即信服务器路径
@@ -93,8 +92,11 @@ jixin: #银行存管
   ftp-username: guangfubao # ftp用户名
   ftp-password: A85yL0p9ZyxIj # ftp密码
   contract:
-      url: https://apitest-contract.credit2go.cn
-      onlineAt: 2017-11-15
+        crtdata_url: http://120.27.15.77:48080
+        content-url: http://118.190.145.213:28080
+        ids-url: http://120.27.15.77:28080
+        onlineAt: 2017-11-15
+        version: 10
 gofobao:
   dev: true # 开发环境
   javaDomain: http://7yhsngp.hk1.mofasuidao.cn

@@ -12,7 +12,7 @@ public class BorrowStatistics {
     private Integer sum;
     @ApiModelProperty("车贷")
     private Integer cheDai;
-    @ApiModelProperty("净值标")
+    @ApiModelProperty("信用标")
     private Integer jingZhi;
     @ApiModelProperty("渠道")
     private Integer quDao;

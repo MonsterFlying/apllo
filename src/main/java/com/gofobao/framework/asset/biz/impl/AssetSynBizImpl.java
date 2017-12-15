@@ -365,7 +365,7 @@ AssetSynBizImpl implements AssetSynBiz {
                     break;
                 }
 
-                inpDate = accountDetailsQueryItemList.get(accountDetailsQuery2Items.size() - 1).getInpDate();
+                inpDate = accountDetailsQuery2Items.get(accountDetailsQuery2Items.size() - 1).getInpDate();
                 // 排除拨正数据
                 accountDetailsQuery2Items = accountDetailsQuery2Items
                         .stream()
@@ -503,7 +503,7 @@ AssetSynBizImpl implements AssetSynBiz {
             if (CollectionUtils.isEmpty(accountDetailsQuery2Items)) {
                 break;
             }
-            inpDate = accountDetailsQueryItemList.get(accountDetailsQuery2Items.size() - 1).getInpDate();
+            inpDate = accountDetailsQuery2Items.get(accountDetailsQuery2Items.size() - 1).getInpDate();
 
             // 排除拨正数据
             accountDetailsQuery2Items = accountDetailsQuery2Items

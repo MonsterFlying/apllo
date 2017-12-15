@@ -212,6 +212,7 @@ public class WheelBorrowBizImpl implements WheelBorrowBiz {
         log.info("=======================================");
         log.info("===========进入通知车轮理财接口==========");
         log.info("=======================================");
+        log.info("打印当前投资信息：" + GSON.toJson(tender));
         Users user = userService.findById(tender.getUserId());
         if (StringUtils.isEmpty(user.getWheelId())) {
             log.info("当前用户不是车轮用户");
@@ -262,7 +263,7 @@ public class WheelBorrowBizImpl implements WheelBorrowBiz {
         investNotice.setInvest_money(StringHelper.formatDouble(tender.getValidMoney(), 100, false));
         if (!StringUtils.isEmpty(borrow.getRecheckAt())
                 && BorrowContants.PASS.equals(borrow.getStatus())
-                && StringUtils.isEmpty(borrow.getCloseAt())) {
+                && tender.getState().intValue()!=TenderConstans.SETTLE) {
             Specification<BorrowRepayment> specification = Specifications.<BorrowRepayment>and()
                     .eq("borrowId", borrow.getId())
                     .build();
@@ -303,6 +304,7 @@ public class WheelBorrowBizImpl implements WheelBorrowBiz {
         }
         String tempRequestParamStr = paramStr.substring(0, paramStr.lastIndexOf("&"));
         try {
+            log.info("打印投资变化请求车轮参数：" + tempRequestParamStr);
             String bizParamStr = JEncryption.encrypt(tempRequestParamStr.getBytes("utf-8"), secretKey);
             String param = "?param=" + URLEncoder.encode(bizParamStr, "utf-8") + "&from=" + shortName;
             System.out.print("用户投资通知车轮,请求车轮地址：" + wheelDomain + investNoticeUrl + param);

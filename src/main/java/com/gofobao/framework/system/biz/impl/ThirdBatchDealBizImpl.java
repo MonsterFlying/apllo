@@ -497,17 +497,16 @@ public class ThirdBatchDealBizImpl implements ThirdBatchDealBiz {
         }
 
         if (CollectionUtils.isEmpty(failureTRepayOrderIds)) {
-            //更新即信放款状态 为处理失败!
-            BorrowRepayment borrowRepayment = borrowRepaymentService.findById(repaymentId);
-            borrowRepayment.setRepayStatus(ThirdDealStatusContrants.DISPOSED);
-            borrowRepayment.setUpdatedAt(new Date());
-            borrowRepaymentService.save(borrowRepayment);
-
             ResponseEntity<VoBaseResp> resp = repaymentBiz.newRepayDeal(repaymentId, batchNo);
             if (resp.getBody().getState().getCode() != VoBaseResp.OK) {
-                log.error("批次还款处理:" + resp.getBody().getState().getMsg());
+                log.error("批次还款处理失败:" + resp.getBody().getState().getMsg());
             } else {
-                log.info("批次还款处理:" + resp.getBody().getState().getMsg());
+                log.info("批次还款处理成功:" + resp.getBody().getState().getMsg());
+                //更新即信放款状态 为处理成功!
+                BorrowRepayment borrowRepayment = borrowRepaymentService.findById(repaymentId);
+                borrowRepayment.setRepayStatus(ThirdDealStatusContrants.DISPOSED);
+                borrowRepayment.setUpdatedAt(new Date());
+                borrowRepaymentService.save(borrowRepayment);
                 //更新批次状态
                 thirdBatchLogBiz.updateBatchLogState(String.valueOf(batchNo), repaymentId, 3, ThirdBatchLogContants.BATCH_REPAY);
                 //记录批次处理日志
@@ -816,15 +815,21 @@ public class ThirdBatchDealBizImpl implements ThirdBatchDealBiz {
 
             if (borrow.isTransfer() && (!BooleanUtils.toBoolean(userCache.getTenderTransfer()))) {
                 userCache.setTenderTransfer(0);
+                userCache.setTenderId(0L);
             } else if ((borrow.getType() == 0) && (!BooleanUtils.toBoolean(userCache.getTenderTuijian()))) {
                 userCache.setTenderTuijian(0);
+                userCache.setTenderId(0L);
             } else if ((borrow.getType() == 1) && (!BooleanUtils.toBoolean(userCache.getTenderJingzhi()))) {
                 userCache.setTenderJingzhi(0);
+                userCache.setTenderId(0L);
             } else if ((borrow.getType() == 2) && (!BooleanUtils.toBoolean(userCache.getTenderMiao()))) {
                 userCache.setTenderMiao(0);
+                userCache.setTenderId(0L);
             } else if ((borrow.getType() == 4) && (!BooleanUtils.toBoolean(userCache.getTenderQudao()))) {
                 userCache.setTenderQudao(0);
+                userCache.setTenderId(0L);
             }
+
             userCacheService.save(userCache);
         }
     }

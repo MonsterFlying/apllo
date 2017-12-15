@@ -24,7 +24,7 @@ public class AssetStatistic {
     @ApiModelProperty("待收金额")
     private String collection;
 
-    @ApiModelProperty("净值额度")
+    @ApiModelProperty("信用额度")
     private String netWorthLimit;
 
     @ApiModelProperty("已实现净收益")
@@ -39,7 +39,7 @@ public class AssetStatistic {
     @ApiModelProperty("待收明细")
     private PaymentDetails paymentDetails;
 
-    @ApiModelProperty("净值额度明细")
+    @ApiModelProperty("信用额度明细")
     private NetProceedsDetails jingZhiDetails;
 
     @ApiModelProperty("总支出")
