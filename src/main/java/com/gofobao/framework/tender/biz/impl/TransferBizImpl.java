@@ -2181,7 +2181,7 @@ public class TransferBizImpl implements TransferBiz {
         borrowInfoRes.setRepayFashion(borrow.getRepayFashion());
 
         //结束时间
-        Date endAt = DateHelper.addHours(DateHelper.beginOfDate(transfer.getRecheckAt()), 21);
+        Date endAt = DateHelper.addHours(DateHelper.beginOfDate(transfer.getReleaseAt()), 21);
         borrowInfoRes.setEndAt(DateHelper.dateToString(endAt, DateHelper.DATE_FORMAT_YMDHMS));
         //进度
         borrowInfoRes.setSurplusSecond(-1L);
@@ -2193,7 +2193,7 @@ public class TransferBizImpl implements TransferBiz {
                 borrowInfoRes.setStatus(6);
                 borrowInfoRes.setPeriodHour(transfer.getSuccessAt().getTime() - transfer.getReleaseAt().getTime());
                 //已过期
-            } else if (endAt.getTime()<new Date().getTime()) {
+            } else if (endAt.getTime() < System.currentTimeMillis()) {
                 borrowInfoRes.setStatus(5);
             } else {
                 //招标中
