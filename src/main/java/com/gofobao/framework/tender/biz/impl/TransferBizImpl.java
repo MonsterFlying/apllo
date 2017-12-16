@@ -1977,9 +1977,9 @@ public class TransferBizImpl implements TransferBiz {
             } else if (item.getState() == TransferContants.TRANSFERED) {
                 //已完成
                 voViewBorrowList.setStatus(4);
-                voViewBorrowList.setRecheckAt(DateHelper.dateToString(item.getRecheckAt()));
             }
             double spend = NumberHelper.floorDouble((item.getTransferMoneyYes().doubleValue() / item.getTransferMoney()) * 100, 2);
+            voViewBorrowList.setRecheckAt(StringUtils.isEmpty(item.getRecheckAt())?"":DateHelper.dateToString(item.getRecheckAt()));
             voViewBorrowList.setSpend(spend);
             Users user = userRef.get(item.getUserId());
             voViewBorrowList.setUserName(!StringUtils.isEmpty(user.getUsername()) ? user.getUsername() : user.getPhone());
@@ -1999,7 +1999,6 @@ public class TransferBizImpl implements TransferBiz {
 
     @Override
     public ResponseEntity<VoPcBorrowList> pcFindTransferList(VoBorrowListReq voBorrowListReq) {
-
         VoPcBorrowList voPcBorrowList = VoBaseResp.ok("查询成功", VoPcBorrowList.class);
         Map<String, Object> resultMaps = commonQuery(voBorrowListReq);
         List<Transfer> transferList = (List<Transfer>) resultMaps.get("transfers");
@@ -2007,12 +2006,15 @@ public class TransferBizImpl implements TransferBiz {
             return ResponseEntity.ok(voPcBorrowList);
         }
         voPcBorrowList.setTotalCount(Long.valueOf(resultMaps.get("totalCount").toString()).intValue());
+        voPcBorrowList.setBorrowLists(commonHandel(transferList));
+        return ResponseEntity.ok(voPcBorrowList);
+    }
 
-
+    @Override
+    public List<VoViewBorrowList> commonHandel(List<Transfer> transferList) {
         Set<Long> borrowIds = transferList
                 .stream()
                 .map(transfer -> transfer.getBorrowId()).collect(Collectors.toSet());
-
         Specification<Borrow> bs = Specifications
                 .<Borrow>and()
                 .in("id", borrowIds.toArray())
@@ -2102,10 +2104,8 @@ public class TransferBizImpl implements TransferBiz {
             item.setSurplusSecond(0L);
             transfers.add(item);
         });
-        voPcBorrowList.setBorrowLists(transfers);
-        return ResponseEntity.ok(voPcBorrowList);
+        return transfers;
     }
-
 
     private Map<String, Object> commonQuery(VoBorrowListReq voBorrowListReq) {
         Map<String, Object> resultMaps = Maps.newHashMap();
@@ -2193,7 +2193,7 @@ public class TransferBizImpl implements TransferBiz {
                 borrowInfoRes.setStatus(6);
                 borrowInfoRes.setPeriodHour(transfer.getSuccessAt().getTime() - transfer.getReleaseAt().getTime());
                 //已过期
-            } else if (endAt.getTime() < System.currentTimeMillis()) {
+            } else if (endAt.getTime() < new Date().getTime()) {
                 borrowInfoRes.setStatus(5);
             } else {
                 //招标中

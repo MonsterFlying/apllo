@@ -22,27 +22,52 @@ public interface TransferRepository extends JpaSpecificationExecutor<Transfer>, 
 
     /**
      * 根据债券ids查询债券集合
+     *
      * @param ids
      * @return
      */
     List<Transfer> findByIdIn(List<Long> ids);
 
 
-    List<Transfer>findByBorrowId(Long borrowId);
+    List<Transfer> findByBorrowId(Long borrowId);
 
     /**
      * 首页理财 流转标列表
+     *
      * @param pageable
      * @return
      */
     @Query("select transfer from Transfer transfer " +
             "where " +
             "(transfer.state=1 or (transfer.state=2 and transfer.apr<1500)) " +
-            "and " +
+            "and  " +
             "transfer.type =0 " +
+            "AND " +
+            "transfer.releaseAt is not null " +
             "order by " +
-            "transfer.id desc , " +
-            "transfer.transferMoneyYes/transfer.transferMoney ASC ")
+            "transfer.state asc , " +
+            "transfer.transferMoneyYes/transfer.transferMoney,transfer.id desc" )
     Page<Transfer> findByStateIsOrStateIsAndAprThanLee(Pageable pageable);
 
+
+    /**
+     * 首页全部
+     *
+     * @return
+     */
+    @Query("SELECT transfer from Transfer  transfer\n" +
+            "where\n" +
+            "(transfer.state= 1)\n" +
+            "and\n" +
+            "transfer.type =0\n" +
+            "and\n" +
+            "transfer.transferMoneyYes/transfer.transferMoney!=1\n " +
+            "and\n" +
+            "transfer.releaseAt is not null\n"+
+            "and\n" +
+            "transfer.successAt is null\n" +
+            "order by\n" +
+            "transfer.state asc,\n" +
+            "transfer.transferMoneyYes/transfer.transferMoney ,transfer.id desc ")
+    List<Transfer> indexList();
 }
