@@ -70,6 +70,7 @@ import com.gofobao.framework.repayment.service.BorrowRepaymentService;
 import com.gofobao.framework.scheduler.DailyAssetBackupScheduler;
 import com.gofobao.framework.scheduler.DealThirdBatchScheduler;
 import com.gofobao.framework.scheduler.biz.FundStatisticsBiz;
+import com.gofobao.framework.scheduler.repository.CountRepository;
 import com.gofobao.framework.system.biz.ThirdBatchDealBiz;
 import com.gofobao.framework.system.biz.ThirdBatchDealLogBiz;
 import com.gofobao.framework.scheduler.service.CountAssetInfo;

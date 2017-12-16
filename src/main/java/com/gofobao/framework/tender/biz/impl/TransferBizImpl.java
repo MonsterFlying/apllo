@@ -1537,7 +1537,7 @@ public class TransferBizImpl implements TransferBiz {
         transfer.setCreatedAt(nowDate);
         transfer.setTimeLimit(waitTimeLimit);
         transfer.setLowest(1000 * 100L);
-        transfer.setState(0);
+        transfer.setState(1);
         transfer.setTenderCount(0);
         transfer.setTenderId(tenderId);
         transfer.setIsAll(isAll);

@@ -16,12 +16,11 @@ import com.gofobao.framework.tender.service.TenderService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Component;
+import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -87,14 +86,15 @@ public class UserHelper {
         long netWorthQuota = new Double(MoneyHelper.multiply(assets, 0.8)).longValue() - asset.getPayment() - sumRepayTotal;
         /*截止2017年12月15日12：00，净值待还金额超过10万的用户信息如下*/
         String passUserName = "cy333999,cjm888,cuic7777,cuic8888,cjm8866,zz888,钱途无量,tasklist,ss999,tiger888,sadfsaag,王自胜,黛溪新芽,antiqdong,tiger999,cstqq,inetcall,tiger_w,sadfsaag3,sadfsaag1,sayba,cuic9999";
+        Set<String> passUserNames = new HashSet<>(Arrays.asList(passUserName.split(",")));
         /**
          * 2018年1月15日24:00止，如仍有待还本金超过20万的用户，账户不得投标
          不得提现不得发净值。直至降到20万以内。
          */
-        if (passUserName.indexOf(user.getUsername()) == -1 || System.currentTimeMillis() > DateHelper.stringToDate("2018-01-15 24:00:00").getTime()) {
+        if (!passUserNames.contains(user.getUsername()) || System.currentTimeMillis() > DateHelper.stringToDate("2018-01-15 24:00:00").getTime()) {
             //信用限额
             long quota = 0;
-            if (passUserName.indexOf(user.getUsername()) != -1) {
+            if (passUserNames.contains(user.getUsername())) {
                 quota = 200 * 1000;
             } else {
                 quota = 100 * 1000;
