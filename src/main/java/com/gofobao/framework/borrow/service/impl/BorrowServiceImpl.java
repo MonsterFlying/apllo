@@ -15,11 +15,13 @@ import com.gofobao.framework.member.entity.UserAttachment;
 import com.gofobao.framework.member.entity.Users;
 import com.gofobao.framework.member.repository.UserAttachmentRepository;
 import com.gofobao.framework.member.repository.UsersRepository;
+import com.gofobao.framework.tender.biz.TransferBiz;
 import com.gofobao.framework.tender.contants.TenderConstans;
 import com.gofobao.framework.tender.contants.TransferContants;
 import com.gofobao.framework.tender.entity.Tender;
 import com.gofobao.framework.tender.entity.Transfer;
 import com.gofobao.framework.tender.repository.TenderRepository;
+import com.gofobao.framework.tender.repository.TransferRepository;
 import com.gofobao.framework.tender.service.TransferService;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
@@ -86,6 +88,15 @@ public class BorrowServiceImpl implements BorrowService {
     @Value("${gofobao.imageDomain}")
     private String imageDomain;
 
+    @Autowired
+    private TransferRepository transferRepository;
+
+
+    @Autowired
+    private TransferBiz transferBiz;
+
+
+
 
     //过滤掉 发标待审 初审不通过；复审不通过 已取消
     private static List statusArray = Lists.newArrayList(
@@ -100,7 +111,8 @@ public class BorrowServiceImpl implements BorrowService {
             .expireAfterWrite(60, TimeUnit.MINUTES)
             .maximumSize(1024)
             .build(new CacheLoader<String, Borrow>() {
-                ImmutableList states = ImmutableList.of(1, 3) ;
+                ImmutableList states = ImmutableList.of(1, 3);
+
                 @Override
                 public Borrow load(String type) throws Exception {
                     Specification<Borrow> specification = Specifications
@@ -139,11 +151,11 @@ public class BorrowServiceImpl implements BorrowService {
         if (type.intValue() == -1) {
             type = null;
         }
-        StringBuilder condtionSql = new StringBuilder(" SELECT b.* FROM gfb_borrow  b   WHERE 1 = 1 AND is_finance = 0  ");
+        StringBuilder condtionSql = new StringBuilder(" SELECT b.* FROM gfb_borrow  b   WHERE 1 = 1 AND is_finance = 0 AND b.product_id is not null  ");
         if (!StringUtils.isEmpty(type)) { // 标的状态
             condtionSql.append(" AND b.type = " + type + " AND  b.status NOT IN(:statusArray)  ");
         } else {  // 全部
-            condtionSql.append(" AND b.status=:statusArray AND b.success_at is null AND  b.money_yes <>  b.money ");   // 为满标的
+            condtionSql.append(" AND b.status=:statusArray  AND b.type!=:type AND b.success_at is null AND  b.money_yes <>  b.money ");   // 为满标的
         }
         condtionSql.append(" AND b.verify_at IS Not NULL AND b.close_at is null AND b.product_id IS NOT NULL ");  // 排除验证时间不等于空, 关闭时间为空, 而且申报成功
         if (StringUtils.isEmpty(type)) {   // 全部
@@ -159,20 +171,34 @@ public class BorrowServiceImpl implements BorrowService {
         Query pageQuery = entityManager.createNativeQuery(condtionSql.toString(), Borrow.class);
         if (StringUtils.isEmpty(type)) {
             pageQuery.setParameter("statusArray", BorrowContants.BIDDING);
+            pageQuery.setParameter("type", BorrowContants.JING_ZHI);
         } else {
             pageQuery.setParameter("statusArray", statusArray);
+            int firstResult = voBorrowListReq.getPageIndex() * voBorrowListReq.getPageSize();
+            pageQuery
+                    .setFirstResult(firstResult)
+                    .setMaxResults(voBorrowListReq.getPageSize());
         }
-        int firstResult = voBorrowListReq.getPageIndex() * voBorrowListReq.getPageSize();
-        List<Borrow> borrowLists = pageQuery
-                .setFirstResult(firstResult)
-                .setMaxResults(voBorrowListReq.getPageSize())
-                .getResultList();
-
-        if (CollectionUtils.isEmpty(borrowLists)) {
+        List<Borrow> borrowLists = pageQuery.getResultList();
+        if (CollectionUtils.isEmpty(borrowLists) && StringUtils.isEmpty(type)) {
             return Collections.EMPTY_LIST;
         }
-
-        return commonHandle(borrowLists, voBorrowListReq);
+        List<VoViewBorrowList> voViewBorrowLists = Lists.newArrayList();
+        if (!CollectionUtils.isEmpty(borrowLists)) {
+            voViewBorrowLists = commonHandle(borrowLists, voBorrowListReq);
+        }
+        //全部显示列表
+        if (StringUtils.isEmpty(type)) {
+            //加上流转标的
+            List<Transfer> transfers = transferRepository.indexList();
+            if (!CollectionUtils.isEmpty(transfers)) {
+                List<VoViewBorrowList> transferBorrow = transferBiz.commonHandel(transfers);
+                for (VoViewBorrowList voBorrowList : transferBorrow) {
+                    voViewBorrowLists.add(voBorrowList);
+                }
+            }
+        }
+        return voViewBorrowLists;
     }
 
 
@@ -249,7 +275,8 @@ public class BorrowServiceImpl implements BorrowService {
             } else {
                 item.setIsFlow(false);
             }
-            item.setReleaseAt(DateHelper.dateToString(m.getReleaseAt()));
+            item.setReleaseAt(StringUtils.isEmpty(m.getReleaseAt()) ? "" : DateHelper.dateToString(m.getReleaseAt()));
+            item.setRecheckAt(StringUtils.isEmpty(m.getRecheckAt()) ? "" : DateHelper.dateToString(m.getRecheckAt()));
             item.setStatus(status);
             item.setRepayFashion(m.getRepayFashion());
             item.setIsContinued(m.getIsContinued());
@@ -290,7 +317,7 @@ public class BorrowServiceImpl implements BorrowService {
         StringBuilder condtionSql = new StringBuilder(" AND is_finance = 0 ");
 
         if (StringUtils.isEmpty(type)) {  // 全部
-            condtionSql.append(" AND b.successAt is null AND  b.moneyYes <> b.money AND  b.status=:statusArray ");  // 可投
+            condtionSql.append(" AND b.successAt is null AND  b.moneyYes <> b.money AND  b.status=:statusArray and type!=:type");  // 可投
         } else {
             condtionSql.append(" AND b.closeAt is null AND b.status NOT IN(:statusArray ) AND  b.type=" + type);  //
         }
@@ -307,21 +334,35 @@ public class BorrowServiceImpl implements BorrowService {
         }
         //分页
         Query pageQuery = entityManager.createQuery(pageSb.append(condtionSql).toString(), Borrow.class);
-        if (StringUtils.isEmpty(type)) {
+        if (StringUtils.isEmpty(type)) {  //首页全部 投标标+转让标（去掉净值标的）
             pageQuery.setParameter("statusArray", BorrowContants.BIDDING);
+            pageQuery.setParameter("type", BorrowContants.JING_ZHI);
         } else {
             pageQuery.setParameter("statusArray", statusArray);
+            pageQuery
+                    .setFirstResult(voBorrowListReq.getPageIndex() * voBorrowListReq.getPageSize())
+                    .setMaxResults(voBorrowListReq.getPageSize());
         }
-
-        List<Borrow> borrowLists = pageQuery
-                .setFirstResult(voBorrowListReq.getPageIndex() * voBorrowListReq.getPageSize())
-                .setMaxResults(voBorrowListReq.getPageSize())
-                .getResultList();
-
-        if (CollectionUtils.isEmpty(borrowLists)) {
+        List<Borrow> borrowLists = pageQuery.getResultList();
+        //不是全部显示列表并且普通标集合为空
+        if (!StringUtils.isEmpty(type) && CollectionUtils.isEmpty(borrowLists)) {
             return warpRes;
         }
-        List<VoViewBorrowList> borrowListList = commonHandle(borrowLists, voBorrowListReq);
+        //普通标集合
+        List<VoViewBorrowList> borrowListList = Lists.newArrayList();
+        if (!CollectionUtils.isEmpty(borrowLists)) {
+            borrowListList = commonHandle(borrowLists, voBorrowListReq);
+        }
+        //全部显示 可投 加上 转让标集合
+        if (StringUtils.isEmpty(type)) {
+            List<Transfer> transfers = transferRepository.indexList();
+            if (!CollectionUtils.isEmpty(transfers)) {
+                List<VoViewBorrowList> transferBorrowList = transferBiz.commonHandel(transfers);
+                for (VoViewBorrowList viewBorrowList : transferBorrowList) {
+                    borrowListList.add(viewBorrowList);
+                }
+            }
+        }
         warpRes.setBorrowLists(borrowListList);
         warpRes.setPageIndex(voBorrowListReq.getPageIndex() + 1);
         warpRes.setPageSize(voBorrowListReq.getPageSize());
@@ -329,6 +370,7 @@ public class BorrowServiceImpl implements BorrowService {
         Query countQuery = entityManager.createQuery(countSb.append(condtionSql).toString(), Long.class);
         if (StringUtils.isEmpty(type)) {
             countQuery.setParameter("statusArray", BorrowContants.BIDDING);
+            countQuery.setParameter("type", BorrowContants.JING_ZHI);
         } else {
             countQuery.setParameter("statusArray", statusArray);
 
@@ -402,7 +444,7 @@ public class BorrowServiceImpl implements BorrowService {
         Query query = entityManager.createNativeQuery(sql, Borrow.class);
         List<Borrow> borrows = query.getResultList();
         //装配处理
-        List<VoViewBorrowList> borrowLists= commonHandle( borrows, new VoBorrowListReq() );
+        List<VoViewBorrowList> borrowLists = commonHandle(borrows, new VoBorrowListReq());
         return borrowLists;
     }
 

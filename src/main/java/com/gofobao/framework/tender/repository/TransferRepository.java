@@ -42,10 +42,32 @@ public interface TransferRepository extends JpaSpecificationExecutor<Transfer>, 
             "(transfer.state=1 or (transfer.state=2 and transfer.apr<1500)) " +
             "and  " +
             "transfer.type =0 " +
+            "AND " +
+            "transfer.releaseAt is not null " +
             "order by " +
             "transfer.state asc , " +
-            "transfer.transferMoneyYes/transfer.transferMoney ASC," +
-            "transfer.id")
+            "transfer.transferMoneyYes/transfer.transferMoney,transfer.id desc" )
     Page<Transfer> findByStateIsOrStateIsAndAprThanLee(Pageable pageable);
 
+
+    /**
+     * 首页全部
+     *
+     * @return
+     */
+    @Query("SELECT transfer from Transfer  transfer\n" +
+            "where\n" +
+            "(transfer.state= 1)\n" +
+            "and\n" +
+            "transfer.type =0\n" +
+            "and\n" +
+            "transfer.transferMoneyYes/transfer.transferMoney!=1\n " +
+            "and\n" +
+            "transfer.releaseAt is not null\n"+
+            "and\n" +
+            "transfer.successAt is null\n" +
+            "order by\n" +
+            "transfer.state asc,\n" +
+            "transfer.transferMoneyYes/transfer.transferMoney ,transfer.id desc ")
+    List<Transfer> indexList();
 }

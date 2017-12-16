@@ -179,7 +179,7 @@ public interface TransferBiz {
      * @param transferBuyLogList
      * @return
      */
-    List<Tender> addFinanceChildTender(Date nowDate, Transfer transfer, Tender parentTender, List<TransferBuyLog> transferBuyLogList) ;
+    List<Tender> addFinanceChildTender(Date nowDate, Transfer transfer, Tender parentTender, List<TransferBuyLog> transferBuyLogList);
 
     /**
      * 生成子级债权回款记录，标注老债权回款已经转出
@@ -190,6 +190,7 @@ public interface TransferBiz {
      * @param childTenderList
      */
     List<BorrowCollection> addFinanceChildTenderCollection(Date nowDate, Transfer transfer, Borrow parentBorrow, List<Tender> childTenderList) throws Exception;
+
     /**
      * 生成子级债权回款记录，标注老债权回款已经转出
      *
@@ -208,4 +209,13 @@ public interface TransferBiz {
      * @return
      */
     Map<String, Object> contract(Long tenderId, Long userId);
+
+    /**
+     * 流转标公共处理
+     *
+     * @param transfers
+     * @return
+     */
+    List<VoViewBorrowList> commonHandel(List<Transfer> transfers);
+
 }
