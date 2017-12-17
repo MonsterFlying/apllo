@@ -96,8 +96,6 @@ public class BorrowServiceImpl implements BorrowService {
     private TransferBiz transferBiz;
 
 
-
-
     //过滤掉 发标待审 初审不通过；复审不通过 已取消
     private static List statusArray = Lists.newArrayList(
             new Integer(BorrowContants.CANCEL),
@@ -390,29 +388,29 @@ public class BorrowServiceImpl implements BorrowService {
     public List<VoViewBorrowList> pcIndexBorrowList() {
         //公共sql
         List<Integer> typeArray = Lists.newArrayList(BorrowContants.CE_DAI,
-                                                    BorrowContants.JING_ZHI,
-                                                    BorrowContants.QU_DAO);
+                BorrowContants.JING_ZHI,
+                BorrowContants.QU_DAO);
         Map<Integer, String> sqlMap = Maps.newHashMap();
         for (Integer type : typeArray) {
             String sql = " SELECT b.* FROM gfb_borrow  b  " +
                     "WHERE " +
-                         "b.product_id IS NOT NULL " +
+                    "b.product_id IS NOT NULL " +
                     "AND " +
-                        "b.type =" + type+
+                    "b.type =" + type +
                     " AND " +
-                        "b.status " +
+                    "b.status " +
                     "NOT IN(" + BorrowContants.CANCEL + "," +
-                                BorrowContants.NO_PASS + "," +
-                                BorrowContants.RECHECK_NO_PASS + "," +
-                                BorrowContants.PENDING + ") " +
-                    "AND "+
-                        " b.is_finance = 0 " +
+                    BorrowContants.NO_PASS + "," +
+                    BorrowContants.RECHECK_NO_PASS + "," +
+                    BorrowContants.PENDING + ") " +
                     "AND " +
-                        "b.verify_at IS Not NULL " +
+                    " b.is_finance = 0 " +
                     "AND " +
-                        "b.close_at is null " +
+                    "b.verify_at IS Not NULL " +
                     "AND " +
-                        "b.product_id IS NOT NULL";
+                    "b.close_at is null " +
+                    "AND " +
+                    "b.product_id IS NOT NULL";
             sqlMap.put(type, sql);
         }
         //车贷排序
@@ -443,8 +441,14 @@ public class BorrowServiceImpl implements BorrowService {
         String sql = sqlStr.substring(0, sqlStr.lastIndexOf("UNION ALL "));
         Query query = entityManager.createNativeQuery(sql, Borrow.class);
         List<Borrow> borrows = query.getResultList();
+        /*查询债转标*/
+        Pageable pageable = new PageRequest(0,
+                2);
+        Page<Transfer> transferPage = transferRepository.findByStateIsOrStateIsAndAprThanLee(pageable);
+        List<VoViewBorrowList> transferViewList = transferBiz.commonHandel(transferPage.getContent());
         //装配处理
         List<VoViewBorrowList> borrowLists = commonHandle(borrows, new VoBorrowListReq());
+        borrowLists.addAll(transferViewList);
         return borrowLists;
     }
 
