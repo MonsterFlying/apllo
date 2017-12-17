@@ -196,6 +196,9 @@ public class BorrowServiceImpl implements BorrowService {
                 }
             }
         }
+        if (CollectionUtils.isEmpty(voViewBorrowLists) && voBorrowListReq.getPageIndex().intValue() == 0) {
+            voViewBorrowLists = commonHandle(otherAdd(), voBorrowListReq);
+        }
         return voViewBorrowLists;
     }
 
@@ -312,7 +315,7 @@ public class BorrowServiceImpl implements BorrowService {
         }
         StringBuilder pageSb = new StringBuilder(" SELECT b FROM Borrow b WHERE 1=1  AND b.productId IS NOT NULL ");
         StringBuilder countSb = new StringBuilder(" SELECT COUNT(id) FROM Borrow b WHERE 1=1 AND b.productId IS NOT NULL ");
-        StringBuilder condtionSql = new StringBuilder(" AND is_finance = 0 ");
+        StringBuilder condtionSql = new StringBuilder(" AND isFinance = 0 ");
 
         if (StringUtils.isEmpty(type)) {  // 全部
             condtionSql.append(" AND b.successAt is null AND  b.moneyYes <> b.money AND  b.status=:statusArray and type!=:type");  // 可投
@@ -361,22 +364,57 @@ public class BorrowServiceImpl implements BorrowService {
                 }
             }
         }
+        Long count = 10L;
+        //如果当前没有可投
+        if (CollectionUtils.isEmpty(borrowListList)) {
+            if (voBorrowListReq.getPageIndex().intValue() == 0) {
+                List<Borrow> otherAddListBorrows = otherAdd();
+                borrowListList = commonHandle(otherAddListBorrows, voBorrowListReq);
+            }
+        } else {
+            //总记录数
+            Query countQuery = entityManager.createQuery(countSb.append(condtionSql).toString(), Long.class);
+            if (StringUtils.isEmpty(type)) {
+                countQuery.setParameter("statusArray", BorrowContants.BIDDING);
+                countQuery.setParameter("type", BorrowContants.JING_ZHI);
+            } else {
+                countQuery.setParameter("statusArray", statusArray);
+            }
+            count = (Long) countQuery.getSingleResult();
+        }
         warpRes.setBorrowLists(borrowListList);
         warpRes.setPageIndex(voBorrowListReq.getPageIndex() + 1);
         warpRes.setPageSize(voBorrowListReq.getPageSize());
-        //总记录数
-        Query countQuery = entityManager.createQuery(countSb.append(condtionSql).toString(), Long.class);
-        if (StringUtils.isEmpty(type)) {
-            countQuery.setParameter("statusArray", BorrowContants.BIDDING);
-            countQuery.setParameter("type", BorrowContants.JING_ZHI);
-        } else {
-            countQuery.setParameter("statusArray", statusArray);
-
-        }
-        Long count = (Long) countQuery.getSingleResult();
         warpRes.setTotalCount(count.intValue());
         return warpRes;
 
+    }
+
+    private List<Borrow> otherAdd() {
+        StringBuilder contionStr = new StringBuilder(" SELECT b FROM Borrow b\n" +
+                "WHERE\n" +
+                "b.productId IS NOT NULL\n" +
+                "AND\n" +
+                "isFinance = 0\n" +
+                "AND\n" +
+                "b.closeAt is null\n" +
+                "AND\n" +
+                "b.status=:status\n" +
+                "AND\n" +
+                "b.type in (:typeArrays)\n" +
+                "AND\n" +
+                "b.recheckAt IS Not NULL\n" +
+                "ORDER BY  FIELD(b.type, 0, 4), " +
+                "b.status ASC," +
+                "b.lendRepayStatus ASC, " +
+                "(b.moneyYes / b.money) DESC, " +
+                "b.id desc");
+        Query query = entityManager.createQuery(contionStr.toString(), Borrow.class);
+        query.setParameter("status", BorrowContants.PASS);
+        query.setParameter("typeArrays", Lists.newArrayList(BorrowContants.CE_DAI, BorrowContants.INDEX_TYPE_QU_DAO));
+        query.setFirstResult(0);
+        query.setMaxResults(10);
+        return query.getResultList();
     }
 
     /**
@@ -661,7 +699,7 @@ public class BorrowServiceImpl implements BorrowService {
         borrowStatistics.setMiaoBiao(miaoBiao);
         borrowStatistics.setQuDao(quDao);
         borrowStatistics.setLiuZhuan(liuZhuanCount);
-        borrowStatistics.setSum(sum1 + liuZhuanCount);
+        borrowStatistics.setSum(quDao +cheDai+liuZhuanCount);
         borrowStatisticss.add(borrowStatistics);
         return borrowStatisticss;
     }
