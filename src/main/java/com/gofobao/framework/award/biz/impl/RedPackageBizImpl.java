@@ -352,7 +352,7 @@ public class RedPackageBizImpl implements RedPackageBiz {
                     .<MarketingRedpackRecord>and()
                     .eq("userId", users.getId())
                     .eq("marketingId", 3)
-                    .between("publishTime", new Range(DateHelper.endOfDate(beginDate), DateHelper.endOfDate(nowDate)))
+                    .between("openTime", new Range(DateHelper.endOfDate(beginDate), DateHelper.endOfDate(nowDate)))
                     .build();
             long redpackCount = marketingRedpackRecordService.count(marketingRedpackRecordSpecification);
             if (redpackCount >= 3) {
