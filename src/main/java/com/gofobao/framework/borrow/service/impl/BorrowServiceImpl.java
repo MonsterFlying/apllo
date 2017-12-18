@@ -167,17 +167,24 @@ public class BorrowServiceImpl implements BorrowService {
         }
 
         Query pageQuery = entityManager.createNativeQuery(condtionSql.toString(), Borrow.class);
+        List<Borrow> borrowLists = Lists.newArrayList();
         if (StringUtils.isEmpty(type)) {
-            pageQuery.setParameter("statusArray", BorrowContants.BIDDING);
-            pageQuery.setParameter("type", BorrowContants.JING_ZHI);
+            if (voBorrowListReq.getPageIndex().intValue() == 0) {
+                pageQuery.setParameter("statusArray", BorrowContants.BIDDING);
+                pageQuery.setParameter("type", BorrowContants.JING_ZHI);
+                pageQuery.setFirstResult(0);
+                pageQuery.setMaxResults(30);
+                borrowLists = pageQuery.getResultList();
+            }
         } else {
             pageQuery.setParameter("statusArray", statusArray);
             int firstResult = voBorrowListReq.getPageIndex() * voBorrowListReq.getPageSize();
             pageQuery
                     .setFirstResult(firstResult)
                     .setMaxResults(voBorrowListReq.getPageSize());
+            borrowLists= pageQuery.getResultList();
         }
-        List<Borrow> borrowLists = pageQuery.getResultList();
+
         if (CollectionUtils.isEmpty(borrowLists) && StringUtils.isEmpty(type)) {
             return Collections.EMPTY_LIST;
         }
@@ -186,7 +193,7 @@ public class BorrowServiceImpl implements BorrowService {
             voViewBorrowLists = commonHandle(borrowLists, voBorrowListReq);
         }
         //全部显示列表
-        if (StringUtils.isEmpty(type)) {
+        if (StringUtils.isEmpty(type) && voBorrowListReq.getPageIndex().intValue() == 0) {
             //加上流转标的
             List<Transfer> transfers = transferRepository.indexList();
             if (!CollectionUtils.isEmpty(transfers)) {
@@ -208,8 +215,8 @@ public class BorrowServiceImpl implements BorrowService {
                 tempVoViewBorrows = commonHandle(otherAdd(tempCount), voBorrowListReq);
             }
             if (!CollectionUtils.isEmpty(tempVoViewBorrows)) {
-                for (VoViewBorrowList viewBorrowList : tempVoViewBorrows){
-                    viewBorrowList.setApr(viewBorrowList.getApr()+BorrowContants.percent);
+                for (VoViewBorrowList viewBorrowList : tempVoViewBorrows) {
+                    viewBorrowList.setApr(viewBorrowList.getApr() + BorrowContants.percent);
                     voViewBorrowLists.add(viewBorrowList);
                 }
 
@@ -350,16 +357,23 @@ public class BorrowServiceImpl implements BorrowService {
         }
         //分页
         Query pageQuery = entityManager.createQuery(pageSb.append(condtionSql).toString(), Borrow.class);
+        List<Borrow> borrowLists = Lists.newArrayList();
         if (StringUtils.isEmpty(type)) {  //首页全部 投标标+转让标（去掉净值标的）
-            pageQuery.setParameter("statusArray", BorrowContants.BIDDING);
-            pageQuery.setParameter("type", BorrowContants.JING_ZHI);
+            if (voBorrowListReq.getPageIndex().intValue() == 0) {
+                pageQuery.setParameter("statusArray", BorrowContants.BIDDING);
+                pageQuery.setParameter("type", BorrowContants.JING_ZHI);
+                pageQuery.setFirstResult(0);
+                pageQuery.setMaxResults(30);
+                borrowLists = pageQuery.getResultList();
+            }
         } else {
             pageQuery.setParameter("statusArray", statusArray);
             pageQuery
                     .setFirstResult(voBorrowListReq.getPageIndex() * voBorrowListReq.getPageSize())
                     .setMaxResults(voBorrowListReq.getPageSize());
+            borrowLists = pageQuery.getResultList();
         }
-        List<Borrow> borrowLists = pageQuery.getResultList();
+
         //不是全部显示列表并且普通标集合为空
         if (!StringUtils.isEmpty(type) && CollectionUtils.isEmpty(borrowLists)) {
             return warpRes;
@@ -375,7 +389,7 @@ public class BorrowServiceImpl implements BorrowService {
             if (!CollectionUtils.isEmpty(transfers)) {
                 List<VoViewBorrowList> transferBorrowList = transferBiz.commonHandel(transfers);
                 for (VoViewBorrowList viewBorrowList : transferBorrowList) {
-                    viewBorrowList.setApr(viewBorrowList.getApr()+BorrowContants.percent);
+                    viewBorrowList.setApr(viewBorrowList.getApr() + BorrowContants.percent);
                     borrowListList.add(viewBorrowList);
                 }
             }
