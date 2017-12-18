@@ -566,10 +566,6 @@ public class TransferBizImpl implements TransferBiz {
                 long interest = NumberHelper.toLong(repayDetailMap.get("interest"));
                 Date collectionAt = DateHelper.stringToDate(StringHelper.toString(repayDetailMap.get("repayAt")));
                 sumCollectionInterest += interest;
-                //最后一个购买债权转让的最后一期回款，需要把还款溢出的利息补给新的回款记录
-                if ((j == childTenderList.size() - 1) && (i == repayDetailList.size() - 1)) {
-                    interest += transferInterest - sumCollectionInterest;/* 新的回款利息添加溢出的利息 */
-                }
 
                 //如果是理财计划借款不需要生成利息
                 if (childTender.getType().intValue() == 1 || (parentBorrow.getIsFinance() && (childTender.getUserId().longValue() == 22002))) {
@@ -1841,6 +1837,7 @@ public class TransferBizImpl implements TransferBiz {
      * @param tenderId 投标记录Id
      * @return
      */
+    @Override
     public ResponseEntity<VoGoTenderInfo> goTenderInfo(Long tenderId, Long userId) {
         Tender tender = tenderService.findById(tenderId);
         Preconditions.checkNotNull(tender, "");
@@ -1979,7 +1976,7 @@ public class TransferBizImpl implements TransferBiz {
                 voViewBorrowList.setStatus(4);
             }
             double spend = NumberHelper.floorDouble((item.getTransferMoneyYes().doubleValue() / item.getTransferMoney()) * 100, 2);
-            voViewBorrowList.setRecheckAt(StringUtils.isEmpty(item.getRecheckAt())?"":DateHelper.dateToString(item.getRecheckAt()));
+            voViewBorrowList.setRecheckAt(StringUtils.isEmpty(item.getRecheckAt()) ? "" : DateHelper.dateToString(item.getRecheckAt()));
             voViewBorrowList.setSpend(spend);
             Users user = userRef.get(item.getUserId());
             voViewBorrowList.setUserName(!StringUtils.isEmpty(user.getUsername()) ? user.getUsername() : user.getPhone());
@@ -2193,12 +2190,12 @@ public class TransferBizImpl implements TransferBiz {
                 borrowInfoRes.setStatus(6);
                 borrowInfoRes.setPeriodHour(transfer.getSuccessAt().getTime() - transfer.getReleaseAt().getTime());
                 //已过期
-            } else if (endAt.getTime() < new Date().getTime()) {
+            } else if (endAt.getTime() < System.currentTimeMillis()) {
                 borrowInfoRes.setStatus(5);
             } else {
                 //招标中
                 borrowInfoRes.setStatus(3);
-                borrowInfoRes.setPeriodSurplusHour(endAt.getTime() - new Date().getTime());
+                borrowInfoRes.setPeriodSurplusHour(endAt.getTime() - System.currentTimeMillis());
             }
         } else {
             borrowInfoRes.setStatus(4);

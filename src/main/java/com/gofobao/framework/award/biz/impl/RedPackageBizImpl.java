@@ -131,7 +131,7 @@ public class RedPackageBizImpl implements RedPackageBiz {
         UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(userId);
         Preconditions.checkNotNull(userThirdAccount, "userThirdAccount is null");
         Long redpackAccountId = assetChangeProvider.getRedpackAccountId();
-        Asset redpackAsset = assetService.findByUserId(redpackAccountId);
+        Asset redpackAsset = assetService.findByUserIdLock(redpackAccountId);
         Preconditions.checkNotNull(redpackAsset, "publishRedpack redpackAsset is null");
 
         if (redpackAsset.getUseMoney() - money < 0) {
