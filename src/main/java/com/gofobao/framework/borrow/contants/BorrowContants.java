@@ -108,6 +108,6 @@ public class BorrowContants {
      */
     public static final int INDEX_TYPE_LIU_ZHUAN = 5;
 
-
+    public static final String percent="%";
 
 }
