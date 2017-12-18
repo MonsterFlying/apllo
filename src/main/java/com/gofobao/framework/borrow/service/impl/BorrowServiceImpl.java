@@ -511,8 +511,14 @@ public class BorrowServiceImpl implements BorrowService {
         String sql = sqlStr.substring(0, sqlStr.lastIndexOf("UNION ALL "));
         Query query = entityManager.createNativeQuery(sql, Borrow.class);
         List<Borrow> borrows = query.getResultList();
+        /*查询债转标*/
+        Pageable pageable = new PageRequest(0,
+                2);
+        Page<Transfer> transferPage = transferRepository.findByStateIsOrStateIsAndAprThanLee(pageable);
+        List<VoViewBorrowList> transferViewList = transferBiz.commonHandel(transferPage.getContent());
         //装配处理
         List<VoViewBorrowList> borrowLists = commonHandle(borrows, new VoBorrowListReq());
+        borrowLists.addAll(transferViewList);
         return borrowLists;
     }
 

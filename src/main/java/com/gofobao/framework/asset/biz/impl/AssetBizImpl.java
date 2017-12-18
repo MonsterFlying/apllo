@@ -1034,7 +1034,7 @@ public class AssetBizImpl implements AssetBiz {
         response.setCollectionMoney(StringHelper.formatDouble((userCache.getWaitCollectionPrincipal() + userCache.getWaitCollectionInterest()) / 100D, true)); // 待收
         response.setAccountMoney(StringHelper.formatDouble((asset.getNoUseMoney() + asset.getUseMoney()) / 100D, true));
         response.setTotalAsset(StringHelper.formatDouble((asset.getUseMoney() + asset.getNoUseMoney() + asset.getCollection() - asset.getPayment()) / 100D, true));
-        Double netAmount = ((asset.getUseMoney() + userCache.getWaitCollectionPrincipal()) * 0.8D - asset.getPayment()) / 100D;
+        Double netAmount = userHelper.getNetWorthQuota(userId) / 100D;
         response.setNetAmount(StringHelper.formatDouble(netAmount, true));
         return ResponseEntity.ok(response);
     }

@@ -95,9 +95,9 @@ public class UserHelper {
             //信用限额
             long quota = 0;
             if (passUserNames.contains(user.getUsername())) {
-                quota = 200 * 1000;
+                quota = 200 * 1000 * 100;
             } else {
-                quota = 100 * 1000;
+                quota = 100 * 1000 * 100;
             }
             /* 信用限额跟信用额度取小值 */
             netWorthQuota = MathHelper.min((quota - userCache.getJhWaitCollectionPrincipal()), netWorthQuota);

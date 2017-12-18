@@ -580,7 +580,7 @@ public class TransferBizImpl implements TransferBiz {
                 borrowCollection.setStartAtYes(i > 0 ? DateHelper.stringToDate(StringHelper.toString(repayDetailList.get(i - 1).get("repayAt"))) : nowDate);
                 borrowCollection.setCollectionAt(collectionAt);
                 borrowCollection.setCollectionAtYes(collectionAt);
-                borrowCollection.setCollectionMoney(principal);
+                borrowCollection.setCollectionMoney(principal + interest);
                 borrowCollection.setPrincipal(principal);
                 borrowCollection.setInterest(interest);
                 borrowCollection.setCreatedAt(nowDate);
@@ -1019,20 +1019,20 @@ public class TransferBizImpl implements TransferBiz {
             Preconditions.checkState(!CollectionUtils.isEmpty(repayDetailList), "生成用户回款计划开始: 计划生成为空");
             BorrowCollection borrowCollection;
             long collectionMoney = 0;
-            long collectionInterest = 0;
             int startOrder = oldBorrowCollectionList.get(0).getOrder();/* 获取开始转让期数,期数下标从0开始 */
             for (int i = 0; i < repayDetailList.size(); i++) {
                 borrowCollection = new BorrowCollection();
                 Map<String, Object> repayDetailMap = repayDetailList.get(i);
                 collectionMoney += new Double(NumberHelper.toDouble(repayDetailMap.get("repayMoney"))).longValue();
                 long interest = new Double(NumberHelper.toDouble(repayDetailMap.get("interest"))).longValue();
-                collectionInterest += interest;
                 sumCollectionInterest += interest;
                 //最后一个购买债权转让的最后一期回款，需要把转让溢出的利息补给新的回款记录
                 //排除理财计划转让，因为理财计划没有回款利息
                 if ((j == childTenderList.size() - 1) && (i == repayDetailList.size() - 1) && transfer.getType().intValue() != 1) {
                     /* 新的回款利息添加溢出的利息 */
-                    interest += transferInterest - sumCollectionInterest;
+                    long difference = transferInterest - sumCollectionInterest;
+                    interest += difference;
+                    collectionMoney += difference;
                 }
 
                 borrowCollection.setTenderId(childTender.getId());
@@ -1523,7 +1523,6 @@ public class TransferBizImpl implements TransferBiz {
         transfer.setUserId(userId);
         transfer.setTransferMoney(leftCapital + alreadyInterest);
         transfer.setTransferMoneyYes(0l);
-        transfer.setDel(true);
         transfer.setBorrowId(borrow.getId());
         transfer.setPrincipal(leftCapital);
         transfer.setStartOrder(firstBorrowCollection.getOrder());
@@ -1533,7 +1532,7 @@ public class TransferBizImpl implements TransferBiz {
         transfer.setCreatedAt(nowDate);
         transfer.setTimeLimit(waitTimeLimit);
         transfer.setLowest(1000 * 100L);
-        transfer.setState(1);
+        transfer.setState(0);
         transfer.setTenderCount(0);
         transfer.setTenderId(tenderId);
         transfer.setIsAll(isAll);
@@ -1546,6 +1545,13 @@ public class TransferBizImpl implements TransferBiz {
         tender.setTransferFlag(1);
         tender.setUpdatedAt(nowDate);
         tenderService.updateById(tender);
+
+        try {
+            //自动初审
+            doFirstVerifyTransfer(transfer.getId());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     /**
