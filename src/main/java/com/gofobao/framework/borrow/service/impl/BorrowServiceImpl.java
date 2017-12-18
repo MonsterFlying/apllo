@@ -185,7 +185,7 @@ public class BorrowServiceImpl implements BorrowService {
             borrowLists = pageQuery.getResultList();
         }
 
-        if (CollectionUtils.isEmpty(borrowLists) && StringUtils.isEmpty(type)) {
+        if (CollectionUtils.isEmpty(borrowLists) && !StringUtils.isEmpty(type)) {
             return Collections.EMPTY_LIST;
         }
         List<VoViewBorrowList> voViewBorrowLists = Lists.newArrayList();
