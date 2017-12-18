@@ -1429,3 +1429,43 @@ ALTER TABLE gfb_user_third_account ADD entrust_state smallint(1) DEFAULT '0' COM
 
 
 ALTER TABLE gfb_user_cache ADD `tender_id` int(10) DEFAULT '0' COMMENT '首投id' AFTER `wait_repay_interest`;
+
+
+-- auto-generated definition
+create table gfb_count
+(
+  site_balance varchar(400) null comment '网站余额',
+  account_balance varchar(300) null comment '存管账户余额',
+  net_wait_collection_principal int null comment '净值标待收本金',
+  net_wait_collection_interest int null comment '净值标待收利息',
+  net_wait_repayment_principal int null comment '净值标待还本金',
+  net_wait_repayment_interest int null comment '净值标待还利息',
+  net_advance_principal int null comment '净值标垫付本金',
+  car_wait_collection varchar(300) null comment '车贷标待收',
+  car_wait_repayment varchar(300) null comment '车贷标待还',
+  channel_wait_collection varchar(300) null comment '渠道标待收',
+  channel_wait_repayment varchar(300) null comment '渠道标待还',
+  net_borrow_principal int null comment '净值标借款本金',
+  net_advance_no_principal int null comment '净值标垫付后未收回本金',
+  net_advance_no_interest int null comment '净值标垫付未收回利息',
+  net_net_advance_principal int null comment '净值标净垫付本金',
+  net_net_increase_principal int null comment '净值标净新增本金',
+  id int auto_increment
+    primary key,
+  net_advance_yes_principal int null comment '净值标垫付后收回本金',
+  car_borrow_principal varchar(300) null comment '车贷标借款本金',
+  car_repayment_principal varchar(300) null comment '车贷标还款本金',
+  car_increase_principal varchar(300) null comment '车贷标净新增本金',
+  car_wait_collection_principal varchar(300) null comment '车贷标每个月待收本金',
+  net_repayment_principal varchar(300) null comment '净值标还款本金',
+  channel_borrow_principal varchar(300) null comment '渠道标借款本金',
+  channel_repayment_principal varchar(300) null comment '渠道标还款本金',
+  channel_increase_principal varchar(300) null comment '渠道标净新增本金',
+  channel_wait_collection_principal varchar(300) null comment '渠道标待收本金',
+  wait_collection_principal int null comment '净值标每月待收本金',
+  create_time datetime null comment '创建时间',
+  update_time datetime null comment '修改时间',
+  count_date datetime null comment '统计的年月份'
+)
+  comment '资金统计表'
+;

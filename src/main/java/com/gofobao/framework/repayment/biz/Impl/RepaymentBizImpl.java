@@ -254,6 +254,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
      * @throws Exception
      */
     @Transactional(rollbackFor = Exception.class)
+    @Override
     public ResponseEntity<VoBaseResp> pcRepayAll(VoRepayAllReq voRepayAllReq) throws Exception {
         String paramStr = voRepayAllReq.getParamStr();/* pc请求提前结清参数 */
         if (!SecurityHelper.checkSign(voRepayAllReq.getSign(), paramStr)) {

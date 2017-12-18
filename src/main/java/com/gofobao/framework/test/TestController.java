@@ -27,6 +27,8 @@ import com.gofobao.framework.api.model.credit_details_query.CreditDetailsQueryRe
 import com.gofobao.framework.api.model.credit_details_query.CreditDetailsQueryResponse;
 import com.gofobao.framework.api.model.credit_invest_query.CreditInvestQueryReq;
 import com.gofobao.framework.api.model.credit_invest_query.CreditInvestQueryResp;
+import com.gofobao.framework.api.model.debt_details_query.DebtDetailsQueryRequest;
+import com.gofobao.framework.api.model.debt_details_query.DebtDetailsQueryResponse;
 import com.gofobao.framework.api.model.freeze_details_query.FreezeDetailsQueryRequest;
 import com.gofobao.framework.api.model.freeze_details_query.FreezeDetailsQueryResponse;
 import com.gofobao.framework.asset.service.BatchAssetChangeItemService;
@@ -156,55 +158,6 @@ public class TestController {
     private FinancePlanProvider financePlanProvider;
     @Autowired
     private WheelBorrowBiz wheelBorrowBiz;
-
-    @RequestMapping("/pub/test/xiufu/transfer")
-    @Transactional(rollbackFor = Exception.class)
-    public void xiufuCall() throws Exception {
-        Date nowDate = new Date();
-        /* 理财计划回购债权转让id */
-        long transferId = 613L;
-        /* 理财计划回购债权转让记录 */
-        Transfer transfer = transferService.findByIdLock(transferId);
-        //默认zfh为回购人
-        long repurchaseUserId = 22002L;
-        //回购金额
-        long principal = transfer.getPrincipal();
-        /* 债权购买记录 */
-        TransferBuyLog transferBuyLog = new TransferBuyLog();
-        transferBuyLog.setTransferId(transferId);
-        transferBuyLog.setState(0);
-        transferBuyLog.setAlreadyInterest(0L);
-        transferBuyLog.setBuyMoney(principal);
-        transferBuyLog.setValidMoney(principal);
-        transferBuyLog.setPrincipal(principal);
-        transferBuyLog.setUserId(repurchaseUserId);
-        transferBuyLog.setAuto(false);
-        transferBuyLog.setAutoOrder(0);
-        transferBuyLog.setDel(false);
-        transferBuyLog.setSource(0);
-        transferBuyLog.setType(0);
-        transferBuyLog.setCreatedAt(nowDate);
-        transferBuyLog.setUpdatedAt(nowDate);
-        transferBuyLogService.save(transferBuyLog);
-
-        transfer.setTransferMoneyYes(principal);
-        transfer.setUpdatedAt(nowDate);
-        transfer.setTenderCount(transfer.getTenderCount() + 1);
-        transferService.save(transfer);
-
-        //理财计划回购债权转让
-        if (transfer.getTransferMoneyYes() >= transfer.getTransferMoney()) {
-            ImmutableMap<String, String> body = ImmutableMap
-                    .of(MqConfig.MSG_TRANSFER_ID, StringHelper.toString(transferId),
-                            MqConfig.IS_REPURCHASE, "true",
-                            MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
-            Boolean result = financePlanProvider.againVerifyFinanceTransfer(body);
-            if (!result) {
-                throw new Exception("回购失败!");
-            }
-        }
-
-    }
 
     @RequestMapping("/pub/test/asset/change")
     @Transactional(rollbackFor = Exception.class)
@@ -498,6 +451,26 @@ public class TestController {
         log.info(GSON.toJson(response));
     }
 
+    @ApiOperation("查询标的登记")
+    @RequestMapping("/pub/borrow/find")
+    @Transactional(rollbackFor = Exception.class)
+    public void borrowQuery(@RequestParam("productId") Object productId, @RequestParam("accountId") Object accountId) {
+        DebtDetailsQueryRequest debtDetailsQueryRequest = new DebtDetailsQueryRequest();
+        debtDetailsQueryRequest.setChannel(ChannelContant.HTML);
+        debtDetailsQueryRequest.setAccountId(StringHelper.toString(accountId));
+        if (ObjectUtils.isEmpty(productId)) {
+            debtDetailsQueryRequest.setProductId(StringHelper.toString(productId));
+        }
+        debtDetailsQueryRequest.setPageSize("10");
+        debtDetailsQueryRequest.setPageNum("1");
+        DebtDetailsQueryResponse debtDetailsQueryResponse = jixinManager.send(JixinTxCodeEnum.DEBT_DETAILS_QUERY,
+                debtDetailsQueryRequest,
+                DebtDetailsQueryResponse.class);
+        log.info("=========================================================================================");
+        log.info("查询标的登记:");
+        log.info("=========================================================================================");
+        log.info(GSON.toJson(debtDetailsQueryResponse));
+    }
 
     @Autowired
     BorrowBiz borrowBiz;
@@ -515,7 +488,7 @@ public class TestController {
     /**
      * 重推车轮理财
      */
-    @GetMapping("pub/repush/wheel")
+    @GetMapping("pub/repush/whe")
     public void rePush(@RequestParam("borrowId") Object borrowId) {
         Specification<Tender> tenderSpecifications = Specifications.<Tender>and()
                 .eq("borrowId", NumberHelper.toLong(borrowId))

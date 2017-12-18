@@ -566,10 +566,6 @@ public class TransferBizImpl implements TransferBiz {
                 long interest = NumberHelper.toLong(repayDetailMap.get("interest"));
                 Date collectionAt = DateHelper.stringToDate(StringHelper.toString(repayDetailMap.get("repayAt")));
                 sumCollectionInterest += interest;
-                //最后一个购买债权转让的最后一期回款，需要把还款溢出的利息补给新的回款记录
-                if ((j == childTenderList.size() - 1) && (i == repayDetailList.size() - 1)) {
-                    interest += transferInterest - sumCollectionInterest;/* 新的回款利息添加溢出的利息 */
-                }
 
                 //如果是理财计划借款不需要生成利息
                 if (childTender.getType().intValue() == 1 || (parentBorrow.getIsFinance() && (childTender.getUserId().longValue() == 22002))) {
@@ -584,7 +580,7 @@ public class TransferBizImpl implements TransferBiz {
                 borrowCollection.setStartAtYes(i > 0 ? DateHelper.stringToDate(StringHelper.toString(repayDetailList.get(i - 1).get("repayAt"))) : nowDate);
                 borrowCollection.setCollectionAt(collectionAt);
                 borrowCollection.setCollectionAtYes(collectionAt);
-                borrowCollection.setCollectionMoney(principal);
+                borrowCollection.setCollectionMoney(principal + interest);
                 borrowCollection.setPrincipal(principal);
                 borrowCollection.setInterest(interest);
                 borrowCollection.setCreatedAt(nowDate);
@@ -1023,20 +1019,20 @@ public class TransferBizImpl implements TransferBiz {
             Preconditions.checkState(!CollectionUtils.isEmpty(repayDetailList), "生成用户回款计划开始: 计划生成为空");
             BorrowCollection borrowCollection;
             long collectionMoney = 0;
-            long collectionInterest = 0;
             int startOrder = oldBorrowCollectionList.get(0).getOrder();/* 获取开始转让期数,期数下标从0开始 */
             for (int i = 0; i < repayDetailList.size(); i++) {
                 borrowCollection = new BorrowCollection();
                 Map<String, Object> repayDetailMap = repayDetailList.get(i);
                 collectionMoney += new Double(NumberHelper.toDouble(repayDetailMap.get("repayMoney"))).longValue();
                 long interest = new Double(NumberHelper.toDouble(repayDetailMap.get("interest"))).longValue();
-                collectionInterest += interest;
                 sumCollectionInterest += interest;
                 //最后一个购买债权转让的最后一期回款，需要把转让溢出的利息补给新的回款记录
                 //排除理财计划转让，因为理财计划没有回款利息
                 if ((j == childTenderList.size() - 1) && (i == repayDetailList.size() - 1) && transfer.getType().intValue() != 1) {
                     /* 新的回款利息添加溢出的利息 */
-                    interest += transferInterest - sumCollectionInterest;
+                    long difference = transferInterest - sumCollectionInterest;
+                    interest += difference;
+                    collectionMoney += difference;
                 }
 
                 borrowCollection.setTenderId(childTender.getId());
@@ -1527,7 +1523,6 @@ public class TransferBizImpl implements TransferBiz {
         transfer.setUserId(userId);
         transfer.setTransferMoney(leftCapital + alreadyInterest);
         transfer.setTransferMoneyYes(0l);
-        transfer.setDel(true);
         transfer.setBorrowId(borrow.getId());
         transfer.setPrincipal(leftCapital);
         transfer.setStartOrder(firstBorrowCollection.getOrder());
@@ -1550,6 +1545,13 @@ public class TransferBizImpl implements TransferBiz {
         tender.setTransferFlag(1);
         tender.setUpdatedAt(nowDate);
         tenderService.updateById(tender);
+
+        try {
+            //自动初审
+            doFirstVerifyTransfer(transfer.getId());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     /**
@@ -1841,6 +1843,7 @@ public class TransferBizImpl implements TransferBiz {
      * @param tenderId 投标记录Id
      * @return
      */
+    @Override
     public ResponseEntity<VoGoTenderInfo> goTenderInfo(Long tenderId, Long userId) {
         Tender tender = tenderService.findById(tenderId);
         Preconditions.checkNotNull(tender, "");
@@ -1961,6 +1964,10 @@ public class TransferBizImpl implements TransferBiz {
             voViewBorrowList.setSurplusSecond(0L);
             //进度
             voViewBorrowList.setSpend(0d);
+
+            //过期时间 第二天晚上9点
+            Date endAt = DateHelper.subHours(DateHelper.endOfDate(DateHelper.addDays(item.getReleaseAt(), 1)), 3);
+
             //转让中
             if (item.getState() == TransferContants.TRANSFERIND) {
                 if (item.getTransferMoneyYes() / item.getTransferMoney() == 1) {
@@ -1968,7 +1975,7 @@ public class TransferBizImpl implements TransferBiz {
                     voViewBorrowList.setStatus(6);
                 } else {
                     //招标中
-                    if (DateHelper.addDays(item.getVerifyAt(), 1).getTime() > new Date().getTime()) {
+                    if (endAt.getTime() > new Date().getTime()) {
                         voViewBorrowList.setStatus(3);
                     } else {
                         voViewBorrowList.setStatus(5);
@@ -1977,9 +1984,9 @@ public class TransferBizImpl implements TransferBiz {
             } else if (item.getState() == TransferContants.TRANSFERED) {
                 //已完成
                 voViewBorrowList.setStatus(4);
-                voViewBorrowList.setRecheckAt(DateHelper.dateToString(item.getRecheckAt()));
             }
             double spend = NumberHelper.floorDouble((item.getTransferMoneyYes().doubleValue() / item.getTransferMoney()) * 100, 2);
+            voViewBorrowList.setRecheckAt(StringUtils.isEmpty(item.getRecheckAt()) ? "" : DateHelper.dateToString(item.getRecheckAt()));
             voViewBorrowList.setSpend(spend);
             Users user = userRef.get(item.getUserId());
             voViewBorrowList.setUserName(!StringUtils.isEmpty(user.getUsername()) ? user.getUsername() : user.getPhone());
@@ -1999,7 +2006,6 @@ public class TransferBizImpl implements TransferBiz {
 
     @Override
     public ResponseEntity<VoPcBorrowList> pcFindTransferList(VoBorrowListReq voBorrowListReq) {
-
         VoPcBorrowList voPcBorrowList = VoBaseResp.ok("查询成功", VoPcBorrowList.class);
         Map<String, Object> resultMaps = commonQuery(voBorrowListReq);
         List<Transfer> transferList = (List<Transfer>) resultMaps.get("transfers");
@@ -2007,12 +2013,15 @@ public class TransferBizImpl implements TransferBiz {
             return ResponseEntity.ok(voPcBorrowList);
         }
         voPcBorrowList.setTotalCount(Long.valueOf(resultMaps.get("totalCount").toString()).intValue());
+        voPcBorrowList.setBorrowLists(commonHandel(transferList));
+        return ResponseEntity.ok(voPcBorrowList);
+    }
 
-
+    @Override
+    public List<VoViewBorrowList> commonHandel(List<Transfer> transferList) {
         Set<Long> borrowIds = transferList
                 .stream()
                 .map(transfer -> transfer.getBorrowId()).collect(Collectors.toSet());
-
         Specification<Borrow> bs = Specifications
                 .<Borrow>and()
                 .in("id", borrowIds.toArray())
@@ -2078,6 +2087,9 @@ public class TransferBizImpl implements TransferBiz {
                     : DateHelper.dateToString(transfer.getRecheckAt()));
             double spend = NumberHelper.floorDouble((transfer.getTransferMoneyYes().doubleValue() / transfer.getTransferMoney()) * 100, 2);
             item.setSpend(spend);
+
+            Date endAt = DateHelper.subHours(DateHelper.endOfDate(DateHelper.addDays(transfer.getReleaseAt(), 1)), 3);
+
             //1.待发布 2.还款中 3.招标中 4.已完成 5.已过期 6.待复审
             //进度
             Integer status = transfer.getState();
@@ -2088,7 +2100,7 @@ public class TransferBizImpl implements TransferBiz {
                     item.setStatus(6);
                 } else {
                     //招标中
-                    if (DateHelper.addDays(transfer.getVerifyAt(), 1).getTime() > new Date().getTime()) {
+                    if (endAt.getTime() > new Date().getTime()) {
                         item.setStatus(3);
                     } else {
                         item.setStatus(5);
@@ -2102,10 +2114,8 @@ public class TransferBizImpl implements TransferBiz {
             item.setSurplusSecond(0L);
             transfers.add(item);
         });
-        voPcBorrowList.setBorrowLists(transfers);
-        return ResponseEntity.ok(voPcBorrowList);
+        return transfers;
     }
-
 
     private Map<String, Object> commonQuery(VoBorrowListReq voBorrowListReq) {
         Map<String, Object> resultMaps = Maps.newHashMap();
@@ -2181,7 +2191,7 @@ public class TransferBizImpl implements TransferBiz {
         borrowInfoRes.setRepayFashion(borrow.getRepayFashion());
 
         //结束时间
-        Date endAt = DateHelper.addHours(DateHelper.beginOfDate(transfer.getRecheckAt()), 21);
+        Date endAt = DateHelper.subHours(DateHelper.endOfDate(DateHelper.addDays(transfer.getReleaseAt(), 1)), 3);
         borrowInfoRes.setEndAt(DateHelper.dateToString(endAt, DateHelper.DATE_FORMAT_YMDHMS));
         //进度
         borrowInfoRes.setSurplusSecond(-1L);
@@ -2193,12 +2203,12 @@ public class TransferBizImpl implements TransferBiz {
                 borrowInfoRes.setStatus(6);
                 borrowInfoRes.setPeriodHour(transfer.getSuccessAt().getTime() - transfer.getReleaseAt().getTime());
                 //已过期
-            } else if (endAt.getTime()<new Date().getTime()) {
+            } else if (endAt.getTime() < System.currentTimeMillis()) {
                 borrowInfoRes.setStatus(5);
             } else {
                 //招标中
                 borrowInfoRes.setStatus(3);
-                borrowInfoRes.setPeriodSurplusHour(endAt.getTime() - new Date().getTime());
+                borrowInfoRes.setPeriodSurplusHour(endAt.getTime() - System.currentTimeMillis());
             }
         } else {
             borrowInfoRes.setStatus(4);
@@ -2217,7 +2227,7 @@ public class TransferBizImpl implements TransferBiz {
         borrowInfoRes.setIsNovice(borrow.getIsNovice());
         borrowInfoRes.setSuccessAt(StringUtils.isEmpty(transfer.getSuccessAt())
                 ? ""
-                : DateHelper.dateToString(transfer.getSuccessAt()));
+                : DateHelper.dateToString(borrow.getSuccessAt()));
         borrowInfoRes.setRecheckAt(!StringUtils.isEmpty(transfer.getRecheckAt())
                 ? DateHelper.dateToString(transfer.getRecheckAt())
                 : ""
@@ -2336,4 +2346,6 @@ public class TransferBizImpl implements TransferBiz {
             return null;
         }
     }
+
+
 }
