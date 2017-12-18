@@ -2198,7 +2198,7 @@ public class TransferBizImpl implements TransferBiz {
         //0.待审核 1.转让中 2.已转让 3.审核未通过 4.已取消',
         Integer status = transfer.getState();
         if (status == 1) {//招标中
-            if (transfer.getTransferMoneyYes() / transfer.getTransferMoney() == 1) {
+            if ((transfer.getTransferMoneyYes() / transfer.getTransferMoney() == 1) && !ObjectUtils.isEmpty(transfer.getSuccessAt())) {
                 //复审中
                 borrowInfoRes.setStatus(6);
                 borrowInfoRes.setPeriodHour(transfer.getSuccessAt().getTime() - transfer.getReleaseAt().getTime());

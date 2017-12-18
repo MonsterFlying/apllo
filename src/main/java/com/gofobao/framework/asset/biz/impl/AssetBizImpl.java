@@ -410,6 +410,7 @@ public class AssetBizImpl implements AssetBiz {
     public ResponseEntity<VoBaseResp> rechargeOnline(HttpServletRequest request, VoRechargeReq voRechargeReq) throws Exception {
         try {
             Users users = userService.findById(voRechargeReq.getUserId());
+            String requestSource = request.getHeader("requestSource");
             Preconditions.checkNotNull(users, "当前用户不存在");
             if (users.getIsLock()) {
                 return ResponseEntity
@@ -542,6 +543,11 @@ public class AssetBizImpl implements AssetBiz {
             rechargeDetailLog.setCardNo(userThirdAccount.getCardNo());
             rechargeDetailLog.setDel(0);
             rechargeDetailLog.setIp(IpHelper.getIpAddress(request));
+            //充值来源
+            if (!StringUtils.isEmpty(requestSource)) {
+                rechargeDetailLog.setRechargeSource(Integer.valueOf(requestSource));
+            }
+
             rechargeDetailLog.setMobile(voRechargeReq.getPhone());
             Double recordRecharge = MoneyHelper.multiply(voRechargeReq.getMoney(), 100D, 0);
             rechargeDetailLog.setMoney(recordRecharge.longValue());
@@ -751,6 +757,8 @@ public class AssetBizImpl implements AssetBiz {
         rechargeDetailLog.setMobile(users.getPhone());
         rechargeDetailLog.setMoney(new Double(voRechargeReq.getMoney() * 100).longValue());
         rechargeDetailLog.setRechargeChannel(0);
+        //充值来源
+        rechargeDetailLog.setRechargeSource(Integer.valueOf(request.getHeader("requestSource")));
         rechargeDetailLog.setSeqNo(directRechargePlusRequest.getTxDate() + directRechargePlusRequest.getTxTime() + directRechargePlusRequest.getSeqNo());
 
         rechargeDetailLogService.save(rechargeDetailLog);
