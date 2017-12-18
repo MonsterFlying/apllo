@@ -196,12 +196,24 @@ public class BorrowServiceImpl implements BorrowService {
                 }
             }
         }
-        if (CollectionUtils.isEmpty(voViewBorrowLists) && voBorrowListReq.getPageIndex().intValue() == 0) {
-            voViewBorrowLists = commonHandle(otherAdd(), voBorrowListReq);
+        Integer tempCount = 10;
+        //如果第一页 并且是“全部可投列表”
+        if (voBorrowListReq.getPageIndex().intValue() == 0 && StringUtils.isEmpty(type)) {
+            List<VoViewBorrowList> tempVoViewBorrows = Lists.newArrayList();
+            if (!CollectionUtils.isEmpty(voViewBorrowLists)) {
+                if (voViewBorrowLists.size() < tempCount) { //小于10条
+                    tempVoViewBorrows = commonHandle(otherAdd(tempCount - voViewBorrowLists.size()), voBorrowListReq);
+                }
+            } else {  //为空 凑10条
+                tempVoViewBorrows = commonHandle(otherAdd(tempCount), voBorrowListReq);
+            }
+            if (!CollectionUtils.isEmpty(tempVoViewBorrows)) {
+                for (VoViewBorrowList viewBorrowList : tempVoViewBorrows)
+                    voViewBorrowLists.add(viewBorrowList);
+            }
         }
         return voViewBorrowLists;
     }
-
 
     private List<VoViewBorrowList> commonHandle(List<Borrow> borrowLists, VoBorrowListReq voBorrowListReq) {
         List<VoViewBorrowList> listResList = new ArrayList<>(voBorrowListReq.getPageSize());
@@ -366,20 +378,36 @@ public class BorrowServiceImpl implements BorrowService {
         }
         Long count = 10L;
         //如果当前没有可投
-        if (CollectionUtils.isEmpty(borrowListList)) {
-            if (voBorrowListReq.getPageIndex().intValue() == 0) {
-                List<Borrow> otherAddListBorrows = otherAdd();
-                borrowListList = commonHandle(otherAddListBorrows, voBorrowListReq);
+        Integer tempCount = 10;
+        Boolean isLeeZoer = false;  //是否小于10条
+        //是第一页并且是 ”全部列表“
+        if (voBorrowListReq.getPageIndex().intValue() == 0 && StringUtils.isEmpty(type)) {
+            List<VoViewBorrowList> otherAddListBorrows = Lists.newArrayList();
+            if (CollectionUtils.isEmpty(borrowListList)) {
+                otherAddListBorrows = commonHandle(otherAdd(tempCount), voBorrowListReq);
+                isLeeZoer = true;
+            } else if (borrowListList.size() < 10) { //小于10条
+                otherAddListBorrows = commonHandle(otherAdd(tempCount - borrowListList.size()), voBorrowListReq);
+                isLeeZoer = true;
             }
-        } else {
-            //总记录数
-            Query countQuery = entityManager.createQuery(countSb.append(condtionSql).toString(), Long.class);
-            if (StringUtils.isEmpty(type)) {
+            if (!CollectionUtils.isEmpty(otherAddListBorrows)) {
+                for (VoViewBorrowList tempVo : otherAddListBorrows) {
+                    borrowListList.add(tempVo);
+                }
+            }
+        }
+        //总记录数
+        Query countQuery = entityManager.createQuery(countSb.append(condtionSql).toString(), Long.class);
+        if (StringUtils.isEmpty(type)) {
+            if (isLeeZoer && voBorrowListReq.getPageIndex() == 0) { //是第一页 并且小于10条
+                count = 10L;
+            } else {
                 countQuery.setParameter("statusArray", BorrowContants.BIDDING);
                 countQuery.setParameter("type", BorrowContants.JING_ZHI);
-            } else {
-                countQuery.setParameter("statusArray", statusArray);
+                count = (Long) countQuery.getSingleResult();
             }
+        } else {
+            countQuery.setParameter("statusArray", statusArray);
             count = (Long) countQuery.getSingleResult();
         }
         warpRes.setBorrowLists(borrowListList);
@@ -390,8 +418,8 @@ public class BorrowServiceImpl implements BorrowService {
 
     }
 
-    private List<Borrow> otherAdd() {
-        StringBuilder contionStr = new StringBuilder(" SELECT b FROM Borrow b\n" +
+    private List<Borrow> otherAdd(Integer pageSize) {
+        StringBuilder contionStr = new StringBuilder(" SELECT b FROM Borrow b\n " +
                 "WHERE\n" +
                 "b.productId IS NOT NULL\n" +
                 "AND\n" +
@@ -413,7 +441,7 @@ public class BorrowServiceImpl implements BorrowService {
         query.setParameter("status", BorrowContants.PASS);
         query.setParameter("typeArrays", Lists.newArrayList(BorrowContants.CE_DAI, BorrowContants.INDEX_TYPE_QU_DAO));
         query.setFirstResult(0);
-        query.setMaxResults(10);
+        query.setMaxResults(pageSize);
         return query.getResultList();
     }
 
@@ -699,7 +727,7 @@ public class BorrowServiceImpl implements BorrowService {
         borrowStatistics.setMiaoBiao(miaoBiao);
         borrowStatistics.setQuDao(quDao);
         borrowStatistics.setLiuZhuan(liuZhuanCount);
-        borrowStatistics.setSum(quDao +cheDai+liuZhuanCount);
+        borrowStatistics.setSum(quDao + cheDai + liuZhuanCount);
         borrowStatisticss.add(borrowStatistics);
         return borrowStatisticss;
     }
