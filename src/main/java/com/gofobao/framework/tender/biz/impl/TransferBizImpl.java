@@ -1961,6 +1961,10 @@ public class TransferBizImpl implements TransferBiz {
             voViewBorrowList.setSurplusSecond(0L);
             //进度
             voViewBorrowList.setSpend(0d);
+
+            //过期时间 第二天晚上9点
+            Date endAt = DateHelper.subHours(DateHelper.endOfDate(DateHelper.addDays(item.getReleaseAt(), 1)), 3);
+
             //转让中
             if (item.getState() == TransferContants.TRANSFERIND) {
                 if (item.getTransferMoneyYes() / item.getTransferMoney() == 1) {
@@ -1968,7 +1972,7 @@ public class TransferBizImpl implements TransferBiz {
                     voViewBorrowList.setStatus(6);
                 } else {
                     //招标中
-                    if (DateHelper.addDays(item.getVerifyAt(), 1).getTime() > new Date().getTime()) {
+                    if (endAt.getTime() > new Date().getTime()) {
                         voViewBorrowList.setStatus(3);
                     } else {
                         voViewBorrowList.setStatus(5);
@@ -1979,7 +1983,7 @@ public class TransferBizImpl implements TransferBiz {
                 voViewBorrowList.setStatus(4);
             }
             double spend = NumberHelper.floorDouble((item.getTransferMoneyYes().doubleValue() / item.getTransferMoney()) * 100, 2);
-            voViewBorrowList.setRecheckAt(StringUtils.isEmpty(item.getRecheckAt())?"":DateHelper.dateToString(item.getRecheckAt()));
+            voViewBorrowList.setRecheckAt(StringUtils.isEmpty(item.getRecheckAt()) ? "" : DateHelper.dateToString(item.getRecheckAt()));
             voViewBorrowList.setSpend(spend);
             Users user = userRef.get(item.getUserId());
             voViewBorrowList.setUserName(!StringUtils.isEmpty(user.getUsername()) ? user.getUsername() : user.getPhone());
@@ -2080,6 +2084,9 @@ public class TransferBizImpl implements TransferBiz {
                     : DateHelper.dateToString(transfer.getRecheckAt()));
             double spend = NumberHelper.floorDouble((transfer.getTransferMoneyYes().doubleValue() / transfer.getTransferMoney()) * 100, 2);
             item.setSpend(spend);
+
+            Date endAt = DateHelper.subHours(DateHelper.endOfDate(DateHelper.addDays(transfer.getReleaseAt(), 1)), 3);
+
             //1.待发布 2.还款中 3.招标中 4.已完成 5.已过期 6.待复审
             //进度
             Integer status = transfer.getState();
@@ -2090,7 +2097,7 @@ public class TransferBizImpl implements TransferBiz {
                     item.setStatus(6);
                 } else {
                     //招标中
-                    if (DateHelper.addDays(transfer.getVerifyAt(), 1).getTime() > new Date().getTime()) {
+                    if (endAt.getTime() > new Date().getTime()) {
                         item.setStatus(3);
                     } else {
                         item.setStatus(5);
@@ -2181,7 +2188,7 @@ public class TransferBizImpl implements TransferBiz {
         borrowInfoRes.setRepayFashion(borrow.getRepayFashion());
 
         //结束时间
-        Date endAt = DateHelper.addHours(DateHelper.beginOfDate(transfer.getReleaseAt()), 21);
+        Date endAt = DateHelper.subHours(DateHelper.endOfDate(DateHelper.addDays(transfer.getReleaseAt(), 1)), 3);
         borrowInfoRes.setEndAt(DateHelper.dateToString(endAt, DateHelper.DATE_FORMAT_YMDHMS));
         //进度
         borrowInfoRes.setSurplusSecond(-1L);
@@ -2336,4 +2343,6 @@ public class TransferBizImpl implements TransferBiz {
             return null;
         }
     }
+
+
 }
