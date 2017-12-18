@@ -61,4 +61,12 @@ public interface TenderBiz {
      * @throws Exception
      */
     ResponseEntity<VoBaseResp> endThirdTender(long userId) throws Exception;
+
+
+    /**
+     * 原始标投标记录
+     *
+     * @return
+     */
+    ResponseEntity<VoBorrowTenderUserWarpListRes> originalBorrowTenderList(TenderUserReq tenderUserReq);
 }

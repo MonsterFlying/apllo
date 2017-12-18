@@ -87,18 +87,50 @@ public class TenderServiceImpl implements TenderService {
         if (CollectionUtils.isEmpty(tenderList)) {
             return Collections.EMPTY_LIST;
         }
+        tenderUserResList = commonHandle(tenderList, tenderUserReq);
+        return Optional.empty().ofNullable(tenderUserResList).orElse(Collections.emptyList());
+    }
+
+    /**
+     * 转让标的原始标投标记录
+     *
+     * @param tenderUserReq
+     * @return
+     */
+    @Override
+    public List<VoBorrowTenderUserRes> originalBorrowTenderUser(TenderUserReq tenderUserReq) {
+        Long borrowId = tenderUserReq.getBorrowId();
+        Borrow borrow = borrowRepository.findOne(borrowId);
+        if (ObjectUtils.isEmpty(borrow)) {
+            return Collections.EMPTY_LIST;
+        }
+
+        PageRequest pageRequest = new PageRequest(tenderUserReq.getPageIndex(),
+                tenderUserReq.getPageSize(),
+                new Sort(Sort.Direction.DESC, "id"));
+        Specification<Tender> tenderSpecification = Specifications.<Tender>and()
+                .eq("borrowId", borrowId)
+                .eq("status", TenderConstans.SUCCESS)
+                .build();
+
+        List<Tender> tenderList = tenderRepository.findAll(tenderSpecification, pageRequest).getContent();
+        if (CollectionUtils.isEmpty(tenderList)) {
+            return Collections.EMPTY_LIST;
+        }
+
+        return commonHandle(tenderList, tenderUserReq);
+    }
+
+    private List<VoBorrowTenderUserRes> commonHandle(List<Tender> tenderList, TenderUserReq tenderUserReq) {
+
         Users sendUser = usersRepository.findOne(tenderUserReq.getUserId());
         //获取当前用户类型
         String userType = "";
         if (!ObjectUtils.isEmpty(sendUser)) {
             userType = sendUser.getType();
         }
-
-        if (StringUtils.isEmpty(userType)) {
-            userType = "";
-        }
-
         String finalUserType = userType;
+        List<VoBorrowTenderUserRes> tenderUserResList = new ArrayList<>();
         tenderList.stream().forEach(item -> {
             VoBorrowTenderUserRes tenderUserRes = new VoBorrowTenderUserRes();
             tenderUserRes.setValidMoney(StringHelper.formatMon(item.getValidMoney() / 100d) + MoneyConstans.RMB);
@@ -130,14 +162,20 @@ public class TenderServiceImpl implements TenderService {
 
             Users user = usersRepository.findOne(new Long(item.getUserId()));
             //如果当前用户是管理员或者本人 用户名可见
-            tenderUserRes.setUserName(finalUserType.equals("manager")
+          /*  tenderUserRes.setUserName(finalUserType.equals("manager")
                     ? user.getPhone()
                     : UserHelper.hideChar(user.getPhone(), UserHelper.PHONE_NUM)
-            );
+            );*/
+
+            tenderUserRes.setUserName(!StringUtils.isEmpty(sendUser)
+                    ? (finalUserType.equals("manager") || user.getId().intValue() == sendUser.getId().intValue())
+                        ? user.getPhone() : UserHelper.hideChar(user.getPhone(), UserHelper.PHONE_NUM)
+                    : UserHelper.hideChar(user.getPhone(), UserHelper.PHONE_NUM));
             tenderUserResList.add(tenderUserRes);
         });
-        return Optional.empty().ofNullable(tenderUserResList).orElse(Collections.emptyList());
+        return tenderUserResList;
     }
+
 
     /**
      * 查询投标复审金额

@@ -705,6 +705,28 @@ public class TenderBizImpl implements TenderBiz {
         }
     }
 
+    /**
+     * 转让标的原始投标记录
+     * @param tenderUser
+     * @return
+     */
+    @Override
+    public ResponseEntity<VoBorrowTenderUserWarpListRes> originalBorrowTenderList(TenderUserReq tenderUser) {
+
+        try {
+            List<VoBorrowTenderUserRes> tenderUserRes = tenderService.originalBorrowTenderUser(tenderUser);
+            VoBorrowTenderUserWarpListRes warpListRes = VoBaseResp.ok("查询成功", VoBorrowTenderUserWarpListRes.class);
+            warpListRes.setVoBorrowTenderUser(tenderUserRes);
+            return ResponseEntity.ok(warpListRes);
+        } catch (Throwable e) {
+            e.printStackTrace();
+            return ResponseEntity.
+                    badRequest().
+                    body(VoBaseResp.error(VoBaseResp.ERROR, "查询失败", VoBorrowTenderUserWarpListRes.class));
+        }
+
+    }
+
     @Override
     public ResponseEntity<VoBaseResp> adminCancelTender(VoAdminCancelTender voAdminCancelTender) {
         log.error("请求用户标的信息");
@@ -1019,4 +1041,6 @@ public class TenderBizImpl implements TenderBiz {
         thirdBatchLogService.save(thirdBatchLog);
         return ResponseEntity.ok(VoBaseResp.ok("结束申请成功!"));
     }
+
+
 }

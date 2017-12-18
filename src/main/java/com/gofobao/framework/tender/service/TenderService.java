@@ -23,7 +23,16 @@ public interface TenderService {
 
     boolean updateById(Tender tender);
 
+
     List<VoBorrowTenderUserRes> findBorrowTenderUser(TenderUserReq tenderUserReq);
+
+    /**
+     * 债转标的原始标的投标记录
+     *
+     * @param tenderUserReq
+     * @return
+     */
+    List<VoBorrowTenderUserRes> originalBorrowTenderUser(TenderUserReq tenderUserReq);
 
     List<Tender> findList(Specification<Tender> specification);
 

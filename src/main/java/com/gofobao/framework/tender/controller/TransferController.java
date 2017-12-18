@@ -5,6 +5,7 @@ import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.helper.ThymeleafHelper;
 import com.gofobao.framework.security.contants.SecurityContants;
 import com.gofobao.framework.security.helper.JwtTokenHelper;
+import com.gofobao.framework.tender.biz.TenderBiz;
 import com.gofobao.framework.tender.biz.TransferBiz;
 import com.gofobao.framework.tender.vo.request.*;
 import com.gofobao.framework.tender.vo.response.*;
@@ -39,6 +40,9 @@ public class TransferController {
 
     @Autowired
     private JwtTokenHelper jwtTokenHelper;
+
+    @Autowired
+    private TenderBiz tenderBiz;
 
     /**
      * 查询债权转让购买记录
@@ -207,5 +211,27 @@ public class TransferController {
         return ResponseEntity.ok(content);
     }
 
+    @ApiOperation("转让标原始标-投标记录")
+    @GetMapping("/pub/transfer/v2/user/list/{pageIndex}/{pageSize}/{borrowId}")
+    public ResponseEntity<VoBorrowTenderUserWarpListRes> findBorrowTenderUser(@PathVariable Integer pageIndex,
+                                                                              @PathVariable Integer pageSize,
+                                                                              @PathVariable Long borrowId,
+                                                                              HttpServletRequest request) {
+        TenderUserReq borrowTenderList = new TenderUserReq();
+        try {
+            String token = jwtTokenHelper.getToken(request);
+            if (!StringUtils.isEmpty(token)) {
+                jwtTokenHelper.validateSign(token);
+                Long userId = jwtTokenHelper.getUserIdFromToken(token);  // 用户ID
+                borrowTenderList.setUserId(userId);
+            }
+        } catch (Exception e) {
+            log.info("当前用户未登录");
+        }
+        borrowTenderList.setPageSize(pageSize);
+        borrowTenderList.setPageIndex(pageIndex);
+        borrowTenderList.setBorrowId(borrowId);
+        return tenderBiz.originalBorrowTenderList(borrowTenderList);
+    }
 
 }
