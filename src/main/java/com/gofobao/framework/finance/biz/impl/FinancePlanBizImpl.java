@@ -445,7 +445,7 @@ public class FinancePlanBizImpl implements FinancePlanBiz {
             throw new Exception("即信批次还款冻结资金失败：" + balanceFreezeResp.getRetMsg());
         }*/
         //保存存管冻结orderId
-/*        financePlanBuyer.setFreezeOrderId(orderId);*/
+        /*        financePlanBuyer.setFreezeOrderId(orderId);*/
         financePlanBuyerService.save(financePlanBuyer);
     }
 
@@ -802,14 +802,14 @@ public class FinancePlanBizImpl implements FinancePlanBiz {
     @Override
     public ResponseEntity<PlanListWarpRes> list(Page page) {
         PlanListWarpRes warpRes = VoBaseResp.ok("查询成功", PlanListWarpRes.class);
-        if (page.getPageIndex().equals(1)) {
+        if (page.getPageIndex() > 0) {  //第二页直接返回为空
             return ResponseEntity.ok(warpRes);
         }
         page.setPageSize(10);
-        List<FinancePlan> financePlans = financePlanRepository.indexList(Lists.newArrayList(FinannceContants.PURCJASE, FinannceContants.END),
-                0,
-                page.getPageIndex(),
-                page.getPageSize());
+        List<FinancePlan> financePlans = financePlanRepository.indexList(Lists.newArrayList(FinannceContants.PURCJASE), 0);
+            /*    page.getPageIndex(),
+                page.getPageSize());*/
+
         warpRes.setTotalCount(10);
         if (CollectionUtils.isEmpty(financePlans)) {
             return ResponseEntity.ok(warpRes);
@@ -841,14 +841,14 @@ public class FinancePlanBizImpl implements FinancePlanBiz {
     @Override
     public ResponseEntity<VoViewFinanceServerPlanResp> financeServerlist(Page page) {
         VoViewFinanceServerPlanResp warpRes = VoBaseResp.ok("查询成功", VoViewFinanceServerPlanResp.class);
-        if (page.getPageIndex().equals(1)) {
+        if (page.getPageIndex() > 0) { //第二页直接返回为空
             return ResponseEntity.ok(warpRes);
         }
         page.setPageSize(10);
-        List<FinancePlan> financePlans = financePlanRepository.indexList(Lists.newArrayList(FinannceContants.PURCJASE, FinannceContants.END),
-                1,
+        List<FinancePlan> financePlans = financePlanRepository.indexList(Lists.newArrayList(FinannceContants.PURCJASE),
+                1/*,
                 page.getPageIndex(),
-                page.getPageSize());
+                page.getPageSize()*/);
         warpRes.setTotalCount(10);
         if (CollectionUtils.isEmpty(financePlans)) {
             return ResponseEntity.ok(warpRes);

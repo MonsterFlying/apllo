@@ -182,10 +182,10 @@ public class BorrowServiceImpl implements BorrowService {
             pageQuery
                     .setFirstResult(firstResult)
                     .setMaxResults(voBorrowListReq.getPageSize());
-            borrowLists= pageQuery.getResultList();
+            borrowLists = pageQuery.getResultList();
         }
 
-        if (CollectionUtils.isEmpty(borrowLists) && StringUtils.isEmpty(type)) {
+        if (CollectionUtils.isEmpty(borrowLists) && !StringUtils.isEmpty(type)) {
             return Collections.EMPTY_LIST;
         }
         List<VoViewBorrowList> voViewBorrowLists = Lists.newArrayList();
@@ -199,6 +199,7 @@ public class BorrowServiceImpl implements BorrowService {
             if (!CollectionUtils.isEmpty(transfers)) {
                 List<VoViewBorrowList> transferBorrow = transferBiz.commonHandel(transfers);
                 for (VoViewBorrowList voBorrowList : transferBorrow) {
+                    voBorrowList.setApr(voBorrowList.getApr() + BorrowContants.percent);
                     voViewBorrowLists.add(voBorrowList);
                 }
             }
@@ -216,7 +217,6 @@ public class BorrowServiceImpl implements BorrowService {
             }
             if (!CollectionUtils.isEmpty(tempVoViewBorrows)) {
                 for (VoViewBorrowList viewBorrowList : tempVoViewBorrows) {
-                    viewBorrowList.setApr(viewBorrowList.getApr() + BorrowContants.percent);
                     voViewBorrowLists.add(viewBorrowList);
                 }
 
