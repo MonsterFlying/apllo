@@ -126,6 +126,7 @@ public class WrbCoopDESUtil {
     public static void main(String[] args) throws Exception {
         String param="pf_user_id=22002";
         System.out.println(desEncrypt("2l0IYbNnRcShWOM9Q5Ej0A3gCEP07LBS", param));
+        System.out.println(desDecrypt("2l0IYbNnRcShWOM9Q5Ej0A3gCEP07LBS","AvJXa7FMi3upVadK%2BGSb9W4sGvUmXRiBkrJKe4GvGz0%3D"));
            }
 
 }
