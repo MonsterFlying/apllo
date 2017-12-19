@@ -84,6 +84,7 @@ public class AssetChangeProvider {
 
     /**
      * 通用资金变动
+     * @// TODO: 2017/12/19 奖励金  增加前置奖励金转换 
      *
      * @param entity
      */

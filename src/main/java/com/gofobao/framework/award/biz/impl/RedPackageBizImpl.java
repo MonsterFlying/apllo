@@ -346,7 +346,7 @@ public class RedPackageBizImpl implements RedPackageBiz {
         }
 
         // 红包开启平率限制
-        try {
+        /*try {
             Date beginDate = DateHelper.subDays(nowDate, 1);
             Specification<MarketingRedpackRecord> marketingRedpackRecordSpecification = Specifications
                     .<MarketingRedpackRecord>and()
@@ -363,7 +363,7 @@ public class RedPackageBizImpl implements RedPackageBiz {
             }
         } catch (Exception e) {
             log.error("红包平率限制异常", e);
-        }
+        }*/
 
 
         String onlySeql = String.format("%s%s%s", users.getId(), AssetChangeTypeEnum.receiveRedpack.getLocalType(), marketingRedpackRecord.getId());

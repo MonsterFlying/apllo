@@ -1430,6 +1430,7 @@ ALTER TABLE gfb_user_third_account ADD entrust_state smallint(1) DEFAULT '0' COM
 
 ALTER TABLE gfb_user_cache ADD `tender_id` int(10) DEFAULT '0' COMMENT '首投id' AFTER `wait_repay_interest`;
 
+ALTER TABLE gfb_asset ADD `bounty` bigint(20) DEFAULT '0' COMMENT '奖励金';
 
 -- auto-generated definition
 create table gfb_count
