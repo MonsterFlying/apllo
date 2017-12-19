@@ -7,6 +7,14 @@ package com.gofobao.framework.api.helper;
 
 public enum JixinTxCodeEnum {
     /**
+     * 投资人购买债权
+     */
+    CREDIT_INVEST(
+            "creditInvest",
+            "/p2p/page/creditInvest",
+            "投资人购买债权"),
+
+    /**
      * 账户资金冻结明细查询
      */
     FREEZE_DETAILS_QUERY(

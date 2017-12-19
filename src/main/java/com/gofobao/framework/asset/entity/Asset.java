@@ -36,7 +36,8 @@ public class Asset {
 
     private Long financePlanMoney;
 
-    public long getTotal() {
-        return this.useMoney + this.noUseMoney + this.collection;
-    }
+    /**
+     * 奖励金 在使用时  会变成可用金
+     */
+    private Long bounty;
 }

@@ -229,6 +229,11 @@ public class UserThirdBizImpl implements UserThirdBiz {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
+    /**
+     * @// TODO: 2017/12/19 大转盘活动
+     * 1.每名广富宝实名注册用户均有1次抽奖机会，新老不限；
+    2.活动期间内每邀请2位好友注册并开通存管账户，邀请人可获得1次抽奖机会，多邀多得，上不封顶；
+     */
     public ResponseEntity<VoOpenAccountResp> openAccount(VoOpenAccountReq voOpenAccountReq, Long userId, HttpServletRequest httpServletRequest) {
         voOpenAccountReq.setCardNo(voOpenAccountReq.getCardNo().toUpperCase());
         // 1.用户用户信息

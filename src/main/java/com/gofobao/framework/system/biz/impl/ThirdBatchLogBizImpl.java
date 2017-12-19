@@ -330,6 +330,7 @@ public class ThirdBatchLogBizImpl implements ThirdBatchLogBiz {
      * @param type
      * @return true 已处理  false 未处理
      */
+    @Override
     public boolean checkLocalSourceState(String sourceId, int type) {
         Specification<Borrow> bs = null;
         Specification<BorrowRepayment> brs = null;
@@ -338,7 +339,8 @@ public class ThirdBatchLogBizImpl implements ThirdBatchLogBiz {
         List<Borrow> borrowList = null;
         long rowNum = 0;
         switch (type) {
-            case ThirdBatchLogContants.BATCH_CREDIT_INVEST: //投资人批次购买债权
+            case ThirdBatchLogContants.BATCH_CREDIT_INVEST:
+                //投资人批次购买债权
                 ts = Specifications
                         .<Transfer>and()
                         .eq("state", 2)
@@ -349,7 +351,8 @@ public class ThirdBatchLogBizImpl implements ThirdBatchLogBiz {
                     return true;
                 }
                 break;
-            case ThirdBatchLogContants.BATCH_LEND_REPAY: //即信批次放款
+            case ThirdBatchLogContants.BATCH_LEND_REPAY:
+                //即信批次放款
                 bs = Specifications
                         .<Borrow>and()
                         .eq("status", 3)
@@ -364,7 +367,8 @@ public class ThirdBatchLogBizImpl implements ThirdBatchLogBiz {
                     return true;
                 }
                 break;
-            case ThirdBatchLogContants.BATCH_REPAY: //即信批次还款
+            case ThirdBatchLogContants.BATCH_REPAY:
+                //即信批次还款
                 brs = Specifications
                         .<BorrowRepayment>and()
                         .eq("id", sourceId)
@@ -375,7 +379,8 @@ public class ThirdBatchLogBizImpl implements ThirdBatchLogBiz {
                     return true;
                 }
                 break;
-            case ThirdBatchLogContants.BATCH_BAIL_REPAY: //名义借款人垫付
+            case ThirdBatchLogContants.BATCH_BAIL_REPAY:
+                //名义借款人垫付
                 als = Specifications
                         .<AdvanceLog>and()
                         .eq("repaymentId", sourceId)
@@ -392,7 +397,8 @@ public class ThirdBatchLogBizImpl implements ThirdBatchLogBiz {
                     return true;
                 }
                 break;
-            case ThirdBatchLogContants.BATCH_REPAY_ALL: //提前结清批次还款
+            case ThirdBatchLogContants.BATCH_REPAY_ALL:
+                //提前结清批次还款
                 bs = Specifications
                         .<Borrow>and()
                         .eq("id", sourceId)

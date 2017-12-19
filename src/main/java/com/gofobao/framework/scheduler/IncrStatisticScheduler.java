@@ -21,7 +21,7 @@ public class IncrStatisticScheduler {
     private IncrStatisticService incrStatisticService;
 
 
-    @Scheduled(cron = "0 30 0 * * ? ")
+   /* @Scheduled(cron = "0 30 0 * * ? ")*/
     @Transactional(rollbackOn = Exception.class)
     public void process() {
         Date date=new Date();

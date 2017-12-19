@@ -1198,6 +1198,12 @@ public class TransferBizImpl implements TransferBiz {
      * 2.判断债权转让剩余金额是否大于等于购买金额
      * 3.判断账户可用金额是否大于购入金额
      * 4.生成购买债权记录
+     * 
+     * @// TODO: 2017/12/19 大转盘活动
+     * .每天单笔投资每满10,000元即可获得1次抽奖机会，按投资金额自动计算分配；
+    4.累计投资金额每满100,000元，可另获赠1次抽奖机会，以此类推；
+    活动期间新邀请好友投资金额可等同于自己投资送抽奖次数，规则同3、4条；
+    6.本活动仅限车贷标、渠道标、流转标参与，其他标的均不参与该活动；
      */
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -1975,7 +1981,7 @@ public class TransferBizImpl implements TransferBiz {
                     voViewBorrowList.setStatus(6);
                 } else {
                     //招标中
-                    if (endAt.getTime() > new Date().getTime()) {
+                    if (endAt.getTime() > System.currentTimeMillis()) {
                         voViewBorrowList.setStatus(3);
                     } else {
                         voViewBorrowList.setStatus(5);
@@ -2054,7 +2060,7 @@ public class TransferBizImpl implements TransferBiz {
             Borrow borrow = borrowRef.get(transfer.getBorrowId());
             Users users = userRef.get(transfer.getUserId());
 
-            item.setApr(StringHelper.formatMon(transfer.getApr() / 100D));
+            item.setApr(StringHelper.formatMon(transfer.getApr() / 100D) + MoneyConstans.PERCENT);
             item.setAvatar(users.getAvatarPath());
             item.setId(transfer.getId());
             item.setMoneyYes(StringHelper.formatMon(transfer.getTransferMoneyYes() / 100D));
