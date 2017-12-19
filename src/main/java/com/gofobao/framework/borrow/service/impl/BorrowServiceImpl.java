@@ -218,7 +218,6 @@ public class BorrowServiceImpl implements BorrowService {
                 for (VoViewBorrowList viewBorrowList : tempVoViewBorrows) {
                     voViewBorrowLists.add(viewBorrowList);
                 }
-
             }
         }
         return voViewBorrowLists;
