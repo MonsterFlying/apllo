@@ -346,7 +346,7 @@ public class RedPackageBizImpl implements RedPackageBiz {
         }
 
         // 红包开启平率限制
-        /*try {
+        try {
             Date beginDate = DateHelper.subDays(nowDate, 1);
             Specification<MarketingRedpackRecord> marketingRedpackRecordSpecification = Specifications
                     .<MarketingRedpackRecord>and()
@@ -355,15 +355,15 @@ public class RedPackageBizImpl implements RedPackageBiz {
                     .between("openTime", new Range(DateHelper.endOfDate(beginDate), DateHelper.endOfDate(nowDate)))
                     .build();
             long redpackCount = marketingRedpackRecordService.count(marketingRedpackRecordSpecification);
-            if (redpackCount >= 3) {
-                log.warn("当天开启红包[邀请好友]次数超过3个!");
+            if (redpackCount >= 50) {
+                log.warn("当天开启红包[邀请好友]次数超过50个!");
                 return ResponseEntity
                         .badRequest()
                         .body(VoViewOpenRedPackageWarpRes.error(VoViewOpenRedPackageWarpRes.ERROR, "开启邀请红包过于频繁, 请明天再次尝试!", VoViewOpenRedPackageWarpRes.class));
             }
         } catch (Exception e) {
             log.error("红包平率限制异常", e);
-        }*/
+        }
 
 
         String onlySeql = String.format("%s%s%s", users.getId(), AssetChangeTypeEnum.receiveRedpack.getLocalType(), marketingRedpackRecord.getId());
