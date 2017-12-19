@@ -11,7 +11,7 @@ public enum JixinTxCodeEnum {
      */
     CREDIT_INVEST(
             "creditInvest",
-            "/escrow/p2p/page",
+            "/p2p/page/creditInvest",
             "投资人购买债权"),
 
     /**
