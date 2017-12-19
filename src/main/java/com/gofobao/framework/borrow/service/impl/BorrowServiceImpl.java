@@ -199,7 +199,6 @@ public class BorrowServiceImpl implements BorrowService {
             if (!CollectionUtils.isEmpty(transfers)) {
                 List<VoViewBorrowList> transferBorrow = transferBiz.commonHandel(transfers);
                 for (VoViewBorrowList voBorrowList : transferBorrow) {
-                    voBorrowList.setApr(voBorrowList.getApr() + BorrowContants.percent);
                     voViewBorrowLists.add(voBorrowList);
                 }
             }
@@ -389,7 +388,6 @@ public class BorrowServiceImpl implements BorrowService {
             if (!CollectionUtils.isEmpty(transfers)) {
                 List<VoViewBorrowList> transferBorrowList = transferBiz.commonHandel(transfers);
                 for (VoViewBorrowList viewBorrowList : transferBorrowList) {
-                    viewBorrowList.setApr(viewBorrowList.getApr() + BorrowContants.percent);
                     borrowListList.add(viewBorrowList);
                 }
             }
